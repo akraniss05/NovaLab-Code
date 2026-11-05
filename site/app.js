@@ -61,7 +61,7 @@ function home(){breadcrumb('Startseite');
  const musicCourses=courses.filter(c=>c.category==='Musik'),codeCourses=courses.filter(c=>c.category!=='Musik');
  const musicDone=musicCourses.reduce((n,c)=>n+lessonsOf(c).filter(l=>state.completed[l.id]).length,0);
  const recently=(state.recent||[]).filter(id=>lookup[id]).slice(0,3);
- content.innerHTML=`<section class="v4-hero"><div class="eyebrow">[ LIVERYLAB · ACADEMY 4.0 ]</div>
+ content.innerHTML=`<section class="v4-hero"><div class="eyebrow">[ LIVERYLAB · ACADEMY 4.1 ]</div>
  <h1>Deine Ideen.<br><em>Dein nächstes Level.</em></h1>
  <p>Wähle deine Lernwelt: professionelles Programmieren oder eigene Musik produzieren. Kein Tagesplan – echte Projekte, Challenges und ein Studio direkt im Browser.</p>
  <div class="flex">${btn('⌘ Developer Academy','catalog','primary')}${btn('♫ Music Producer Academy','music-catalog','secondary')}</div>
