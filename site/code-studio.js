@@ -32,7 +32,7 @@ let root=null,state=null,saveState=()=>{},controller=null,runner=null,output='',
 function project(){if(!Array.isArray(state.projects))state.projects=[];return state.projects.find(p=>p.id===state.projectId)||state.projects[0]}
 function ensure(){if(!state.projects?.length){const p=template.web();p.id=newId();state.projects=[p];state.projectId=p.id;saveState()}const p=project();if(!p.file||!Object.prototype.hasOwnProperty.call(p.files,p.file))p.file=Object.keys(p.files)[0];return p}
 function msg(s){output=String(s);const o=root&&$('#llideOutput',root);if(o)o.textContent=output}
-function newProject(kind){if(!template[kind])return;const p=template[kind]();p.id=newId();state.projects.push(p);state.projectId=p.id;saveState();render(root,{state,save:saveState})}
+function newProject(kind){if(!template[kind]){const suffix=({typescript:'ts',java:'java',csharp:'cs',cpp:'cpp',rust:'rs',go:'go',php:'php',kotlin:'kt',sql:'sql',bash:'sh'})[kind];if(!suffix)return;const p={name:kind.toUpperCase()+' Projekt',lang:kind,file:'main.'+suffix,files:{}};p.files[p.file]=({typescript:'const message: string = "Hello!";\nconsole.log(message);',java:'public class Main { public static void main(String[] args) { System.out.println("Hello!"); } }',csharp:'using System;\nclass Program { static void Main() { Console.WriteLine("Hello!"); } }',cpp:'#include <iostream>\nint main() { std::cout << "Hello!\\n"; }',rust:'fn main() { println!("Hello!"); }',go:'package main\nimport "fmt"\nfunc main(){ fmt.Println("Hello!") }',php:'<?php echo "Hello!";',kotlin:'fun main() { println("Hello!") }',sql:'select 42 as answer;',bash:'#!/bin/bash\necho "Hello!"'})[kind];p.id=newId();state.projects.push(p);state.projectId=p.id;saveState();render(root,{state,save:saveState});return}const p=template[kind]();p.id=newId();state.projects.push(p);state.projectId=p.id;saveState();render(root,{state,save:saveState})}
 function fileType(file){return file.split('.').pop()?.toLowerCase()}
 function editorLanguage(file){return ({js:'JavaScript',ts:'TypeScript',lua:'Lua',py:'Python',html:'HTML',css:'CSS',json:'JSON',cs:'C#',java:'Java',cpp:'C++'})[fileType(file)]||'Text'}
 function download(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),20000)}
@@ -64,6 +64,9 @@ async function pythonRun(code){
 }
 async function run(){
  const p=ensure(),name=p.file,code=p.files[name]||'',ext=fileType(name);
+ const supported=['js','lua','py','html','css'].includes(ext);
+ if(!supported){msg(editorLanguage(name)+' benötigt einen echten Compiler oder Server. Für Web-App, JS, Python und einfache Lua-Beispiele gibt es einen Browser-Test.');return}
+ const gate=await window.LLPro.use('code_run');if(!gate.allowed){msg('🔒 '+gate.reason);return}
  if(ext==='html'||(p.files['index.html']&&['js','css'].includes(ext))||p.files['web/index.html']&&['js','css'].includes(ext)){const html=previewHTML(p);if(html)return showPreview(html)}
  if(ext==='js')return jsRun(code);
  if(ext==='lua'){msg('Starte begrenzten Lua-Übungsrunner …');try{const res=await window.LLMini.run(code);msg(res?.error?'Lua: '+res.error+'\n'+(res.output||''):(res?.output||JSON.stringify(res,null,2)))}catch(e){msg('Lua: '+e.message)}return}
@@ -72,7 +75,7 @@ async function run(){
  msg(editorLanguage(name)+' kann im Handy-Browser nicht vollständig kompiliert werden. Exportiere die Dateien für einen passenden Compiler oder FiveM-Testserver.');
 }
 async function archive(){
- const p=ensure();
+ const p=ensure();const gate=await window.LLPro.use('code_export');if(!gate.allowed){msg('🔒 '+gate.reason);return}
  try{let JSZip=window.JSZip;if(!JSZip){await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';s.onload=res;s.onerror=rej;document.head.append(s)});JSZip=window.JSZip}
   if(!JSZip)throw Error('ZIP-Bibliothek nicht geladen');
   const zip=new JSZip();for(const [name,content]of Object.entries(p.files))zip.file(name,content);
@@ -82,13 +85,13 @@ async function archive(){
 function render(container,{state:source,save,userId}={}){
  controller?.abort();controller=new AbortController();root=container;state=source;saveState=save||(()=>{});const p=ensure();
  container.innerHTML=`<div class="eyebrow">LIVERYLAB · CODE STUDIO</div><h1>Build. Code. <em>Ship.</em></h1><p class="text-muted">Mehrere Dateien, eigene Apps und FiveM-Projekte – lokal auf diesem Gerät. Code kann kopiert und als ZIP exportiert werden.</p>
- <div class="llide-toolbar"><label>Projekt<select id="llideProject">${state.projects.map(x=>`<option value="${esc(x.id)}" ${x.id===p.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label><label>Neues Projekt<select id="llideTemplate"><option value="">+ Vorlage auswählen</option><option value="web">Web-App (HTML, CSS, JS)</option><option value="snake">Snake Browsergame</option><option value="admin">FiveM Adminpanel</option><option value="lua">Lua</option><option value="python">Python</option><option value="js">JavaScript</option></select></label></div>
+ <div class="llide-toolbar"><label>Projekt<select id="llideProject">${state.projects.map(x=>`<option value="${esc(x.id)}" ${x.id===p.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label><label>Neues Projekt<select id="llideTemplate"><option value="">+ Vorlage auswählen</option><option value="web">Web-App (HTML, CSS, JS)</option><option value="snake">Snake Browsergame</option><option value="admin">FiveM Adminpanel</option><option value="lua">Lua</option><option value="python">Python</option><option value="js">JavaScript</option>${['typescript','java','csharp','cpp','rust','go','php','kotlin','sql','bash'].map(x=>`<option value="${x}">${x.toUpperCase()} · Quelltext</option>`).join('')}</select></label></div>
  <div class="llide-layout"><aside class="llide-files"><div class="llide-files-title">DATEIEN <button data-ide="add-file" title="Neue Datei">＋</button></div>
  ${Object.keys(p.files).map(f=>`<button class="llide-file ${f===p.file?'current':''}" data-ide="file" data-file="${esc(f)}">▤ ${esc(f)}</button>`).join('')}
  <div class="llide-small-actions"><button class="btn small" data-ide="rename-file">Umbenennen</button><button class="btn small danger" data-ide="delete-file">Löschen</button></div></aside>
  <div class="llide-main"><div class="llide-editorhead"><strong>⌘ ${esc(p.file)}</strong><span>${editorLanguage(p.file)} · Lokal</span></div><div class="llide-editwrap"><pre id="llideLines" aria-hidden="true">${Array.from({length:Math.max(5,(p.files[p.file]||'').split('\n').length)},(_,i)=>i+1).join('\n')}</pre><textarea id="llideCode" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" aria-label="Quellcode">${esc(p.files[p.file]||'')}</textarea></div>
  <div class="llide-shortcuts">${['  ','()','{}','[]','""',"''",'=','=>',';',':'].map(x=>`<button type="button" data-ide="insert" data-text="${esc(x)}">${esc(x.trim()||'⇥')}</button>`).join('')}</div>
- <div class="flex llide-actions"><button class="btn primary" data-ide="run">▶ Ausführen / Vorschau</button><button class="btn" data-ide="save">✓ Speichern</button><button class="btn" data-ide="download">↓ Projekt ZIP</button><button class="btn ghost" data-ide="import">↑ Datei importieren</button></div><input hidden id="llideImport" type="file" accept=".lua,.js,.ts,.py,.html,.css,.json,.txt,.cs,.java,.cpp,.xml,.md,.json"><section class="llide-output"><div class="eyebrow">KONSOLE</div><pre id="llideOutput">${esc(output||'Bereit.')}</pre></section><div id="llideFrameBox"></div>
+ <div class="flex llide-actions"><button class="btn primary" data-ide="run">▶ Ausführen / Vorschau</button><button class="btn" data-ide="save">✓ Speichern</button><button class="btn" data-ide="download">↓ Projekt ZIP</button><button class="btn" data-ide="format">▤ Formatieren</button><button class="btn" data-ide="audit">✦ Code-Audit Pro</button><button class="btn ghost" data-ide="import">↑ Datei importieren</button></div><input hidden id="llideImport" type="file" accept=".lua,.js,.ts,.py,.html,.css,.json,.txt,.cs,.java,.cpp,.xml,.md,.json"><section class="llide-output"><div class="eyebrow">KONSOLE</div><pre id="llideOutput">${esc(output||'Bereit.')}</pre></section><div id="llideFrameBox"></div>
  </div></div><p class="micro">Sandbox-Tests: JavaScript in Worker, HTML/CSS/JS in isolierter Vorschau, einfacher Lua-Runner und optional Python über Pyodide. FiveM/C#/Java/C++ benötigen echte Laufzeiten. Dateien bleiben lokal, solange du sie nicht selbst exportierst.</p>`;
  container.addEventListener('click',click,{signal:controller.signal});
  container.addEventListener('change',change,{signal:controller.signal});
@@ -110,6 +113,8 @@ async function click(e){const b=e.target.closest('[data-ide]');if(!b)return;cons
  case 'save':saveState();msg('✓ Projekt lokal im Browser gespeichert. Für dauerhafte Sicherung ZIP exportieren.');break;
  case 'run':await run();break;
  case 'download':await archive();break;
+ case 'format':{const f=$('#llideCode',root),type=fileType(p.file);if(type==='json'){try{f.value=JSON.stringify(JSON.parse(f.value),null,2)}catch(e){msg('Ungültiges JSON: '+e.message);return}}else{f.value=f.value.split('\n').map(line=>line.replace(/[ \t]+$/,'')).join('\n').replace(/\n{4,}/g,'\n\n\n')}f.dispatchEvent(new Event('input',{bubbles:true}));msg('Datei formatiert. Für komplexe Formatierung bitte Prettier/Black im passenden Editor nutzen.');break}
+ case 'audit':{const gate=await window.LLPro.use('code_advanced');if(!gate.allowed){msg('🔒 '+gate.reason);break}const issues=[],all=Object.entries(p.files);for(const [name,code] of all){if(/\beval\s*\(/.test(code))issues.push(name+': eval() vermeiden');if(/\.innerHTML\s*=/.test(code))issues.push(name+': bei Nutzerdaten textContent verwenden');if(/RegisterNetEvent\s*\(/.test(code)&&!/IsPlayerAceAllowed|HasPermission|IsPlayerAllowed/.test(code))issues.push(name+': FiveM-Serverevents benötigen serverseitige Rechteprüfung');if(/(?:password|service.role|api.secret)\s*[:=]\s*['\"][^'\"]+/.test(code))issues.push(name+': möglicherweise hartkodiertes Secret');if(code.length>35000)issues.push(name+': große Datei – Aufteilung in Module prüfen')}msg('CODE-AUDIT · Statische Hinweise (kein vollständiger Security-Scanner)\n'+(issues.length?issues.map((x,i)=>(i+1)+'. '+x).join('\n'):'Keine der geprüften einfachen Risikomuster gefunden. Tests und Code Review bleiben nötig.'));break}
  case 'import':$('#llideImport',root).click();break;
  }
 }

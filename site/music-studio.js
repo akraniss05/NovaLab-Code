@@ -93,7 +93,7 @@ async function handleChange(e){if(e.target.id==='llpreset'){stop();beats=pattern
  if(e.target.id==='llupload'){const file=e.target.files?.[0];if(!file)return;if(file.size>50*1024*1024)return info('Maximal 50 MB pro Audiodatei.');try{info('Lade Audio lokal …');buffer=await ac().decodeAudioData((await file.arrayBuffer()).slice(0));el('#llfilename',root).textContent=file.name+' · '+Math.round(buffer.duration)+' Sekunden';info('Audio geladen. Experimentiere mit dem Bass-Regler.')}catch(err){info('Audio konnte nicht gelesen werden: '+err.message)}}}
 function renderLesson(node,lesson,course,{onDone,onBack,isDone=false,note='',onNote,onStudio}={}){
  stop();const opts=lesson.options||[];
- const video=/^[\w-]{11}$/.test(lesson.videoId||'')?lesson.videoId:null;
+ const video=null; // External embeds are loaded only after explicit consent in videos-v5.js
  const li=a=>(a||[]).map(x=>`<li>${esc(x)}</li>`).join('');
  node.innerHTML=`<button class="btn ghost small" id="lmBack">← ${esc(course.name)}</button><div class="eyebrow" style="margin-top:20px">MUSIC PRODUCER · ${esc(lesson.level)}</div><h1>${esc(lesson.title)}</h1>
  <section class="panel"><div class="eyebrow">01 / WISSEN</div><p>${esc(lesson.theory)}</p><div class="callout">🎯 ${esc(lesson.goal)}</div><h3>Schritt für Schritt</h3><ol class="steps">${li(lesson.steps)}</ol></section>
