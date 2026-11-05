@@ -40,7 +40,7 @@ jobs:
           if(!app.includes('window.LLMFA.refresh')||!app.includes('window.LLVideoLab.render'))throw Error('New account or video routes missing');
           if(!app.includes('roadmapsView')||!app.includes('window.LLPro'))throw Error('Roadmaps or Pro integration missing');
           const vm=require('node:vm'),context={window:{},document:{},console};
-          for(const f of ['site/plans-v5.js','site/videos-v5.js','site/music-studio.js','site/music-v5.js','site/code-studio.js','site/studio3d-v5.js','site/games-v5.js']){
+          for(const f of ['site/plans-v5.js','site/videos-v5.js','site/music-studio.js','site/music-v5.js','site/code-studio.js','site/studio3d-v5.js','site/games-v5.js','site/shell-v5.js','site/auth-mfa-v5.js','site/video-lab-v5.js']){
             vm.runInNewContext(fs.readFileSync(f,'utf8'),context,{timeout:2000,filename:f});
           }
           if(typeof context.window.LL3D.render!=='function'||typeof context.window.LLMusic.renderStudio!=='function'||typeof context.window.LLGames.render!=='function'||typeof context.window.LLIDE.render!=='function'||typeof context.window.LLShell.renderSettings!=='function'||typeof context.window.LLMFA.renderGate!=='function'||typeof context.window.LLVideoLab.render!=='function')throw Error('Studio modules failed to initialize');
