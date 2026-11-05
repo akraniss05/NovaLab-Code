@@ -247,23 +247,15 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-go],
 
  if(b.dataset.memberReset){
   const id=b.dataset.memberReset;
-  if(!confirm('Für diesen Schüler ein neues temporäres Passwort erstellen? Das bisherige Passwort wird ungültig.'))return;
+  if(!confirm('Ein neues temporäres Passwort für diesen Schüler erstellen?'))return;
   const bytes=new Uint8Array(20);crypto.getRandomValues(bytes);
-  const symbols='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#const id=b.dataset.memberDelete;if(prompt('Schülerkonto und alle zugehörigen Cloud-Daten löschen? Tippe SCHÜLER LÖSCHEN ein.')!=='SCHÜLER LÖSCHEN')return;try{await adminRequest({action:'deleteStudent',userId:id,confirmation:'SCHÜLER LÖSCHEN'});await loadMembers();toast('Schülerkonto gelöscht')}catch(e){adminMessage=e.message;render()}return}
- if(b.dataset.member){const id=b.dataset.member,enable=b.dataset.enable==='1';if(!confirm((enable?'Freigeben':'Sperren')+' dieses Konto?'))return;try{await adminRequest({action:'setActive',userId:id,active:enable});await loadMembers();toast('Konto aktualisiert')}catch(e){adminMessage=e.message;render()}return}
- if(b.dataset.act)try{await handleAction(b.dataset.act,b)}catch(err){console.error(err);toast(err.message||'Aktion fehlgeschlagen')}
-});
-document.addEventListener('input',e=>{if(e.target.id==='lessonEditor'){state.lessonCode[lessonId]=e.target.value;persist()}if(e.target.id==='lessonNotes'){state.notes[lessonId]=e.target.value;persist();syncSoon()}if(e.target.id==='profileName'){state.profileName=e.target.value.slice(0,40);persist()}if(e.target.id==='codeEditor'){const p=project();p.files[p.file]=e.target.value;persist();const n=$('#lineInfo');if(n)n.textContent=e.target.value.split('\n').length+' Zeilen'}});
-document.addEventListener('change',async e=>{if(e.target.id==='llLeaderboardToggle'){if(!user)return;const {error}=await (await supabaseClient()).from('academy_leaderboard').update({visible:e.target.checked}).eq('user_id',user.id);if(error){toast(error.message);e.target.checked=!e.target.checked}else leaderboardView();return}if(e.target.id==='levelFilter'){levelFilter=e.target.value;catalog()}if(e.target.id==='projectSelect'){state.projectId=e.target.value;persist();render()}if(e.target.id==='editorLang'){project().lang=e.target.value;persist();render()}if(e.target.id==='settingStorage'){state.storageEnabled=e.target.checked;persist();toast(e.target.checked?'Lokale Speicherung aktiviert':'Lokale Speicherung deaktiviert');}if(e.target.id==='settingCloud'){state.cloudEnabled=e.target.checked;persist();if(state.cloudEnabled)syncSoon();toast(e.target.checked?'Cloud-Sync aktiviert':'Cloud-Sync pausiert');}});
-$('#importFile').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{const parsed=JSON.parse(await file.text());if(parsed.app!=='LiveryLab Academy 2.0'||!parsed.state||typeof parsed.state!=='object')throw Error('Ungültige Backup-Datei');if(!confirm('Lokalen Fortschritt mit diesem Backup ersetzen?'))return;state=parsed.state;state.projects??=defaultProjects();persist();nav('profile');toast('Backup wiederhergestellt')}catch(err){toast('Backup: '+err.message)}finally{e.target.value=''}});
-function init(){if(!window.LL_CONFIG?.supabaseUrl||!window.LL_CONFIG?.supabaseAnonKey){content.innerHTML='<div class="empty">Die private Anmeldung ist noch nicht konfiguriert.</div>';return}let fragment='';try{fragment=decodeURIComponent(location.hash.slice(1))}catch(e){}if(['home','catalog','editor','practice','profile','music','settings'].includes(fragment))view=fragment;render();initAuth();if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWorker.register('./service-worker.js').catch(()=>{});}
-init();
-})();
-
-;
+  const symbols='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#';
   const password=Array.from(bytes,x=>symbols[x%symbols.length]).join('');
-  try{await adminRequest({action:'resetUsernamePassword',userId:id,password});prompt('Neues temporäres Passwort: bitte jetzt sicher kopieren und weitergeben. Es wird nicht erneut angezeigt.',password);toast('Passwort zurückgesetzt.');await loadMembers()}
-  catch(err){adminMessage=err.message;render()}
+  try{
+    await adminRequest({action:'resetUsernamePassword',userId:id,password});
+    prompt('Neues Einmalpasswort: bitte sicher kopieren und weitergeben. Es wird nicht erneut angezeigt.',password);
+    toast('Passwort zurückgesetzt.');await loadMembers();
+  }catch(err){adminMessage=err.message;render()}
   return;
  }
  if(b.dataset.memberDelete){const id=b.dataset.memberDelete;if(prompt('Schülerkonto und alle zugehörigen Cloud-Daten löschen? Tippe SCHÜLER LÖSCHEN ein.')!=='SCHÜLER LÖSCHEN')return;try{await adminRequest({action:'deleteStudent',userId:id,confirmation:'SCHÜLER LÖSCHEN'});await loadMembers();toast('Schülerkonto gelöscht')}catch(e){adminMessage=e.message;render()}return}
