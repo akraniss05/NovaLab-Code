@@ -34,7 +34,7 @@ Deno.serve(async(req:Request)=>{
     const {data:{user},error:authError}=await caller.auth.getUser(token);
     if(authError||!user)return reply(401,{error:'Invalid session'});
     const admin=createClient(url,secret,{auth:{persistSession:false,autoRefreshToken:false}});
-    const {data:profile,error:profileError}=await admin.from('academy_profiles').select('role,active').eq('id',user.id).single();
+    const {data:profile,error:profileError}=await admin.from('academy_profiles').select('role,active,needs_password_change').eq('id',user.id).single();
     if(profileError||!profile)return reply(403,{error:'Account not enrolled'});
     let body:Record<string,unknown>;
     try{body=await req.json()}catch{return reply(400,{error:'Invalid JSON'})}
@@ -43,6 +43,7 @@ Deno.serve(async(req:Request)=>{
     if(body.action==='finishPasswordChange'){
       const next=String(body.password||'');
       if(!profile.active)return reply(403,{error:'Konto gesperrt'});
+      if(!profile.needs_password_change)return reply(403,{error:'Temporärer Passwortwechsel nicht erforderlich'});
       if(next.length<14||next.length>256)return reply(400,{error:'Neues Passwort: 14 bis 256 Zeichen'});
       const {error:pwdError}=await admin.auth.admin.updateUserById(user.id,{password:next});
       if(pwdError)throw pwdError;

@@ -30,7 +30,7 @@ const template={
 const newId=()=>`p-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,7)}`;
 let root=null,state=null,saveState=()=>{},controller=null,runner=null,output='',tab='files';
 function project(){if(!Array.isArray(state.projects))state.projects=[];return state.projects.find(p=>p.id===state.projectId)||state.projects[0]}
-function ensure(){if(!state.projects?.length){const p=template.web();p.id=newId();state.projects=[p];state.projectId=p.id;saveState()}const p=project();if(!p.file||!p.files[p.file])p.file=Object.keys(p.files)[0];return p}
+function ensure(){if(!state.projects?.length){const p=template.web();p.id=newId();state.projects=[p];state.projectId=p.id;saveState()}const p=project();if(!p.file||!(p.file in p.files))p.file=Object.keys(p.files)[0];return p}
 function msg(s){output=String(s);const o=root&&$('#llideOutput',root);if(o)o.textContent=output}
 function newProject(kind){if(!template[kind])return;const p=template[kind]();p.id=newId();state.projects.push(p);state.projectId=p.id;saveState();render(root,{state,save:saveState})}
 function fileType(file){return file.split('.').pop()?.toLowerCase()}
