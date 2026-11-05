@@ -28,7 +28,7 @@ const template={
  js:()=>({name:'JavaScript Rechner',lang:'javascript',file:'main.js',files:{'main.js':'function addiere(a,b){return a+b}\nconsole.log("Ergebnis:",addiere(20,22))'}})
 };
 const newId=()=>`p-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,7)}`;
-let root=null,state=null,saveState=()=>{},controller=null,runner=null,output='',tab='files';
+let root=null,state=null,saveState=()=>{},controller=null,runner=null,output='',tab='files',mirror=null;
 function project(){if(!Array.isArray(state.projects))state.projects=[];return state.projects.find(p=>p.id===state.projectId)||state.projects[0]}
 function ensure(){if(!state.projects?.length){const p=template.web();p.id=newId();state.projects=[p];state.projectId=p.id;saveState()}const p=project();if(!p.file||!Object.prototype.hasOwnProperty.call(p.files,p.file))p.file=Object.keys(p.files)[0];return p}
 function msg(s){output=String(s);const o=root&&$('#llideOutput',root);if(o)o.textContent=output}
@@ -82,8 +82,47 @@ async function archive(){
   download(await zip.generateAsync({type:'blob'}),p.name.replace(/[^\w-]/g,'_')+'.zip');msg('Projekt als ZIP exportiert.')
  }catch(e){download(new Blob([JSON.stringify(p,null,2)],{type:'application/json'}),p.name+'.json');msg('ZIP offline nicht verfügbar; Projekt als JSON-Backup exportiert.')}
 }
+
+const cmBase='https://cdn.jsdelivr.net/npm/codemirror@5.65.20/';
+function injectScript(url){
+ return new Promise((resolve,reject)=>{
+  if(document.querySelector('script[data-src="'+url+'"]')){resolve();return}
+  const s=document.createElement('script');s.src=url;s.dataset.src=url;s.async=true;
+  s.onload=resolve;s.onerror=()=>reject(Error('CDN nicht erreichbar'));
+  document.head.append(s);
+ })
+}
+async function upgradeEditor(container){
+ const textarea=$('#llideCode',container);if(!textarea)return;
+ try{
+  if(!window.CodeMirror){
+   if(!document.querySelector('link[data-ll-cm]')){
+    const css=document.createElement('link');css.rel='stylesheet';css.href=cmBase+'lib/codemirror.min.css';css.dataset.llCm='1';document.head.append(css)
+   }
+   await injectScript(cmBase+'lib/codemirror.min.js');
+  }
+  const f=fileType(ensure().file);
+  const map={lua:'lua',js:'javascript',ts:'javascript',json:'javascript',html:'htmlmixed',css:'css',py:'python',cs:'clike',cpp:'clike',java:'clike',sql:'sql',xml:'xml'};
+  const mode=map[f];
+  if(mode){
+   const modules=mode==='htmlmixed'?['xml','javascript','css','htmlmixed']:[mode];
+   for(const module of modules){
+    const key='cm-loading-'+module;
+    if(!window[key])window[key]=injectScript(cmBase+'mode/'+module+'/'+module+'.min.js').catch(()=>{});
+    await window[key];
+   }
+  }
+  if(root!==container||controller?.signal.aborted)return;
+  mirror?.toTextArea();mirror=window.CodeMirror.fromTextArea(textarea,{lineNumbers:true,indentUnit:2,tabSize:2,lineWrapping:false,styleActiveLine:true,mode:mode==='python'?'text/x-python':mode==='lua'?'text/x-lua':mode||'text/plain',theme:'default',inputStyle:'textarea'});
+  mirror.setSize('100%','420px');
+  const wrap=$('.llide-editwrap',container);wrap?.classList.add('cm-ready');
+  mirror.on('change',c=>{textarea.value=c.getValue();textarea.dispatchEvent(new Event('input',{bubbles:true}))});
+  window.requestAnimationFrame(()=>mirror?.refresh());
+ }catch(e){msg('Quelltext-Editor aktiv. Syntaxfarben konnten nicht geladen werden (offline/Verbindung).')}
+}
+
 function render(container,{state:source,save,userId}={}){
- controller?.abort();controller=new AbortController();root=container;state=source;saveState=save||(()=>{});const p=ensure();
+ controller?.abort();try{mirror?.toTextArea()}catch{}mirror=null;controller=new AbortController();root=container;state=source;saveState=save||(()=>{});const p=ensure();
  container.innerHTML=`<div class="eyebrow">LIVERYLAB · CODE STUDIO</div><h1>Build. Code. <em>Ship.</em></h1><p class="text-muted">Mehrere Dateien, eigene Apps und FiveM-Projekte – lokal auf diesem Gerät. Code kann kopiert und als ZIP exportiert werden.</p>
  <div class="llide-toolbar"><label>Projekt<select id="llideProject">${state.projects.map(x=>`<option value="${esc(x.id)}" ${x.id===p.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label><label>Neues Projekt<select id="llideTemplate"><option value="">+ Vorlage auswählen</option><option value="web">Web-App (HTML, CSS, JS)</option><option value="snake">Snake Browsergame</option><option value="admin">FiveM Adminpanel</option><option value="lua">Lua</option><option value="python">Python</option><option value="js">JavaScript</option>${['typescript','java','csharp','cpp','rust','go','php','kotlin','sql','bash'].map(x=>`<option value="${x}">${x.toUpperCase()} · Quelltext</option>`).join('')}</select></label></div>
  <div class="llide-layout"><aside class="llide-files"><div class="llide-files-title">DATEIEN <button data-ide="add-file" title="Neue Datei">＋</button></div>
@@ -96,6 +135,7 @@ function render(container,{state:source,save,userId}={}){
  container.addEventListener('click',click,{signal:controller.signal});
  container.addEventListener('change',change,{signal:controller.signal});
  container.addEventListener('input',input,{signal:controller.signal});
+ upgradeEditor(container);
 }
 function input(e){if(e.target.id!=='llideCode')return;const p=ensure();p.files[p.file]=e.target.value;saveState();const lines=e.target.value.split('\n').length;$('#llideLines',root).textContent=Array.from({length:Math.max(5,lines)},(_,i)=>i+1).join('\n')}
 function change(e){
@@ -109,11 +149,11 @@ async function click(e){const b=e.target.closest('[data-ide]');if(!b)return;cons
  case 'add-file':{let name=prompt('Dateiname, z.B. client.lua oder style.css');if(!name)return;name=name.trim().replace(/^\/+/,'');if(!/^[a-z0-9_./-]{1,80}$/i.test(name)||name.includes('..'))return msg('Ungültiger Dateiname');if(p.files[name]!==undefined)return msg('Datei existiert bereits');p.files[name]='';p.file=name;saveState();render(root,{state,save:saveState});break}
  case 'rename-file':{let name=prompt('Neuer Dateiname',p.file);if(!name||name===p.file)return;if(!/^[a-z0-9_./-]{1,80}$/i.test(name)||name.includes('..')||p.files[name]!==undefined)return msg('Ungültiger oder belegter Dateiname');p.files[name]=p.files[p.file];delete p.files[p.file];p.file=name;saveState();render(root,{state,save:saveState});break}
  case 'delete-file':if(Object.keys(p.files).length<=1)return msg('Mindestens eine Datei wird benötigt');if(confirm('Datei '+p.file+' wirklich löschen?')){delete p.files[p.file];p.file=Object.keys(p.files)[0];saveState();render(root,{state,save:saveState})}break;
- case 'insert':{const t=$('#llideCode',root),a=t.selectionStart,z=t.selectionEnd;let text=b.dataset.text;t.setRangeText(text,a,z,'end');t.dispatchEvent(new Event('input',{bubbles:true}));t.focus();break}
+ case 'insert':{let text=b.dataset.text;if(mirror){mirror.replaceSelection(text);mirror.focus();break}const t=$('#llideCode',root),a=t.selectionStart,z=t.selectionEnd;t.setRangeText(text,a,z,'end');t.dispatchEvent(new Event('input',{bubbles:true}));t.focus();break}
  case 'save':saveState();msg('✓ Projekt lokal im Browser gespeichert. Für dauerhafte Sicherung ZIP exportieren.');break;
  case 'run':await run();break;
  case 'download':await archive();break;
- case 'format':{const f=$('#llideCode',root),type=fileType(p.file);if(type==='json'){try{f.value=JSON.stringify(JSON.parse(f.value),null,2)}catch(e){msg('Ungültiges JSON: '+e.message);return}}else{f.value=f.value.split('\n').map(line=>line.replace(/[ \t]+$/,'')).join('\n').replace(/\n{4,}/g,'\n\n\n')}f.dispatchEvent(new Event('input',{bubbles:true}));msg('Datei formatiert. Für komplexe Formatierung bitte Prettier/Black im passenden Editor nutzen.');break}
+ case 'format':{const f=$('#llideCode',root),type=fileType(p.file);if(type==='json'){try{f.value=JSON.stringify(JSON.parse(f.value),null,2)}catch(e){msg('Ungültiges JSON: '+e.message);return}}else{f.value=f.value.split('\n').map(line=>line.replace(/[ \t]+$/,'')).join('\n').replace(/\n{4,}/g,'\n\n\n')}f.dispatchEvent(new Event('input',{bubbles:true}));if(mirror)mirror.setValue(f.value);msg('Datei formatiert. Für komplexe Formatierung bitte Prettier/Black im passenden Editor nutzen.');break}
  case 'audit':{const gate=await window.LLPro.use('code_advanced');if(!gate.allowed){msg('🔒 '+gate.reason);break}const issues=[],all=Object.entries(p.files);for(const [name,code] of all){if(/\beval\s*\(/.test(code))issues.push(name+': eval() vermeiden');if(/\.innerHTML\s*=/.test(code))issues.push(name+': bei Nutzerdaten textContent verwenden');if(/RegisterNetEvent\s*\(/.test(code)&&!/IsPlayerAceAllowed|HasPermission|IsPlayerAllowed/.test(code))issues.push(name+': FiveM-Serverevents benötigen serverseitige Rechteprüfung');if(/(?:password|service.role|api.secret)\s*[:=]\s*['\"][^'\"]+/.test(code))issues.push(name+': möglicherweise hartkodiertes Secret');if(code.length>35000)issues.push(name+': große Datei – Aufteilung in Module prüfen')}msg('CODE-AUDIT · Statische Hinweise (kein vollständiger Security-Scanner)\n'+(issues.length?issues.map((x,i)=>(i+1)+'. '+x).join('\n'):'Keine der geprüften einfachen Risikomuster gefunden. Tests und Code Review bleiben nötig.'));break}
  case 'import':$('#llideImport',root).click();break;
  }

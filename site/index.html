@@ -4,13 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#100b17">
-<meta name="description" content="LiveryLab Academy – Programmierung, FiveM Adminpanel, eigene Apps, Games, Musikproduktion, Hardtekk, Mixing & Mastering. Ohne Zeitplan.">
+<meta name="description" content="LiveryLab Academy – interaktive Lernwelten für Coding, FiveM, Musikproduktion, Video und Blender/3D mit Studios, Roadmaps, Übungen und geschützten Konten.">
 <title>LiveryLab Academy 5.0 | Code, Music & 3D</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjggMTI4Ij48cmVjdCB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyOCIgcng9IjI5IiBmaWxsPSIjMjAxMDM0Ii8+PHBhdGggZD0iTTI2IDkyIDY0IDIwaDM1TDYzIDkyaDM0bC0xMCAxOEgxNnoiIGZpbGw9IiNhOTNmZmYiLz48cGF0aCBkPSJtODIgNDIgMjUgMjgtMjUgMjgtMjAtMjh6IiBmaWxsPSIjZTNhN2ZmIi8+PC9zdmc+Cg==">
 
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="studio-v4.css">
 <link rel="stylesheet" href="studio-v5.css">
+<link rel="stylesheet" href="shell-v5.css">
+<link rel="stylesheet" href="studio-polish-v5.css">
 <script type="importmap">{"imports":{"three":"https://esm.sh/three@0.180.0","three/addons/":"https://esm.sh/three@0.180.0/examples/jsm/"}}</script>
 </head>
 <body>
@@ -32,14 +34,14 @@
     <div class="sidebar-bottom"><div class="sidebar-card"><span>ENTWICKLE DEINE IDEEN</span><h3>Learn. Build.<br>Level up.</h3><p>Ohne Zeitdruck. Von den Grundlagen bis zu eigenen Projekten.</p><button class="btn small secondary" data-go="catalog">Alle Kurse ansehen →</button></div><div class="signature">Made with 💙 by <b>NyxAtheris</b><br><small>(LiveryLab)</small></div></div>
   </aside>
   <div class="app-body">
-    <header class="topbar"><div class="mini-logo"><span>L</span> LIVERY<b>LAB</b></div><div class="crumb" id="crumb">Übersicht</div><div class="top-tools"><button class="iconbtn" data-go="catalog" title="Suchen" aria-label="Kurse suchen">⌕</button><span class="xp-tag" id="xpBadge">✦ 0 XP</span><button class="user-badge" data-go="profile" aria-label="Profil öffnen">N</button></div></header>
+    <header class="topbar"><button id="ll-menu-button" class="ll-head-menu" aria-label="Hauptmenü öffnen" title="Menü öffnen">•••</button><div class="mini-logo"><span>L</span> LIVERY<b>LAB</b></div><div class="crumb" id="crumb">Dashboard</div><div class="top-tools"><button class="iconbtn" data-go="catalog" title="Kurse suchen" aria-label="Suchen">⌕</button><span class="xp-tag" id="xpBadge">✦ 0 XP</span><button class="ll-head-action" data-go="settings" aria-label="Einstellungen" title="Einstellungen">⚙</button><button class="user-badge ll-head-account" data-go="profile" aria-label="Mein Profil" title="Profil"><span class="ll-avatar">◆</span></button></div></header>
     <main id="content" tabindex="-1"><div class="loading">Lade LiveryLab Academy …</div></main>
     <footer class="footer">LIVERYLAB CREATOR ACADEMY · <b>Made with 💙 by NyxAtheris (LiveryLab)</b> · <span id="appVersion">v5.0</span></footer>
   </div>
-  <nav class="mobile-nav" aria-label="Handy Hauptnavigation"><button data-go="home" class="active"><span>⌂</span>Start</button><button data-go="catalog"><span>▤</span>Studium</button><button data-go="editor"><span>{ }</span>Editor</button><button data-go="practice"><span>✧</span>Üben</button><button data-go="music"><span>♫</span>Musik</button><button data-go="studio3d"><span>◈</span>3D</button><button data-go="roadmaps"><span>↗</span>Roadmaps</button><button data-go="profile"><span>◉</span>Profil</button></nav>
+  <nav class="mobile-nav" aria-label="Handy-Navigation"><button data-go="home" class="active"><span>⌂</span>Start</button><button data-go="catalog"><span>▤</span>Kurse</button><button data-go="roadmaps"><span>↗</span>Roadmaps</button><button data-go="music"><span>♫</span>Musik</button><button data-go="profile"><span>◉</span>Profil</button></nav>
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <input id="importFile" type="file" accept="application/json,.json" hidden>
-<script src="config.js"></script><script src="plans-v5.js"></script><script src="lua-mini.js"></script><script src="videos-v5.js"></script><script src="music-studio.js"></script><script src="music-v5.js"></script><script src="code-studio.js"></script><script src="studio3d-v5.js"></script><script src="games-v5.js"></script><script src="app.js"></script>
+<script src="config.js"></script><script src="shell-v5.js"></script><script src="auth-mfa-v5.js"></script><script src="plans-v5.js"></script><script src="lua-mini.js"></script><script src="videos-v5.js"></script><script src="music-studio.js"></script><script src="music-v5.js"></script><script src="video-lab-v5.js"></script><script src="code-studio.js"></script><script src="studio3d-v5.js"></script><script src="games-v5.js"></script><script src="app.js"></script>
 </body>
 </html>
