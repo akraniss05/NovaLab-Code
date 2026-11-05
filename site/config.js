@@ -1,11 +1,11 @@
-
-/* PUBLIC settings only! Never place service_role, sb_secret_ or passwords here.
+/*
+ * PUBLIC browser configuration only.
+ * No passwords, no service_role key, no sb_secret_ API keys.
  * Made with 💙 by NyxAtheris (LiveryLab)
  */
 window.LL_CONFIG = {
-  supabaseUrl: '',               // https://YOUR-PROJECT.supabase.co
-  supabaseAnonKey: '',           // sb_publishable_... or legacy anon key
+  supabaseUrl: 'https://ekgxotvvhkmeuxvuwbei.supabase.co',
+  supabaseAnonKey: '', // Add ONLY the public sb_publishable_ key after enabling the Supabase project
   adminFunctionName: 'admin-users',
-  requireLogin: false            // Set true to show a login screen when Supabase is configured.
+  requireLogin: false // Switch to true ONLY after database, admin user and login are tested
 };
-
