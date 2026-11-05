@@ -1,4 +1,4 @@
-name: Deploy LiveryLab Academy to GitHub Pages
+name: Deploy LiveryLab Academy
 on:
   push:
     branches: [main]
@@ -8,28 +8,41 @@ permissions:
   pages: write
   id-token: write
 concurrency:
-  group: pages
+  group: github-pages
   cancel-in-progress: true
 jobs:
   deploy:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Prepare website
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify scripts and learning content
         run: |
-          mkdir -p dist
-          cp index.html service-worker.js .nojekyll dist/
-          test -s dist/index.html
-          grep -q "LiveryLab Developer Academy" dist/index.html
+          for f in site/config.js site/data.js site/lua-mini.js site/design-lab.js site/app.js site/service-worker.js; do node --check "$f"; done
+          node - <<'NODE'
+          const fs=require('node:fs');
+          const c=JSON.parse(fs.readFileSync('site/data.json','utf8'));
+          const chapters=c.courses.flatMap(x=>x.chapters);
+          const lessons=chapters.flatMap(x=>x.lessons);
+          if(c.courses.length<30 || chapters.length<80 || lessons.length<300)throw Error('Incomplete course data');
+          if(new Set(lessons.map(x=>x.id)).size!==lessons.length)throw Error('Duplicate lesson ids');
+          if(lessons.some(x=>!x.theory||!x.task||!x.quiz))throw Error('Incomplete lesson');
+          const cfg=fs.readFileSync('site/config.js','utf8');
+          if(/sb_secret_[A-Za-z0-9]/.test(cfg))throw Error('Secret exposed');
+          for(const file of ['site/index.html','site/styles.css','site/assets/liverylab-hero.jpg','site/privacy.html','site/manifest.webmanifest'])if(!fs.existsSync(file))throw Error('Missing '+file);
+          console.log('Validated:',c.courses.length,'courses,',chapters.length,'chapters,',lessons.length,'lessons');
+          NODE
       - name: Setup Pages
         uses: actions/configure-pages@v5
-      - name: Upload website
+      - name: Upload static site
         uses: actions/upload-pages-artifact@v4
         with:
-          path: dist
+          path: site
       - name: Publish
         id: deployment
         uses: actions/deploy-pages@v4

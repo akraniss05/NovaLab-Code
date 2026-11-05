@@ -1,0 +1,17 @@
+{
+  "name": "LiveryLab Developer Academy",
+  "short_name": "LiveryLab",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#100b17",
+  "theme_color": "#100b17",
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
