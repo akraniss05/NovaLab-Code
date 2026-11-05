@@ -1,25 +1,37 @@
-# LiveryLab Developer Academy — private Mitglieder-App
+# LiveryLab Academy 4.0 — Developer & Music Producer
 
 **Made with 💙 by NyxAtheris (LiveryLab)**
 
 Website: https://akraniss05.github.io/liverylab-academy/
 
-Die Academy umfasst 33 Lernbereiche, 86 Kapitel und 304 Lektionen. Nur eingeladene und bestätigte Benutzer sollen über Supabase Auth Zugang zur Kursoberfläche und zu persönlichen Lernständen erhalten.
+## Features
+- Freie Kurswahl ohne Zeitplan; Benutzerkonto erforderlich.
+- 39 Bereiche mit 354 Lektionen (aktuell in Supabase), inklusive FiveM-Adminpanel und Musikproduktion.
+- **Code Studio:** Mehrdateiprojekte auf diesem Gerät, ZIP-Export, isolierte HTML-Vorschau, JavaScript Worker, begrenzter Lua-Runner, optionale Pyodide-Python-Laufzeit.
+- **Music Studio:** original synthetisierte Beats, 16-Step-Sequencer, Hardtekk/Techno/House/Hip-Hop/DnB, lokaler Bass-EQ, WAV-Export.
+- **Lernen:** Theorie, Praxisaufgaben, Tipps, Quiz, Notizen, freiwillige YouTube-Videos, Projektübungen.
+- **Motivation:** Lern-XP, optionale serverbestätigte tägliche Rewards, freiwillige Rangliste nach Check-ins.
+- **Konten:** Supabase Login, Administrator-Einladungen per E-Mail oder selbst erstellte Benutzernamen mit Startpasswort, gesicherte Kontodaten und Sitzungen.
 
-## Live-Architektur
-- **GitHub Pages** veröffentlicht ausschließlich die Oberfläche aus `site/`. Der Login ist erforderlich.
-- **Supabase Auth** verwaltet Einladungen, E-Mail-Anmeldungen, Passwortänderungen und Sitzungen.
-- **PostgreSQL** speichert Profile (`academy_profiles`), Fortschritt (`academy_progress`) und die 304 Lektionen (`academy_curriculum`).
-- **Row Level Security** erlaubt Kurszugriff nur für aktive Mitglieder und persönliche Fortschrittsdaten nur für deren Eigentümer.
-- **Supabase Edge Function admin-users** stellt den Admin-Verwaltungsbereich bereit. Adminrechte werden serverseitig geprüft.
-- `site/config.js` enthält ausschließlich die öffentliche Supabase-Projektadresse und einen Publishable Key.
+## Laufzeiten und wichtige Grenzen
+Die Browser-Sandbox ersetzt **kein** echtes Visual Studio Code, keinen Python-Server, keine FiveM-FXServer-Laufzeit und keine vollwertige DAW. Programmcode für C#, Java, Rust und echte FiveM-Natives muss in der jeweiligen offiziellen Umgebung getestet werden. Die Codeprüfung kontrolliert Struktur, nicht garantiertes Expertenkönnen. Der Beat-Sequencer ist eine Lernumgebung und ersetzt nicht die professionelle Mehrspurproduktion.
 
-## Offener Einrichtungsschritt
-**Das erste Auth-Konto existiert noch nicht.** Im Supabase Dashboard → Authentication → Users den Besitzer unter `NyxAtheris@livery-lab.app` einladen. Die Adresse muss tatsächlich E-Mails empfangen können. Benutzer bestätigt den Link und setzt ein **neues, einzigartiges Passwort** auf einer sicheren Supabase-Seite. Ein Datenbank-Trigger erstellt das Profil und weist nach erfolgreicher E-Mail-Verifikation automatisch `NyxAtheris` als Anzeigename und `admin` als Rolle zu.
+## Datenspeicherung
+Persönliche Lernfortschritte und Notizen lassen sich mit Supabase synchronisieren. Die eigene IDE-Projektdateien sind bewusst **lokal** und werden nicht über `academy_progress` hochgeladen. Für Backups Projekt ZIP auf das eigene Gerät exportieren; Browserdaten können beim Löschen der Website-Daten verloren gehen.
 
-Unter **Authentication → URL Configuration** muss die Site-URL sowie Redirect-Allowlist auf `https://akraniss05.github.io/liverylab-academy/` gesetzt werden. Selbstregistrierung muss ausgeschaltet bleiben. Schüler werden danach vom Administrator per E-Mail eingeladen.
+Server-Check-ins werden höchstens einmal pro UTC-Tag vergeben. Die Rangliste ist freiwillig und wertet nur diese bestätigten Check-in-Punkte aus. Sie ist ausdrücklich kein professionelles Leistungs-Ranking.
 
-## Sicherheit und wichtige Einschränkung
-Die aktuell ausgelieferten Kursdateien werden nur nach Anmeldung über die Datenbank geladen, **jedoch existieren ältere öffentliche GitHub-Commits mit Kopien der Kursinhalte**. Um auch den Quellcode und die Git-Historie zu verbergen, muss das Repository bei geeigneter GitHub-Pages-Berechtigung privat gemacht und die Website danach getestet werden. Ein reiner Frontend-Login kann öffentliche Repository-Historie nicht verstecken.
+## Nutzerverwaltung
+Als Administrator im Profil → Administration ein neues **Benutzername/Passwort-Konto** mit einem einmaligen Passwort (mind. 14 Zeichen) anlegen. Der Benutzer muss beim ersten Login das Passwort ändern. Keine E-Mail-Zustellung erforderlich; ein Passwort-Reset ohne E-Mail muss über den Administrator erfolgen. Startpasswörter nicht in GitHub, Chat-Logs oder Screenshots hinterlegen.
 
-Die Anwendung ist keine verifizierte Hochsicherheitsplattform. Bitte vor dem Einladen echter Schüler Admin-Einladungen, RLS, Passwort-Reset, Kontosperre und E-Mail-Zustellung mit Testkonten testen. Für rechtlichen Betrieb eine vollständige Datenschutzerklärung und ein Impressum ergänzen.
+## Sicherheit und Veröffentlichung
+Die statische Oberfläche wird über GitHub Pages bereitgestellt; das Curriculum wird via RLS aus Supabase geladen. **Die öffentliche Git-Historie älterer Versionen kann weiterhin frühere Kurskopien enthalten.** Für vollständigen Schutz des Quellcodes ist ein privates Repository oder anderes Hosting erforderlich. Admin-Berechtigungen werden serverseitig geprüft. Secret/API-Service-Role-Schlüssel gehören niemals in GitHub Pages.
+
+## Domain
+Die aktuelle funktionierende Adresse ist die GitHub-Pages-URL. Eine eigene URL wie `dev.livery-lab.app` ist erst möglich, wenn du diese Domain kontrollierst und in DNS den passenden CNAME setzt. Fantasie-Domains sind nicht automatisch registriert.
+
+## Rechtliches
+Vor dem Einladen anderer Personen: Impressum, eine vollständige Datenschutzerklärung und die relevanten Datenschutzverträge ergänzen. Die vorhandene `site/privacy.html` ist ein technischer Entwurf.
+
+## Lernziele
+Der Kurs vermittelt Grundlagen und fortgeschrittene Konzepte; für echten Expertenstatus sind wiederholte realistische Projekte, reale Fehleranalysen, Feedback und Praxiserfahrung notwendig.

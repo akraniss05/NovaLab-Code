@@ -1,10 +1,10 @@
 {
-  "name": "LiveryLab Developer Academy",
+  "name": "LiveryLab Academy · Developer & Music Producer",
   "short_name": "LiveryLab",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#100b17",
+  "background_color": "#0d0915",
   "theme_color": "#100b17",
   "icons": [
     {
