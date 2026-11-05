@@ -6,7 +6,7 @@ Website: https://akraniss05.github.io/liverylab-academy/
 
 ## Features
 - Freie Kurswahl ohne Zeitplan; Benutzerkonto erforderlich.
-- 39 Bereiche mit 354 Lektionen (aktuell in Supabase), inklusive FiveM-Adminpanel und Musikproduktion.
+- 44 Bereiche mit 384 Lektionen (aktuell in Supabase), inklusive FiveM-Adminpanel und Musikproduktion.
 - **Code Studio:** Mehrdateiprojekte auf diesem Gerät, ZIP-Export, isolierte HTML-Vorschau, JavaScript Worker, begrenzter Lua-Runner, optionale Pyodide-Python-Laufzeit.
 - **Music Studio:** original synthetisierte Beats, 16-Step-Sequencer, Hardtekk/Techno/House/Hip-Hop/DnB, lokaler Bass-EQ, WAV-Export.
 - **Lernen:** Theorie, Praxisaufgaben, Tipps, Quiz, Notizen, freiwillige YouTube-Videos, Projektübungen.
@@ -32,6 +32,9 @@ Die aktuelle funktionierende Adresse ist die GitHub-Pages-URL. Eine eigene URL w
 
 ## Rechtliches
 Vor dem Einladen anderer Personen: Impressum, eine vollständige Datenschutzerklärung und die relevanten Datenschutzverträge ergänzen. Die vorhandene `site/privacy.html` ist ein technischer Entwurf.
+
+## Lernqualität
+Jede Lektion enthält nun zusätzlich vier Abnahmekriterien für ein eigenständiges Ergebnis. Bei FiveM sind negative Berechtigungstests auf einem FXServer Pflicht, bei Musik originale A/B-Mixes und WAV-Exporte. Die neuen Masterclasses schließen mit größeren Projekten ab.
 
 ## Lernziele
 Der Kurs vermittelt Grundlagen und fortgeschrittene Konzepte; für echten Expertenstatus sind wiederholte realistische Projekte, reale Fehleranalysen, Feedback und Praxiserfahrung notwendig.

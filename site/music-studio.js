@@ -102,7 +102,7 @@ function renderLesson(node,lesson,course,{onDone,onBack,isDone=false,note='',onN
  <section class="panel"><div class="eyebrow">04 / CHECK</div><strong>${esc(lesson.quiz)}</strong><div class="llanswers">${opts.map((x,i)=>`<button class="quiz-option" data-lm-answer="${i}">${esc(x)}</button>`).join('')}</div><p id="lmFeedback" class="micro" role="status"></p></section>
  <section class="panel"><h3>Deine Produktionsnotizen</h3><textarea class="input" rows="4" id="lmNotes" placeholder="BPM, Preset, Bass, Erkenntnisse …">${esc(note)}</textarea></section>
  <div class="flex"><button class="btn primary" id="lmDone">${isDone?'✓ Abgeschlossen':'✓ Als gelernt markieren'}</button><button class="btn" id="lmStudio">♫ Beat Lab öffnen</button></div>`;
- el('#lmBack',node).addEventListener('click',onBack);
+ if(Array.isArray(lesson.rubric)&&lesson.rubric.length){const box=document.createElement('section');box.className='panel';box.innerHTML='<div class="eyebrow">05 / PRODUCER-ABNAHME</div><h3>Woran du echte Fortschritte erkennst</h3><ul class="steps">'+lesson.rubric.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>';node.append(box)}el('#lmBack',node).addEventListener('click',onBack);
  el('#lmDone',node).addEventListener('click',onDone);
  el('#lmStudio',node).addEventListener('click',onStudio);
  el('#lmNotes',node).addEventListener('input',e=>onNote?.(e.target.value));
