@@ -39,6 +39,17 @@ Deno.serve(async(req:Request)=>{
     let body:Record<string,unknown>;
     try{body=await req.json()}catch{return reply(400,{error:'Invalid JSON'})}
     if(!body||typeof body!=='object'||Array.isArray(body))return reply(400,{error:'Invalid request'});
+
+    if(body.action==='finishPasswordChange'){
+      const next=String(body.password||'');
+      if(!profile.active)return reply(403,{error:'Konto gesperrt'});
+      if(next.length<14||next.length>256)return reply(400,{error:'Neues Passwort: 14 bis 256 Zeichen'});
+      const {error:pwdError}=await admin.auth.admin.updateUserById(user.id,{password:next});
+      if(pwdError)throw pwdError;
+      const {error:profileError}=await admin.from('academy_profiles').update({needs_password_change:false}).eq('id',user.id);
+      if(profileError)throw profileError;
+      return reply(200,{ok:true});
+    }
     if(body.action==='deleteSelf'){
       if(body.confirmation!=='KONTO LÖSCHEN')return reply(400,{error:'Confirmation required'});
       const {error}=await admin.auth.admin.deleteUser(user.id);
@@ -50,13 +61,51 @@ Deno.serve(async(req:Request)=>{
       const page=Math.max(1,Math.min(100,Math.trunc(Number(body.page)||1)));
       const {data:members,error}=await admin.auth.admin.listUsers({page,perPage:100});
       if(error)throw error;
-      const {data:profiles,error:pe}=await admin.from('academy_profiles').select('id,role,active');
+      const {data:profiles,error:pe}=await admin.from('academy_profiles').select('id,role,active,username,needs_password_change');
       if(pe)throw pe;
       const map=new Map((profiles||[]).map(p=>[p.id,p]));
       const users=members.users.filter(u=>map.has(u.id)).map(u=>({
-        id:u.id,email:u.email||'',role:map.get(u.id)?.role||'student',active:map.get(u.id)?.active??true
+        id:u.id,email:u.email||'',username:map.get(u.id)?.username||null,needs_password_change:map.get(u.id)?.needs_password_change||false,role:map.get(u.id)?.role||'student',active:map.get(u.id)?.active??true
       }));
       return reply(200,{users,page,hasMore:members.users.length===100});
+    }
+
+    if(body.action==='createUsername'){
+      const username=String(body.username||'').trim();
+      const pwd=String(body.password||'');
+      if(!/^[A-Za-z][A-Za-z0-9_]{2,23}$/.test(username))return reply(400,{error:'Benutzername: 3-24 Zeichen, Buchstaben/Zahlen/Unterstrich'});
+      if(pwd.length<14||pwd.length>256)return reply(400,{error:'Temporäres Passwort muss 14-256 Zeichen lang sein'});
+      const safe=username.toLowerCase();
+      const email=safe+'@accounts.livery-lab.app';
+      const {data:created,error}=await admin.auth.admin.createUser({
+        email,password:pwd,email_confirm:true,
+        user_metadata:{name:username},
+        app_metadata:{academy_username:safe,academy_managed:true}
+      });
+      if(error)return reply(400,{error:'Account konnte nicht erstellt werden: '+error.message});
+      if(!created?.user?.id)return reply(500,{error:'Auth provider returned no user'});
+      const userId=created.user.id;
+      const {error:profileIssue}=await admin.from('academy_profiles')
+        .update({username:safe,display_name:username,needs_password_change:true,role:'student',active:true})
+        .eq('id',userId);
+      if(profileIssue){
+        await admin.auth.admin.deleteUser(userId);
+        return reply(500,{error:'Profil konnte nicht eingerichtet werden'});
+      }
+      return reply(200,{ok:true,id:userId,username:safe,notice:'Einmalpasswort nur sicher an die Person geben. Passwortwechsel beim ersten Login erforderlich.'});
+    }
+    if(body.action==='resetUsernamePassword'){
+      const id=String(body.userId||'');
+      const pwd=String(body.password||'');
+      if(!isUUID(id)||id===user.id)return reply(400,{error:'Ungültige Nutzer-ID'});
+      if(pwd.length<14||pwd.length>256)return reply(400,{error:'Passwort muss 14-256 Zeichen lang sein'});
+      const {data:target,error:lookupError}=await admin.from('academy_profiles').select('role,username').eq('id',id).single();
+      if(lookupError||!target||target.role!=='student'||!target.username)return reply(403,{error:'Nur verwaltete Schülerkonten erlaubt'});
+      const {error:resetError}=await admin.auth.admin.updateUserById(id,{password:pwd});
+      if(resetError)throw resetError;
+      const {error:flagError}=await admin.from('academy_profiles').update({needs_password_change:true}).eq('id',id);
+      if(flagError)throw flagError;
+      return reply(200,{ok:true});
     }
     if(body.action==='invite'){
       const email=String(body.email||'').trim().toLowerCase();

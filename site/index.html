@@ -4,23 +4,23 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#100b17">
-<meta name="description" content="LiveryLab Developer Academy – lerne Lua, FiveM, QBCore, ESX, OX, Webentwicklung, Programmierung und FiveM Design, in deinem eigenen Tempo.">
-<title>LiveryLab Developer Academy 3.0</title>
+<meta name="description" content="LiveryLab Academy – Programmieren, FiveM Adminpanel, Apps, Browsergames und Music Production mit Hardtekk, Beats, Bass und Mixing in deinem eigenen Tempo.">
+<title>LiveryLab Academy 4.0 · Developer & Music Producer</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjggMTI4Ij48cmVjdCB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyOCIgcng9IjI5IiBmaWxsPSIjMjAxMDM0Ii8+PHBhdGggZD0iTTI2IDkyIDY0IDIwaDM1TDYzIDkyaDM0bC0xMCAxOEgxNnoiIGZpbGw9IiNhOTNmZmYiLz48cGF0aCBkPSJtODIgNDIgMjUgMjgtMjUgMjgtMjAtMjh6IiBmaWxsPSIjZTNhN2ZmIi8+PC9zdmc+Cg==">
 
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="v4.css">
 </head>
 <body>
 <div class="app" id="app">
   <aside class="sidebar" aria-label="Navigation">
-    <button class="brand" data-go="home" aria-label="LiveryLab Start"><span class="brand-icon">L</span><span><strong>LIVERY<span>LAB</span></strong><small>DEVELOPER ACADEMY</small></span></button>
-    <div class="sidebar-tag">LERNPLATTFORM</div>
+    <button class="brand" data-go="home" aria-label="LiveryLab Start"><span class="brand-icon">L</span><span><strong>LIVERY<span>LAB</span></strong><small>DEVELOPER & MUSIC ACADEMY</small></span></button>
+    <div class="sidebar-tag">LERNPLATTFORM · 4.0</div>
     <nav class="nav-desktop">
       <button class="navitem active" data-go="home"><span class="navicon">⌂</span> Übersicht</button>
       <button class="navitem" data-go="catalog"><span class="navicon">▦</span> Alle Lernbereiche</button>
       <button class="navitem" data-go="editor"><span class="navicon">{ }</span> Code Studio</button>
       <button class="navitem" data-go="practice"><span class="navicon">◆</span> Übungen & Spiele</button>
-      <button class="navitem" data-go="design"><span class="navicon">◧</span> Design Lab</button>
+      <button class="navitem" data-go="music"><span class="navicon">♫</span> Beat & Music Lab</button><button class="navitem" data-go="leaderboard"><span class="navicon">★</span> Rangliste</button>
       <button class="navitem" data-go="profile"><span class="navicon">◉</span> Profil & Fortschritt</button>
     </nav>
     <div class="sidebar-bottom"><div class="sidebar-card"><span>ENTWICKLE DEINE IDEEN</span><h3>Learn. Build.<br>Level up.</h3><p>Ohne Zeitdruck. Von den Grundlagen bis zu eigenen Projekten.</p><button class="btn small secondary" data-go="catalog">Alle Kurse ansehen →</button></div><div class="signature">Made with 💙 by <b>NyxAtheris</b><br><small>(LiveryLab)</small></div></div>
@@ -28,12 +28,12 @@
   <div class="app-body">
     <header class="topbar"><div class="mini-logo"><span>L</span> LIVERY<b>LAB</b></div><div class="crumb" id="crumb">Übersicht</div><div class="top-tools"><button class="iconbtn" data-go="catalog" title="Suchen" aria-label="Kurse suchen">⌕</button><span class="xp-tag" id="xpBadge">✦ 0 XP</span><button class="user-badge" data-go="profile" aria-label="Profil öffnen">N</button></div></header>
     <main id="content" tabindex="-1"><div class="loading">Lade LiveryLab Academy …</div></main>
-    <footer class="footer">LIVERYLAB DEVELOPER ACADEMY · <b>Made with 💙 by NyxAtheris (LiveryLab)</b> · <span id="appVersion">v3.0</span></footer>
+    <footer class="footer">LIVERYLAB DEVELOPER & MUSIC ACADEMY · <b>Made with 💙 by NyxAtheris (LiveryLab)</b> · <span id="appVersion">v4.0</span></footer>
   </div>
-  <nav class="mobile-nav" aria-label="Handy Hauptnavigation"><button data-go="home" class="active"><span>⌂</span>Start</button><button data-go="catalog"><span>▤</span>Studium</button><button data-go="editor"><span>{ }</span>Editor</button><button data-go="practice"><span>✧</span>Üben</button><button data-go="design"><span>◧</span>Design</button><button data-go="profile"><span>◉</span>Profil</button></nav>
+  <nav class="mobile-nav" aria-label="Handy Hauptnavigation"><button data-go="home" class="active"><span>⌂</span>Start</button><button data-go="catalog"><span>▤</span>Studium</button><button data-go="editor"><span>{ }</span>Editor</button><button data-go="practice"><span>✧</span>Üben</button><button data-go="music"><span>♫</span>Musik</button><button data-go="profile"><span>◉</span>Profil</button></nav>
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <input id="importFile" type="file" accept="application/json,.json" hidden>
-<script src="config.js"></script><script src="lua-mini.js"></script><script src="design-lab.js"></script><script src="app.js"></script>
+<script src="config.js"></script><script src="lua-mini.js"></script><script src="music-studio.js"></script><script src="code-studio.js"></script><script src="app.js"></script>
 </body>
 </html>

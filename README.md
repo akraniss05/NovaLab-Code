@@ -1,25 +1,17 @@
-# LiveryLab Developer Academy — private Mitglieder-App
+# LiveryLab Academy 4.0
 
-**Made with 💙 by NyxAtheris (LiveryLab)**
+Made with 💙 by NyxAtheris (LiveryLab)
 
 Website: https://akraniss05.github.io/liverylab-academy/
 
-Die Academy umfasst 33 Lernbereiche, 86 Kapitel und 304 Lektionen. Nur eingeladene und bestätigte Benutzer sollen über Supabase Auth Zugang zur Kursoberfläche und zu persönlichen Lernständen erhalten.
+Developer Academy mit FiveM Adminpanel, App- und Browsergame-Projekten; Music Producer Academy mit Hardtekk, Techno, Beats und Bass-Mixing. 39 Kurse, 95 Kapitel, 354 Lektionen. Lehrinhalte sind in Supabase geschützt und werden nach Login geladen.
 
-## Live-Architektur
-- **GitHub Pages** veröffentlicht ausschließlich die Oberfläche aus `site/`. Der Login ist erforderlich.
-- **Supabase Auth** verwaltet Einladungen, E-Mail-Anmeldungen, Passwortänderungen und Sitzungen.
-- **PostgreSQL** speichert Profile (`academy_profiles`), Fortschritt (`academy_progress`) und die 304 Lektionen (`academy_curriculum`).
-- **Row Level Security** erlaubt Kurszugriff nur für aktive Mitglieder und persönliche Fortschrittsdaten nur für deren Eigentümer.
-- **Supabase Edge Function admin-users** stellt den Admin-Verwaltungsbereich bereit. Adminrechte werden serverseitig geprüft.
-- `site/config.js` enthält ausschließlich die öffentliche Supabase-Projektadresse und einen Publishable Key.
+Code Studio: Mehrdateien-Editor, lokale Projekte, optionaler JS/Python/Lua-Runner, isolierte HTML-Vorschau und ZIP-Export. FiveM Scripts müssen auf einem eigenen FXServer getestet werden.
 
-## Offener Einrichtungsschritt
-**Das erste Auth-Konto existiert noch nicht.** Im Supabase Dashboard → Authentication → Users den Besitzer unter `NyxAtheris@livery-lab.app` einladen. Die Adresse muss tatsächlich E-Mails empfangen können. Benutzer bestätigt den Link und setzt ein **neues, einzigartiges Passwort** auf einer sicheren Supabase-Seite. Ein Datenbank-Trigger erstellt das Profil und weist nach erfolgreicher E-Mail-Verifikation automatisch `NyxAtheris` als Anzeigename und `admin` als Rolle zu.
+Music Studio: Originale synthetisierte Beats mit 16-Step-Sequencer, Hardtekk/Techno/House/Hip-Hop/DnB-Presets, WebAudio Bass-EQ und WAV-Export. Keine Audio-Uploads zum Backend.
 
-Unter **Authentication → URL Configuration** muss die Site-URL sowie Redirect-Allowlist auf `https://akraniss05.github.io/liverylab-academy/` gesetzt werden. Selbstregistrierung muss ausgeschaltet bleiben. Schüler werden danach vom Administrator per E-Mail eingeladen.
+Admin verwaltet Benutzername-und-Passwort-Schülerkonten über die serverseitige Supabase Edge Function; erstes Passwort wird gewechselt. Opt-in Rangliste mit vom Server aus Kursabschlüssen abgeleiteten Punkten, nicht anti-cheat-sicher. Daily XP belohnt regelmäßiges Lernen, nicht tatsächliche Kompetenz.
 
-## Sicherheit und wichtige Einschränkung
-Die aktuell ausgelieferten Kursdateien werden nur nach Anmeldung über die Datenbank geladen, **jedoch existieren ältere öffentliche GitHub-Commits mit Kopien der Kursinhalte**. Um auch den Quellcode und die Git-Historie zu verbergen, muss das Repository bei geeigneter GitHub-Pages-Berechtigung privat gemacht und die Website danach getestet werden. Ein reiner Frontend-Login kann öffentliche Repository-Historie nicht verstecken.
+Domain: Wunschsubdomains wie academy.livery-lab.app setzen Besitz an livery-lab.app und DNS-Kontrolle voraus. GitHub Settings → Pages → Custom domain, dann CNAME auf akraniss05.github.io setzen; HTTPS prüfen.
 
-Die Anwendung ist keine verifizierte Hochsicherheitsplattform. Bitte vor dem Einladen echter Schüler Admin-Einladungen, RLS, Passwort-Reset, Kontosperre und E-Mail-Zustellung mit Testkonten testen. Für rechtlichen Betrieb eine vollständige Datenschutzerklärung und ein Impressum ergänzen.
+Datenschutz/Impressum: Vor Weitergabe an Dritte rechtliche Angaben vervollständigen. Eingebettete YouTube-Videos übertragen möglicherweise Daten an YouTube. Ältere öffentliche GitHub-Commits enthalten noch frühere Kursinhalte.

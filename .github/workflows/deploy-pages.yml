@@ -1,48 +1,56 @@
-name: Deploy LiveryLab Academy
+name: LiveryLab Academy Build and Deploy
 on:
   push:
-    branches: [main]
+    branches: [main, academy-v4-staging]
   workflow_dispatch:
 permissions:
   contents: read
   pages: write
   id-token: write
 concurrency:
-  group: github-pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  deploy:
+  validate:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Check private academy build
+      - name: Verify JavaScript and structure
         run: |
-          for f in site/config.js site/lua-mini.js site/design-lab.js site/app.js site/service-worker.js; do node --check "$f"; done
+          for f in site/config.js site/lua-mini.js site/music-studio.js site/code-studio.js site/app.js site/service-worker.js; do
+            node --check "$f"
+          done
           node - <<'NODE'
           const fs=require('node:fs');
           const html=fs.readFileSync('site/index.html','utf8');
+          const app=fs.readFileSync('site/app.js','utf8');
           const config=fs.readFileSync('site/config.js','utf8');
-          const js=fs.readFileSync('site/app.js','utf8');
-          if(!config.includes('requireLogin: true'))throw Error('Login is not required');
-          if(!config.includes('sb_publishable_'))throw Error('Missing public key');
-          if(!js.includes("from('academy_curriculum')"))throw Error('Curriculum must come from authenticated database');
-          if(fs.existsSync('site/data.js')||fs.existsSync('site/data.json'))throw Error('Public curriculum files exist');
-          if(html.includes('data.js'))throw Error('Public data.js reference found');
-          if(/sb_secret_[A-Za-z0-9]/.test(config))throw Error('Secret in public config');
-          for(const file of ['site/index.html','site/styles.css','site/assets/liverylab-hero.jpg','site/privacy.html','site/manifest.webmanifest'])if(!fs.existsSync(file))throw Error('Missing '+file);
-          console.log('Private curriculum loader and public assets validated');
+          const required=['site/index.html','site/styles.css','site/v4.css','site/config.js','site/lua-mini.js','site/music-studio.js','site/code-studio.js','site/app.js','site/service-worker.js','site/assets/liverylab-hero.jpg','site/privacy.html','site/manifest.webmanifest'];
+          for(const f of required)if(!fs.existsSync(f))throw Error('Missing '+f);
+          for(const f of ['data.js','data.json','design-lab.js'])if(fs.existsSync('site/'+f))throw Error('Legacy public asset '+f);
+          for(const f of ['music-studio.js','code-studio.js','v4.css'])if(!html.includes(f))throw Error('Missing reference '+f);
+          if(html.includes('Design Lab')||html.includes('data-go="design"'))throw Error('Old design menu');
+          if(!config.includes('requireLogin: true'))throw Error('Login disabled');
+          if(!app.includes("from('academy_curriculum')"))throw Error('Missing protected course loader');
+          for(const item of ['passwordChangeGate','leaderboardView','homeV4'])if(!app.includes(item))throw Error('Missing '+item);
+          if(/sb_secret_[a-zA-Z0-9]+/.test(config))throw Error('Secret in public config');
+          console.log('Academy 4 build checks passed');
           NODE
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-      - name: Upload static site
-        uses: actions/upload-pages-artifact@v4
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: validate
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
         with:
           path: site
-      - name: Publish
-        id: deployment
+      - id: deployment
         uses: actions/deploy-pages@v4
