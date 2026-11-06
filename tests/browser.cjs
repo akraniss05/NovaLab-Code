@@ -10,7 +10,7 @@ const lesson = {id:'qa-lesson',courseId:'qa',chapterId:'qa-ch',title:'Arrays',la
 const course = {id:'qa',name:'JavaScript',category:'Sprachen',level:'beginner',chapters:[{id:'qa-ch',name:'Grundlagen',lessons:[lesson]}]};
 const fixtures = {
   academy_profiles:{id:user.id,display_name:'QA',active:true,role:'student'},
-  academy_plans:{tier:'pro'},
+  academy_plans:{tier:'ultimate'},
   academy_curriculum:{payload:{courses:[course],roadmaps:[{id:'coding',name:'Coding',stages:[{title:'Grundlagen',courseIds:['qa']}]}]}},
 };
 function mockSdk() {
@@ -74,6 +74,7 @@ async function run(engine,mobile){
     await go('profile');await page.locator('[data-act="customize-profile"]').click();
     await page.locator('button[data-ll-avatar]').first().click();
     await go('roadmaps');await page.locator('[data-roadmap]').first().click();
+    await go('friends');await page.locator('.llsocial-page').waitFor();
     await go('videos');
     await go('catalog');await page.locator('[data-course="qa"]').first().click();
     const chapter=page.locator('[data-chapter="qa-ch"]');await chapter.click();
