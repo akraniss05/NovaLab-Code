@@ -3,9 +3,9 @@
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),assert=require('node:assert/strict');
 const {chromium}=require('playwright-core');
 const root=path.join(__dirname,'..');
-const source=fs.readFileSync(path.join(root,'site/academy.js'),'utf8');
-const css=fs.readFileSync(path.join(root,'site/app-v19.css'),'utf8');
-const expose='\nwindow.__views={s,trackPage,lessonPage,scriptPage,examPage,referencePage,plansPage,adminPage,login,profilePage,friendsPage,settingsPage,homePage,streakModalHtml,paywall};\n})();';
+const source=fs.readFileSync(path.join(root,'site/academy-v20.js'),'utf8');
+const css=fs.readFileSync(path.join(root,'site/app-v20.css'),'utf8');
+const expose='\nwindow.__views={s,trackPage,lessonPage,scriptPage,examPage,referencePage,plansPage,adminPage,login,profilePage,friendsPage,settingsPage,homePage,streakModalHtml,llIcon,paywall};\n})();';
 assert.match(source,/\ninit\(\);\n\}\)\(\);\s*$/);
 const rewritten=source.replace(/\ninit\(\);\n\}\)\(\);\s*$/,expose);
 const fake=()=>({innerHTML:'',classList:{toggle(){},add(){},remove(){},contains(){return false}}});
@@ -30,7 +30,7 @@ s.lesson={payload:{title:titles[0],theory:'Mit Variablen speicherst du Werte, di
 const bannerB64=fs.readFileSync(path.join(root,'site/liverylab-banner.webp')).toString('base64');
 function capture(html){
 html=html.replaceAll('src="./liverylab-banner.webp"','src="data:image/webp;base64,'+bannerB64+'"');
-const nav=['Home','Lernen','Script','Prüfung','Profil'].map((n,i)=>'<button class="bottom-item '+(i===0?'active':'')+'"><span class="side-icon">'+['⌂','▦','⌘','☆','◉'][i]+'</span>'+n+'</button>').join('');
+const nav=['Home','Lernen','Script','Prüfung','Profil'].map((n,i)=>'<button class="bottom-item '+(i===0?'active':'')+'"><span class="side-icon">'+app.llIcon(['home','learn','code','exam','profile'][i])+'</span>'+n+'</button>').join('');
 return '<!doctype html><html lang="de"><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+'</style></head><body>'+
 '<div class="app-shell"><aside class="sidebar"><div class="sidebar-logo"><span class="logo-mark">fx</span>LiveryLab Academy</div></aside>'+
 '<div class="app-column"><header class="topbar"><div class="brandbox"><button class="icon-btn mobile-only">☰</button><a class="brand" href="#"><span class="brand-mark">fx</span><span>LiveryLab <strong>Academy</strong></span></a></div>'+
@@ -94,12 +94,22 @@ return {
  titleBelow:title&&summary?summary.getBoundingClientRect().top>=title.getBoundingClientRect().bottom-2:true,
  navDisplay:getComputedStyle(nav).display,
  videoRatio:video?video.getBoundingClientRect().width/video.getBoundingClientRect().height:null,
- mainWidth:main.getBoundingClientRect().width
+ mainWidth:main.getBoundingClientRect().width,
+ iconWidths:Array.from(document.querySelectorAll('.ll-icon')).map(el=>Math.round(el.getBoundingClientRect().width)),
+ navRows:[...new Set(Array.from(nav.querySelectorAll('.bottom-item')).map(el=>Math.round(el.getBoundingClientRect().top)))].length,
+ shortcutDisplay:get('.ll-home-shortcuts')?getComputedStyle(get('.ll-home-shortcuts')).display:null,
+ continueDisplay:get('.ll-home-continue')?getComputedStyle(get('.ll-home-continue')).display:null,
+ modalWidth:get('.ll-streak-modal')?get('.ll-streak-modal').getBoundingClientRect().width:null,
+ bannerRatio:get('.ll-home-brand-banner')?get('.ll-home-brand-banner').getBoundingClientRect().width/get('.ll-home-brand-banner').getBoundingClientRect().height:null
 };
 },selectors);
 assert.equal(actual.missing.length,0,name+' @'+width+' missing '+actual.missing.join(','));
 assert.ok(actual.overflow<=2,name+' @'+width+' horizontal overflow '+actual.overflow+'px');
 assert.ok(actual.mainWidth<=width,name+' @'+width+' content too wide');
+assert.ok(actual.iconWidths.every(v=>v>=1&&v<=48),name+' @'+width+' icon HUGE: '+JSON.stringify(actual.iconWidths));
+if(name==='home'){assert.equal(actual.shortcutDisplay,'grid','Home shortcuts must be a grid');assert.equal(actual.continueDisplay,'flex','Continue card must be styled');assert.ok(actual.bannerRatio>2.0&&actual.bannerRatio<3.3,'Banner aspect broken: '+actual.bannerRatio);}
+if(name.startsWith('streak')){assert.ok(actual.modalWidth>200&&actual.modalWidth<=width,'Daily popup size broken');}
+if(width<820){assert.equal(actual.navRows,1,'Five bottom nav tabs must stay on ONE ROW: '+actual.navRows);}
 if(name==='track'){assert.equal(actual.cardDisplay,'grid');assert.ok(actual.titleBelow,'Lesson title/description collision');}
 if(name==='lesson'){assert.equal(actual.stepsDisplay,'grid');assert.equal(actual.stepChildren,4);assert.ok(actual.videoRatio>1.65&&actual.videoRatio<1.9,'Video aspect ratio');}
 assert.equal(actual.navDisplay,width<820?'grid':'none');

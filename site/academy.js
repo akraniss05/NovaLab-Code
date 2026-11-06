@@ -7,7 +7,7 @@
 'use strict';
 var cfg=window.LL_CONFIG||{}, $=function(q,root){return (root||document).querySelector(q);};
 var content=$('#content'), sidebar=$('#sidebar'), bottom=$('#bottom-nav'), toastNode=$('#toast');
-var api=null, s={streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,loginStreak:null,friendTab:'friends',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},adminPage:1,catalogLimit:9,practiceChecked:false,draft:'',prefs:null,projectTab:0,projectSource:'',projectLoading:false};
+var api=null, s={streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},adminPage:1,catalogLimit:9,practiceChecked:false,draft:'',prefs:null,projectTab:0,projectSource:'',projectLoading:false};
 var plans={free:'Free',pro:'Plus',ultimate:'Pro / Ultimate'};
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];});}
 function safeLink(url){return /^https:\/\/[^\s<>"]+$/i.test(String(url||''))?esc(url):'#';}
@@ -97,7 +97,14 @@ function frame(){
    '" aria-label="'+label+'"><span class="side-icon" aria-hidden="true">'+llIcon(icon)+'</span><span>'+label+'</span></button>').join('');
  }
  const head=$('#xp-head');if(head)head.textContent='✦ '+((s.progress.done||[]).length*30).toLocaleString('de-DE')+' XP';
- const st=$('#streak-head');if(st){st.innerHTML=llIcon('fire')+' '+Number(s.loginStreak?.current||0)+' Tage';st.classList.toggle('can-claim',!!s.loginStreak?.claimable);}
+ let st=$('#streak-head');
+ if(!st){
+  const top=document.querySelector('.top-right');
+  if(top&&typeof document.createElement==='function'){st=document.createElement('button');st.type='button';st.id='streak-head';st.className='header-streak-chip';st.setAttribute('data-streak-open','');st.setAttribute('aria-label','Daily Streak öffnen');top.insertBefore(st,top.firstChild);}
+ }
+ if(st){st.innerHTML=llIcon('fire')+' '+Number(s.loginStreak?.current||0)+' Tage';st.classList.toggle('can-claim',!!s.loginStreak?.claimable);}
+ const mark=document.querySelector('.topbar .brand-mark');
+ if(mark&&mark.querySelector&&!mark.querySelector('.ll-brand-symbol'))mark.innerHTML='<img class="ll-brand-symbol" src="./liverylab-symbol.svg" alt="">';
  const avatar=$('.avatar-btn');if(avatar)avatar.textContent=String(s.profile?.display_name||s.profile?.username||'N').slice(0,1).toUpperCase();
 }
 
@@ -271,12 +278,14 @@ async function loadData(){
  var data=all[3].data?.payload||{};
  s.progress={done:Array.isArray(data.done)?data.done:[],watched:Array.isArray(data.watched)?data.watched:[],exams:data.exams||{},practiced:Array.isArray(data.practiced)?data.practiced:[]};
  s.ready=true;
- try{const streak=await api.rpc('academy_streak_status');s.loginStreak=streak.error?null:streak.data;if(s.loginStreak?.server_now)s.streakClockOffsetMs=Date.parse(s.loginStreak.server_now)-Date.now();}catch(_){}
+ try{await refreshStreakStatus();}catch(e){s.streakError=formatError(e);}
  try{const [exam,social,courses,media]=await Promise.all([api.rpc('academy_exam_status'),api.rpc('academy_social_list'),api.rpc('academy_entitled_courses'),api.rpc('academy_social_media_list')]);s.examStatus=exam.error?null:exam.data;s.social=social.error?null:social.data;s.entitledCourses=courses.error?null:courses.data;s.socialMedia=media.error?{}:media.data||{};}catch(_){}
- s.streakModalOpen=!!s.loginStreak?.claimable;
+ // Always present Daily Streak after a successful sign-in, even during cooldown.
+ // If status retrieval failed, the dialog offers a visible retry instead of silently disappearing.
+ s.streakModalOpen=true;
  frame();await navigateCurrent();
 }
-async function logout(){try{await api.auth.signOut();}catch(e){}s.authScreen='login';s.ready=false;s.streakModalOpen=false;s.loginStreak=null;paintStreakModal();s.user=null;s.profile=null;s.lesson=null;s.courses=[];s.lessons=[];location.hash='#home';login();}
+async function logout(){try{await api.auth.signOut();}catch(e){}s.authScreen='login';s.ready=false;s.streakModalOpen=false;s.streakError='';s.loginStreak=null;paintStreakModal();s.user=null;s.profile=null;s.lesson=null;s.courses=[];s.lessons=[];location.hash='#home';login();}
 async function saveProgress(){
  var res=await api.from('academy_progress').upsert({user_id:s.user.id,key:'liverylab-v10',payload:s.progress,updated_at:new Date().toISOString()},{onConflict:'user_id,key'});
  if(res.error)throw res.error;frame();
@@ -344,6 +353,10 @@ function courseCard(c){
 }
 
 
+function installCriticalStyles(){
+ if(document.getElementById&&document.getElementById('liverylab-v20-critical'))return;
+ if(document.createElement&&document.head){const st=document.createElement('style');st.id='liverylab-v20-critical';st.textContent="\n/* v20 guaranteed layout: protect against cached v18 styles on mobile Safari */\n.ll-icon{display:inline-block!important;width:22px!important;height:22px!important;min-width:0!important;max-width:100%!important;flex-shrink:0!important;vertical-align:middle!important}\n.ll-shortcut-symbol .ll-icon{width:27px!important;height:27px!important}\n.ll-home-continue .ll-icon{width:33px!important;height:33px!important}\n.ll-home-level .ll-icon{width:26px!important;height:26px!important}\n.ll-streak-modal .ll-icon{width:22px!important;height:22px!important}\n.ll-home-dashboard{display:block;width:100%;max-width:1060px;margin:auto}\n.ll-home-brand-banner{width:100%;overflow:hidden;border-radius:20px;aspect-ratio:2.63/1;margin-bottom:24px;border:1px solid #6f378c;background:#170b27}\n.ll-home-brand-banner img{display:block;width:100%;height:100%;object-fit:cover}\n.ll-home-greeting{display:grid;grid-template-columns:minmax(0,1fr) minmax(180px,240px);gap:14px;align-items:center;margin:20px 0}\n.ll-home-greeting h1{font-size:clamp(27px,4vw,42px);line-height:1.17;margin:8px 0}\n.ll-home-greeting p{font-size:13px;color:#c7b8dd;line-height:1.6}\n.ll-home-level{border:1px solid #8b4abe;background:#261638;border-radius:16px;padding:16px;min-width:0}\n.ll-level-top{display:flex;align-items:center;gap:7px;font-size:18px;font-weight:800}\n.ll-home-level small{display:block;font-size:11px;margin:7px 0;color:#c3b0d4}\n.ll-level-bar{height:8px;border-radius:10px;background:#39254e;overflow:hidden}\n.ll-level-bar span{display:block;height:100%;background:linear-gradient(90deg,#9d54ee,#e792fe);border-radius:10px}\n.ll-home-continue{display:flex;align-items:center;flex-wrap:wrap;gap:14px;padding:18px;border:1px solid #ac65f1;border-radius:20px;background:linear-gradient(125deg,#29183c,#160e27);margin:22px 0;box-shadow:0 0 20px #9e45d829}\n.ll-continue-icon{display:grid;place-items:center;flex:0 0 56px;width:56px;height:56px;border-radius:14px;background:#58237f}\n.ll-continue-copy{min-width:0;flex:1}\n.ll-continue-copy h2{font-size:clamp(17px,3vw,24px);margin:5px 0}\n.ll-continue-copy p{font-size:12px;color:#c4b2d5;margin:0 0 9px}\n.ll-continue-progress{display:flex;align-items:center;gap:9px}.ll-continue-progress .ll-level-bar{flex:1}.ll-continue-progress strong{font-size:12px}\n.ll-continue-button{min-height:46px;display:inline-flex;align-items:center;justify-content:center;gap:6px;max-width:100%;margin-left:auto}\n.ll-home-heading{margin:30px 0 15px}.ll-home-heading h2{font-size:23px;margin:8px 0}.ll-home-heading p{font-size:13px;color:#bfaed0}\n.ll-home-shortcuts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;width:100%}\n.ll-home-shortcut{display:flex;align-items:center;gap:12px;border:1px solid #654180;background:linear-gradient(135deg,#251633,#150f22);border-radius:16px;min-height:98px;padding:13px;color:#f4ecff;min-width:0;text-align:left}\n.ll-home-shortcut.wide{grid-column:1/-1}\n.ll-shortcut-symbol{flex:0 0 42px;width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:#41215e;color:#d79cff}\n.ll-shortcut-text{flex:1;min-width:0}.ll-shortcut-text strong{display:block;font-size:15px;line-height:1.3}.ll-shortcut-text small{display:block;font-size:11px;color:#c8b5d8;line-height:1.5;margin-top:5px}\n.ll-home-shortcut>.ll-icon{width:15px!important;height:15px!important}\n.ll-home-more{margin:32px 0}\n.bottom-nav{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;width:100%;align-items:stretch}\n.bottom-item{min-width:0!important;max-width:100%!important;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:3px;min-height:63px;font-size:11px;white-space:nowrap}\n.bottom-item>.side-icon{display:grid;place-items:center;width:26px;height:26px}\n#streak-portal{position:relative;z-index:3000}\n.ll-streak-backdrop{position:fixed;inset:0;z-index:3000;display:flex;align-items:center;justify-content:center;padding:15px;background:#080310c9;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}\n.ll-streak-modal{position:relative;width:min(100%,470px);max-height:calc(100dvh - 30px);overflow:auto;padding:35px 25px 24px;background:radial-gradient(ellipse at 50% 0%,#552879,#1b0e2c 65%);border:2px solid #bd65ff;border-radius:25px;text-align:center;color:#f7efff;box-shadow:0 0 35px #a02bf6,0 20px 90px #050109}\n.ll-streak-emblem{display:flex;justify-content:center;align-items:center;margin:0 auto 13px}.ll-fire-emblem{display:grid;place-items:center;width:75px;height:75px;border-radius:18px;background:#5f268d;color:#ffb048;border:1px solid #c579ff}\n.ll-streak-modal h2{font-size:38px;margin:7px 0 10px}.ll-streak-lede{color:#e4d3f1;margin-bottom:17px}\n.ll-streak-counter{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;padding:13px 10px;background:#44235b;border:1px solid #a65ae4;border-radius:90px;margin:0 0 17px}\n.ll-streak-counter strong{font-size:19px;color:#e9c7fc}\n.ll-streak-instructions{font-size:13px;line-height:1.55;color:#e0cfeb;margin-bottom:18px}\n.ll-streak-claim{display:flex;align-items:center;justify-content:center;gap:12px;min-height:58px;width:100%;border:1px solid #e6a7ff;border-radius:15px;background:linear-gradient(135deg,#d34efc,#7620dd);color:white;font-size:25px;font-weight:900;box-shadow:0 0 20px #a934e7}\n.ll-streak-next{display:flex;align-items:center;justify-content:center;gap:9px;margin-top:14px;padding:13px;background:#3b234d;border-radius:12px;font-size:12px;line-height:1.5}\n.ll-modal-close{position:absolute;top:13px;right:13px;width:35px;height:35px;background:#46245c;border:1px solid #9661bd;border-radius:50%;display:grid;place-items:center;color:#fff}\n.ll-streak-notice{padding:10px;color:#eacdf2}.ll-streak-notice p{font-size:13px;line-height:1.5}\n@media(max-width:760px){.ll-home-greeting{grid-template-columns:1fr}.ll-home-continue .ll-continue-button{width:100%;margin-left:0}}\n@media(max-width:500px){\n .ll-home-dashboard{max-width:100%}.ll-home-brand-banner{border-radius:15px;margin-bottom:18px}\n .ll-home-greeting h1{font-size:27px}\n .ll-home-shortcuts{gap:8px}\n .ll-home-shortcut{padding:10px;gap:7px;min-height:105px}\n .ll-shortcut-symbol{flex-basis:36px;width:36px;height:36px}\n .ll-shortcut-text strong{font-size:12px}\n .ll-shortcut-text small{font-size:10px}\n .ll-home-shortcut>.ll-icon{display:none!important}\n .ll-streak-modal{padding:31px 17px 18px}\n .ll-streak-modal h2{font-size:32px}\n .ll-streak-counter strong{font-size:17px}\n .bottom-item{font-size:10px;padding:6px 1px}\n}\n";document.head.appendChild(st);}
+}
 function llIcon(name){
  const paths={
  home:'<path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
@@ -360,7 +373,7 @@ function llIcon(name){
  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
  close:'<path d="M5 5 19 19M19 5 5 19"/>'
  };
- return '<svg class="ll-icon ll-icon-'+esc(name)+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(paths[name]||paths.code)+'</svg>';
+ return '<svg width="24" height="24" style="display:inline-block;width:22px;height:22px;max-width:100%;min-width:0;flex-shrink:0;vertical-align:middle" class="ll-icon ll-icon-'+esc(name)+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(paths[name]||paths.code)+'</svg>';
 }
 function streakRemaining(){
  const st=s.loginStreak;
@@ -373,8 +386,11 @@ function durationDisplay(value){
 }
 async function refreshStreakStatus(){
  if(!api||!s.ready)return;
- const r=await api.rpc('academy_streak_status');if(r.error)throw r.error;
+ s.streakLoading=true;
+ try{const r=await api.rpc('academy_streak_status');if(r.error)throw r.error;
  s.loginStreak=r.data||null;
+ s.streakError='';
+ }catch(e){s.streakError=formatError(e);throw e;}finally{s.streakLoading=false;}
  if(s.loginStreak?.server_now)s.streakClockOffsetMs=Date.parse(s.loginStreak.server_now)-Date.now();
  return s.loginStreak;
 }
@@ -386,9 +402,9 @@ function streakModalHtml(){
  '<div class="ll-streak-emblem"><span class="ll-laurel">❧</span><span class="ll-fire-emblem">'+llIcon('fire')+'</span><span class="ll-laurel right">❧</span></div>'+
  '<span class="eyebrow ll-streak-kicker">DEINE TÄGLICHE BELOHNUNG</span>'+
  '<h2 id="streak-dialog-title">Daily <span class="gradient">Streak</span></h2>'+
- '<p class="ll-streak-lede">'+(ready?'Dein täglicher Claim ist bereit!':'Dein heutiger Claim ist gespeichert.')+'</p>'+
+ '<p class="ll-streak-lede">'+(!s.loginStreak?'Überprüfe deinen Daily Streak …':ready?'Dein täglicher Claim ist bereit!':st.claimed_today?'Dein heutiger Claim ist gespeichert.':'Dein nächster Claim ist noch nicht bereit.')+'</p>'+
  '<div class="ll-streak-counter">'+llIcon('fire')+'<strong>'+n+' '+(n===1?'Tag':'Tage')+' Streak</strong><span>Rekord: '+Number(st.best||0)+'</span></div>'+
- (ready?'<p class="ll-streak-instructions">Drücke auf <strong>Claim</strong>, damit deine Streak weiterläuft. Danach startet die 24-Stunden-Wartezeit.</p>'+
+ (!s.loginStreak?'<div class="ll-streak-notice"><p>'+(s.streakError?'Verbindung zum Streak-Server fehlgeschlagen: '+esc(s.streakError):'Status wird geladen …')+'</p><button type="button" class="ll-streak-claim" data-streak-retry>'+(s.streakLoading?'Lade …':'Erneut prüfen')+'</button></div>':ready?'<p class="ll-streak-instructions">Drücke auf <strong>Claim</strong>, damit deine Streak weiterläuft. Danach startet die 24-Stunden-Wartezeit.</p>'+
  '<button class="ll-streak-claim" type="button" data-streak-claim '+(s.streakBusy?'disabled':'')+'>'+(s.streakBusy?'Wird eingelöst …':'Claim')+llIcon('arrow')+'</button>'+
  '<div class="ll-streak-next">'+llIcon('clock')+'<span>Nächster Claim nach dem Einlösen: <strong>24:00:00</strong></span></div>':
  '<p class="ll-streak-instructions">Komm morgen wieder und sichere deine Serie. Das nächste Zeitfenster öffnet nach 24 Stunden.</p>'+
@@ -397,7 +413,11 @@ function streakModalHtml(){
  '<p class="ll-streak-timezone">Ein Claim pro Kalendertag (00:00–00:00 Uhr, Deutschland). Wird ein ganzer Tag übersprungen, startet die Serie wieder bei 1.</p></section></div>';
 }
 function paintStreakModal(){
- const root=document.querySelector('#streak-portal');if(!root)return;
+ let root=document.querySelector('#streak-portal');
+ if(!root&&document.body&&typeof document.createElement==='function'){
+  root=document.createElement('div');root.id='streak-portal';document.body.appendChild(root);
+ }
+ if(!root)return;
  root.innerHTML=streakModalHtml();
  const opened=!!(s.ready&&s.streakModalOpen);
  document.body.classList.toggle('streak-modal-visible',opened);
@@ -1270,6 +1290,8 @@ async function adminAction(action,node){
  }catch(e){notice('Admin-Fehler: '+formatError(e));}
 }
 document.addEventListener('click',async function(e){
+ var streakRetry=e.target.closest('[data-streak-retry]');
+ if(streakRetry){try{await refreshStreakStatus();}catch(_e){}paintStreakModal();return;}
  var streakOpen=e.target.closest('[data-streak-open]');
  if(streakOpen){s.streakModalOpen=true;paintStreakModal();return;}
  var streakClose=e.target.closest('[data-streak-close]');
@@ -1578,6 +1600,7 @@ document.addEventListener('submit',async function(e){
 window.addEventListener('hashchange',function(){if(s.ready)navigateCurrent();});
 async function init(){
  applyPreferences();
+ installCriticalStyles();
  if(typeof window.setInterval==='function')window.setInterval(updateStreakClocks,1000);
  document.head.insertAdjacentHTML('beforeend','<style>.is-auth .sidebar,.is-auth .bottom-nav{display:none}.is-auth .topbar{background:#0d0a19}.is-auth .content{max-width:1100px}.is-auth .app-column{width:100%}</style>');
  if(!window.supabase||!cfg.supabaseUrl||!cfg.supabasePublishableKey){content.innerHTML='<div class="auth-layout panel"><h2>Verbindung nicht verfügbar</h2><p>Supabase konnte nicht geladen werden. Bitte lade die Seite erneut oder überprüfe deine Verbindung.</p></div>';return;}

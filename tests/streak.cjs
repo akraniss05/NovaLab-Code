@@ -1,7 +1,7 @@
 /* LiveryLab Academy v19 — client-side claim UX, with mocked Supabase. */
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),assert=require('node:assert/strict');
-const js=fs.readFileSync(path.join(__dirname,'../site/academy.js'),'utf8');
+const js=fs.readFileSync(path.join(__dirname,'../site/academy-v20.js'),'utf8');
 const re=/\ninit\(\);\n\}\)\(\);\s*$/;
 assert(re.test(js),'Expected app init closure');
 const body=js.replace(re,"\nwindow.__streakTest={s,streakModalHtml,claimDailyStreak,refreshStreakStatus,streakRemaining,durationDisplay,setApi(client){api=client}};\n})();");
@@ -22,6 +22,9 @@ s.lessons=[];s.courses=[];s.progress={done:[],watched:[],practiced:[],exams:{}};
 s.loginStreak={current:0,best:0,claimable:true,server_now:new Date().toISOString()};
 s.streakModalOpen=true;
 assert(app.streakModalHtml().includes('data-streak-claim'),'Login modal offers Claim');
+s.loginStreak=null;s.streakError='Network unavailable';
+assert(app.streakModalHtml().includes('data-streak-retry'),'When backend is unavailable offer retry');
+s.loginStreak={current:0,best:0,claimable:true,server_now:new Date().toISOString()};
 assert(app.streakModalHtml().includes('Daily'),'Modal title visible');
 assert.equal(app.durationDisplay(86400),'24:00:00','24 hour timer is formatted');
 const next=new Date(Date.now()+86400*1000).toISOString();

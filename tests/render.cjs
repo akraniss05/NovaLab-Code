@@ -2,7 +2,7 @@
    Tests actual view functions without a login or network connection. */
 'use strict';
 const assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');
-const source=fs.readFileSync(path.join(__dirname,'../site/academy.js'),'utf8');
+const source=fs.readFileSync(path.join(__dirname,'../site/academy-v20.js'),'utf8');
 assert.match(source,/\ninit\(\);\n\}\)\(\);\s*$/);
 const expose="\nwindow.__test={s,homePage,coursesPage,trackPage,lessonPage,scriptPage,referencePage,examPage,profilePage,settingsPage,plansPage,examsPage,adminPage,login,waitingApproval,submitExamAnswer,courseCard,friendsPage,setApi(apiValue){api=apiValue},updateLessonControls,filteredCourses,frame};\n})();";
 const body=source.replace(/\ninit\(\);\n\}\)\(\);\s*$/,expose);

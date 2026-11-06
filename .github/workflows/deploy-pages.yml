@@ -1,4 +1,4 @@
-name: Deploy LiveryLab Academy v19 • neon dashboard and manual streak claims
+name: Deploy LiveryLab Academy v20 • iOS layout, daily modal and cache repair
 on:
   push:
     branches: [main]
@@ -26,6 +26,7 @@ jobs:
         run: |
           node --check site/reference-data.js
           node --check site/academy.js
+          node --check site/academy-v20.js
           node --check site/auth-mfa-v15.js
           node --check site/config.js
           node tests/smoke.cjs
@@ -42,7 +43,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: academy-v19-mobile-captures
+          name: academy-v20-mobile-captures
           path: test-results/
           if-no-files-found: ignore
       - name: Remove restricted reference data from public site artifact
