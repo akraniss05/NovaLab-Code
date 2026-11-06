@@ -7,7 +7,7 @@
 'use strict';
 var cfg=window.LL_CONFIG||{}, $=function(q,root){return (root||document).querySelector(q);};
 var content=$('#content'), sidebar=$('#sidebar'), bottom=$('#bottom-nav'), toastNode=$('#toast');
-var api=null, s={streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},adminPage:1,catalogLimit:9,practiceChecked:false,draft:'',prefs:null,projectTab:0,projectSource:'',projectLoading:false};
+var api=null, s={streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},adminPage:1,adminFilter:'all',adminSearch:'',catalogLimit:9,practiceChecked:false,draft:'',prefs:null,projectTab:0,projectSource:'',projectLoading:false};
 var plans={free:'Free',pro:'Plus',ultimate:'Pro / Ultimate'};
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];});}
 function safeLink(url){return /^https:\/\/[^\s<>"]+$/i.test(String(url||''))?esc(url):'#';}
@@ -112,7 +112,7 @@ function login(){
  s.ready=false;frame();
  const brand='<img class="ll-login-banner" src="./liverylab-banner.webp" alt="Livery-Lab Premium FiveM Systems Banner"><div class="brandmark"><img class="ll-brand-symbol" src="./liverylab-symbol.svg" alt=""><span>LiveryLab <span class="gradient">Academy</span></span></div>';
  if(s.authScreen==='register'){
- content.innerHTML='<div class="auth-layout"><section class="auth-card">'+brand+
+ content.innerHTML='<div class="auth-layout auth-login-layout"><aside class="auth-showcase"><span class="eyebrow">LIVERYLAB · PRIVATE BETA</span><h2>Baue echte Skills.<br><em>Schritt für Schritt.</em></h2><p>Programmierung, FiveM und Blender in klaren Lernpfaden – mit Videos, Praxis, Quizzen und Abschlussprüfungen.</p><div class="auth-feature-grid"><span>▶ Video-Lektionen</span><span>✓ Praxisaufgaben</span><span>✦ XP & Titel</span><span>★ Kursprüfungen</span></div><small>Made with 💙 from NyxAtheris (LiveryLab Studios)</small></aside><section class="auth-card">'+brand+
  '<span class="eyebrow">[ + ] BEWERBUNG</span><h1>Dein Weg in die <span class="gradient">Academy.</span></h1>'+
  '<p class="lede">Erstelle dein Konto. Die Academy ist noch in der Testphase: Erst nach Freigabe durch NyxAtheris erhältst du Zugang. Plus/Pro gibt es derzeit auf Anfrage über Discord.</p>'+
  '<form data-form="register"><div class="form-group"><label class="form-label" for="reg-email">E-Mail-Adresse</label>'+
@@ -147,7 +147,7 @@ function login(){
  '<div class="auth-secondary"><span>Noch kein Konto?</span><button type="button" class="btn" data-action="show-register">Jetzt registrieren →</button></div>'+
  '<p class="micro">LiveryLab ist aktuell eine betreute Test-Academy. Dein Konto muss freigegeben werden. Für Plus/Pro: Schreib NyxAtheris per Discord-DM oder eröffne ein Ticket mit dem Grund und erwähne @nyxatheris.</p>'+
  '<a class="btn discord block discord-block" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord beitreten</a>'+
- '<p class="smallprint" style="text-align:center;margin-top:19px">Made with 💙 from NyxAtheris (LiveryLab Studios)</p></section></div>';
+ '<p class="smallprint" style="text-align:center;margin-top:19px">Sicherer Zugang über LiveryLab Academy</p></section></div>';
 }
 async function registerAccount(fd){
  const email=String(fd.get('email')||'').trim().toLowerCase();
@@ -587,8 +587,8 @@ function lessonPage(id){
  '<div class="hero-actions" style="justify-content:center"><button class="btn primary" data-go="plans">Stufen vergleichen</button>'+
  '<a class="btn discord" rel="noopener noreferrer" target="_blank" href="https://discord.gg/livery-lab">Freischaltung anfragen</a></div></section>';
  if(!s.lesson){const daily=s.lessonGate?.reason==='daily_limit';return back+'<section class="lesson-gate"><span class="gate-icon">'+(daily?'◷':'🔒')+'</span><span class="eyebrow">'+(daily?'TAGESLIMIT ERREICHT':'LEKTION NICHT VERFÜGBAR')+'</span><h2>'+(daily?'Für heute geschafft.':'Lektion nicht geladen')+'</h2><p>'+(daily?'Du hast heute alle '+safeNumber(s.daily?.daily_limit)+' neuen Lernstationen geöffnet. Morgen geht es weiter. Bereits geöffnete Stationen bleiben zugänglich.':esc(s.lessonGate?.error||'Prüfe deine Freischaltung und Verbindung.'))+'</p><div class="actions-pair"><button class="btn" data-go="track/'+esc(l.course_id)+'">← Lernpfad</button><button class="btn primary" data-go="plans">Tarife ansehen →</button></div></section>';}
- var p=s.lesson.payload||{},video=s.lesson.video_id,info=videoInfo(video),options=Array.isArray(p.options)?p.options:[],finished=doneIds().has(id),isBlender=c?.category==='3D & Blender';
- var validVideo=video&&/^[a-zA-Z0-9_-]{11}$/.test(video),url=validVideo?'https://www.youtube.com/watch?v='+video+'&t='+Math.max(0,Number(s.lesson.video_start)||0)+'s':null;
+ var p=s.lesson.payload||{},video=s.lesson.video_id||p.videoId,info=videoInfo(video),options=Array.isArray(p.options)?p.options:[],finished=doneIds().has(id),isBlender=c?.category==='3D & Blender';
+ var videoStart=Math.max(0,Number(s.lesson.video_start||p.videoStart)||0),validVideo=video&&/^[a-zA-Z0-9_-]{11}$/.test(video),url=validVideo?'https://www.youtube.com/watch?v='+video+'&t='+videoStart+'s':null;
  var search='https://www.youtube.com/results?search_query='+encodeURIComponent(c.name+' '+l.title+' Anleitung Tutorial deutsch');
  var next=all[index+1],d=esc(s.draft),isPracticeDone=s.practiceChecked||finished;
  return '<article class="lesson-article">'+back+
@@ -607,7 +607,7 @@ function lessonPage(id){
  (p.example?'<div class="codebox"><pre><code>'+esc(p.example)+'</code></pre></div>':'')+
  (p.resource?'<a href="'+safeLink(p.resource)+'" target="_blank" rel="noopener noreferrer">Offizielle Dokumentation ↗</a>':'')+
  '</section>'+
- '<section class="step-box"><span class="eyebrow">SCHRITT 02 · VIDEO-TUTORIAL</span><h2>Erklärung ansehen.</h2>'+
+ '<section class="step-box '+(isBlender?'blender-video-step':'')+'"><span class="eyebrow">SCHRITT 02 · '+(isBlender?'BLENDER VIDEO-TRAINING':'VIDEO-TUTORIAL')+'</span><h2>'+(isBlender?'Im Interface mitmachen.':'Erklärung ansehen.')+'</h2>'+
  (validVideo?
  '<p class="muted">Passender Videoguide: <strong>'+esc(info.name)+'</strong>. Wenn das Video länger ist, konzentriere dich auf das Kapitel zu dieser Lektion.</p>'+
  '<div class="video-frame" id="video-frame"><div class="video-placeholder"><div class="play">▶</div><strong>'+esc(info.name)+'</strong>'+
@@ -1093,10 +1093,11 @@ function achievementGallery(){
 }
 function profilePage(){
  const name=s.profile?.display_name||s.profile?.username||'Developer';
- const streak=Number(s.loginStreak?.current||0),best=Number(s.loginStreak?.best||0);
+ const streak=Number(s.loginStreak?.current||0),best=Number(s.loginStreak?.best||0),titles=(s.social?.titles||['Developer']).filter(Boolean),selected=s.social?.profile?.title||'Developer';
  return pageHeading('DEIN PROFIL','Dein Lern-<span class="gradient">fortschritt.</span>',
  'Hier siehst du deine wichtigsten Werte und freigeschalteten Erfolge. Persönliche App-Farben und Hintergründe findest du in den Einstellungen.')+
- '<section class="profile-overview-card"><div class="profile-overview-avatar">'+esc(name.slice(0,1).toUpperCase())+'</div><div><span class="eyebrow">LIVERYLAB DEVELOPER</span><h2>'+esc(name)+'</h2><p>@'+esc(s.profile?.username||'developer')+' · '+esc(tierLabel(s.tier))+'</p></div><button class="btn small" data-go="settings">App-Design ändern →</button></section>'+
+ '<section class="profile-overview-card"><div class="profile-overview-avatar">'+esc(name.slice(0,1).toUpperCase())+'</div><div><span class="eyebrow">LIVERYLAB DEVELOPER</span><h2>'+esc(name)+'</h2><span class="profile-title-badge">✦ '+esc(selected)+'</span><p>@'+esc(s.profile?.username||'developer')+' · '+esc(tierLabel(s.tier))+'</p></div><button class="btn small" data-go="settings">App-Design ändern →</button></section>'+
+ '<section class="profile-title-picker"><div><span class="eyebrow">[ ✦ ] DEIN PROFILTITEL</span><h3>Zeig, was du erreicht hast.</h3><p>Du kannst nur Titel auswählen, die du durch Lektionen, Prüfungen, Freunde oder Streaks freigeschaltet hast.</p></div><form data-form="profile-title"><label class="form-label" for="profile-title">Freigeschalteten Titel auswählen</label><div class="profile-title-row"><select class="select" id="profile-title" name="title">'+titles.map(t=>'<option value="'+esc(t)+'" '+(t===selected?'selected':'')+'>'+esc(t)+'</option>').join('')+'</select><button class="btn primary" type="submit">Titel verwenden</button></div></form></section>'+
  '<section class="profile-quick-stats"><div class="profile-quick-tile"><span>🔥</span><strong>'+streak+'</strong><small>Login-Streak in Tagen</small></div>'+
  '<div class="profile-quick-tile"><span>🏅</span><strong>'+best+'</strong><small>Bisheriger Rekord</small></div>'+
  '<div class="profile-quick-tile"><span>✦</span><strong>'+((s.progress.done||[]).length*30)+'</strong><small>Erlernte XP</small></div></section>'+
@@ -1215,7 +1216,7 @@ function voucherAdminSection(){
 
 function adminPage(){
  if(s.profile?.role!=='admin')return '<section class="locked-panel"><h2>Nur für Administratoren.</h2></section>';
- const people=s.members||[],pending=people.filter(u=>u.access_status==='pending'),rest=people.filter(u=>u.access_status!=='pending');
+ const people=s.members||[],pending=people.filter(u=>u.access_status==='pending'),query=String(s.adminSearch||'').toLowerCase(),rest=people.filter(u=>u.access_status!=='pending').filter(u=>(s.adminFilter==='all'||(s.adminFilter==='active'&&u.active)||(s.adminFilter==='blocked'&&!u.active)||(s.adminFilter==='admin'&&u.role==='admin'))&&(!query||String(u.username||'').toLowerCase().includes(query)||String(u.email||'').toLowerCase().includes(query))),active=people.filter(u=>u.active).length,blocked=people.filter(u=>!u.active&&u.access_status!=='pending').length;
  const requests='<section class="section approval-section"><div class="section-heading"><div><span class="eyebrow">[ ! ] ANTRÄGE</span>'+
  '<h2>Registrierungsanfragen <span class="pending-bubble">'+pending.length+'</span></h2>'+
  '<p>Nur du kannst neue Konten genehmigen. Ohne deine Bestätigung bleiben die Kurse gesperrt.</p></div>'+
@@ -1247,12 +1248,14 @@ function adminPage(){
    (u.active?'Zugriff sperren':'Zugriff erlauben')+'</button>'+
    '<button class="btn small danger" data-delete-user="'+esc(u.id)+'" '+(owner?'disabled':'')+'>Löschen</button></div>'+(s.isOwner&&!u.is_owner?'<div class="admin-role-select"><label class="form-label">Teamrolle</label><select class="select" data-admin-role="'+esc(u.id)+'" aria-label="Teamrolle von '+esc(u.username||'')+'"><option value="student" '+(u.role==='student'?'selected':'')+'>Mitglied</option><option value="admin" '+(u.role==='admin'?'selected':'')+'>Administrator · Team verwalten</option></select></div>':'')+'</div></article>';
  }).join('');
- return pageHeading('ADMINISTRATION','Dein <span class="gradient">Team.</span>',
- 'Registrierungen prüfen, Zugänge sperren oder wieder freigeben und Mitgliedschaften direkt ändern.')+
+ return pageHeading('ADMINISTRATION','Dein <span class="gradient">Control Center.</span>',
+ 'Registrierungen, Mitgliedschaften, Teamrollen und Gutscheine sicher an einem Ort verwalten.')+
+ '<section class="admin-overview"><article><span>◷</span><strong>'+pending.length+'</strong><small>Offene Anfragen</small></article><article><span>✓</span><strong>'+active+'</strong><small>Aktive Konten</small></article><article><span>⛔</span><strong>'+blocked+'</strong><small>Gesperrte Konten</small></article><article><span>✦</span><strong>'+people.filter(u=>u.role==='admin').length+'</strong><small>Administratoren</small></article></section>'+
  requests+
  '<section class="section"><div class="section-heading"><div><span class="eyebrow">[ 02 ] MITGLIEDER</span>'+
  '<h2>Deine Teamkonten</h2><p>Tarifänderungen werden über den geschützten Administrationsserver gespeichert. Administratoren haben immer Vollzugriff.</p></div></div>'+
- '<div class="member-list">'+(cards||'<div class="empty">Noch keine aktiven Mitglieder.</div>')+'</div>'+
+ '<div class="admin-tools"><input class="input" id="admin-search" type="search" placeholder="Benutzername oder E-Mail suchen …" value="'+esc(s.adminSearch)+'"><div class="admin-filter" role="group" aria-label="Konten filtern">'+[['all','Alle'],['active','Aktiv'],['blocked','Gesperrt'],['admin','Admins']].map(([value,label])=>'<button type="button" class="'+(s.adminFilter===value?'active':'')+'" data-admin-filter="'+value+'">'+label+'</button>').join('')+'</div></div>'+
+ '<div class="member-list">'+(cards||'<div class="empty">Keine passenden Mitglieder gefunden.</div>')+'</div>'+
  '<div class="admin-pagination"><button class="btn small" data-action="admin-prev" '+(s.adminPage===1?'disabled':'')+'>← Vorherige</button>'+
  '<span>Seite '+s.adminPage+'</span><button class="btn small" data-action="admin-next" '+(people.length<100?'disabled':'')+'>Nächste →</button></div></section>'+
  '<section class="section"><details class="panel admin-create"><summary><strong>+ Manuell ein Teamkonto erstellen</strong></summary>'+
@@ -1319,6 +1322,8 @@ document.addEventListener('click',async function(e){
  if(socialRemove){if(!confirm('Dieses Profilbild / Banner wirklich entfernen?'))return;try{await removeSocialImage(socialRemove.dataset.socialRemove);render();notice('Bild entfernt.');}catch(err){notice('Bild: '+formatError(err))}return;}
  var friendTab=e.target.closest('[data-friend-tab]');
  if(friendTab){s.friendTab=friendTab.dataset.friendTab;render();return;}
+ var adminFilter=e.target.closest('[data-admin-filter]');
+ if(adminFilter){s.adminFilter=adminFilter.dataset.adminFilter||'all';render();return;}
  var friendAction=e.target.closest('[data-friend-action]');
  if(friendAction){
   const command=friendAction.dataset.friendAction,id=friendAction.dataset.friendId;
@@ -1364,9 +1369,9 @@ document.addEventListener('click',async function(e){
   }
   if(['refresh-admin','admin-prev','admin-next'].includes(name)){await adminAction(name,action);return;}
   if(name==='load-video'){
-   var video=s.lesson?.video_id;if(!/^[a-zA-Z0-9_-]{11}$/.test(String(video||'')))return;
+   var video=s.lesson?.video_id||s.lesson?.payload?.videoId;if(!/^[a-zA-Z0-9_-]{11}$/.test(String(video||'')))return;
    var frame=$('#video-frame');
-   if(frame){var iframe=document.createElement('iframe');iframe.src='https://www.youtube-nocookie.com/embed/'+video+'?rel=0&start='+Math.max(0,safeNumber(s.lesson.video_start));
+   if(frame){var iframe=document.createElement('iframe');iframe.src='https://www.youtube-nocookie.com/embed/'+video+'?rel=0&start='+Math.max(0,safeNumber(s.lesson.video_start||s.lesson?.payload?.videoStart));
     iframe.title='Externes Video-Tutorial von YouTube';iframe.loading='lazy';iframe.referrerPolicy='strict-origin-when-cross-origin';
     iframe.allow='accelerometer; encrypted-media; gyroscope; picture-in-picture; web-share';iframe.allowFullscreen=true;frame.replaceChildren(iframe);s.videoLoaded=true;}
    return;
@@ -1473,6 +1478,7 @@ document.addEventListener('input',function(e){
  }
 });
 document.addEventListener('change',async function(e){
+ if(e.target.id==='admin-search'){s.adminSearch=e.target.value;render();return;}
  if(e.target.hasAttribute('data-social-upload')){
   const kind=e.target.dataset.socialUpload,file=e.target.files?.[0];if(!file)return;
   e.target.disabled=true;
@@ -1547,6 +1553,12 @@ document.addEventListener('submit',async function(e){
    if(bio.length>260)throw Error('Die Bio darf maximal 260 Zeichen lang sein.');
    const r=await api.rpc('academy_social_update',{p_bio:bio,p_avatar:avatar,p_banner:banner,p_style:style,p_title:title,p_show:visible});if(r.error)throw r.error;
    await refreshSocial();notice('Profilgestaltung gespeichert!');render();return;
+  }
+  if(mode==='profile-title'){
+   const title=String(fd.get('title')||'Developer'),card=s.social?.profile||{},unlocked=new Set(s.social?.titles||['Developer']);
+   if(!unlocked.has(title))throw Error('Dieser Titel ist noch nicht freigeschaltet.');
+   const r=await api.rpc('academy_social_update',{p_bio:String(card.bio||''),p_avatar:String(card.avatar_style||'violet'),p_banner:String(card.banner_style||'nebula'),p_style:String(card.name_style||'classic'),p_title:title,p_show:card.show_progress!==false});if(r.error)throw r.error;
+   await refreshSocial();notice('Profiltitel gespeichert: '+title);render();return;
   }
   if(mode==='friend-search'){
    const username=String(fd.get('username')||'').trim();const r=await api.rpc('academy_social_search',{p_username:username});if(r.error)throw r.error;
