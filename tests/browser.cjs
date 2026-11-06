@@ -100,14 +100,15 @@ return {
  shortcutDisplay:get('.ll-home-shortcuts')?getComputedStyle(get('.ll-home-shortcuts')).display:null,
  continueDisplay:get('.ll-home-continue')?getComputedStyle(get('.ll-home-continue')).display:null,
  modalWidth:get('.ll-streak-modal')?get('.ll-streak-modal').getBoundingClientRect().width:null,
- bannerRatio:get('.ll-home-brand-banner')?get('.ll-home-brand-banner').getBoundingClientRect().width/get('.ll-home-brand-banner').getBoundingClientRect().height:null
+ bannerRatio:get('.ll-home-brand-banner')?get('.ll-home-brand-banner').getBoundingClientRect().width/get('.ll-home-brand-banner').getBoundingClientRect().height:null,
+ bannerDebug:get('.ll-home-brand-banner')?{width:get('.ll-home-brand-banner').getBoundingClientRect().width,height:get('.ll-home-brand-banner').getBoundingClientRect().height,aspect:getComputedStyle(get('.ll-home-brand-banner')).aspectRatio,display:getComputedStyle(get('.ll-home-brand-banner')).display,imagePosition:getComputedStyle(get('.ll-home-brand-banner img')).position,rules:Array.from(document.styleSheets).map(x=>x.cssRules?.length||0)}:null
 };
 },selectors);
 assert.equal(actual.missing.length,0,name+' @'+width+' missing '+actual.missing.join(','));
 assert.ok(actual.overflow<=2,name+' @'+width+' horizontal overflow '+actual.overflow+'px');
 assert.ok(actual.mainWidth<=width,name+' @'+width+' content too wide');
 assert.ok(actual.iconWidths.every(v=>v===0||(v>=1&&v<=48)),name+' @'+width+' icon HUGE: '+JSON.stringify(actual.iconWidths));
-if(name==='home'){assert.equal(actual.shortcutDisplay,'grid','Home shortcuts must be a grid');assert.equal(actual.continueDisplay,'flex','Continue card must be styled');assert.ok(actual.bannerRatio>2.0&&actual.bannerRatio<3.3,'Banner aspect broken: '+actual.bannerRatio);}
+if(name==='home'){console.log('BANNER GEOMETRY '+width+' '+JSON.stringify(actual.bannerDebug));assert.equal(actual.shortcutDisplay,'grid','Home shortcuts must be a grid');assert.equal(actual.continueDisplay,'flex','Continue card must be styled');assert.ok(actual.bannerRatio>2.0&&actual.bannerRatio<3.3,'Banner aspect broken: '+actual.bannerRatio);}
 if(name.startsWith('streak')){assert.ok(actual.modalWidth>200&&actual.modalWidth<=width,'Daily popup size broken');}
 if(width<820){assert.equal(actual.navRows,1,'Five bottom nav tabs must stay on ONE ROW: '+actual.navRows);}
 if(name==='track'){assert.equal(actual.cardDisplay,'grid');assert.ok(actual.titleBelow,'Lesson title/description collision');}
