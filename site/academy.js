@@ -652,7 +652,8 @@ function voucherAdminSection(){
  const rows=(s.vouchers||[]).map(v=>'<div class="voucher-admin-row"><div><strong>'+esc(v.code)+'</strong>'+
  '<small>'+(v.kind==='gift'?'Gratis '+(v.tier==='pro'?'Plus':'Pro')+' · '+Number(v.days)+' Tage':Number(v.percent)+' % Rabatt auf '+(v.tier==='pro'?'Plus':'Pro'))+
  ' · '+Number(v.uses)+' / '+Number(v.max_uses)+' genutzt'+(!v.active?' · Deaktiviert':'')+'</small></div>'+
- '<button type="button" class="btn small" data-copy-voucher="'+esc(v.code)+'">Kopieren</button></div>').join('');
+ '<div class="voucher-row-actions"><button type="button" class="btn small" data-copy-voucher="'+esc(v.code)+'">Kopieren</button>'+
+ '<button type="button" class="btn small" data-voucher-toggle="'+esc(v.code)+'" data-voucher-enabled="'+(!v.active)+'">'+(v.active?'Deaktivieren':'Aktivieren')+'</button></div></div>').join('');
  return '<section class="section admin-voucher"><span class="eyebrow">ADMIN · GUTSCHEINE</span><h2>Gutscheine erstellen</h2>'+
  '<p class="muted">Rabatte oder kostenlose Mitgliedschaften – die Freigaben werden durch Supabase geprüft.</p>'+
  '<div class="panel"><form data-form="create-voucher"><div class="form-row">'+
@@ -792,6 +793,19 @@ document.addEventListener('click',async function(e){
  var exam=e.target.closest('[data-exam-answer]');if(exam){await submitExamAnswer(Number(exam.dataset.examAnswer));return;}
  var filter=e.target.closest('[data-filter]');if(filter){s.filter=filter.dataset.filter;s.catalogLimit=9;render();return;}
 
+ var voucherToggle=e.target.closest('[data-voucher-toggle]');
+ if(voucherToggle){
+  if(s.profile?.role!=='admin')return;
+  const enabling=voucherToggle.dataset.voucherEnabled==='true';
+  if(!confirm(enabling?'Diesen Gutschein wieder aktivieren?':'Diesen Gutschein deaktivieren? Nicht genutzte Einlösungen werden blockiert.'))return;
+  try{
+   const r=await api.rpc('academy_voucher_set_active',{p_code:voucherToggle.dataset.voucherToggle,p_active:enabling});
+   if(r.error)throw r.error;
+   if(!r.data?.ok)throw Error(r.data?.error||'Änderung abgelehnt.');
+   await fetchVouchers();render();notice('Gutschein aktualisiert.');
+  }catch(err){notice('Gutschein: '+formatError(err))}
+  return;
+ }
  var couponButton=e.target.closest('[data-copy-voucher]');
  if(couponButton){
   try{await navigator.clipboard.writeText(couponButton.dataset.copyVoucher);notice('Gutscheincode kopiert.');}

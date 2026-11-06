@@ -17,7 +17,7 @@ assert(css.includes('grid-template-columns:repeat(4,minmax(0,1fr))'),'4-column s
 assert(css.includes('@media(max-width:560px)'),'Mobile breakpoint missing');
 assert(!/sb_secret_|SUPABASE_SERVICE_ROLE_KEY\s*[:=]/.test(read('site/config.js')),'Secret key detected in public config');
 assert(/sb_publishable_/.test(read('site/config.js')),'Supabase publishable key missing');
-for(const feature of ['academy_voucher_apply','academy_voucher_create','academy_voucher_list','academy_voucher_status','academy_open_lesson','academy_project_examples','redeem-voucher','create-voucher','membership-card','daily-strip'])assert(js.includes(feature),'Missing membership feature: '+feature);
+for(const feature of ['academy_voucher_apply','academy_voucher_create','academy_voucher_list','academy_voucher_status','academy_voucher_set_active','academy_open_lesson','academy_project_examples','redeem-voucher','create-voucher','membership-card','daily-strip'])assert(js.includes(feature),'Missing membership feature: '+feature);
 const mfa=read('site/auth-mfa-v5.js');
 assert(mfa.includes('mfa.challenge')&&mfa.includes('mfa.verify'),'Authenticator verification missing');
 new Function(js);

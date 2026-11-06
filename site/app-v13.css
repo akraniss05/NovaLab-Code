@@ -184,3 +184,8 @@ body.is-auth .sidebar,body.is-auth .topbar,body.is-auth .bottom-nav{display:none
  .voucher-input-row .btn{width:100%}
  .membership-card{padding:15px}
 }
+
+
+.voucher-row-actions{display:flex;flex:0 0 auto;gap:7px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
+.voucher-row-actions .btn{font-size:11px;padding:7px 9px}
+@media(max-width:490px){.voucher-admin-row{align-items:flex-start;flex-direction:column}.voucher-row-actions{width:100%;justify-content:flex-start}}

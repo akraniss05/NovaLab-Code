@@ -43,7 +43,8 @@ const scenes=[
  ['track',app.trackPage('fivem'),['.lesson-card','.lesson-main strong','.lesson-summary','.status-ring']],
  ['lesson',app.lessonPage('fivem-01'),['.lesson-steps','.lesson-step','.step-box','.video-frame','.quiz-choice','.exercise-textarea']],
  ['script',app.scriptPage(),['.file-tree','.file-tabs','.file-preview']],
- ['reference',app.referencePage(),['.reference-row','.reference-block']]
+ ['reference',app.referencePage(),['.reference-row','.reference-block']],
+ ['plans',app.plansPage(),['.membership-card','.voucher-panel','.voucher-input-row']]
 ];
 s.progress.done=s.lessons.map(l=>l.id);
 s.exam={items:Array.from({length:20},()=>({payload:{quiz:'Wofür benutzt man eine Variable?',options:['Wert speichern','Zum Löschen','Nur für Videos'],correct:0}})),at:0,answers:[]};
