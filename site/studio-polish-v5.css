@@ -86,3 +86,11 @@ body[data-workspace=blender] .ll3-layout{box-shadow:0 19px 60px #160a184f}
   .app input:not([type="range"]):not([type="checkbox"]), .app select, .app textarea {font-size: 16px}
 }
 .llide-actions [aria-pressed="true"] {outline: 2px solid currentColor}
+@media (max-width: 700px) {
+  .llv-layout, .llv-inspector, .llv-canvas, .llv-setup {grid-template-columns: minmax(0, 1fr)}
+  .llv-range {grid-template-columns: repeat(2, minmax(0, 1fr))}
+  .llv-range label, .llv-setup label, .llv-inspector, #llv-canvas {min-width: 0; max-width: 100%}
+  .llv-setup select, .llv-setup input {width: 100%; min-width: 0}
+  #app .mobile-nav {display: grid; grid-template-columns: repeat(5, minmax(0, 1fr))!important}
+  #app .mobile-nav button {min-width: 0}
+}

@@ -1,5 +1,5 @@
 /* LiveryLab Academy offline assets: never cache credentials, API calls or private user data. */
-const CACHE = 'liverylab-v5.1.3';
+const CACHE = 'liverylab-v5.1.4';
 const ASSETS=['./','./index.html','./styles.css','./app.js','./isolated-worker.js','./lua-mini.js','./music-studio.js','./code-studio.js','./studio-v4.css','./config.js','./privacy.html','./assets/icon.svg','./assets/liverylab-hero.jpg','./manifest.webmanifest','./plans-v5.js','./videos-v5.js','./music-v5.js','./studio3d-v5.js','./games-v5.js','./studio-v5.css','./shell-v5.js','./auth-mfa-v5.js','./video-lab-v5.js','./shell-v5.css','./studio-polish-v5.css','./assets/category-music.svg','./assets/category-code.svg','./assets/category-fivem.svg','./assets/category-blender.svg','./assets/category-games.svg'];
 self.addEventListener('install',event=>{
  event.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)));

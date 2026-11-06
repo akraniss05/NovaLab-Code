@@ -95,14 +95,21 @@ async function run(engine,mobile){
     await go('studio3d');await page.locator('#ll3-canvas canvas').waitFor();
     await page.locator('[data-three="add"]').click();await page.locator('[data-three="camera"]').click();
     await checkDownload(page,'[data-three="json"]');await checkDownload(page,'[data-three="export"]','glTF');
-    await go('videolab');await page.locator('#llv-import').setInputFiles(process.env.QA_CLIP);
-    await page.waitForFunction(()=>document.querySelector('#llv-status').textContent.includes('Clip geladen'));
+    await go('videolab');await page.locator('#llv-import').setInputFiles(mobile?process.env.QA_CLIP:process.env.QA_CLIP.replace('.mp4','.webm'));
+    await page.waitForFunction(()=>document.querySelector('#llv-status').textContent.includes('Clip geladen')).catch(async err=>{console.error(await page.locator('#llv-status').textContent());throw err});
     await page.locator('#llv-text').fill('Academy QA');
     await page.locator('#llv-preview').click();await page.locator('#llv-play').click();
     if(await page.evaluate(()=>!!window.MediaRecorder&&!!HTMLCanvasElement.prototype.captureStream)){
       await checkDownload(page,'#llv-export');
     }
-    if(mobile)assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Layout wider than mobile viewport');
+    if(mobile){
+      const layout=await page.evaluate(()=>({
+        width:innerWidth,scroll:document.documentElement.scrollWidth,
+        overflow:[...document.body.querySelectorAll('*')].filter(el=>el.getBoundingClientRect().right>innerWidth+1)
+          .map(el=>[el.tagName,el.id,el.className,Math.round(el.getBoundingClientRect().right)]).slice(0,15),
+      }));
+      assert.ok(layout.scroll<=layout.width+1,JSON.stringify(layout));
+    }
     assert.deepEqual(errors,[]);
     console.log(mobile?'iPhone / WebKit passed':'Desktop / Chromium passed');
   }finally{await browser.close()}
