@@ -7,7 +7,7 @@ const catalog=[
  {id:'Zi-Q0t4gMC8',name:'JavaScript – kompletter Grundkurs',author:'freeCodeCamp.org',lang:'Englisch',match:'javascript',desc:'Variablen, Arrays, Funktionen und Kontrollfluss.'},
  {id:'a_iQb1lnAEQ',name:'HTML & CSS – Grundkurs',author:'freeCodeCamp.org',lang:'Englisch',match:'web',desc:'Grundlagen von Webseiten, HTML und CSS.'},
  {id:'K5KVEU3aaeQ',name:'Python – Full Course for Beginners',author:'Programming with Mosh',lang:'Englisch',match:'python',desc:'Python 2025: Variablen, Funktionen, Bedingungen, Schleifen.'},
- {id:'dkqbgV2KUKw',name:'FiveM – erstes Lua-Script schreiben',author:'Twisle',lang:'Englisch',match:'fivem',desc:'FiveM-Tutorial 2025: eigene Resource und erste Lua-Befehle.'},
+ {id:'Tsk1-tKgMH0',name:'FiveM – Lua-Scripting für Anfänger (2025)',author:'TraseDev',lang:'Englisch',match:'fivem',desc:'FiveM-Tutorial 2025: eigene Resource und erste Lua-Befehle.'},
  {id:'9eIYmRg5ZeQ',name:'Lua in FiveM – Resource Basics',author:'Jeva',lang:'Englisch',match:'lua',desc:'Erste Resource und Grundlagen. Ältere APIs unbedingt mit docs.fivem.net abgleichen.'}
 ];
 const isValid=id=>typeof id==='string'&&/^[\w-]{11}$/.test(id);
