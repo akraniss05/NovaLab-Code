@@ -5,7 +5,7 @@ const read=file=>fs.readFileSync(path.join(__dirname,'..',file),'utf8');
 const html=read('site/index.html'),js=read('site/academy-v20.js'),css=read('site/app-v20.css');
 for(const file of ['site/reference-data.js','site/app-v20.css','site/app-v12.css','site/config.js','site/auth-mfa-v15.js','site/academy-v20.js','site/privacy.html','site/manifest.webmanifest','site/icon.svg','supabase/functions/academy-signin/index.ts','supabase/functions/admin-users/index.ts'])
  assert(fs.existsSync(path.join(__dirname,'..',file)),file+' missing');
-for(const token of ['app-v20.css?build=','academy-v20.js?build=','auth-mfa-v15.js?release=','config.js?release=','LiveryLab v20'])
+for(const token of ['app-v20.css?build=','academy-v20.js?build=','auth-mfa-v15.js?build=','config.js?build=','LiveryLab v20'])
  assert(html.includes(token),'Versioned asset missing: '+token);
 for(const obsolete of ['styles.css','refined.css','music-studio.js','studio3d-v5.js'])
  assert(!html.includes(obsolete),'Old asset still linked: '+obsolete);
