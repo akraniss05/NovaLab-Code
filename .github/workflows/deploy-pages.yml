@@ -40,9 +40,10 @@ jobs:
           for(const unwanted of ['code-studio.js','music-v5.js','music-studio.js','studio3d-v5.js','video-lab-v5.js','workspace-v6.js','games-v5.js']) {
             if(html.includes(unwanted))throw Error('Unwanted editor or studio script '+unwanted)
           }
-          for(const item of ['username','Passwort','discord.gg/livery-lab','nyxatheris','LL9.learning','academy_open_lesson']){
+          for(const item of ['username','Passwort','discord.gg/livery-lab','nyxatheris','LL9.learning']){
             if(!app.toLowerCase().includes(item.toLowerCase()))throw Error('Missing learning/account feature '+item)
           }
+          if(!fs.readFileSync('site/plans-v5.js','utf8').includes('academy_open_lesson'))throw Error('Server-verified lesson quota missing');
           if(!config.includes('requireLogin: true'))throw Error('Login must remain required')
           if(!config.includes('sb_publishable_'))throw Error('Only public Supabase key expected')
           if(/sb_secret_[A-Za-z0-9]|service_role_key|SUPABASE_SERVICE_ROLE/.test(config))throw Error('Secret key present in published configuration')
