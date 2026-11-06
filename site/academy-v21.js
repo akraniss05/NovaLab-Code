@@ -442,7 +442,7 @@ function paintStreakModal(){
  if(!root)return;
  const opened=!!(s.ready&&s.streakModalOpen);
  root.innerHTML=streakModalHtml();
- if(opened){const focus=root.querySelector('[data-streak-claim], [data-streak-retry], [data-streak-close]');if(focus&&document.activeElement===document.body)focus.focus({preventScroll:true});}
+ if(opened&&typeof root.querySelector==='function'){const focus=root.querySelector('[data-streak-claim], [data-streak-retry], [data-streak-close]');if(focus&&document.activeElement===document.body&&typeof focus.focus==='function')focus.focus({preventScroll:true});}
  document.body.classList.toggle('streak-modal-visible',opened);
  const shell=document.querySelector('#app');if(shell&&'inert' in shell)shell.inert=opened;
 }
