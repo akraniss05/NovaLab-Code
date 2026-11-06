@@ -4,8 +4,8 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),asse
 const {chromium}=require('playwright-core');
 const root=path.join(__dirname,'..');
 const source=fs.readFileSync(path.join(root,'site/academy.js'),'utf8');
-const css=fs.readFileSync(path.join(root,'site/app-v15.css'),'utf8');
-const expose='\nwindow.__views={s,trackPage,lessonPage,scriptPage,examPage,referencePage,plansPage,adminPage,login};\n})();';
+const css=fs.readFileSync(path.join(root,'site/app-v17.css'),'utf8');
+const expose='\nwindow.__views={s,trackPage,lessonPage,scriptPage,examPage,referencePage,plansPage,adminPage,login,profilePage,friendsPage,paywall};\n})();';
 assert.match(source,/\ninit\(\);\n\}\)\(\);\s*$/);
 const rewritten=source.replace(/\ninit\(\);\n\}\)\(\);\s*$/,expose);
 const fake=()=>({innerHTML:'',classList:{toggle(){},add(){},remove(){},contains(){return false}}});
@@ -20,7 +20,7 @@ vm.createContext(context);
 vm.runInContext(fs.readFileSync(path.join(root,'site/reference-data.js'),'utf8'),context,{filename:'reference-data.js'});
 vm.runInContext(rewritten,context,{filename:'academy.js'});
 const app=context.window.__views,s=app.s;
-s.ready=true;s.profile={display_name:'Developer',username:'developer',role:'student',active:true};
+s.ready=true;s.profile={display_name:'Developer',username:'developer',role:'student',active:true};s.referenceData=context.window.LL_REFERENCE_DATA;s.social={profile:{username:'developer',display_name:'Developer',bio:'Lerne FiveM und Python',avatar_style:'violet',banner_style:'nebula',name_style:'gradient',title:'Developer',lessons:1,awards:0},friends:[],requests:[],titles:['Developer']};
 s.user={email:'developer@example.com'};s.tier='ultimate';
 s.courses=[{id:'fivem',name:'Lua für FiveM – bis zum eigenen Script',category:'FiveM',level:'beginner'}];
 const titles=['Variablen, Typen & print','Bedingungen & Schleifen','Funktionen','Tables: Listen & Dictionaries','Event-Grundlagen','fxmanifest und Resource','Client, Server & Events','Threads & Performance','Natives und Blips','Commands & ACE','Server-Logik','Sicherheit','Debugging'];
@@ -47,7 +47,11 @@ const scenes=[
  ['lesson',app.lessonPage('fivem-01'),['.lesson-steps','.lesson-step','.step-box','.video-frame','.quiz-choice','.exercise-textarea']],
  ['script',app.scriptPage(),['.file-tree','.file-tabs','.file-preview']],
  ['reference',app.referencePage(),['.reference-row','.reference-block']],
- ['plans',app.plansPage(),['.membership-card','.voucher-panel','.voucher-input-row']]
+ ['plans',app.plansPage(),['.membership-card','.voucher-panel','.voucher-input-row']],
+ ['profile',app.profilePage(),['.social-banner','.social-customizer','.social-avatar','.style-picker']],
+ ['friends',app.friendsPage(),['.friends-search-panel','.friend-empty']],
+ ['paywall-script',app.paywall('Script','Plus','Gesperrt für Free'),['.feature-gate','.feature-gate-actions']],
+ ['paywall-reference',app.paywall('Referenzen','Pro / Ultimate','Gesperrt für Plus'),['.feature-gate','.feature-gate-actions']]
 ];
 s.progress.done=s.lessons.map(l=>l.id);
 s.exam={items:Array.from({length:20},()=>({payload:{quiz:'Wofür benutzt man eine Variable?',options:['Wert speichern','Zum Löschen','Nur für Videos'],correct:0}})),at:0,answers:[]};

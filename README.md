@@ -135,3 +135,16 @@ Unter Repository Settings > Pages muss „GitHub Actions“ aktiviert sein. Push
 - `academy_signup_rate_limit` begrenzt Registrierungsversuche anhand pseudonymisierter Kontakt-/IP-Fingerabdrücke und einer Tagesobergrenze. IP-basierte Limitation ist lediglich Best-Effort; weitere Schutzmechanismen wie CAPTCHA sind für höhere Nutzungszahlen ratsam.
 - Mit aktivierten Public Signups bei Supabase arbeitet die Academy weiterhin mit dem regulären `auth.signUp()` inklusive Supabase-E-Mail-Bestätigung.
 - Der `tests/registration.cjs` prüft die Umleitung im Browsercode, reguläre Signups und Fehlerbehandlung. Live-Tests mit Zustellung echter E-Mails wurden nicht durchgeführt.
+
+
+## v17 · Lernrechte, kursspezifische Prüfungen, Developer-Profile & Freunde
+
+- Free: 3 neue Lektionen pro Tag, **2 neue Prüfungsstarts pro Tag**, 10 Grundkurse, Script und Referenzen gesperrt.
+- Plus (`academy_plans.tier='pro'`): 6 neue Lektionen, **4 Prüfungen pro Tag**, 25 Kurse und Script-Werkstatt; Referenzen gesperrt.
+- Pro/Ultimate (`tier='ultimate'`): volle Kurs-/Prüfungsrechte, unbegrenzte tägliche Prüfungen sowie Script und Referenzen.
+- Prüfungsfragen werden serverseitig pro Kurs nach Lernpfadabschluss ausgewählt. Die Lösungsschlüssel bleiben in `academy_private.academy_exam_attempts`, werden erst beim `academy_exam_finish` bewertet und können nicht beliebig an das Frontend übertragen werden.
+- Die Referenzdaten wurden in `academy_private.academy_reference_library` übertragen. Nur Ultimate erhält sie über `academy_reference_get`. Das Pages-Build entfernt die statische Referenzdatei aus dem veröffentlichten Websiteverzeichnis. Die öffentliche GitHub-Historie bleibt unabhängig davon einsehbar.
+- Discord-inspirierte Profilkarten mit Avatar, Banner, Namensstil, Bio, Titeln und freiwilliger Fortschrittsfreigabe; Uploads auf maximal 1 MiB WebP in einem auf eigene Dateipfade begrenzten Storage-Bucket.
+- Freundesliste mit Anfragen, Annahme, Ablehnung und Entfernen. Fortschritt nur für bestätigte Freunde und optional abschaltbar. Kein Zugriff auf E-Mail-Adressen anderer Nutzer.
+- Der ursprüngliche Eigentümer kann weitere Administratoren ernennen und entlassen. Delegierte Admins können Anfragen freigeben, Accounts sperren und Mitgliedschaften verwalten, aber **nicht** den Owner oder andere Adminrollen verändern.
+- Alle kostenpflichtigen Testzugänge werden derzeit persönlich über NyxAtheris/Discord vergeben. Kein automatischer Zahlungsanbieter.

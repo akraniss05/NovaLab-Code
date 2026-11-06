@@ -1,4 +1,4 @@
-name: Deploy LiveryLab Academy v16 • cross-browser registration
+name: Deploy LiveryLab Academy v17 • membership social and examinations
 on:
   push:
     branches: [main]
@@ -36,9 +36,11 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: academy-v16-mobile-captures
+          name: academy-v17-mobile-captures
           path: test-results/
           if-no-files-found: ignore
+      - name: Remove restricted reference data from public site artifact
+        run: rm -f site/reference-data.js
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:

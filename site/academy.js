@@ -7,8 +7,8 @@
 'use strict';
 var cfg=window.LL_CONFIG||{}, $=function(q,root){return (root||document).querySelector(q);};
 var content=$('#content'), sidebar=$('#sidebar'), bottom=$('#bottom-nav'), toastNode=$('#toast');
-var api=null, s={authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,videoChecked:false,videoLoaded:false,exam:null,members:[],memberPlans:{},adminPage:1,catalogLimit:9,practiceChecked:false,draft:'',prefs:null,projectTab:0,projectSource:'',projectLoading:false};
-var plans={free:'Free',pro:'Plus',ultimate:'Pro'};
+var api=null, s={authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},adminPage:1,catalogLimit:9,practiceChecked:false,draft:'',prefs:null,projectTab:0,projectSource:'',projectLoading:false};
+var plans={free:'Free',pro:'Plus',ultimate:'Pro / Ultimate'};
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];});}
 function safeLink(url){return /^https:\/\/[^\s<>"]+$/i.test(String(url||''))?esc(url):'#';}
 function notice(message){toastNode.textContent=message;toastNode.classList.add('show');clearTimeout(notice.timer);notice.timer=setTimeout(function(){toastNode.classList.remove('show');},5000);}
@@ -21,7 +21,11 @@ function lessonsOf(id){return s.lessons.filter(function(l){return l.course_id===
 function courseOf(id){return s.courses.find(function(c){return c.id===id;});}
 function pct(n,total){return total?Math.round(n/total*100):0;}
 function tierLabel(t){return t==='plus'?'Plus':t==='pro'?'Pro':'Free';}
-function allowed(l){return !!s.profile&&(s.profile.role==='admin'||l.required_plan==='free'||(l.required_plan==='plus'&&['pro','ultimate'].includes(s.tier))||(l.required_plan==='pro'&&s.tier==='ultimate'));}
+function allowed(l){return !!s.profile&&(s.profile.role==='admin'||(!s.entitledCourses||s.entitledCourses.includes(l.course_id))&&(l.required_plan==='free'||(l.required_plan==='plus'&&['pro','ultimate'].includes(s.tier))||(l.required_plan==='pro'&&s.tier==='ultimate')));}
+function fullAccess(){return s.profile?.role==='admin'||s.tier==='ultimate';}
+function hasScript(){return s.profile?.role==='admin'||s.tier==='pro'||s.tier==='ultimate';}
+function examCap(){return fullAccess()?-1:s.tier==='pro'?4:2;}
+function paywall(feature,tier,description){return '<section class="feature-gate"><span class="feature-lock">🔒</span><span class="eyebrow">'+esc(tier)+'-MITGLIEDSCHAFT</span><h1>'+esc(feature)+' ist gesperrt.</h1><p class="lede">'+esc(description)+'</p><div class="feature-gate-actions"><button type="button" data-go="plans" class="btn primary">Tarif ansehen →</button><a class="btn discord" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Auf Discord anfragen</a></div><p class="micro">Schreibe NyxAtheris eine DM oder eröffne im Discord ein Ticket und erwähne @nyxatheris mit dem Grund.</p></section>';}
 function badge(t){return '<span class="chip '+esc(t)+'">'+tierLabel(t)+'</span>';}
 function levelText(l){var x=String(l||'beginner').toLowerCase();return /beginner|anfänger/.test(x)?'Anfänger':/intermediate|mittelstufe/.test(x)?'Aufbau':'Fortgeschritten';}
 
@@ -45,9 +49,9 @@ function videoInfo(id){var sources={
 
 function navHTML(route){
  const items=[
-  ['home','⌂','Lernen'],['courses','▦','Alle Kurse'],['script','⌘','Script'],
-  ['exams','☆','Prüfung'],['reference','▤','Referenz'],['plans','✦','Free / Plus / Pro'],
-  ['profile','◉','Mein Profil'],['settings','⚙','Einstellungen']
+  ['home','⌂','Lernen'],['courses','▦','Alle Kurse'],['script','⌘',hasScript()?'Script':'Script 🔒'],
+  ['exams','☆','Prüfung'],['reference','▤',fullAccess()?'Referenz':'Referenz 🔒'],['plans','✦','Free / Plus / Pro'],
+  ['profile','◉','Mein Profil'],['friends','♡','Freunde'],['settings','⚙','Einstellungen']
  ];
  if(s.profile?.role==='admin')items.push(['admin','♢','Administration']);
  return items.map(([id,icon,label])=>{
@@ -83,7 +87,7 @@ function login(){
  if(s.authScreen==='register'){
  content.innerHTML='<div class="auth-layout"><section class="auth-card">'+brand+
  '<span class="eyebrow">[ + ] BEWERBUNG</span><h1>Dein Weg in die <span class="gradient">Academy.</span></h1>'+
- '<p class="lede">Erstelle dein Konto. Danach muss NyxAtheris deine Anmeldung erst freigeben, bevor du die Kurse nutzen kannst.</p>'+
+ '<p class="lede">Erstelle dein Konto. Die Academy ist noch in der Testphase: Erst nach Freigabe durch NyxAtheris erhältst du Zugang. Plus/Pro gibt es derzeit auf Anfrage über Discord.</p>'+
  '<form data-form="register"><div class="form-group"><label class="form-label" for="reg-email">E-Mail-Adresse</label>'+
  '<input class="input" type="email" id="reg-email" name="email" autocomplete="email" required maxlength="254" placeholder="du@beispiel.de"></div>'+
  '<div class="form-group"><label class="form-label" for="reg-user">Benutzername</label>'+
@@ -93,7 +97,7 @@ function login(){
  '<div class="form-group"><label class="form-label" for="reg-confirm">Passwort wiederholen</label>'+
  '<input class="input" type="password" id="reg-confirm" name="confirm_password" autocomplete="new-password" minlength="14" required></div>'+
  '<button class="btn primary block" type="submit">Registrierungsanfrage senden →</button></form>'+
- '<p class="micro">Dein Passwort wird über Supabase Auth verarbeitet. Du musst möglicherweise deine E-Mail bestätigen. Die Freischaltung erfolgt erst durch einen Administrator.</p>'+
+ '<p class="micro">Dein Passwort wird sicher über Supabase Auth verarbeitet. Deine Anmeldung wird vom Team geprüft; ohne Genehmigung erhältst du keinen Zugriff.</p>'+
  '<button type="button" class="btn ghost block" data-action="show-login">← Bereits registriert? Anmelden</button>'+
  '<p class="smallprint" style="text-align:center;margin-top:18px">Made with 💙 from NyxAtheris (LiveryLab Studios)</p></section></div>';return;
  }
@@ -114,7 +118,7 @@ function login(){
  '<input class="input" type="password" id="password" name="password" autocomplete="current-password" required placeholder="Dein Passwort"></div>'+
  '<button class="btn primary block" type="submit">Anmelden →</button></form>'+
  '<div class="auth-secondary"><span>Noch kein Konto?</span><button type="button" class="btn" data-action="show-register">Jetzt registrieren →</button></div>'+
- '<p class="micro">Du benötigst nach der Registrierung eine Freigabe durch das Team.</p>'+
+ '<p class="micro">LiveryLab ist aktuell eine betreute Test-Academy. Dein Konto muss freigegeben werden. Für Plus/Pro: Schreib NyxAtheris per Discord-DM oder eröffne ein Ticket mit dem Grund und erwähne @nyxatheris.</p>'+
  '<a class="btn discord block discord-block" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord beitreten</a>'+
  '<p class="smallprint" style="text-align:center;margin-top:19px">Made with 💙 from NyxAtheris (LiveryLab Studios)</p></section></div>';
 }
@@ -246,7 +250,9 @@ async function loadData(){
  if(all[4].error)notice('Kontingent konnte nicht geladen werden: '+formatError(all[4].error));
  var data=all[3].data?.payload||{};
  s.progress={done:Array.isArray(data.done)?data.done:[],watched:Array.isArray(data.watched)?data.watched:[],exams:data.exams||{},practiced:Array.isArray(data.practiced)?data.practiced:[]};
- s.ready=true;frame();await navigateCurrent();
+ s.ready=true;
+ try{const [exam,social,courses,media]=await Promise.all([api.rpc('academy_exam_status'),api.rpc('academy_social_list'),api.rpc('academy_entitled_courses'),api.rpc('academy_social_media_list')]);s.examStatus=exam.error?null:exam.data;s.social=social.error?null:social.data;s.entitledCourses=courses.error?null:courses.data;s.socialMedia=media.error?{}:media.data||{};}catch(_){}
+ frame();await navigateCurrent();
 }
 async function logout(){try{await api.auth.signOut();}catch(e){}s.authScreen='login';s.ready=false;s.user=null;s.profile=null;s.lesson=null;s.courses=[];s.lessons=[];location.hash='#home';login();}
 async function saveProgress(){
@@ -265,7 +271,9 @@ async function navigateCurrent(){
    if(meta&&allowed(meta)){var result=await api.rpc('academy_open_lesson',{p_lesson:route.id});if(result.error){s.lessonGate={reason:'error',error:formatError(result.error)};notice(formatError(result.error));}else if(result.data?.allowed){s.lesson=result.data;if(s.daily){s.daily.used_today=result.data.used;s.daily.remaining_today=result.data.remaining;}}else{s.lessonGate=result.data||{reason:'error'};}}
  }
  if(route.page==='admin'&&s.profile?.role==='admin'){try{await Promise.all([fetchMembers(),fetchVouchers()]);}catch(e){notice('Adminliste: '+formatError(e));}}
- if(route.page==='script'){await loadProjectTab();}
+ if(route.page==='script'&&hasScript()){await loadProjectTab();}
+ if(route.page==='reference'&&fullAccess()&&!s.referenceData){const ref=await api.rpc('academy_reference_get');if(!ref.error)s.referenceData=ref.data||{};}
+ if(route.page==='friends'||route.page==='profile'){try{const r=await api.rpc('academy_social_list');if(!r.error)s.social=r.data;}catch(_){}}
  if(route.page==='exam'&&route.id){await loadExam(route.id);}
  render();window.scrollTo({top:0,behavior:'instant'});
 }
@@ -284,8 +292,8 @@ function render(){
  if(!s.ready){login();return;}
  frame();const r=parseRoute();
  const pages={home:homePage,courses:coursesPage,track:()=>trackPage(r.id),lesson:()=>lessonPage(r.id),
-  script:scriptPage,plans:plansPage,exams:examsPage,exam:()=>examPage(r.id),
-  reference:referencePage,profile:profilePage,settings:settingsPage,admin:adminPage};
+  script:()=>hasScript()?scriptPage():paywall('Script-Werkstatt','Plus','Codebeispiele sind ab Plus verfügbar.'),plans:plansPage,exams:examsPage,exam:()=>examPage(r.id),
+  reference:()=>fullAccess()?referencePage():paywall('Code-Referenzen','Pro / Ultimate','Die vollständige Sprachbibliothek gehört zum höchsten Tarif.'),profile:profilePage,friends:friendsPage,settings:settingsPage,admin:adminPage};
  content.innerHTML=(pages[r.page]||homePage)();
  if(r.page==='settings'||r.page==='profile')renderMFA();
 }
@@ -329,9 +337,7 @@ function homePage(){
  '<section class="section"><div class="section-heading"><div><span class="eyebrow">[ 01 ] DEINE LERNPFADE</span><h2>Womit möchtest du anfangen?</h2>'+
  '<p>Kleine Schritte, klare Themen und eigener Lernfortschritt.</p></div><a href="#courses">Alle Kurse ansehen</a></div>'+
  '<div class="course-grid">'+top.map(courseCard).join('')+'</div></section>'+
- '<section class="section panel community"><span class="eyebrow">LIVERYLAB STUDIOS</span><h2>Gemeinsam entwickeln.</h2>'+
- '<p>Du hast Fragen oder möchtest Zugang? Kontaktiere <strong>nyxatheris</strong> auf Discord.</p>'+
- '<a class="btn discord" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord beitreten →</a></section>';
+ membershipHelp();
 }
 
 function filteredCourses(){
@@ -511,8 +517,16 @@ function dailyStrip(){
  (cap<0?'Unbegrenztes Lernen':'Heute: '+Math.max(0,cap-used)+' von '+cap+' Stationen übrig')+'</strong>'+
  '<small>'+(cap<0?'Alle Lernstationen ohne tägliche Begrenzung.':'Einmal geöffnete Stationen bleiben jederzeit abrufbar.')+'</small></div></div>';
 }
+
+function membershipHelp(){
+ return '<section class="membership-help-callout"><div class="membership-help-spark">✦</div><span class="eyebrow">LIVERYLAB STUDIOS · BETA</span><h2>Plus oder Pro testen?</h2>'+
+ '<p>Schreib <strong>NyxAtheris</strong> eine Discord-DM oder eröffne ein <strong>Ticket</strong> auf dem LiveryLab-Server. Erwähne dort <strong>@nyxatheris</strong> und teile mit, warum du Zugang möchtest. Wir schalten Testmitglieder manuell frei.</p>'+
+ '<div class="membership-help-actions"><a class="btn primary" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Ticket auf Discord eröffnen ↗</a>'+
+ '<button class="btn" data-go="plans">Mitgliedschaften vergleichen →</button></div></section>';
+}
+
 function plansPage(){
- const own=s.tier,allCourseCount=52;
+ const own=s.tier,allCourseCount=s.courses.length||52;
  function tile(tier,name,cap,stations,price,desc,benefits){
   const current=own===tier,included=(tier==='free'&&own!=='free')||(tier==='pro'&&own==='ultimate');
   return '<article class="membership-card tier-'+tier+(current?' current':'')+'">'+
@@ -528,15 +542,15 @@ function plansPage(){
  }
  const quote=s.discount;
  return pageHeading('MITGLIEDSCHAFT','Dein <span class="gradient">Lernzugang.</span>',
- 'Wähle deinen Lernumfang. Gutscheine kannst du direkt hier einlösen.')+
+ 'Wähle deinen Lernumfang. Free: 2 Prüfungen pro Tag, Plus: 4 Prüfungen und Script, Pro/Ultimate: alles unbegrenzt.')+
  dailyStrip()+
  '<div class="membership-stack">'+
  tile('free','Free','10','3 pro Tag','0,00 €','Die wichtigsten Grundlagen für deinen Anfang.',[
-  '10 Einsteiger-Lernpfade','3 neue Stationen pro Tag','Praxis, Quiz und Lernfortschritt'])+
+  '10 Grundlagenkurse und 3 neue Lektionen pro Tag','2 Kursprüfungen pro Tag','Script-Werkstatt und Referenzen gesperrt'])+
  tile('pro','Plus','25','6 pro Tag','1,99 €','Mehr Themen und mehr Übungszeit.',[
-  '25 Lernpfade','6 neue Stationen pro Tag','Vertiefende Lektionen und Projekte'])+
+  '25 Lernpfade, 6 Lektionen pro Tag','4 Prüfungen pro Tag','Script-Werkstatt freigeschaltet · Referenzen gesperrt'])+
  tile('ultimate','Pro','Alle '+allCourseCount,'Unbegrenzt','3,99 €','Der gesamte Kurskatalog.',[
-  'Zugang zu allen Kursen','Kein tägliches Stationslimit','Fortgeschrittene FiveM- und Blender-Kurse'])+
+  'Alle Kurse, Lektionen und Prüfungen unbegrenzt','Script-Werkstatt + vollständige Code-Referenzen','Sämtliche Lernfunktionen ohne Tageslimit'])+
  '</div>'+
  '<section class="voucher-panel"><div class="voucher-head"><div><span class="eyebrow">[ % ] GUTSCHEIN</span><h2>Code einlösen</h2></div><span class="voucher-icon">◇</span></div>'+
  '<p>Rabatt erhalten oder eine kostenlose Plus-/Pro-Mitgliedschaft freischalten.</p>'+
@@ -547,54 +561,45 @@ function plansPage(){
  '<div><s>'+euro(quote.original_cents)+'</s> <strong>'+euro(quote.final_cents)+'</strong> / Monat bei bestätigter Freischaltung</div>'+
  '<small>Für Zahlung und Aktivierung den LiveryLab-Support kontaktieren.</small></div>':'')+
  '<small>Rabattcodes sind Angebote, kein automatischer Kauf. Kostenpflichtige Mitgliedschaften werden derzeit vom Team nach Bestätigung aktiviert.</small></section>'+
- '<section class="section membership-support"><span class="eyebrow">NOCH FRAGEN?</span><h3>Freischaltung über Discord</h3>'+
- '<p>Schreib <strong>nyxatheris</strong>, wenn du Plus oder Pro nutzen möchtest.</p>'+
- '<a class="btn discord" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Zum LiveryLab Discord →</a></section>';
+ membershipHelp();
 }
 function examsPage(){
- var recommended=['coding-basics','lua','python','javascript','html','blender-fundamentals','fivem','sql']
-  .map(courseOf).filter(Boolean),ready=s.courses.filter(c=>countDone(c.id)===lessonsOf(c.id).length&&lessonsOf(c.id).length>=3);
- var display=Array.from(new Map([...ready,...recommended].map(c=>[c.id,c])).values()).slice(0,9);
- return pageHeading('PRÜFUNGEN','Prüfungen für <span class="gradient">dein Können.</span>',
- 'Schließe alle Lektionen eines Kurses ab. Danach startet die Abschlussprüfung mit bis zu 20 Fragen. Du bestehst ab 80 %.')+
- '<section class="section"><div class="course-grid">'+display.map(c=>{
-  var n=lessonsOf(c.id).length,done=countDone(c.id),best=(s.progress.exams||{})[c.id];
-  return '<article class="course-card '+(best?'is-complete':'')+'"><div class="course-head"><span class="course-icon">'+esc(courseAccent(c))+'</span><span class="chip '+(best?'free':'')+'">'+(best?'✓ Bestanden':'Abschluss')+'</span></div>'+
-  '<h3>'+esc(c.name)+'</h3><p>'+done+' von '+n+' Lektionen abgeschlossen. '+(best?'Dein Abschluss ist gespeichert.':'Bereite dich in Ruhe vor.')+'</p>'+
-  '<div class="progress"><span style="width:'+pct(done,n)+'%"></span></div>'+
-  '<button class="btn block" data-go="'+(done===n?'exam/':'track/')+esc(c.id)+'">'+(done===n?'Prüfung '+(best?'wiederholen':'starten')+' →':'Weiterlernen →')+'</button></article>';
- }).join('')+'</div><div class="catalog-footer"><button class="btn" data-go="courses">Alle Lernpfade ansehen →</button></div></section>';
+ const cap=Number(s.examStatus?.limit??examCap()),used=Number(s.examStatus?.used||0);
+ const suitable=s.courses.filter(c=>{const ls=lessonsOf(c.id);return ls.length>0&&ls.every(l=>allowed(l));})
+ .sort((a,b)=>(countDone(a.id)===lessonsOf(a.id).length?0:1)-(countDone(b.id)===lessonsOf(b.id).length?0:1)||a.name.localeCompare(b.name,'de'));
+ return pageHeading('PRÜFUNGEN','Deine <span class="gradient">Kursprüfungen.</span>','Jede Prüfung gehört zu genau einem freigeschalteten Kurs. Schließe zuerst dessen Lektionen ab.')+
+ '<div class="exam-quota"><strong>✦ '+(cap<0?'Unbegrenzt':Math.max(0,cap-used)+' von '+cap)+' Prüfungen heute übrig</strong><small>Free: 2 · Plus: 4 · Pro/Ultimate: unbegrenzt. Reset um Mitternacht (Berlin).</small><button class="btn small" data-go="plans">Tarife →</button></div>'+
+ '<section class="section"><div class="section-heading"><div><span class="eyebrow">DEINE KURSE</span><h2>'+suitable.length+' passende Prüfungen</h2></div></div><div class="course-grid">'+suitable.map(c=>{
+  const ls=lessonsOf(c.id),count=countDone(c.id),ready=count===ls.length,passed=!!s.progress.exams?.[c.id];
+  return '<article class="course-card '+(passed?'is-complete':'')+'"><div class="course-head"><span class="course-icon">'+esc(courseAccent(c))+'</span><span class="chip '+(passed?'free':'plus')+'">'+(passed?'✓ Bestanden':ready?'Bereit':'Noch gesperrt')+'</span></div><span class="micro">'+esc(c.category)+'</span><h3>'+esc(c.name)+'</h3><p>'+count+' / '+ls.length+' Lektionen abgeschlossen</p><div class="progress"><span style="width:'+pct(count,ls.length)+'%"></span></div><button class="btn block" data-go="'+(ready?'exam/':'track/')+esc(c.id)+'">'+(ready?'Prüfung öffnen →':'Kurs fortsetzen →')+'</button></article>';
+ }).join('')+'</div></section>';
 }
 async function loadExam(id){
- s.exam=null;
- const lessons=lessonsOf(id);
- if(!lessons.length||lessons.some(l=>!doneIds().has(l.id)))return;
- const res=await api.rpc('academy_exam_questions',{p_course:id});
- if(res.error){notice('Prüfungsfragen konnten nicht geladen werden: '+formatError(res.error));return;}
- const questions=(res.data||[]).filter(x=>x.payload&&Array.isArray(x.payload.options)&&x.payload.options.length>1&&Number.isInteger(Number(x.payload.correct)));
- s.exam={items:questions.slice(0,20),at:0,answers:[],review:[],busy:false};
+ s.exam=null;s.examGate=null;
+ const ls=lessonsOf(id);
+ if(!ls.length||!ls.every(l=>allowed(l))){s.examGate={reason:'tier',error:'Diese Kursprüfung ist für deinen Tarif gesperrt.'};return;}
+ if(ls.some(l=>!doneIds().has(l.id)))return;
+ const r=await api.rpc('academy_exam_start',{p_course:id});
+ if(r.error){s.examGate={reason:'error',error:formatError(r.error)};return;}
+ if(!r.data?.ok){s.examGate=r.data||{reason:'error'};return;}
+ const qs=(r.data.questions||[]).filter(x=>x.payload&&Array.isArray(x.payload.options)&&x.payload.options.length>1);
+ s.examStatus={limit:r.data.limit,used:r.data.used,remaining:r.data.remaining};
+ s.exam={items:qs,attemptId:r.data.attempt_id,at:0,answers:[],review:[],busy:false,result:null};
 }
 async function submitExamAnswer(answerIndex){
- const ex=s.exam,route=parseRoute();
+ const ex=s.exam,course=parseRoute().id;
  if(!ex||ex.busy||ex.at>=ex.items.length||!Number.isInteger(answerIndex))return;
- const item=ex.items[ex.at],p=item.payload;
- if(answerIndex<0||answerIndex>=p.options.length)return;
- ex.busy=true;
- const correct=answerIndex===Number(p.correct);
- ex.answers.push(correct);
- ex.review.push({quiz:p.quiz||'Wissensfrage',correct,chosen:p.options[answerIndex],expected:p.options[Number(p.correct)]||'—'});
- ex.at++;
- if(ex.at===ex.items.length){
-  const score=ex.answers.filter(Boolean).length;
-  const pass=score>=Math.ceil(ex.items.length*.8);
-  if(pass){
-   const existing=(s.progress.exams||{})[route.id];
-   if(!s.progress.exams)s.progress.exams={};
-   if(!existing||existing===true||Number(existing.score||0)<score){
-    s.progress.exams[route.id]={score,total:ex.items.length,passed:true,at:new Date().toISOString()};
-   }
-   try{await saveProgress()}catch(err){notice('Prüfungsergebnis konnte nicht synchronisiert werden: '+formatError(err));}
-  }
+ const q=ex.items[ex.at];if(answerIndex<0||answerIndex>=q.payload.options.length)return;
+ ex.busy=true;ex.answers.push(answerIndex);ex.at++;
+ if(ex.at>=ex.items.length){
+  try{
+   const r=await api.rpc('academy_exam_finish',{p_attempt:ex.attemptId,p_answers:ex.answers});
+   if(r.error)throw r.error;if(!r.data?.ok)throw Error(r.data?.error||'Prüfung fehlgeschlagen');
+   ex.result=r.data;ex.review=r.data.review||[];
+   if(r.data.passed){s.progress.exams[course]={score:r.data.score,total:r.data.total,passed:true,at:new Date().toISOString()};
+    try{await saveProgress()}catch(_){}
+    try{const a=await api.rpc('academy_social_list');if(!a.error)s.social=a.data;}catch(_){}}
+  }catch(e){ex.result={ok:false,error:formatError(e)};notice('Ergebnis: '+formatError(e))}
  }
  ex.busy=false;render();
 }
@@ -608,13 +613,14 @@ function examPage(id){
  '<div class="project-message"><strong>Dein Lernpfad ist noch nicht vollständig.</strong>'+
  '<p>Schließe zuerst alle '+all.length+' Lektionen ab, um die Abschlussprüfung zu starten.</p></div>'+
  '<button class="btn primary" data-go="track/'+esc(id)+'">Zum Lernpfad →</button></section>';
+ if(s.examGate)return back+'<section class="feature-gate"><span class="feature-lock">◷</span><h2>'+esc(s.examGate.error||'Prüfung gesperrt')+'</h2><p>'+esc(s.examGate.reason==='daily_limit'?'Morgen sind neue Prüfungen verfügbar.':'Bitte deinen Tarif oder den Kurs prüfen.')+'</p><button class="btn primary" data-go="plans">Tarife ansehen →</button></section>';
  if(!s.exam||!s.exam.items.length)return back+'<div class="empty">Keine Prüfungsfragen hinterlegt.</div>';
  const ex=s.exam,finished=ex.at>=ex.items.length;
  if(finished){
-  const score=ex.answers.filter(Boolean).length,pass=score>=Math.ceil(ex.items.length*.8);
+  const score=Number(ex.result?.score||0),pass=!!ex.result?.passed;
   return back+'<section class="exam-result"><div class="award">'+(pass?'🏆':'◈')+'</div>'+
   '<span class="eyebrow">PRÜFUNG · '+esc(course.name)+'</span><h1>'+score+' von '+ex.items.length+' richtig</h1>'+
-  '<p class="lede">'+(pass?'Prüfung bestanden. Dein Ergebnis ist gespeichert.':'Noch nicht bestanden. Wiederhole die Lektionen und versuche es erneut.')+'</p>'+
+  '<p class="lede">'+(ex.result?.ok===false?'Auswertung fehlgeschlagen: '+esc(ex.result.error||'Fehler'):pass?'Prüfung bestanden! Ein neuer Profiltitel wurde möglicherweise freigeschaltet.':'Nicht bestanden. Übe weiter und versuche es erneut.')+'</p>'+
   '<div class="exam-breakdown"><strong>Deine Auswertung</strong><p>'+Math.round(score/ex.items.length*100)+' % richtig · '+(ex.items.length-score)+' Fehler</p>'+ex.review.filter(x=>!x.correct).slice(0,8).map(x=>'<div class="exam-mistake"><span>'+esc(x.quiz)+'</span><small>Richtig: '+esc(x.expected)+'</small></div>').join('')+'</div><div class="actions-pair"><button class="btn" data-go="exams">← Prüfungen</button><button class="btn primary" data-action="restart-exam">Erneut versuchen →</button></div></section>';
  }
  const q=ex.items[ex.at],p=q.payload;
@@ -643,6 +649,7 @@ function projectUnblocked(file){
 }
 function projectTotal(){return projectLessons().filter(l=>doneIds().has(l.id)).length}
 async function loadProjectTab(){
+ if(!hasScript()){s.projectSource='';return;}
  const file=PROJECT_FILES[s.projectTab]||PROJECT_FILES[0],unlocked=projectUnblocked(file);
  s.projectSource='';
  if(!unlocked.length)return;
@@ -680,7 +687,7 @@ function scriptPage(){
 }
 
 function referenceLibrary(){
- return window.LL_REFERENCE_DATA||{
+ return s.referenceData||{
   lua:{name:'Lua',url:'https://www.lua.org/manual/5.4/',
   groups:{'Grundlagen':[['local x = 1','Lokale Variable'],['print(x)','Wert ausgeben'],['if x > 1 then ... end','Bedingung']]}}
  };
@@ -705,6 +712,7 @@ function referenceResults(){
  return {html:html||'<div class="empty"><h3>Keine Treffer</h3><p>Versuche einen anderen Suchbegriff oder eine andere Kategorie.</p></div>',count:hits};
 }
 function referencePage(){
+ if(!fullAccess())return paywall('Code-Referenzen','Pro / Ultimate','Die Referenzbibliothek gehört zum höchsten Tarif.');
  const lib=referenceLibrary(),entry=lib[s.refLang]||lib.lua||Object.values(lib)[0];
  const langs=Object.keys(lib),groups=Object.keys(entry?.groups||{}),allCount=Object.values(lib).reduce((sum,v)=>sum+Object.values(v.groups||{}).reduce((a,arr)=>a+arr.length,0),0);
  const results=referenceResults();
@@ -728,10 +736,106 @@ function referencePage(){
  '<button type="button" class="btn primary" data-go="courses">Zu den Lernpfaden →</button></section>';
 }
 
+
+const AVATAR_STYLES=[['violet','Violett'],['blue','Oceanblau'],['emerald','Emerald'],['rose','Rose'],['amber','Gold'],['mono','Monochrom']];
+const BANNER_STYLES=[['nebula','Nebula'],['aurora','Aurora'],['sunset','Sunset'],['ocean','Ozean'],['pixel','Pixel'],['midnight','Midnight']];
+const NAME_STYLES=[['classic','Klassisch'],['gradient','Gradient'],['glow','Glow'],['mono','Mono'],['bold','Bold']];
+function selectStyle(name,values,current){
+ return '<div class="style-picker" role="group" aria-label="'+esc(name)+'">'+values.map(([value,label])=>
+ '<label class="style-choice '+esc(name)+'-option '+esc(value)+'"><input type="radio" name="'+esc(name)+'" value="'+esc(value)+'" '+(value===current?'checked':'')+'><span>'+esc(label)+'</span></label>').join('')+'</div>';
+}
+function avatarFor(card,name,size){
+ const initial=esc(String(name||'D').slice(0,1).toUpperCase()),uid=card?.id||s.user?.id,
+ image=socialImageUrl(uid,'avatar');
+ return '<span class="social-avatar avatar-'+esc(card?.avatar_style||'violet')+' '+(size||'')+'">'+initial+
+ (image?'<img class="social-avatar-image" src="'+safeLink(image)+'" alt="" loading="lazy">':'')+'</span>';
+}
+function socialBanner(card,name,editable){
+ const style=card?.banner_style||'nebula',title=card?.title||'Developer',username=card?.username||s.profile?.username||'developer';
+ const banner=socialImageUrl(card?.id||s.user?.id,'banner');
+ return '<div class="social-banner banner-'+esc(style)+'">'+(banner?'<img class="social-banner-photo" src="'+safeLink(banner)+'" alt="" loading="lazy">':'')+'<span class="banner-glints">✦ ✧ ✦</span>'+
+ '<div class="social-banner-identity">'+avatarFor(card,name,'large')+
+ '<div><span class="social-title">✦ '+esc(title)+'</span><h2 class="social-name name-'+esc(card?.name_style||'classic')+'">'+esc(name||'Developer')+'</h2><span class="social-handle">@'+esc(username)+'</span></div></div>'+
+ '<span class="social-banner-label">LIVERYLAB STUDIOS · DEVELOPER ACADEMY</span></div>';
+}
+function socialProfilePanel(){
+ const card=s.social?.profile||{username:s.profile?.username,display_name:s.profile?.display_name},
+ name=card.display_name||s.profile?.display_name||'Developer',
+ titles=(s.social?.titles||['Developer']).filter(Boolean);
+ return '<section class="section social-profile-panel"><span class="eyebrow">[ ✦ ] DEIN ÖFFENTLICHES AKADEMIE-PROFIL</span>'+
+ socialBanner(card,name,true)+
+ '<div class="social-profile-bottom"><p class="social-bio">'+esc(card.bio||'Noch keine Bio. Erzähl anderen Developern etwas über dich!')+'</p>'+
+ '<div class="social-profile-metrics"><span>✦ '+Number(card.awards||0)+' bestandene Prüfungsreihen</span><span>▦ '+Number(card.lessons||0)+' abgeschlossene Lektionen</span><span>♡ '+(s.social?.friends?.length||0)+' Freunde</span></div></div>'+
+ '<div class="panel social-customizer"><h3><icon>✎</icon> Profil gestalten</h3><p class="micro">Wähle dein Banner, dein Avatar-Design, deinen Namen-Stil und deine freigeschalteten Titel.</p>'+
+ '<form data-form="social-profile"><div class="form-group"><label class="form-label">Über mich · Bio (max. 260 Zeichen)</label>'+
+ '<textarea class="input social-bio-input" name="bio" maxlength="260" rows="3" placeholder="Ich entwickle gerade mein erstes FiveM-Script …">'+esc(card.bio||'')+'</textarea></div>'+
+ '<div class="social-custom-label">Profilbild hochladen oder Avatar-Farbe wählen</div><div class="social-upload-row"><label class="btn small social-file-picker">Bild hochladen<input type="file" data-social-upload="avatar" accept="image/jpeg,image/png,image/webp" hidden></label><button class="btn small" type="button" data-social-remove="avatar" '+(!s.socialMedia?.[s.user?.id]?.avatar?'disabled':'')+'>Profilbild entfernen</button></div>'+selectStyle('avatar',AVATAR_STYLES,card.avatar_style||'violet')+
+ '<div class="social-custom-label">Banner-Bild und Hintergrund</div><div class="social-upload-row"><label class="btn small social-file-picker">Banner hochladen<input type="file" data-social-upload="banner" accept="image/jpeg,image/png,image/webp" hidden></label><button class="btn small" type="button" data-social-remove="banner" '+(!s.socialMedia?.[s.user?.id]?.banner?'disabled':'')+'>Banner entfernen</button></div><p class="micro">Bilder werden für die Privatsphäre neu als WebP ohne Foto-Metadaten exportiert. Deine hochgeladenen Profilbilder sind für andere über die Bild-URL öffentlich sichtbar.</p>'+selectStyle('banner',BANNER_STYLES,card.banner_style||'nebula')+
+ '<div class="social-custom-label">Namensstil</div>'+selectStyle('style',NAME_STYLES,card.name_style||'classic')+
+ '<div class="form-group"><label class="form-label">Erfolgstitel auswählen</label><select class="select" name="title">'+titles.map(t=>'<option value="'+esc(t)+'" '+(card.title===t?'selected':'')+'>'+esc(t)+'</option>').join('')+'</select></div>'+
+ '<label class="settings-row social-privacy"><span><b>Fortschritt für Freunde sichtbar</b><small>Bestätigte Freunde sehen nur Lektionen und bestandene Prüfungen, niemals E-Mail oder Passwort.</small></span>'+
+ '<input type="checkbox" name="show_progress" '+(card.show_progress!==false?'checked':'')+'></label>'+
+ '<button class="btn primary" type="submit">Änderungen speichern ✓</button></form></div></section>';
+}
+function friendsPage(){
+ const card=s.social||{},friends=card.friends||[],requests=card.requests||[],incoming=requests.filter(r=>r.direction==='incoming'),outgoing=requests.filter(r=>r.direction==='outgoing');
+ const cardFor=(u,buttons)=>'<div class="friend-card">'+avatarFor(u,u.display_name||u.username,'')+
+ '<div class="friend-identity"><strong class="name-'+esc(u.name_style||'classic')+'">'+esc(u.display_name||u.username||'Developer')+'</strong>'+
+ '<span>@'+esc(u.username||'unknown')+' · '+esc(u.title||'Developer')+'</span>'+
+ '<p>'+esc(u.bio||'Lernt in der LiveryLab Academy.')+'</p>'+
+ (u.lessons===null?'<small>Fortschritt privat</small>':
+ u.lessons===undefined?'':'<div class="friend-progress"><span>▦ '+Number(u.lessons)+' Lektionen</span><span>✦ '+Number(u.awards||0)+' Prüfungen</span></div>')+
+ '</div><div class="friend-actions">'+buttons+'</div></div>';
+ return pageHeading('COMMUNITY','Deine <span class="gradient">Developer-Freunde.</span>',
+ 'Finde andere Academy-Mitglieder per Benutzername und verfolge ihren Fortschritt – nur mit ihrer Erlaubnis.')+
+ '<section class="panel friends-search-panel"><h2>Freund hinzufügen</h2><form data-form="friend-search">'+
+ '<label class="form-label" for="friend-query">Benutzername</label><div class="voucher-input-row"><input class="input" id="friend-query" name="username" pattern="[A-Za-z][A-Za-z0-9_]{2,23}" maxlength="24" placeholder="z. B. nyxatheris" required>'+
+ '<button class="btn primary" type="submit">Suchen →</button></div></form><div id="friend-search-result"></div></section>'+
+ (incoming.length?'<section class="section"><span class="eyebrow">OFFENE FREUNDSCHAFTSANFRAGEN · '+incoming.length+'</span>'+
+ '<div class="friend-list">'+incoming.map(u=>cardFor(u,
+ '<button class="btn primary small" data-friend-action="accept" data-friend-id="'+esc(u.id)+'">Annehmen</button><button class="btn small" data-friend-action="decline" data-friend-id="'+esc(u.id)+'">Ablehnen</button>')).join('')+'</div></section>':'')+
+ (outgoing.length?'<section class="section"><h3>Gesendete Anfragen</h3><div class="friend-list">'+outgoing.map(u=>cardFor(u,
+ '<button class="btn small" data-friend-action="cancel" data-friend-id="'+esc(u.id)+'">Zurückziehen</button>')).join('')+'</div></section>':'')+
+ '<section class="section"><div class="section-heading"><div><span class="eyebrow">[ ♡ ] DEINE FREUNDESLISTE</span><h2>'+friends.length+' Freunde</h2></div></div>'+
+ (friends.length?'<div class="friend-list">'+friends.map(u=>cardFor(u,
+ '<button class="btn small danger" data-friend-action="remove" data-friend-id="'+esc(u.id)+'">Entfernen</button>')).join('')+'</div>':
+ '<div class="empty friend-empty"><div class="empty-icon">♡</div><h3>Noch keine Freunde</h3><p>Suche oben nach einem Benutzernamen und sende deine erste Anfrage.</p></div>')+'</section>';
+}
+async function refreshSocial(){const [r,media]=await Promise.all([api.rpc('academy_social_list'),api.rpc('academy_social_media_list')]);if(r.error)throw r.error;s.social=r.data;if(!media.error)s.socialMedia=media.data||{};return r.data;}
+function socialImageUrl(uid,kind){
+ if(!uid||!s.socialMedia?.[uid]?.[kind])return '';
+ return api.storage.from('academy-profile-images').getPublicUrl(uid+'/'+kind+'.webp').data.publicUrl+'?v='+encodeURIComponent(String(s.social?.profile?.lessons||0))+'&stamp='+encodeURIComponent(String(s.imageRevision||'1'));
+}
+async function uploadSocialImage(kind,file){
+ if(!s.user||!['avatar','banner'].includes(kind))throw Error('Ungültiger Bildtyp.');
+ if(!file||!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>5*1024*1024)throw Error('Nur JPG, PNG oder WebP bis maximal 5 MB.');
+ const bitmap=await createImageBitmap(file);
+ const canvas=document.createElement('canvas'),w=kind==='avatar'?480:1200,h=kind==='avatar'?480:440;
+ canvas.width=w;canvas.height=h;
+ const ctx=canvas.getContext('2d');
+ if(!ctx){bitmap.close();throw Error('Bildbearbeitung nicht verfügbar');}
+ const scale=Math.max(w/bitmap.width,h/bitmap.height);
+ const sw=w/scale,sh=h/scale,sx=(bitmap.width-sw)/2,sy=(bitmap.height-sh)/2;
+ ctx.drawImage(bitmap,sx,sy,sw,sh,0,0,w,h);bitmap.close();
+ let blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/webp',.82));
+ if(blob?.size>1048576)blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/webp',.55));
+ if(!blob||blob.size>1048576)throw Error('Das Bild ist auch nach Komprimierung zu groß.');
+ const path=s.user.id+'/'+kind+'.webp';
+ const {error}=await api.storage.from('academy-profile-images').upload(path,blob,{upsert:true,contentType:'image/webp',cacheControl:'120'});
+ if(error)throw error;
+ s.imageRevision=Date.now();await refreshSocial();
+}
+async function removeSocialImage(kind){
+ if(!s.user||!['avatar','banner'].includes(kind))return;
+ const {error}=await api.storage.from('academy-profile-images').remove([s.user.id+'/'+kind+'.webp']);
+ if(error)throw error;
+ s.imageRevision=Date.now();await refreshSocial();
+}
+
 function profilePage(){
  var done=s.progress.done.length,name=s.profile.display_name||s.profile.username||'Developer',
  initial=String(name).slice(0,1).toUpperCase(),username=s.profile.username,activeCourse=s.courses.filter(c=>countDone(c.id)>0).length;
- return pageHeading('MEIN ACCOUNT','Dein <span class="gradient">Developer-Profil.</span>',
+ return socialProfilePanel()+pageHeading('MEIN ACCOUNT','Deine <span class="gradient">Kontoeinstellungen.</span>',
  'Deine Lernreise, dein Konto und deine Sicherheit an einem Ort.')+
  '<section class="profile-hero"><div class="profile-avatar-large">'+esc(initial)+'</div>'+
  '<div class="profile-summary"><span class="eyebrow">LIVERYLAB ACADEMY</span><h2>'+esc(name)+'</h2>'+
@@ -843,7 +947,7 @@ function adminPage(){
    '<button class="btn small" data-reset-user="'+esc(u.id)+'" '+(owner?'disabled':'')+'>Passwort zurücksetzen</button>'+
    '<button class="btn small '+(u.active?'danger':'primary')+'" data-active-user="'+esc(u.id)+'" data-active-value="'+(!u.active)+'" '+(owner?'disabled':'')+'>'+
    (u.active?'Zugriff sperren':'Zugriff erlauben')+'</button>'+
-   '<button class="btn small danger" data-delete-user="'+esc(u.id)+'" '+(owner?'disabled':'')+'>Löschen</button></div></div></article>';
+   '<button class="btn small danger" data-delete-user="'+esc(u.id)+'" '+(owner?'disabled':'')+'>Löschen</button></div>'+(s.isOwner&&!u.is_owner?'<div class="admin-role-select"><label class="form-label">Teamrolle</label><select class="select" data-admin-role="'+esc(u.id)+'" aria-label="Teamrolle von '+esc(u.username||'')+'"><option value="student" '+(u.role==='student'?'selected':'')+'>Mitglied</option><option value="admin" '+(u.role==='admin'?'selected':'')+'>Administrator · Team verwalten</option></select></div>':'')+'</div></article>';
  }).join('');
  return pageHeading('ADMINISTRATION','Dein <span class="gradient">Team.</span>',
  'Registrierungen prüfen, Zugänge sperren oder wieder freigeben und Mitgliedschaften direkt ändern.')+
@@ -870,7 +974,7 @@ function adminPage(){
 }
 async function fetchMembers(){
  if(s.profile?.role!=='admin')return;
- var data=await adminCall({action:'list',page:s.adminPage});s.members=data.users||[];
+ var data=await adminCall({action:'list',page:s.adminPage});s.members=data.users||[];s.isOwner=!!data.isOwner;
  var tier=await api.from('academy_plans').select('user_id,tier');
  if(tier.error)throw tier.error;s.memberPlans={};(tier.data||[]).forEach(function(r){s.memberPlans[r.user_id]=r.tier;});
 }
@@ -905,6 +1009,15 @@ document.addEventListener('click',async function(e){
  if(goTarget){e.preventDefault();go(goTarget.dataset.go);return;}
  if(e.target.id==='nav-backdrop'){sidebar.classList.remove('open');syncBackdrop();return;}
  if(e.target.id==='menu-toggle'){sidebar.classList.toggle('open');syncBackdrop();return;}
+ var socialRemove=e.target.closest('[data-social-remove]');
+ if(socialRemove){if(!confirm('Dieses Profilbild / Banner wirklich entfernen?'))return;try{await removeSocialImage(socialRemove.dataset.socialRemove);render();notice('Bild entfernt.');}catch(err){notice('Bild: '+formatError(err))}return;}
+ var friendAction=e.target.closest('[data-friend-action]');
+ if(friendAction){
+  const command=friendAction.dataset.friendAction,id=friendAction.dataset.friendId;
+  if(command==='remove'&&!confirm('Diesen Freund wirklich entfernen?'))return;
+  try{const r=await api.rpc('academy_friend_action',{p_action:command,p_user:id});if(r.error)throw r.error;await refreshSocial();render();notice('Freundesliste aktualisiert.');}
+  catch(err){notice('Freundschaft: '+formatError(err));}return;
+ }
  var action=e.target.closest('[data-action]');
  if(action){
   var name=action.dataset.action;
@@ -1015,6 +1128,12 @@ document.addEventListener('input',function(e){
  }
 });
 document.addEventListener('change',async function(e){
+ if(e.target.hasAttribute('data-social-upload')){
+  const kind=e.target.dataset.socialUpload,file=e.target.files?.[0];if(!file)return;
+  e.target.disabled=true;
+  try{notice('Bild wird verarbeitet und hochgeladen …');await uploadSocialImage(kind,file);render();notice('Profilbild / Banner gespeichert!');}
+  catch(err){notice('Bild-Upload: '+formatError(err));e.target.disabled=false;}return;
+ }
  if(e.target.id==='reference-language'){
   s.refLang=e.target.value;s.refSearch='';s.refGroup='Alle';render();return;
  }
@@ -1046,6 +1165,11 @@ document.addEventListener('change',async function(e){
   return;
  }
  if(e.target.hasAttribute('data-pref')){setPreference(e.target.dataset.pref,e.target.checked);return;}
+ if(e.target.hasAttribute('data-admin-role')){
+  const field=e.target,member=s.members.find(u=>u.id===field.dataset.adminRole),old=member?.role||'student';
+  if(!s.isOwner||!confirm(field.value==='admin'?'Dieses Mitglied zum Administrator ernennen? Es kann Konten genehmigen, sperren und Tarife ändern.':'Administratorrechte für dieses Mitglied entziehen?')){field.value=old;return;}
+  try{await adminCall({action:'setRole',userId:field.dataset.adminRole,role:field.value});await fetchMembers();render();notice('Administratorrolle geändert.');}catch(e){field.value=old;notice(formatError(e));}return;
+ }
  if(e.target.hasAttribute('data-admin-tier')){
   var select=e.target,old=s.memberPlans[select.dataset.adminTier]||'free';
   try{await updateTier(select.dataset.adminTier,select.value)}catch(err){select.value=old;notice(formatError(err))}
@@ -1067,6 +1191,17 @@ document.addEventListener('submit',async function(e){
    if(result.error)throw result.error;
    s.profile.username=result.data||chosen.toLowerCase();
    notice('Benutzername aktiviert. Beide Anmeldearten funktionieren jetzt.');render();
+  }
+  if(mode==='social-profile'){
+   const bio=String(fd.get('bio')||'').trim(),avatar=String(fd.get('avatar')||'violet'),banner=String(fd.get('banner')||'nebula'),style=String(fd.get('style')||'classic'),title=String(fd.get('title')||'Developer'),visible=fd.has('show_progress');
+   if(bio.length>260)throw Error('Die Bio darf maximal 260 Zeichen lang sein.');
+   const r=await api.rpc('academy_social_update',{p_bio:bio,p_avatar:avatar,p_banner:banner,p_style:style,p_title:title,p_show:visible});if(r.error)throw r.error;
+   await refreshSocial();notice('Profilgestaltung gespeichert!');render();return;
+  }
+  if(mode==='friend-search'){
+   const username=String(fd.get('username')||'').trim();const r=await api.rpc('academy_social_search',{p_username:username});if(r.error)throw r.error;
+   const found=r.data||{},box=$('#friend-search-result');if(!box)return;
+   box.innerHTML=found.id?'<div class="friend-search-found">'+avatarFor(found,found.display_name||found.username,'')+'<div><strong>'+esc(found.display_name||found.username)+'</strong><small>@'+esc(found.username)+' · '+esc(found.title||'Developer')+'</small></div><button type="button" class="btn primary small" data-friend-action="request" data-friend-id="'+esc(found.id)+'">Anfrage senden →</button></div>':'<div class="empty">Kein freigegebenes Profil mit diesem Namen gefunden.</div>';return;
   }
   if(mode==='profile'){
    var name=String(fd.get('display_name')||'').trim();if(name.length<2||name.length>40)throw Error('Anzeigename: 2–40 Zeichen.');

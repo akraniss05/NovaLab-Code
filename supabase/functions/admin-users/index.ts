@@ -70,6 +70,29 @@ Deno.serve(async(req:Request)=>{
       return reply(200,{ok:true,deleted:true});
     }
     if(profile.role!=='admin'||!profile.active||profile.access_status!=='approved')return reply(403,{error:'Administrator only'});
+    
+    // Only the original account owner may delegate or revoke Administrator.
+    // New administrators can approve, ban and manage students, but can never
+    // promote themselves, remove the original owner or change another admin.
+    const {data:ownerList,error:ownerError}=await admin.from('academy_owner_ids').select('user_id');
+    if(ownerError)return reply(503,{error:'Eigentümerrechte konnten nicht geprüft werden'});
+    const ownerIds=new Set((ownerList||[]).map((x:{user_id:string})=>x.user_id));
+    const isOwner=ownerIds.has(user.id);
+    if(body.action==='setRole'){
+      if(!isOwner)return reply(403,{error:'Nur der Projekteigentümer darf Administratorrollen vergeben'});
+      const id=String(body.userId||'');
+      const role=String(body.role||'');
+      if(!isUUID(id)||!['student','admin'].includes(role)||id===user.id||ownerIds.has(id))
+        return reply(400,{error:'Dieses Konto oder diese Rolle darf nicht geändert werden'});
+      const {data:target,error:targetError}=await admin.from('academy_profiles')
+       .select('role,active,access_status').eq('id',id).maybeSingle();
+      if(targetError||!target)return reply(404,{error:'Mitglied nicht gefunden'});
+      if(!target.active||target.access_status!=='approved')
+        return reply(409,{error:'Nur bereits freigegebene, aktive Mitglieder können Administrator werden'});
+      const {error:updateError}=await admin.from('academy_profiles').update({role}).eq('id',id);
+      if(updateError)throw updateError;
+      return reply(200,{ok:true,role});
+    }
     if(body.action==='setTier'){
       const id=String(body.userId||'');
       const tier=String(body.tier||'');
@@ -92,10 +115,10 @@ Deno.serve(async(req:Request)=>{
       if(pe)throw pe;
       const map=new Map((profiles||[]).map(p=>[p.id,p]));
       const users=members.users.filter(u=>map.has(u.id)).map(u=>({
-        id:u.id,email:u.email||'',username:map.get(u.id)?.username||null,needs_password_change:map.get(u.id)?.needs_password_change||false,role:map.get(u.id)?.role||'student',active:map.get(u.id)?.active??false,access_status:map.get(u.id)?.access_status||'blocked',email_confirmed:!!u.email_confirmed_at&&u.app_metadata?.academy_signup_flow!=='manual_request',email_review_required:u.app_metadata?.academy_signup_flow==='manual_request',created_at:u.created_at
+        id:u.id,email:u.email||'',username:map.get(u.id)?.username||null,needs_password_change:map.get(u.id)?.needs_password_change||false,role:map.get(u.id)?.role||'student',is_owner:ownerIds.has(u.id),active:map.get(u.id)?.active??false,access_status:map.get(u.id)?.access_status||'blocked',email_confirmed:!!u.email_confirmed_at&&u.app_metadata?.academy_signup_flow!=='manual_request',email_review_required:u.app_metadata?.academy_signup_flow==='manual_request',created_at:u.created_at
       }));
       users.sort((a,b)=>(a.access_status==='pending'?0:1)-(b.access_status==='pending'?0:1));
-      return reply(200,{users,page,hasMore:members.users.length===100,pendingCount:users.filter(u=>u.access_status==='pending').length});
+      return reply(200,{users,page,isOwner,hasMore:members.users.length===100,pendingCount:users.filter(u=>u.access_status==='pending').length});
     }
 
     if(body.action==='createEmail'){
