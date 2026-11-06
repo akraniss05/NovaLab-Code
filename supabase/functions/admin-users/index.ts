@@ -46,7 +46,7 @@ Deno.serve(async(req:Request)=>{
       }catch(_err){}
       if(aal!=='aal2')return reply(403,{error:'Bitte zuerst den Authenticator-Code bestätigen.'});
     }
-    const {data:profile,error:profileError}=await admin.from('academy_profiles').select('role,active,needs_password_change').eq('id',user.id).single();
+    const {data:profile,error:profileError}=await admin.from('academy_profiles').select('role,active,access_status,needs_password_change').eq('id',user.id).single();
     if(profileError||!profile)return reply(403,{error:'Account not enrolled'});
     let body:Record<string,unknown>;
     try{body=await req.json()}catch{return reply(400,{error:'Invalid JSON'})}
@@ -69,18 +69,33 @@ Deno.serve(async(req:Request)=>{
       if(error)throw error;
       return reply(200,{ok:true,deleted:true});
     }
-    if(profile.role!=='admin'||!profile.active)return reply(403,{error:'Administrator only'});
+    if(profile.role!=='admin'||!profile.active||profile.access_status!=='approved')return reply(403,{error:'Administrator only'});
+    if(body.action==='setTier'){
+      const id=String(body.userId||'');
+      const tier=String(body.tier||'');
+      if(!isUUID(id)||!['free','pro','ultimate'].includes(tier)||id===user.id)
+        return reply(400,{error:'Ungültiger Tarif oder Account'});
+      const {data:target,error:targetError}=await admin.from('academy_profiles')
+        .select('role').eq('id',id).maybeSingle();
+      if(targetError||!target||target.role!=='student')return reply(403,{error:'Nur Mitgliedertarife können geändert werden'});
+      const {error:planError}=await admin.from('academy_plans').upsert({
+        user_id:id,tier,granted_by:user.id,expires_at:null,updated_at:new Date().toISOString()
+      },{onConflict:'user_id'});
+      if(planError)throw planError;
+      return reply(200,{ok:true,tier});
+    }
     if(body.action==='list'){
       const page=Math.max(1,Math.min(100,Math.trunc(Number(body.page)||1)));
       const {data:members,error}=await admin.auth.admin.listUsers({page,perPage:100});
       if(error)throw error;
-      const {data:profiles,error:pe}=await admin.from('academy_profiles').select('id,role,active,username,needs_password_change');
+      const {data:profiles,error:pe}=await admin.from('academy_profiles').select('id,role,active,access_status,username,needs_password_change,created_at');
       if(pe)throw pe;
       const map=new Map((profiles||[]).map(p=>[p.id,p]));
       const users=members.users.filter(u=>map.has(u.id)).map(u=>({
-        id:u.id,email:u.email||'',username:map.get(u.id)?.username||null,needs_password_change:map.get(u.id)?.needs_password_change||false,role:map.get(u.id)?.role||'student',active:map.get(u.id)?.active??true
+        id:u.id,email:u.email||'',username:map.get(u.id)?.username||null,needs_password_change:map.get(u.id)?.needs_password_change||false,role:map.get(u.id)?.role||'student',active:map.get(u.id)?.active??false,access_status:map.get(u.id)?.access_status||'blocked',email_confirmed:!!u.email_confirmed_at,created_at:u.created_at
       }));
-      return reply(200,{users,page,hasMore:members.users.length===100});
+      users.sort((a,b)=>(a.access_status==='pending'?0:1)-(b.access_status==='pending'?0:1));
+      return reply(200,{users,page,hasMore:members.users.length===100,pendingCount:users.filter(u=>u.access_status==='pending').length});
     }
 
     if(body.action==='createEmail'){
@@ -98,7 +113,7 @@ Deno.serve(async(req:Request)=>{
       if(!created?.user?.id)return reply(500,{error:'Auth provider returned no user'});
       const id=created.user.id;
       const {error:profileError}=await admin.from('academy_profiles')
-        .upsert({id,display_name:name,role:'student',active:true,needs_password_change:true},{onConflict:'id'});
+        .upsert({id,display_name:name,role:'student',active:true,access_status:'approved',needs_password_change:true},{onConflict:'id'});
       if(profileError){
         await admin.auth.admin.deleteUser(id);
         return reply(500,{error:'Profil konnte nicht eingerichtet werden'});
@@ -122,7 +137,7 @@ Deno.serve(async(req:Request)=>{
       if(!created?.user?.id)return reply(500,{error:'Auth provider returned no user'});
       const userId=created.user.id;
       const {error:profileIssue}=await admin.from('academy_profiles')
-        .update({username:safe,display_name:username,needs_password_change:true,role:'student',active:true})
+        .update({username:safe,display_name:username,needs_password_change:true,role:'student',active:true,access_status:'approved'})
         .eq('id',userId);
       if(profileIssue){
         await admin.auth.admin.deleteUser(userId);
@@ -155,16 +170,20 @@ Deno.serve(async(req:Request)=>{
       if(!isUUID(body.userId))return reply(400,{error:'Invalid user id'});
       const id=String(body.userId);
       if(id===user.id)return reply(403,{error:'Cannot manage your own admin account here'});
-      const {data:target,error:te}=await admin.from('academy_profiles').select('role,active').eq('id',id).single();
+      const {data:target,error:te}=await admin.from('academy_profiles').select('role,active,access_status').eq('id',id).single();
       if(te||!target)return reply(404,{error:'Account not found'});
       if(target.role!=='student')return reply(403,{error:'Admin accounts protected'});
       if(body.action==='setActive'){
+        if(body.active===true){
+          const {data:record,error:re}=await admin.auth.admin.getUserById(id);
+          if(re||!record?.user?.email_confirmed_at)return reply(409,{error:'Bitte zuerst die E-Mail-Adresse bestätigen, dann kann der Account freigegeben werden.'});
+        }
         if(typeof body.active!=='boolean')return reply(400,{error:'Invalid active state'});
         const {error:ban}=await admin.auth.admin.updateUserById(id,{ban_duration:body.active?'none':'876000h'});
         if(ban)throw ban;
-        const {error:up}=await admin.from('academy_profiles').update({active:body.active}).eq('id',id);
+        const {error:up}=await admin.from('academy_profiles').update({active:body.active,access_status:body.active?'approved':'blocked'}).eq('id',id);
         if(up)throw up;
-        return reply(200,{ok:true,active:body.active});
+        return reply(200,{ok:true,active:body.active,access_status:body.active?'approved':'blocked'});
       }
       if(body.confirmation!=='SCHÜLER LÖSCHEN')return reply(400,{error:'Exact confirmation required'});
       const {error:del}=await admin.auth.admin.deleteUser(id);
