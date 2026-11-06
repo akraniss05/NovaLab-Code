@@ -48,7 +48,7 @@ async function signIn(fd,button){
  var username=String(fd.get('username')||'').trim().toLowerCase();
  var password=String(fd.get('password')||'');
  if(!/^[a-z][a-z0-9_]{2,23}$/.test(username)&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username)){notice('Bitte einen gültigen Benutzernamen eingeben.');return;}
- var email=username.includes('@')?username:username+'@accounts.livery-lab.app';
+ var email=username.includes('@')?username:(username==='nyxatheris'?'nyxatheris@livery-lab.app':username+'@accounts.livery-lab.app');
  if(button){button.disabled=true;button.textContent='Anmeldung prüfen …';}
  try{var res=await api.auth.signInWithPassword({email:email,password:password});if(res.error)throw res.error;await boot();}
  catch(e){notice('Anmeldung fehlgeschlagen. Prüfe Benutzername und Passwort.');if(button){button.disabled=false;button.textContent='Anmelden →';}}
