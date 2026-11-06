@@ -1,4 +1,4 @@
-name: Deploy LiveryLab Academy v17 • membership social and examinations
+name: Deploy LiveryLab Academy v18 • voucher manager streak and creator profiles
 on:
   push:
     branches: [main]
@@ -36,7 +36,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: academy-v17-mobile-captures
+          name: academy-v18-mobile-captures
           path: test-results/
           if-no-files-found: ignore
       - name: Remove restricted reference data from public site artifact

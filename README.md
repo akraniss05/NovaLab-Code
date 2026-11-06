@@ -148,3 +148,17 @@ Unter Repository Settings > Pages muss „GitHub Actions“ aktiviert sein. Push
 - Freundesliste mit Anfragen, Annahme, Ablehnung und Entfernen. Fortschritt nur für bestätigte Freunde und optional abschaltbar. Kein Zugriff auf E-Mail-Adressen anderer Nutzer.
 - Der ursprüngliche Eigentümer kann weitere Administratoren ernennen und entlassen. Delegierte Admins können Anfragen freigeben, Accounts sperren und Mitgliedschaften verwalten, aber **nicht** den Owner oder andere Adminrollen verändern.
 - Alle kostenpflichtigen Testzugänge werden derzeit persönlich über NyxAtheris/Discord vergeben. Kein automatischer Zahlungsanbieter.
+
+
+## v18 · Gutscheinmanager, Login-Streak und individuelle Entwicklerprofile
+
+- Gesicherte Gutscheine können automatisch oder mit einem eigenen Code wie `NYX` oder `NYXATHERIS5` erstellt werden. Gültige Länge 3–64 Zeichen (A–Z, Zahlen, Bindestriche; nicht zwischen Groß-/Kleinschreibung unterscheidend).
+- Administratoren können Gutscheine pausieren und löschen; abgelaufene Codes werden sofort beim Auflisten gefiltert. Ein Supabase-Cron-Job `liverylab-voucher-expiry-cleanup` läuft jede Minute, deaktiviert abgelaufene Codes und entfernt unbenutzte Codes physisch. Bereits eingelöste Codes werden unsichtbar archiviert, damit Einlösehistorie und bereits gewährte Vorteile nicht verloren gehen.
+- `academy_login_streak` zählt einen Besuch je Kalendertag ab **00:00 Uhr Europe/Berlin** und speichert den persönlichen Rekord. Bei wiederholten Besuchen am selben Tag steigt die Streak nicht weiter.
+- 23 freischaltbare Erfolgs-Titel (Lernlektionen, Prüfungen, Freundschaften, Streak sowie Lua/Python/JS/FiveM/HTML/Blender-Abschlüsse). Serverseitig geprüft.
+- Erweiterte Profilgestaltung mit weiteren Banner-Farbwelten und automatischem Bildzuschnitt (bis 15 MB Eingabe; max. 1 MiB WebP-Ausgabe; browserabhängige Quellformate). SVG ist aus Sicherheitsgründen ausgeschlossen. GIFs werden als Standbild gespeichert.
+- **Mein Profil** ist ausschließlich für Bio, sichtbaren Namen, Bild/Avatar, Banner, Stil, Freunde und Erfolge zuständig. E-Mail, Benutzername, Passwort und 2FA stehen in **Einstellungen**.
+- Einstellungen: sechs Farbwelten für den Hintergrund, sechs Akzentfarben, große Schrift, Kontrast, kompakte Karten, weiche Ecken, dezente Effekte, weniger Animationen und sofortige Wiederherstellung des Standarddesigns. Browser-lokal gespeichert.
+- Freundescenter mit getrennten Tabs **Freundesliste / Anfragen / Freund hinzufügen**, persönlichen Karten und optional sichtbaren Lernwerten.
+- Veröffentlichte URL: https://akraniss05.github.io/liverylab-academy/
+- `supabase` bleibt das Backend: GitHub Pages hostet ausschließlich HTML, CSS und JavaScript. Keine Supabase-Secrets im Browser veröffentlichen.

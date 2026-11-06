@@ -4,7 +4,7 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),asse
 const {chromium}=require('playwright-core');
 const root=path.join(__dirname,'..');
 const source=fs.readFileSync(path.join(root,'site/academy.js'),'utf8');
-const css=fs.readFileSync(path.join(root,'site/app-v17.css'),'utf8');
+const css=fs.readFileSync(path.join(root,'site/app-v18.css'),'utf8');
 const expose='\nwindow.__views={s,trackPage,lessonPage,scriptPage,examPage,referencePage,plansPage,adminPage,login,profilePage,friendsPage,paywall};\n})();';
 assert.match(source,/\ninit\(\);\n\}\)\(\);\s*$/);
 const rewritten=source.replace(/\ninit\(\);\n\}\)\(\);\s*$/,expose);
@@ -49,10 +49,12 @@ const scenes=[
  ['reference',app.referencePage(),['.reference-row','.reference-block']],
  ['plans',app.plansPage(),['.membership-card','.voucher-panel','.voucher-input-row']],
  ['profile',app.profilePage(),['.social-banner','.social-customizer','.social-avatar','.style-picker']],
- ['friends',app.friendsPage(),['.friends-search-panel','.friend-empty']],
+ ['friends',app.friendsPage(),['.friends-overview','.friend-navigation','.friend-empty']],
+ ['settings',app.settingsPage(),['.settings-appearance-card','.appearance-picker','.account-settings-grid','#mfa-settings']],
  ['paywall-script',app.paywall('Script','Plus','Gesperrt für Free'),['.feature-gate','.feature-gate-actions']],
  ['paywall-reference',app.paywall('Referenzen','Pro / Ultimate','Gesperrt für Plus'),['.feature-gate','.feature-gate-actions']]
 ];
+s.friendTab='search';scenes.push(['friend-search',app.friendsPage(),['.friends-search-panel','#friend-search-result']]);s.friendTab='friends';
 s.progress.done=s.lessons.map(l=>l.id);
 s.exam={items:Array.from({length:20},()=>({payload:{quiz:'Wofür benutzt man eine Variable?',options:['Wert speichern','Zum Löschen','Nur für Videos'],correct:0}})),at:0,answers:[]};
 scenes.push(['exam',app.examPage('fivem'),['.exam-question','.exam-dots','.exam-option']]);
@@ -62,7 +64,8 @@ s.members=[
  {id:'member-test',username:'DevAktiv',email:'dev@example.com',role:'student',active:true,access_status:'approved',email_confirmed:true}
 ];
 s.memberPlans={'member-test':'pro'};
-scenes.push(['admin',app.adminPage(),['.approval-card','.member-card','.member-management','[data-admin-tier]']]);
+s.vouchers=[{code:'NYXATHERIS5',kind:'gift',tier:'pro',days:7,uses:0,max_uses:1,active:true,expires_at:'2028-06-01T00:00:00Z'}];
+scenes.push(['admin',app.adminPage(),['.approval-card','.member-card','.member-management','[data-admin-tier]','.voucher-maker','[data-voucher-delete]']]);
 s.ready=false;s.authScreen='register';app.login();
 scenes.push(['registration',fakeNodes['#content'].innerHTML,['form[data-form="register"]','.auth-card']]);
 s.ready=true;s.profile.role='student';

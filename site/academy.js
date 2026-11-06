@@ -7,7 +7,7 @@
 'use strict';
 var cfg=window.LL_CONFIG||{}, $=function(q,root){return (root||document).querySelector(q);};
 var content=$('#content'), sidebar=$('#sidebar'), bottom=$('#bottom-nav'), toastNode=$('#toast');
-var api=null, s={authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},adminPage:1,catalogLimit:9,practiceChecked:false,draft:'',prefs:null,projectTab:0,projectSource:'',projectLoading:false};
+var api=null, s={loginStreak:null,friendTab:'friends',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},adminPage:1,catalogLimit:9,practiceChecked:false,draft:'',prefs:null,projectTab:0,projectSource:'',projectLoading:false};
 var plans={free:'Free',pro:'Plus',ultimate:'Pro / Ultimate'};
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];});}
 function safeLink(url){return /^https:\/\/[^\s<>"]+$/i.test(String(url||''))?esc(url):'#';}
@@ -33,7 +33,26 @@ function readDraft(id){try{return localStorage.getItem('liverylab-draft-'+id)||'
 function saveDraft(id,value){try{localStorage.setItem('liverylab-draft-'+id,String(value).slice(0,10000))}catch(_){}}
 function setPreference(key,value){try{localStorage.setItem('liverylab-pref-'+key,value?'1':'0')}catch(_){}applyPreferences()}
 function getPreference(key){try{return localStorage.getItem('liverylab-pref-'+key)==='1'}catch(_){return false}}
-function applyPreferences(){document.body.classList.toggle('compact-cards',getPreference('compact'));document.body.classList.toggle('less-motion',getPreference('motion'))}
+function getChoicePreference(key,fallback){
+ try{return localStorage.getItem('liverylab-choice-'+key)||fallback;}catch(_){return fallback;}
+}
+function setChoicePreference(key,value){
+ try{localStorage.setItem('liverylab-choice-'+key,value);}catch(_){}
+ applyPreferences();
+}
+function applyPreferences(){
+ document.body.classList.toggle('compact-cards',getPreference('compact'));
+ document.body.classList.toggle('less-motion',getPreference('motion'));
+ document.body.classList.toggle('large-typography',getPreference('largeTypography'));
+ document.body.classList.toggle('high-contrast',getPreference('contrast'));
+ document.body.classList.toggle('soft-corners',getPreference('softCorners'));
+ document.body.classList.toggle('decorative-background',getPreference('backgroundArt'));
+ const theme=getChoicePreference('theme','violet'),accent=getChoicePreference('accent','lavender');
+ if(document.documentElement?.dataset){
+  document.documentElement.dataset.theme=['violet','midnight','ocean','forest','rose','ember'].includes(theme)?theme:'violet';
+  document.documentElement.dataset.accent=['lavender','sky','mint','pink','amber','white'].includes(accent)?accent:'lavender';
+ }
+}
 function syncBackdrop(){var b=$('#nav-backdrop');if(b)b.classList.toggle('visible',sidebar.classList.contains('open'))}
 function pageHeading(label,title,description){return '<header class="page-heading"><span class="eyebrow">'+esc(label)+'</span><h1>'+title+'</h1><p class="lede">'+esc(description)+'</p></header>'}
 function planCounts(){var f=s.lessons.filter(l=>l.required_plan==='free').length;var pl=s.lessons.filter(l=>l.required_plan==='plus').length;return {free:f,plus:f+pl,pro:s.lessons.length}}
@@ -251,6 +270,7 @@ async function loadData(){
  var data=all[3].data?.payload||{};
  s.progress={done:Array.isArray(data.done)?data.done:[],watched:Array.isArray(data.watched)?data.watched:[],exams:data.exams||{},practiced:Array.isArray(data.practiced)?data.practiced:[]};
  s.ready=true;
+ try{const streak=await api.rpc('academy_login_streak');s.loginStreak=streak.error?null:streak.data;}catch(_){}
  try{const [exam,social,courses,media]=await Promise.all([api.rpc('academy_exam_status'),api.rpc('academy_social_list'),api.rpc('academy_entitled_courses'),api.rpc('academy_social_media_list')]);s.examStatus=exam.error?null:exam.data;s.social=social.error?null:social.data;s.entitledCourses=courses.error?null:courses.data;s.socialMedia=media.error?{}:media.data||{};}catch(_){}
  frame();await navigateCurrent();
 }
@@ -330,7 +350,11 @@ function homePage(){
  '<p class="lede">Verstehe die Grundlagen, probiere eigene Lösungen aus und werde Schritt für Schritt sicherer in Code, FiveM und Blender.</p>'+
  '<div class="hero-actions"><button class="btn primary" data-go="'+(next?'lesson/'+esc(next.id):'courses')+'">Jetzt starten <span>→</span></button>'+
  '<button class="btn" data-go="courses">Alle Lernpfade</button></div></section>'+
- stats()+dailyStrip()+
+ stats()+
+ '<button class="streak-home" type="button" data-go="profile"><span class="streak-fire">🔥</span><span><strong>'+
+ Number(s.loginStreak?.current||0)+' Tage in Folge gelernt</strong><small>'+
+ 'Dein Bestwert: '+Number(s.loginStreak?.best||0)+' Tage · Reset jeden Tag um 00:00 Uhr</small></span><span class="streak-arrow">Profil →</span></button>'+
+ dailyStrip()+
  (next?'<section class="section"><div class="section-heading"><div><span class="eyebrow">WEITERLERNEN</span><h2>Deine nächste Lektion</h2></div></div>'+
  '<div class="next-lesson"><span class="eyebrow">'+esc(nextCourse?.name||'Lernpfad')+'</span><h3>'+esc(next.title)+'</h3>'+
  '<p>'+esc(next.summary)+'</p><button class="btn primary" data-go="lesson/'+esc(next.id)+'">Lektion öffnen →</button></div></section>':'')+
@@ -738,7 +762,7 @@ function referencePage(){
 
 
 const AVATAR_STYLES=[['violet','Violett'],['blue','Oceanblau'],['emerald','Emerald'],['rose','Rose'],['amber','Gold'],['mono','Monochrom']];
-const BANNER_STYLES=[['nebula','Nebula'],['aurora','Aurora'],['sunset','Sunset'],['ocean','Ozean'],['pixel','Pixel'],['midnight','Midnight']];
+const BANNER_STYLES=[['nebula','Nebula'],['aurora','Aurora'],['sunset','Sunset'],['ocean','Ozean'],['pixel','Pixel'],['midnight','Midnight'],['galaxy','Galaxy'],['cyber','Cyberpunk'],['cherry','Cherry'],['lavender','Lavender'],['carbon','Carbon'],['neon','Neon']];
 const NAME_STYLES=[['classic','Klassisch'],['gradient','Gradient'],['glow','Glow'],['mono','Mono'],['bold','Bold']];
 function selectStyle(name,values,current){
  return '<div class="style-picker" role="group" aria-label="'+esc(name)+'">'+values.map(([value,label])=>
@@ -769,8 +793,8 @@ function socialProfilePanel(){
  '<div class="panel social-customizer"><h3><icon>✎</icon> Profil gestalten</h3><p class="micro">Wähle dein Banner, dein Avatar-Design, deinen Namen-Stil und deine freigeschalteten Titel.</p>'+
  '<form data-form="social-profile"><div class="form-group"><label class="form-label">Über mich · Bio (max. 260 Zeichen)</label>'+
  '<textarea class="input social-bio-input" name="bio" maxlength="260" rows="3" placeholder="Ich entwickle gerade mein erstes FiveM-Script …">'+esc(card.bio||'')+'</textarea></div>'+
- '<div class="social-custom-label">Profilbild hochladen oder Avatar-Farbe wählen</div><div class="social-upload-row"><label class="btn small social-file-picker">Bild hochladen<input type="file" data-social-upload="avatar" accept="image/jpeg,image/png,image/webp" hidden></label><button class="btn small" type="button" data-social-remove="avatar" '+(!s.socialMedia?.[s.user?.id]?.avatar?'disabled':'')+'>Profilbild entfernen</button></div>'+selectStyle('avatar',AVATAR_STYLES,card.avatar_style||'violet')+
- '<div class="social-custom-label">Banner-Bild und Hintergrund</div><div class="social-upload-row"><label class="btn small social-file-picker">Banner hochladen<input type="file" data-social-upload="banner" accept="image/jpeg,image/png,image/webp" hidden></label><button class="btn small" type="button" data-social-remove="banner" '+(!s.socialMedia?.[s.user?.id]?.banner?'disabled':'')+'>Banner entfernen</button></div><p class="micro">Bilder werden für die Privatsphäre neu als WebP ohne Foto-Metadaten exportiert. Deine hochgeladenen Profilbilder sind für andere über die Bild-URL öffentlich sichtbar.</p>'+selectStyle('banner',BANNER_STYLES,card.banner_style||'nebula')+
+ '<div class="social-custom-label">Profilbild hochladen oder Avatar-Farbe wählen</div><div class="social-upload-row"><label class="btn small social-file-picker">Bild hochladen<input type="file" data-social-upload="avatar" accept="image/*,.heic,.heif,.avif" hidden></label><button class="btn small" type="button" data-social-remove="avatar" '+(!s.socialMedia?.[s.user?.id]?.avatar?'disabled':'')+'>Profilbild entfernen</button></div>'+selectStyle('avatar',AVATAR_STYLES,card.avatar_style||'violet')+
+ '<div class="social-custom-label">Banner-Bild und Hintergrund</div><div class="social-upload-row"><label class="btn small social-file-picker">Banner hochladen<input type="file" data-social-upload="banner" accept="image/*,.heic,.heif,.avif" hidden></label><button class="btn small" type="button" data-social-remove="banner" '+(!s.socialMedia?.[s.user?.id]?.banner?'disabled':'')+'>Banner entfernen</button></div><p class="micro">JPG, PNG, WebP, GIF, AVIF, HEIC und weitere browserlesbare Bildformate bis 15 MB. Automatischer Zuschnitt und WebP-Umwandlung (GIFs als Standbild). Hochgeladene Bilder sind über ihre Bild-URL öffentlich sichtbar.</p>'+selectStyle('banner',BANNER_STYLES,card.banner_style||'nebula')+
  '<div class="social-custom-label">Namensstil</div>'+selectStyle('style',NAME_STYLES,card.name_style||'classic')+
  '<div class="form-group"><label class="form-label">Erfolgstitel auswählen</label><select class="select" name="title">'+titles.map(t=>'<option value="'+esc(t)+'" '+(card.title===t?'selected':'')+'>'+esc(t)+'</option>').join('')+'</select></div>'+
  '<label class="settings-row social-privacy"><span><b>Fortschritt für Freunde sichtbar</b><small>Bestätigte Freunde sehen nur Lektionen und bestandene Prüfungen, niemals E-Mail oder Passwort.</small></span>'+
@@ -778,29 +802,58 @@ function socialProfilePanel(){
  '<button class="btn primary" type="submit">Änderungen speichern ✓</button></form></div></section>';
 }
 function friendsPage(){
- const card=s.social||{},friends=card.friends||[],requests=card.requests||[],incoming=requests.filter(r=>r.direction==='incoming'),outgoing=requests.filter(r=>r.direction==='outgoing');
- const cardFor=(u,buttons)=>'<div class="friend-card">'+avatarFor(u,u.display_name||u.username,'')+
- '<div class="friend-identity"><strong class="name-'+esc(u.name_style||'classic')+'">'+esc(u.display_name||u.username||'Developer')+'</strong>'+
- '<span>@'+esc(u.username||'unknown')+' · '+esc(u.title||'Developer')+'</span>'+
- '<p>'+esc(u.bio||'Lernt in der LiveryLab Academy.')+'</p>'+
- (u.lessons===null?'<small>Fortschritt privat</small>':
- u.lessons===undefined?'':'<div class="friend-progress"><span>▦ '+Number(u.lessons)+' Lektionen</span><span>✦ '+Number(u.awards||0)+' Prüfungen</span></div>')+
- '</div><div class="friend-actions">'+buttons+'</div></div>';
- return pageHeading('COMMUNITY','Deine <span class="gradient">Developer-Freunde.</span>',
- 'Finde andere Academy-Mitglieder per Benutzername und verfolge ihren Fortschritt – nur mit ihrer Erlaubnis.')+
- '<section class="panel friends-search-panel"><h2>Freund hinzufügen</h2><form data-form="friend-search">'+
- '<label class="form-label" for="friend-query">Benutzername</label><div class="voucher-input-row"><input class="input" id="friend-query" name="username" pattern="[A-Za-z][A-Za-z0-9_]{2,23}" maxlength="24" placeholder="z. B. nyxatheris" required>'+
- '<button class="btn primary" type="submit">Suchen →</button></div></form><div id="friend-search-result"></div></section>'+
- (incoming.length?'<section class="section"><span class="eyebrow">OFFENE FREUNDSCHAFTSANFRAGEN · '+incoming.length+'</span>'+
- '<div class="friend-list">'+incoming.map(u=>cardFor(u,
- '<button class="btn primary small" data-friend-action="accept" data-friend-id="'+esc(u.id)+'">Annehmen</button><button class="btn small" data-friend-action="decline" data-friend-id="'+esc(u.id)+'">Ablehnen</button>')).join('')+'</div></section>':'')+
- (outgoing.length?'<section class="section"><h3>Gesendete Anfragen</h3><div class="friend-list">'+outgoing.map(u=>cardFor(u,
- '<button class="btn small" data-friend-action="cancel" data-friend-id="'+esc(u.id)+'">Zurückziehen</button>')).join('')+'</div></section>':'')+
- '<section class="section"><div class="section-heading"><div><span class="eyebrow">[ ♡ ] DEINE FREUNDESLISTE</span><h2>'+friends.length+' Freunde</h2></div></div>'+
- (friends.length?'<div class="friend-list">'+friends.map(u=>cardFor(u,
- '<button class="btn small danger" data-friend-action="remove" data-friend-id="'+esc(u.id)+'">Entfernen</button>')).join('')+'</div>':
- '<div class="empty friend-empty"><div class="empty-icon">♡</div><h3>Noch keine Freunde</h3><p>Suche oben nach einem Benutzernamen und sende deine erste Anfrage.</p></div>')+'</section>';
+ const social=s.social||{},friends=social.friends||[],pending=social.requests||[];
+ const incoming=pending.filter(v=>v.direction==='incoming'),outgoing=pending.filter(v=>v.direction==='outgoing');
+ const tab=['friends','requests','search'].includes(s.friendTab)?s.friendTab:'friends';
+ const card=(user,actions)=>{
+  const banner=esc(user.banner_style||'nebula');
+  return '<article class="friend-profile-card"><div class="friend-card-banner banner-'+banner+'"><span>✦ LIVERYLAB ACADEMY</span></div>'+
+  '<div class="friend-card-body"><div class="friend-card-top">'+avatarFor(user,user.display_name||user.username,'')+
+  '<div class="friend-identity"><strong class="name-'+esc(user.name_style||'classic')+'">'+esc(user.display_name||user.username||'Developer')+'</strong>'+
+  '<span>@'+esc(user.username||'')+'</span></div><span class="social-title">✦ '+esc(user.title||'Developer')+'</span></div>'+
+  (user.bio?'<p class="friend-card-bio">'+esc(user.bio)+'</p>':'')+
+  (user.lessons===null?'<div class="friend-card-privacy">🔒 Lernfortschritt privat</div>':
+   user.lessons===undefined?'':'<div class="friend-card-progress"><div><strong>'+Number(user.lessons||0)+'</strong><small>Lektionen</small></div>'+
+   '<div><strong>'+Number(user.awards||0)+'</strong><small>Bestandene Prüfungen</small></div>'+
+   '<div><strong>'+(user.streak===null?'–':Number(user.streak||0))+'</strong><small>Login-Streak</small></div></div>')+
+  '<div class="friend-actions">'+actions+'</div></div></article>';
+ };
+ let content='';
+ if(tab==='friends'){
+  content='<section class="friends-tab-content"><div class="section-heading"><div><span class="eyebrow">[ ♡ ] BESTÄTIGTE FREUNDE</span><h2>Deine Developer</h2>'+
+  '<p>Nur bestätigte Freunde erscheinen hier. Sie bestimmen selbst, ob du ihren Fortschritt sehen darfst.</p></div></div>'+
+  (friends.length?'<div class="friend-profile-grid">'+friends.map(u=>card(u,
+  '<button type="button" class="btn small danger" data-friend-action="remove" data-friend-id="'+esc(u.id)+'">Freund entfernen</button>')).join('')+'</div>':
+  '<div class="empty friend-empty"><div class="empty-icon">♡</div><h3>Noch keine Freunde</h3>'+
+  '<p>Du kannst Freunde per Benutzername suchen und ihnen eine Anfrage senden.</p>'+
+  '<button class="btn primary" type="button" data-friend-tab="search">Freund hinzufügen →</button></div>')+'</section>';
+ }else if(tab==='requests'){
+  content='<section class="friends-tab-content"><div class="section-heading"><div><span class="eyebrow">[ ! ] DEINE ANFRAGEN</span>'+
+  '<h2>Freundschaftsanfragen</h2><p>Hier kannst du Anfragen annehmen, ablehnen oder zurückziehen.</p></div></div>'+
+  (incoming.length?'<h3>Neue Anfragen · '+incoming.length+'</h3><div class="friend-profile-grid">'+incoming.map(u=>card(u,
+  '<button class="btn primary small" type="button" data-friend-action="accept" data-friend-id="'+esc(u.id)+'">✓ Annehmen</button>'+
+  '<button class="btn small" type="button" data-friend-action="decline" data-friend-id="'+esc(u.id)+'">Ablehnen</button>')).join('')+'</div>':'<div class="empty">Keine eingegangenen Anfragen.</div>')+
+  (outgoing.length?'<h3 class="friends-sent-title">Versendete Anfragen · '+outgoing.length+'</h3><div class="friend-profile-grid">'+outgoing.map(u=>card(u,
+  '<button class="btn small" type="button" data-friend-action="cancel" data-friend-id="'+esc(u.id)+'">Anfrage zurückziehen</button>')).join('')+'</div>':'')+'</section>';
+ }else{
+  content='<section class="panel friends-search-panel"><span class="eyebrow">[ + ] ENTDECKEN</span><h2>Freund hinzufügen</h2>'+
+  '<p class="muted">Suche nach dem exakten Benutzernamen. Private Angaben wie die E-Mail-Adresse werden nicht gezeigt.</p>'+
+  '<form data-form="friend-search"><label class="form-label" for="friend-query">Benutzername</label>'+
+  '<div class="voucher-input-row"><input class="input" id="friend-query" name="username" pattern="[A-Za-z][A-Za-z0-9_]{2,23}" maxlength="24" placeholder="z. B. nyxatheris" required>'+
+  '<button class="btn primary" type="submit">Suchen →</button></div></form><div id="friend-search-result"></div></section>';
+ }
+ return pageHeading('LIVERYLAB COMMUNITY','Deine Developer-<span class="gradient">Freunde.</span>',
+ 'Gemeinsam programmieren und Fortschritte teilen – ohne persönliche Daten anderer Mitglieder offenzulegen.')+
+ '<section class="friends-overview"><div class="friends-counter"><span>♡</span><strong>'+friends.length+'</strong><small>Freunde</small></div>'+
+ '<div class="friends-counter"><span>✉</span><strong>'+incoming.length+'</strong><small>Neue Anfragen</small></div>'+
+ '<div class="friends-counter"><span>✦</span><strong>'+outgoing.length+'</strong><small>Gesendet</small></div></section>'+
+ '<div class="friend-navigation" role="tablist" aria-label="Freundeverwaltung">'+
+ [['friends','♡','Freundesliste',friends.length],['requests','✉','Anfragen',incoming.length],['search','+','Freund hinzufügen',null]]
+ .map(([id,symbol,name,count])=>'<button role="tab" type="button" data-friend-tab="'+id+'" aria-selected="'+(tab===id)+'" class="friend-nav-tab '+(tab===id?'active':'')+'">'+
+ '<span>'+symbol+'</span> '+name+(count!==null?'<em>'+count+'</em>':'')+'</button>').join('')+'</div>'+
+ content;
 }
+
 async function refreshSocial(){const [r,media]=await Promise.all([api.rpc('academy_social_list'),api.rpc('academy_social_media_list')]);if(r.error)throw r.error;s.social=r.data;if(!media.error)s.socialMedia=media.data||{};return r.data;}
 function socialImageUrl(uid,kind){
  if(!uid||!s.socialMedia?.[uid]?.[kind])return '';
@@ -808,23 +861,57 @@ function socialImageUrl(uid,kind){
 }
 async function uploadSocialImage(kind,file){
  if(!s.user||!['avatar','banner'].includes(kind))throw Error('Ungültiger Bildtyp.');
- if(!file||!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>5*1024*1024)throw Error('Nur JPG, PNG oder WebP bis maximal 5 MB.');
- const bitmap=await createImageBitmap(file);
- const canvas=document.createElement('canvas'),w=kind==='avatar'?480:1200,h=kind==='avatar'?480:440;
- canvas.width=w;canvas.height=h;
- const ctx=canvas.getContext('2d');
- if(!ctx){bitmap.close();throw Error('Bildbearbeitung nicht verfügbar');}
- const scale=Math.max(w/bitmap.width,h/bitmap.height);
- const sw=w/scale,sh=h/scale,sx=(bitmap.width-sw)/2,sy=(bitmap.height-sh)/2;
- ctx.drawImage(bitmap,sx,sy,sw,sh,0,0,w,h);bitmap.close();
- let blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/webp',.82));
- if(blob?.size>1048576)blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/webp',.55));
- if(!blob||blob.size>1048576)throw Error('Das Bild ist auch nach Komprimierung zu groß.');
- const path=s.user.id+'/'+kind+'.webp';
- const {error}=await api.storage.from('academy-profile-images').upload(path,blob,{upsert:true,contentType:'image/webp',cacheControl:'120'});
- if(error)throw error;
- s.imageRevision=Date.now();await refreshSocial();
+ const supported=/\.(jpe?g|png|webp|gif|bmp|avif|heic|heif|tiff?)$/i.test(file?.name||'');
+ if(!file||!file.size||file.size>15*1024*1024||file.type==='image/svg+xml'||
+    /\.svgz?$/i.test(file.name||'')||(!file.type.startsWith('image/')&&!supported)){
+  throw Error('Bitte ein Bild bis 15 MB hochladen. SVG-Dateien sind aus Sicherheitsgründen nicht erlaubt.');
+ }
+ let image=null,revoke=null;
+ try{
+  // Browsers support different camera formats (HEIC/HEIF, GIF, AVIF, TIFF).
+  // Try native image decoders first; fall back to an image element on Safari.
+  try{if(typeof createImageBitmap==='function')image=await createImageBitmap(file);}
+  catch(_){image=null;}
+  if(!image){
+    const url=URL.createObjectURL(file);revoke=url;
+    const element=new Image();
+    await new Promise((resolve,reject)=>{
+      element.onload=resolve;
+      element.onerror=()=>reject(Error('Dieses Bildformat wird auf deinem Gerät nicht unterstützt.'));
+      element.src=url;
+      if(element.complete&&element.naturalWidth>0)resolve();
+    });
+    image=element;
+  }
+  const iw=image.width||image.naturalWidth,ih=image.height||image.naturalHeight;
+  if(!iw||!ih||iw*ih>65000000)throw Error('Das Bild ist beschädigt oder hat eine zu hohe Auflösung.');
+  const canvas=document.createElement('canvas'),w=kind==='avatar'?480:1200,h=kind==='avatar'?480:440;
+  canvas.width=w;canvas.height=h;
+  const ctx=canvas.getContext('2d');
+  if(!ctx)throw Error('Bildbearbeitung wird in diesem Browser nicht unterstützt.');
+  const scale=Math.max(w/iw,h/ih),sw=w/scale,sh=h/scale,sx=(iw-sw)/2,sy=(ih-sh)/2;
+  ctx.drawImage(image,sx,sy,sw,sh,0,0,w,h);
+  let blob=null;
+  for(const quality of [.85,.7,.55,.35]){
+    blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/webp',quality));
+    if(blob?.type==='image/webp'&&blob.size<=1048576)break;
+  }
+  if(!blob||blob.type!=='image/webp')throw Error('Dein Browser kann das Bild nicht nach WebP umwandeln.');
+  if(blob.size>1048576)throw Error('Das Bild ist auch nach Komprimierung zu groß.');
+  const path=s.user.id+'/'+kind+'.webp';
+  const {error}=await api.storage.from('academy-profile-images').upload(path,blob,
+   {upsert:true,contentType:'image/webp',cacheControl:'120'});
+  if(error)throw error;
+  s.imageRevision=Date.now();await refreshSocial();
+ }catch(error){
+  if(error instanceof Error&&(/Das Bild|Bildbearbeitung|Browser|SVG|zu groß|WebP|supabase/i).test(error.message))throw error;
+  throw Error('Das Bildformat konnte auf diesem Gerät nicht geöffnet oder gespeichert werden. Versuche JPG, PNG oder WebP.');
+ }finally{
+  if(image&&typeof image.close==='function')image.close();
+  if(revoke)URL.revokeObjectURL(revoke);
+ }
 }
+
 async function removeSocialImage(kind){
  if(!s.user||!['avatar','banner'].includes(kind))return;
  const {error}=await api.storage.from('academy-profile-images').remove([s.user.id+'/'+kind+'.webp']);
@@ -832,87 +919,151 @@ async function removeSocialImage(kind){
  s.imageRevision=Date.now();await refreshSocial();
 }
 
+
+const ALL_ACHIEVEMENTS=[["Developer","⌘","Dein Start als Developer."],["First Steps","✦","Schließe deine erste Lektion ab."],["Code Explorer","◇","Schließe 10 Lektionen ab."],["Script Apprentice","⌁","Schließe 25 Lektionen ab."],["Senior Developer","◆","Schließe 50 Lektionen ab."],["Code Legend","♛","Schließe 100 Lektionen ab."],["Certified Learner","★","Bestehe eine Kursprüfung."],["Exam Specialist","✪","Bestehe 3 verschiedene Prüfungen."],["Exam Master","🏆","Bestehe 5 verschiedene Prüfungen."],["Master Developer","♕","Bestehe 8 verschiedene Prüfungen."],["Friendly Developer","♡","Finde deinen ersten Freund."],["Community Builder","♧","Finde 5 Freunde."],["Network Star","✧","Finde 15 Freunde."],["3-Day Starter","🔥","3 aktive Tage hintereinander."],["Week Warrior","⚡","7 aktive Tage hintereinander."],["Monthly Legend","☄","30 aktive Tage hintereinander."],["Century Streak","🌟","100 aktive Tage hintereinander."],["Lua Explorer","☾","Bestehe die Lua-Kursprüfung."],["Python Coder","◈","Bestehe die Python-Kursprüfung."],["JavaScript Wizard","⚙","Bestehe die JavaScript-Kursprüfung."],["FiveM Scripter","⬡","Bestehe die FiveM-Kursprüfung."],["Web Creator","▣","Bestehe die HTML-Kursprüfung."],["Blender Artist","✿","Bestehe die Blender-Kursprüfung."]];
+function achievementGallery(){
+ const unlocked=new Set(s.social?.titles||['Developer']);
+ const order=ALL_ACHIEVEMENTS.slice().sort((a,b)=>Number(unlocked.has(b[0]))-Number(unlocked.has(a[0])));
+ return '<section class="section achievements-section"><div class="section-heading"><div><span class="eyebrow">[ ★ ] AUSZEICHNUNGEN</span>'+
+ '<h2>Erfolge & Titel</h2><p>Jeder Titel wird durch echte Lektionen, Kursprüfungen, Freunde oder Login-Streaks freigeschaltet.</p></div>'+
+ '<span class="chip free">'+unlocked.size+' / '+ALL_ACHIEVEMENTS.length+' freigeschaltet</span></div>'+
+ '<div class="achievement-grid">'+order.map(([title,icon,condition])=>{
+  const ok=unlocked.has(title);
+  return '<article class="achievement-card '+(ok?'unlocked':'locked')+'"><div class="achievement-medal">'+(ok?icon:'🔒')+'</div>'+
+   '<div><strong>'+esc(title)+'</strong><p>'+esc(condition)+'</p></div>'+
+   '<span class="achievement-state">'+(ok?'✓ Freigeschaltet':'Gesperrt')+'</span></article>';
+ }).join('')+'</div></section>';
+}
 function profilePage(){
- var done=s.progress.done.length,name=s.profile.display_name||s.profile.username||'Developer',
- initial=String(name).slice(0,1).toUpperCase(),username=s.profile.username,activeCourse=s.courses.filter(c=>countDone(c.id)>0).length;
- return socialProfilePanel()+pageHeading('MEIN ACCOUNT','Deine <span class="gradient">Kontoeinstellungen.</span>',
- 'Deine Lernreise, dein Konto und deine Sicherheit an einem Ort.')+
- '<section class="profile-hero"><div class="profile-avatar-large">'+esc(initial)+'</div>'+
- '<div class="profile-summary"><span class="eyebrow">LIVERYLAB ACADEMY</span><h2>'+esc(name)+'</h2>'+
- '<p>'+esc(username?'@'+username:(s.user.email?.endsWith('@accounts.livery-lab.app')?'Verwaltetes Konto ohne private E-Mail':s.user.email||''))+'</p></div>'+
- '<span class="profile-status">'+esc(plans[s.tier]||'Free')+'</span></section>'+
- '<div class="profile-stats"><div class="profile-stat"><strong>'+done*30+'</strong><small>Gesammelte XP</small></div>'+
- '<div class="profile-stat"><strong>'+done+'</strong><small>Lektionen erledigt</small></div>'+
- '<div class="profile-stat"><strong>'+activeCourse+'</strong><small>Kurse begonnen</small></div></div>'+
- '<section class="section account-layout"><div class="panel"><span class="eyebrow">PERSÖNLICHE ANGABEN</span><h3>Profil bearbeiten</h3>'+
- '<p class="micro">Dein Benutzername wird für deine Anmeldung verwendet. Dein Anzeigename erscheint nur in der Academy.</p>'+
- '<form data-form="profile"><div class="form-group"><label class="form-label">Anzeigename</label><input class="input" name="display_name" value="'+esc(name)+'" minlength="2" maxlength="40" required></div>'+
- '<button class="btn primary" type="submit">Profil speichern</button></form></div>'+
- '<div class="panel"><span class="eyebrow">ANMELDUNG</span><h3>Dein Login</h3>'+
- '<div class="settings-row" style="padding:10px 0"><div><b>E-Mail-Adresse</b><p>'+esc(s.user.email||'')+'</p></div><span class="chip free">Aktiv</span></div>'+
- '<div class="settings-row" style="padding:11px 0"><div><b>Benutzername</b><p>'+esc(username||'Noch nicht festgelegt')+'</p></div><span class="chip '+(username?'free':'plus')+'">'+(username?'✓ Aktiv':'Optional')+'</span></div>'+
- (!username?'<form data-form="set-username"><div class="form-group"><label class="form-label">Neuen Benutzernamen festlegen</label><input class="input" name="username" pattern="[A-Za-z][A-Za-z0-9_]{2,23}" minlength="3" maxlength="24" required placeholder="z. B. developer23"></div><button class="btn" type="submit">Benutzernamen aktivieren</button></form>':'<p class="micro">Du kannst dich mit deinem Benutzernamen oder deiner E-Mail-Adresse anmelden.</p>')+
- '</div></section>'+
- '<section class="section account-layout"><div class="panel"><span class="eyebrow">KONTOSICHERHEIT</span><h3>Passwort ändern</h3>'+
- '<p class="micro">Wähle ein individuelles Passwort mit mindestens 14 Zeichen.</p>'+
- '<form data-form="password"><div class="form-group"><label class="form-label">Neues Passwort</label><input class="input" type="password" name="password" minlength="14" autocomplete="new-password" required placeholder="Neues sicheres Passwort"></div>'+
- '<button class="btn" type="submit">Passwort aktualisieren</button></form></div>'+
- '<div class="panel"><span class="eyebrow">ZWEITER FAKTOR</span><h3>Authenticator-App</h3><div id="mfa-settings"></div></div></section>';
+ const name=s.profile?.display_name||s.profile?.username||'Developer';
+ const streak=Number(s.loginStreak?.current||0),best=Number(s.loginStreak?.best||0);
+ return pageHeading('DEIN PROFIL','Deine Developer-<span class="gradient">Identität.</span>',
+ 'Passe Bio, Profilbild, Banner, Titel und Namen an. Passwort, Login und 2FA findest du bei den Einstellungen.')+
+ socialProfilePanel()+
+ '<section class="profile-quick-stats"><div class="profile-quick-tile"><span>🔥</span><strong>'+streak+'</strong><small>Login-Streak in Tagen</small></div>'+
+ '<div class="profile-quick-tile"><span>🏅</span><strong>'+best+'</strong><small>Bisheriger Rekord</small></div>'+
+ '<div class="profile-quick-tile"><span>✦</span><strong>'+((s.progress.done||[]).length*30)+'</strong><small>Erlernte XP</small></div></section>'+
+ '<p class="micro streak-explanation">Der nächste Streak-Tag beginnt um 00:00 Uhr in der Zeitzone Europe/Berlin.</p>'+
+ '<section class="panel profile-name-panel"><span class="eyebrow">[ ✎ ] DEIN ÖFFENTLICHER NAME</span><h3>Anzeigename ändern</h3>'+
+ '<p class="micro">Dein sichtbarer Name. Dein Anmelde-Benutzername wird dadurch nicht geändert.</p>'+
+ '<form data-form="profile" class="profile-display-form"><div class="form-group"><label class="form-label">Anzeigename</label>'+
+ '<input class="input" name="display_name" value="'+esc(name)+'" minlength="2" maxlength="40" required></div>'+
+ '<button class="btn primary" type="submit">Namen speichern</button></form></section>'+
+ achievementGallery()+
+ '<section class="profile-friends-link"><div><span class="eyebrow">[ ♡ ] NETZWERK</span><h3>Freunde & gemeinsame Fortschritte</h3>'+
+ '<p>Sieh den freiwillig freigegebenen Lernfortschritt deiner bestätigten Freunde.</p></div>'+
+ '<button class="btn primary" data-go="friends">Freundesliste öffnen →</button></section>';
+}
+
+
+const COLOR_THEMES=[["violet","Mystic Purple","linear-gradient(130deg,#1c1534,#8550c9)"],["midnight","Midnight","linear-gradient(130deg,#0a1325,#394b88)"],["ocean","Deep Ocean","linear-gradient(130deg,#0b2339,#2588bc)"],["forest","Emerald","linear-gradient(130deg,#09281e,#328775)"],["rose","Rose","linear-gradient(130deg,#361431,#c25b96)"],["ember","Amber Dusk","linear-gradient(130deg,#2c1815,#bb743a)"]];
+const ACCENT_THEMES=[["lavender","Violett","#b18cff"],["sky","Blau","#64b6ff"],["mint","Mint","#65dbb2"],["pink","Rosa","#ef8fc5"],["amber","Gold","#f1be73"],["white","Neutral","#e5e3f0"]];
+function appearanceChoices(items,current,attribute){
+ return '<div class="appearance-picker">'+items.map(([value,label,color])=>
+  '<button type="button" class="appearance-choice '+(value===current?'selected':'')+'" data-'+attribute+'="'+esc(value)+'" aria-pressed="'+(value===current)+'">'+
+  '<span class="appearance-color" style="background:'+esc(color)+'"></span><strong>'+esc(label)+'</strong>'+
+  (value===current?'<span class="appearance-check">✓</span>':'')+'</button>').join('')+'</div>';
 }
 function settingsPage(){
- var compact=getPreference('compact'),motion=getPreference('motion');
- return pageHeading('EINSTELLUNGEN','Dein Workspace, <span class="gradient">deine Regeln.</span>',
- 'Klar strukturiert. Nur Einstellungen, die hier tatsächlich etwas verändern.')+
- '<section class="setting-section"><h2>Darstellung</h2><div class="settings-list">'+
- '<label class="settings-row"><span class="setting-info"><span class="setting-icon">▦</span><span><b>Kompakte Kurskarten</b><p>Weniger Abstand, mehr Lernpfade auf einen Blick.</p></span></span>'+
- '<input type="checkbox" class="settings-toggle" data-pref="compact" '+(compact?'checked':'')+' aria-label="Kompakte Kurskarten"></label>'+
- '<label class="settings-row"><span class="setting-info"><span class="setting-icon">◌</span><span><b>Bewegungen reduzieren</b><p>Animationen und Übergänge abschalten.</p></span></span>'+
- '<input type="checkbox" class="settings-toggle" data-pref="motion" '+(motion?'checked':'')+' aria-label="Animationen reduzieren"></label>'+
- '</div></section>'+
- '<section class="setting-section"><h2>Lernen & Fortschritt</h2><div class="settings-list">'+
- '<div class="settings-row"><div class="setting-info"><span class="setting-icon">✓</span><span><b>Mein Lernfortschritt</b><p>'+s.progress.done.length+' Lektionen bearbeitet. Alle abgeschlossenen Kapitel sind in Grün markiert.</p></span></div>'+
- '<button type="button" class="btn small" data-go="courses">Kurse</button></div>'+
- '<div class="settings-row"><div class="setting-info"><span class="setting-icon">▷</span><span><b>Lernvideos & Datenschutz</b><p>YouTube wird erst geladen, wenn du auf Abspielen klickst.</p></span></div><span class="chip free">Geschützt</span></div>'+
- '<div class="settings-row"><div class="setting-info"><span class="setting-icon">↺</span><span><b>Lernfortschritt zurücksetzen</b><p>Setzt XP und Abschlüsse dieses Accounts zurück. Nicht rückgängig zu machen.</p></span></div>'+
- '<button type="button" class="btn small danger" data-action="reset-progress">Zurücksetzen</button></div>'+
- '</div></section>'+
- '<section class="setting-section"><h2>Konto & Sicherheit</h2><div class="settings-list">'+
- '<div class="settings-row"><div class="setting-info"><span class="setting-icon">◉</span><span><b>Profil und Passwort</b><p>Benutzername, E-Mail und Kennwort verwalten.</p></span></div>'+
- '<button type="button" class="btn small" data-go="profile">Öffnen</button></div>'+
- '<div class="settings-row"><div class="setting-info"><span class="setting-icon">⌁</span><span><b>Authenticator und 2FA</b><p>Eine zusätzliche Bestätigung schützt deinen Account.</p></span></div>'+
- '<button type="button" class="btn small" data-go="profile">Einrichten</button></div>'+
- '<div class="settings-row"><div class="setting-info"><span class="setting-icon">↗</span><span><b>Abmelden</b><p>Beendet deine aktuelle Sitzung auf diesem Gerät.</p></span></div>'+
- '<button type="button" class="btn small" data-action="logout">Abmelden</button></div>'+
- '</div></section>'+
- '<section class="section panel mfa-settings-section"><span class="eyebrow">KONTOSICHERHEIT</span><h2>Authenticator-App & 2FA</h2><p class="muted">Verbinde, verwalte und entferne deine Authenticator-Geräte direkt hier.</p><div id="mfa-settings"></div></section>'+
- '<section class="section panel"><span class="eyebrow">LIVERYLAB STUDIOS</span><h3>Über diese Academy</h3>'+
- '<p class="micro">Eine Lernplattform für Programmierung, FiveM und Blender. Version 15 · Lerninhalte werden von der Community weiterentwickelt.</p>'+
+ const name=s.profile?.display_name||s.profile?.username||'Developer',username=s.profile?.username||'',email=s.user?.email||'';
+ function toggle(key,title,description){
+  return '<label class="settings-row appearance-toggle"><span class="setting-info"><span class="setting-icon">✦</span>'+
+  '<span><b>'+title+'</b><p>'+description+'</p></span></span>'+
+  '<input type="checkbox" class="settings-toggle" data-pref="'+key+'" '+(getPreference(key)?'checked':'')+' aria-label="'+title+'"></label>';
+ }
+ return pageHeading('EINSTELLUNGEN','Deine Academy. <span class="gradient">Dein Design.</span>',
+ 'Hier verwaltest du Farben, Darstellung, Anmeldedaten, Passwort, Authenticator und deinen Lernfortschritt.')+
+ '<section class="setting-section appearance-section"><div class="section-heading"><div><span class="eyebrow">01 · PERSÖNLICHES DESIGN</span>'+
+ '<h2>Farben & Hintergrund</h2><p>Die Änderungen werden sofort auf diesem Gerät gespeichert.</p></div></div>'+
+ '<div class="settings-appearance-card"><h3>Hintergrund & Oberflächen</h3>'+
+ appearanceChoices(COLOR_THEMES,getChoicePreference('theme','violet'),'theme-choice')+
+ '<h3>Akzentfarbe</h3>'+appearanceChoices(ACCENT_THEMES,getChoicePreference('accent','lavender'),'accent-choice')+
+ '<h3>Lesbarkeit & Layout</h3><div class="settings-list">'+
+ toggle('compact','Kompakte Kurskarten','Mehr Lerninhalte auf dem Bildschirm anzeigen.')+
+ toggle('largeTypography','Größere Schrift','Texte und Eingabefelder besser lesbar anzeigen.')+
+ toggle('contrast','Erhöhter Kontrast','Text und Umrandungen deutlicher hervorheben.')+
+ toggle('softCorners','Weiche Ecken','Buttons und Karten stärker abrunden.')+
+ toggle('backgroundArt','Hintergrund-Effekte','Dezente Lichtverläufe für mehr Atmosphäre anzeigen.')+
+ toggle('motion','Bewegungen reduzieren','Animationen und Übergänge verringern.')+
+ '</div><button class="btn ghost settings-reset" data-action="reset-appearance">↺ Standarddarstellung wiederherstellen</button></div></section>'+
+ '<section class="setting-section"><span class="eyebrow">02 · DEIN ACCOUNT</span><h2>Anmeldedaten</h2>'+
+ '<div class="account-settings-grid"><div class="panel"><h3>Zugangsdaten</h3>'+
+ '<div class="settings-row"><div><strong>E-Mail-Adresse</strong><p>'+esc(email)+'</p></div><span class="chip free">Hinterlegt</span></div>'+
+ '<div class="settings-row"><div><strong>Benutzername</strong><p>'+esc(username||'Noch nicht festgelegt')+'</p></div><span class="chip '+(username?'free':'plus')+'">'+(username?'Aktiv':'Optional')+'</span></div>'+
+ (!username?'<form data-form="set-username"><div class="form-group"><label class="form-label">Benutzernamen festlegen</label>'+
+ '<input class="input" name="username" pattern="[A-Za-z][A-Za-z0-9_]{2,23}" minlength="3" maxlength="24" required placeholder="developer123"></div>'+
+ '<button class="btn small" type="submit">Benutzernamen aktivieren</button></form>':'<p class="micro">Anmeldung mit deiner E-Mail-Adresse oder deinem Benutzernamen möglich.</p>')+
+ '<div class="settings-row"><div><strong>Öffentlicher Anzeigename</strong><p>'+esc(name)+'</p></div><button class="btn small" data-go="profile">Profil ändern</button></div></div>'+
+ '<div class="panel"><h3>Passwort ändern</h3><p class="micro">Verwende mindestens 14 Zeichen und ein einzigartiges Passwort.</p>'+
+ '<form data-form="password"><div class="form-group"><label class="form-label">Neues Passwort</label>'+
+ '<input class="input" type="password" name="password" minlength="14" maxlength="256" autocomplete="new-password" required placeholder="Neues sicheres Passwort"></div>'+
+ '<button class="btn primary" type="submit">Passwort aktualisieren</button></form></div></div></section>'+
+ '<section class="setting-section"><span class="eyebrow">03 · ZWEITER FAKTOR</span><h2>Authenticator & 2FA</h2>'+
+ '<div class="panel"><p class="micro">Verbinde eine Authenticator-App. Bei der nächsten Anmeldung musst du dann einen sechsstelligen Code eingeben.</p>'+
+ '<div id="mfa-settings"></div></div></section>'+
+ '<section class="setting-section"><span class="eyebrow">04 · LERNEN</span><h2>Fortschritt & Datenschutz</h2><div class="settings-list">'+
+ '<div class="settings-row"><div class="setting-info"><span class="setting-icon">🔥</span><span><b>Login-Streak</b>'+
+ '<p>'+Number(s.loginStreak?.current||0)+' Tage in Folge · Tageswechsel 00:00 Uhr deutscher Zeit</p></span></div>'+
+ '<span class="chip free">'+Number(s.loginStreak?.best||0)+' Rekord</span></div>'+
+ '<div class="settings-row"><div class="setting-info"><span class="setting-icon">✓</span><span><b>Dein Lernfortschritt</b>'+
+ '<p>'+s.progress.done.length+' Lektionen abgeschlossen.</p></span></div><button class="btn small" data-go="courses">Lernpfade</button></div>'+
+ '<div class="settings-row"><div class="setting-info"><span class="setting-icon">▷</span><span><b>Video-Datenschutz</b>'+
+ '<p>Externe YouTube-Videos werden erst nach einem Klick geladen.</p></span></div><span class="chip free">Aktiv</span></div>'+
+ '<div class="settings-row"><div class="setting-info"><span class="setting-icon">↺</span><span><b>Fortschritt zurücksetzen</b>'+
+ '<p>Setzt Lektionen und lokale Prüfungsanzeigen zurück. Auf dem Server vergebene Erfolge bleiben bestehen.</p></span></div>'+
+ '<button class="btn small danger" data-action="reset-progress">Zurücksetzen</button></div></div></section>'+
+ '<section class="setting-section"><span class="eyebrow">05 · SITZUNG & HILFE</span><h2>Support und Abmeldung</h2>'+
+ '<div class="settings-list"><div class="settings-row"><div class="setting-info"><span class="setting-icon">↗</span>'+
+ '<span><b>Abmelden</b><p>Beendet die aktuelle Sitzung auf diesem Gerät.</p></span></div><button class="btn small" data-action="logout">Abmelden</button></div>'+
+ '<div class="settings-row"><div class="setting-info"><span class="setting-icon">♡</span>'+
+ '<span><b>Discord-Support</b><p>Schreibe NyxAtheris eine DM oder öffne ein Ticket und erwähne @nyxatheris.</p></span></div>'+
+ '<a class="btn small discord" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord ↗</a></div></div></section>'+
+ '<section class="section panel"><span class="eyebrow">LIVERYLAB STUDIOS</span><h3>Über die Academy</h3>'+
+ '<p class="micro">Developer-Lernplattform mit Kursen, sicheren Accounts, Profilen, Freunden und Erfolgen. Version 18.</p>'+
  '<a href="./privacy.html">Datenschutzhinweise ansehen ↗</a><p class="smallprint" style="margin-top:16px">Made with 💙 from NyxAtheris (LiveryLab Studios)</p></section>';
 }
 
 function voucherAdminSection(){
- const rows=(s.vouchers||[]).map(v=>'<div class="voucher-admin-row"><div><strong>'+esc(v.code)+'</strong>'+
- '<small>'+(v.kind==='gift'?'Gratis '+(v.tier==='pro'?'Plus':'Pro')+' · '+Number(v.days)+' Tage':Number(v.percent)+' % Rabatt auf '+(v.tier==='pro'?'Plus':'Pro'))+
- ' · '+Number(v.uses)+' / '+Number(v.max_uses)+' genutzt'+(!v.active?' · Deaktiviert':'')+'</small></div>'+
- '<div class="voucher-row-actions"><button type="button" class="btn small" data-copy-voucher="'+esc(v.code)+'">Kopieren</button>'+
- '<button type="button" class="btn small" data-voucher-toggle="'+esc(v.code)+'" data-voucher-enabled="'+(!v.active)+'">'+(v.active?'Deaktivieren':'Aktivieren')+'</button></div></div>').join('');
- return '<section class="section admin-voucher"><span class="eyebrow">ADMIN · GUTSCHEINE</span><h2>Gutscheine erstellen</h2>'+
- '<p class="muted">Rabatte oder kostenlose Mitgliedschaften – die Freigaben werden durch Supabase geprüft.</p>'+
- '<div class="panel"><form data-form="create-voucher"><div class="form-row">'+
- '<div class="form-group"><label class="form-label">Gutscheintyp</label><select class="select" name="kind">'+
+ const items=(s.vouchers||[]).filter(v=>!v.expires_at||new Date(v.expires_at).getTime()>Date.now());
+ const active=items.filter(v=>v.active&&Number(v.uses)<Number(v.max_uses)).length;
+ const rows=items.map(v=>{
+  const used=Number(v.uses)||0,max=Math.max(1,Number(v.max_uses)||1),expires=new Date(v.expires_at);
+  const expiry=Number.isFinite(expires.getTime())?new Intl.DateTimeFormat('de-DE',{day:'2-digit',month:'short',year:'numeric'}).format(expires):'–';
+  return '<article class="voucher-manage-card '+(v.active?'':'is-inactive')+'"><div class="voucher-manage-top">'+
+   '<div class="voucher-manage-code"><span class="voucher-code-icon">%</span><div><code>'+esc(v.code)+'</code>'+
+   '<small>'+esc(v.kind==='gift'?'Gratis '+(v.tier==='pro'?'Plus':'Pro')+' · '+Number(v.days)+' Tage':Number(v.percent)+' % Rabatt für '+(v.tier==='pro'?'Plus':'Pro'))+'</small></div></div>'+
+   '<span class="chip '+(v.active?'free':'plus')+'">'+(v.active?'Aktiv':'Pausiert')+'</span></div>'+
+   '<div class="voucher-manage-meta"><span>◷ Bis '+esc(expiry)+'</span><span>◈ '+used+' / '+max+' eingelöst</span></div>'+
+   '<div class="voucher-use-progress"><span style="width:'+Math.min(100,Math.round(used/max*100))+'%"></span></div>'+
+   '<div class="voucher-manage-actions"><button type="button" class="btn small" data-copy-voucher="'+esc(v.code)+'">Kopieren</button>'+
+   '<button type="button" class="btn small" data-voucher-toggle="'+esc(v.code)+'" data-voucher-enabled="'+(!v.active)+'">'+(v.active?'Pausieren':'Aktivieren')+'</button>'+
+   '<button type="button" class="btn small danger" data-voucher-delete="'+esc(v.code)+'">Löschen</button></div></article>';
+ }).join('');
+ return '<section class="section admin-voucher"><div class="section-heading"><div><span class="eyebrow">ADMIN · GUTSCHEINMANAGER</span>'+
+ '<h2>Gutscheine verwalten</h2><p>Erstelle eigene oder automatisch generierte Codes. Löschen und Ablaufen werden serverseitig durchgesetzt.</p></div></div>'+
+ '<div class="voucher-overview"><div class="voucher-counter"><strong>'+active+'</strong><small>Aktive Gutscheine</small></div>'+
+ '<div class="voucher-counter"><strong>'+items.length+'</strong><small>Sichtbare Codes</small></div><div class="voucher-counter"><strong>60 s</strong><small>Bereinigungsintervall</small></div></div>'+
+ '<div class="panel voucher-maker"><span class="eyebrow">[ + ] NEU ERSTELLEN</span><h3>Neuer Gutschein</h3>'+
+ '<form data-form="create-voucher"><div class="form-row"><div class="form-group"><label class="form-label">Gutscheintyp</label><select class="select" name="kind">'+
  '<option value="gift">Gratis-Mitgliedschaft</option><option value="discount">Rabattcode</option></select></div>'+
- '<div class="form-group"><label class="form-label">Für welchen Tarif?</label><select class="select" name="tier">'+
- '<option value="pro">Plus · 1,99 €/Monat</option><option value="ultimate">Pro · 3,99 €/Monat</option></select></div>'+
- '<div class="form-group voucher-discount-field" hidden><label class="form-label">Rabatt in % (bei Rabattcodes)</label>'+
- '<input class="input" type="number" name="percent" min="1" max="90" value="20"></div>'+
- '<div class="form-group voucher-gift-field"><label class="form-label">Gratis-Mitgliedschaft für</label><select class="select" name="membership_days">'+
+ '<div class="form-group"><label class="form-label">Mitgliedschaft</label><select class="select" name="tier">'+
+ '<option value="pro">Plus · 1,99 € / Monat</option><option value="ultimate">Pro / Ultimate · 3,99 € / Monat</option></select></div>'+
+ '<div class="form-group"><label class="form-label">Code erstellen</label><select class="select" name="code_mode">'+
+ '<option value="random">Automatisch generieren</option><option value="custom">Eigenen Code bestimmen</option></select></div>'+
+ '<div class="form-group voucher-custom-field" hidden><label class="form-label">Dein Wunschcode</label>'+
+ '<input class="input" name="custom_code" maxlength="64" pattern="[A-Za-z0-9][A-Za-z0-9-]{2,63}" autocomplete="off" autocapitalize="characters" placeholder="NYX oder NyxAtheris5">'+
+ '<small>3–64 Zeichen, Buchstaben, Zahlen und Bindestriche. Groß-/Kleinschreibung ist egal.</small></div>'+
+ '<div class="form-group voucher-discount-field" hidden><label class="form-label">Rabatt</label>'+
+ '<input class="input" type="number" name="percent" min="1" max="90" value="20"><small>Prozent auf den angefragten Tarif.</small></div>'+
+ '<div class="form-group voucher-gift-field"><label class="form-label">Kostenlose Mitgliedschaft für</label><select class="select" name="membership_days">'+
  '<option value="7">7 Tage</option><option value="30" selected>30 Tage</option><option value="90">90 Tage</option><option value="365">365 Tage</option></select></div>'+
  '<div class="form-group"><label class="form-label">Maximale Einlösungen</label><input class="input" type="number" name="max_uses" min="1" max="1000" value="1" required></div>'+
- '<div class="form-group"><label class="form-label">Code gültig für</label><select class="select" name="valid_days">'+
- '<option value="7">7 Tage</option><option value="30" selected>30 Tage</option><option value="90">90 Tage</option><option value="365">365 Tage</option></select></div></div>'+
- '<button class="btn primary" type="submit">Neuen Gutschein erstellen →</button></form>'+
- '<div id="created-voucher" class="voucher-created" hidden></div></div>'+
- '<div class="voucher-admin-list">'+(rows||'<p class="micro">Noch keine Gutscheine.</p>')+'</div></section>';
+ '<div class="form-group"><label class="form-label">Gültigkeit des Gutscheins</label><select class="select" name="valid_days">'+
+ '<option value="1">1 Tag</option><option value="7">7 Tage</option><option value="30" selected>30 Tage</option><option value="90">90 Tage</option><option value="365">365 Tage</option></select></div></div>'+
+ '<button class="btn primary block" type="submit">Gutschein sicher erstellen →</button></form><div id="created-voucher" class="voucher-created" hidden></div></div>'+
+ '<div class="voucher-list-heading"><h3>Deine Gutscheine</h3><button class="btn small" type="button" data-action="refresh-admin">↻ Aktualisieren</button></div>'+
+ '<div class="voucher-admin-list">'+(rows||'<div class="empty"><strong>Keine aktiven Gutscheine mehr.</strong><p>Erstelle oben einen neuen Code. Abgelaufene und gelöschte Gutscheine verschwinden automatisch aus der Liste.</p></div>')+'</div>'+
+ '<p class="micro voucher-footnote">Bereits eingelöste Codes bleiben für Abrechnung und Nachweise intern archiviert. Ungenutzte Codes werden nach Ablauf automatisch gelöscht. Die automatische Bereinigung läuft etwa jede Minute.</p></section>';
 }
 
 function adminPage(){
@@ -1011,12 +1162,20 @@ document.addEventListener('click',async function(e){
  if(e.target.id==='menu-toggle'){sidebar.classList.toggle('open');syncBackdrop();return;}
  var socialRemove=e.target.closest('[data-social-remove]');
  if(socialRemove){if(!confirm('Dieses Profilbild / Banner wirklich entfernen?'))return;try{await removeSocialImage(socialRemove.dataset.socialRemove);render();notice('Bild entfernt.');}catch(err){notice('Bild: '+formatError(err))}return;}
+ var friendTab=e.target.closest('[data-friend-tab]');
+ if(friendTab){s.friendTab=friendTab.dataset.friendTab;render();return;}
  var friendAction=e.target.closest('[data-friend-action]');
  if(friendAction){
   const command=friendAction.dataset.friendAction,id=friendAction.dataset.friendId;
   if(command==='remove'&&!confirm('Diesen Freund wirklich entfernen?'))return;
   try{const r=await api.rpc('academy_friend_action',{p_action:command,p_user:id});if(r.error)throw r.error;await refreshSocial();render();notice('Freundesliste aktualisiert.');}
   catch(err){notice('Freundschaft: '+formatError(err));}return;
+ }
+ var themeBtn=e.target.closest('[data-theme-choice],[data-accent-choice]');
+ if(themeBtn){
+  if(themeBtn.hasAttribute('data-theme-choice'))setChoicePreference('theme',themeBtn.dataset.themeChoice);
+  if(themeBtn.hasAttribute('data-accent-choice'))setChoicePreference('accent',themeBtn.dataset.accentChoice);
+  render();return;
  }
  var action=e.target.closest('[data-action]');
  if(action){
@@ -1030,6 +1189,13 @@ document.addEventListener('click',async function(e){
    var wrap=$('#catalog-container');if(wrap)wrap.innerHTML=catalogItems();return;
   }
   if(name==='complete-practice'){await completePractice();return;}
+  if(name==='reset-appearance'){
+    for(const key of ['compact','motion','largeTypography','contrast','softCorners','backgroundArt'])
+     try{localStorage.removeItem('liverylab-pref-'+key);}catch(_){}
+    for(const key of ['theme','accent'])
+     try{localStorage.removeItem('liverylab-choice-'+key);}catch(_){}
+    applyPreferences();render();notice('Standarddesign wiederhergestellt.');return;
+  }
   if(name==='reset-progress'){
    if(!confirm('Wirklich alle Lernabschlüsse, XP und Prüfungsergebnisse dieses Kontos zurücksetzen? Diese Aktion kann nicht rückgängig gemacht werden.'))return;
    var before=s.progress;
@@ -1071,6 +1237,19 @@ document.addEventListener('click',async function(e){
  var exam=e.target.closest('[data-exam-answer]');if(exam){await submitExamAnswer(Number(exam.dataset.examAnswer));return;}
  var filter=e.target.closest('[data-filter]');if(filter){s.filter=filter.dataset.filter;s.catalogLimit=9;render();return;}
 
+ var voucherDelete=e.target.closest('[data-voucher-delete]');
+ if(voucherDelete){
+  if(s.profile?.role!=='admin')return;
+  const code=voucherDelete.dataset.voucherDelete;
+  if(!confirm('Gutschein '+code+' endgültig aus der Verwaltung entfernen? Bereits eingelöste Ansprüche bleiben als Nachweis erhalten. Diese Aktion kann nicht rückgängig gemacht werden.'))return;
+  try{
+   const r=await api.rpc('academy_voucher_delete',{p_code:code});
+   if(r.error)throw r.error;
+   if(!r.data?.ok)throw Error(r.data?.error||'Gutschein konnte nicht gelöscht werden.');
+   await fetchVouchers();render();notice('Gutschein '+code+' aus der Verwaltung entfernt.');
+  }catch(err){notice('Gutschein: '+formatError(err))}
+  return;
+ }
  var voucherToggle=e.target.closest('[data-voucher-toggle]');
  if(voucherToggle){
   if(s.profile?.role!=='admin')return;
@@ -1143,6 +1322,11 @@ document.addEventListener('change',async function(e){
   if(list)list.innerHTML=results.html;if(count)count.textContent=results.count+' Treffer';
   return;
  }
+ if(e.target.matches('select[name="code_mode"]')&&e.target.closest('form[data-form="create-voucher"]')){
+  const field=e.target.closest('form').querySelector('.voucher-custom-field');
+  if(field)field.hidden=e.target.value!=='custom';
+  return;
+ }
  if(e.target.matches('select[name="kind"]')&&e.target.closest('form[data-form="create-voucher"]')){
   const frm=e.target.closest('form'),discount=frm.querySelector('.voucher-discount-field'),gift=frm.querySelector('.voucher-gift-field');
   if(discount)discount.hidden=e.target.value!=='discount';
@@ -1213,7 +1397,7 @@ document.addEventListener('submit',async function(e){
   }
   if(mode==='redeem-voucher'){
     const code=String(fd.get('code')||'').trim().toUpperCase();
-    if(!/^LL-[A-Z0-9-]{8,60}$/.test(code))throw Error('Bitte einen gültigen LiveryLab-Gutscheincode eingeben.');
+    if(!/^[A-Z0-9][A-Z0-9-]{2,63}$/.test(code))throw Error('Gutscheincode: 3 bis 64 Buchstaben, Zahlen oder Bindestriche.');
     const r=await api.rpc('academy_voucher_apply',{p_code:code});
     if(r.error)throw r.error;
     if(!r.data?.ok)throw Error(r.data?.error||'Gutschein konnte nicht eingelöst werden.');
@@ -1227,8 +1411,10 @@ document.addEventListener('submit',async function(e){
   if(mode==='create-voucher'){
     if(s.profile?.role!=='admin')throw Error('Administratorrechte erforderlich.');
     const kind=String(fd.get('kind')),tier=String(fd.get('tier'));
-    const r=await api.rpc('academy_voucher_create',{
-      p_kind:kind,p_tier:tier,
+    const custom=String(fd.get('code_mode')||'random')==='custom'?String(fd.get('custom_code')||'').trim():'';
+    if(fd.get('code_mode')==='custom'&&!/^[A-Za-z0-9][A-Za-z0-9-]{2,63}$/.test(custom))throw Error('Eigener Code: mindestens 3 Zeichen, nur Buchstaben, Zahlen und Bindestriche.');
+    const r=await api.rpc('academy_voucher_create_custom',{
+      p_custom_code:custom,p_kind:kind,p_tier:tier,
       p_percent:kind==='discount'?Number(fd.get('percent')):null,
       p_membership_days:kind==='gift'?Number(fd.get('membership_days')):null,
       p_max_uses:Number(fd.get('max_uses')),p_valid_days:Number(fd.get('valid_days'))

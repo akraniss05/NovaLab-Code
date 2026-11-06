@@ -41,7 +41,15 @@ for(const value of ['practice-input','complete-practice','load-video','video-che
  assert(lessonHtml.includes(value),'Missing lesson feature '+value);
 assert(app.profilePage().includes('Profil gestalten'),'Discord-like profile customization renders');
 assert(app.friendsPage().includes('Freund hinzufügen'),'Friends page rendered');
+assert(app.friendsPage().includes('friend-navigation'),'Friends tabs rendered');
+state.friendTab='search';assert(app.friendsPage().includes('friends-search-panel'),'Friend search tab rendered');state.friendTab='friends';
 assert(app.settingsPage().includes('Kompakte Kurskarten'),'Settings rendered');
+assert(app.settingsPage().includes('Authenticator & 2FA'),'Two-factor settings moved to settings');
+assert(!app.profilePage().includes('mfa-settings'),'Profile must not display account security');
+assert(app.profilePage().includes('Login-Streak'),'Login streak stats on profile');
+assert(app.profilePage().includes('Erfolge & Titel'),'Achievement gallery on profile');
+assert(app.settingsPage().includes('Hintergrund & Oberflächen'),'Background themes rendered');
+assert(app.settingsPage().includes('Standarddarstellung wiederherstellen'),'Appearance reset present');
 assert(app.plansPage().includes('1,99 €'),'Plus price visible');
 assert(app.plansPage().includes('3,99 €'),'Pro price visible');
 assert(app.plansPage().includes('redeem-voucher'),'Coupon redemption visible');
@@ -84,5 +92,5 @@ app.setApi({rpc:async()=>({data:{ok:true,score:1,total:2,passed:false,review:[{q
  await app.submitExamAnswer(0);
  assert.equal(state.exam.at,2,'Exam completes');
  assert(fakeNodes['#content'].innerHTML.includes('Deine Auswertung'),'Exam feedback rendered');
- console.log('All v17 profile, entitlement, registration, social and server-graded exam tests passed');
+ console.log('All v18 profile, friend tabs, appearance, registration, quotas and server-graded exam tests passed');
 })().catch(e=>{console.error(e);process.exitCode=1;});

@@ -5,7 +5,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path');
 const {chromium}=require('playwright-core');
 const root=path.join(__dirname,'..');
-const css=fs.readFileSync(path.join(root,'site/app-v15.css'),'utf8');
+const css=fs.readFileSync(path.join(root,'site/app-v18.css'),'utf8');
 const auth=fs.readFileSync(path.join(root,'site/auth-mfa-v15.js'),'utf8');
 const executable=[process.env.CHROME_BIN,'/usr/bin/google-chrome','/opt/google/chrome/chrome','/usr/bin/chromium'].filter(Boolean).find(p=>fs.existsSync(p));
 if(!executable)throw Error('Chrome/Chromium required for MFA E2E tests');
