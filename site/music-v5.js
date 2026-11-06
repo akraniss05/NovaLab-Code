@@ -72,7 +72,7 @@ function clock(){
  while(next<ctx.currentTime+.12){
   const b=bar,n=step,t=next;const selected=proj.bars[b]||'A';
   schedule(ctx,master,selected,n,t);
-  setTimeout(()=>{if(root){root.querySelectorAll('.llm-step').forEach(el=>el.classList.toggle('playing',Number(el.dataset.i)===n));root.querySelectorAll('.llm-bar').forEach(el=>el.classList.toggle('playing',Number(el.dataset.bar)===b));$('#llm-position',root).textContent=(b+1)+':'+(n+1)}},Math.max(0,(t-ctx.currentTime)*1000));
+  setTimeout(()=>{if(active&&root&&$('#llm-position',root)){root.querySelectorAll('.llm-step').forEach(el=>el.classList.toggle('playing',Number(el.dataset.i)===n));root.querySelectorAll('.llm-bar').forEach(el=>el.classList.toggle('playing',Number(el.dataset.bar)===b));$('#llm-position',root).textContent=(b+1)+':'+(n+1)}},Math.max(0,(t-ctx.currentTime)*1000));
   step++;if(step>=16){step=0;bar=(bar+1)%proj.bars.length}next+=secs;
  }
 }
@@ -101,7 +101,7 @@ function grid(){
 }
 function bars(){
  $('#llm-bars',root).innerHTML=proj.bars.map((id,i)=>`<button class="llm-bar" data-bar="${i}"><small>Takt ${i+1}</small><b>Pattern ${id}</b></button>`).join('');
- $('#llm-active',root).textContent='Pattern '+proj.activePattern;
+
 }
 function render(node,{userId='guest'}={}){
  stop();abort?.abort();abort=new AbortController();root=node;uid=userId;proj=load();

@@ -40,6 +40,7 @@ function update(){
 function stop(){
  abort?.abort();abort=null;
  if(raf!==null)cancelAnimationFrame(raf);raf=null;
+ if(video){video.onpause=null;video.ontimeupdate=null;video.onloadedmetadata=null;video.onerror=null}
  try{video?.pause()}catch{}
  stopExport('Export abgebrochen');
  if(video?._llAudio)video._llAudio.close().catch(()=>{});

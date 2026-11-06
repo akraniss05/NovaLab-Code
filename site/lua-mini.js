@@ -69,10 +69,10 @@
         const tableInsert=(a,v)=>a.push(v), stringUpper=(x)=>String(x).toUpperCase(), stringLower=(x)=>String(x).toLowerCase();
         try{const f=new Function('print','ipairs','pairs','tostring','type','tableInsert','stringUpper','stringLower','__guard', ev.data);f(print,ipairs,pairs,tostring,type,tableInsert,stringUpper,stringLower,__guard); self.postMessage({ok:true,output:logs.length?logs.join('\\n'):'(Keine print-Ausgabe)'});}catch(e){self.postMessage({ok:false,output:logs.join('\\n'),error:String(e.message||e)});}
       }`;
-      let worker,url,finished=false;
+      let worker,finished=false;
       try{worker=window.LLWorker.start(workerCode,'lua');}
       catch(_e){resolve({ok:false,error:'Browser blockiert den Mini-Runner. Nutze den Strukturcheck oder starte die App über localhost.',output:''});return;}
-      const done=(v)=>{if(finished)return;finished=true;clearTimeout(t);worker.terminate();URL.revokeObjectURL(url);resolve(v);};
+      const done=(v)=>{if(finished)return;finished=true;clearTimeout(t);worker.terminate();resolve(v);};
       const t=setTimeout(()=>done({ok:false,output:'',error:'Test gestoppt: Ausführungslimit erreicht.'}),ms);
       worker.onmessage=e=>done(e.data);worker.onerror=e=>done({ok:false,output:'',error:e.message||'JavaScript-Mini-Runnerfehler'});
       worker.postMessage(compiled);

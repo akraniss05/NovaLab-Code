@@ -25,6 +25,7 @@ function mockSdk() {
 }
 const sdk = 'const user='+JSON.stringify(user)+';const fixtures='+JSON.stringify(fixtures)+';export const createClient='+mockSdk.toString();
 async function checkDownload(page,selector,magic){
+  console.log('Checking download',selector);
   const pending=page.waitForEvent('download',{timeout:30000});
   await page.locator(selector).click();
   const file=await pending;
@@ -35,7 +36,7 @@ async function checkDownload(page,selector,magic){
 async function run(engine,mobile){
   const browser=await engine.launch(mobile?{}:{args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
   try{
-    const context=await browser.newContext({...mobile&&devices['iPhone 13'],serviceWorkers:'block'});
+    const context=await browser.newContext({...mobile&&devices['iPhone 13']});
     const page=await context.newPage();page.setDefaultTimeout(12000);
     const errors=[];page.on('pageerror',err=>{errors.push(err.message);console.error(err.stack)});
     page.on('dialog',dialog=>dialog.accept());
@@ -54,6 +55,7 @@ async function run(engine,mobile){
     await page.route('https://esm.sh/three.core.js',route=>route.fulfill({path:path.join(three,'build/three.core.js'),contentType:'application/javascript'}));
     await page.goto('http://127.0.0.1:8080/');
     const go=async id=>{
+      console.log('Checking route',id);
       await page.locator('#ll-menu-button').click();
       await page.locator('#ll-menu-overlay [data-go="'+id+'"]').click();
     };
@@ -63,11 +65,16 @@ async function run(engine,mobile){
     await page.locator('[data-ll-reset]').click();
     await go('profile');await page.locator('[data-act="customize-profile"]').click();
     await page.locator('button[data-ll-avatar]').first().click();
+    await go('roadmaps');await page.locator('[data-roadmap]').first().click();
+    await go('videos');
     await go('catalog');await page.locator('[data-course="qa"]').first().click();
     const chapter=page.locator('[data-chapter="qa-ch"]');await chapter.click();
     assert.equal(await chapter.getAttribute('aria-expanded'),'false');await chapter.click();
     await page.locator('[data-lesson="qa-lesson"]').first().click();
     await page.locator('[data-quiz-opt="0"]').click();await page.locator('[data-act="bookmark"]').click();
+    await page.locator('[data-act="run-lesson"]').click();
+    await page.waitForFunction(()=>document.querySelector('#lessonOutput').textContent.includes('42'));
+    await page.locator('[data-act="show-solution"]').click();
     await go('practice');
     for(const game of ['memory','pong','snake']){
       await page.locator('[data-game="'+game+'"]').click();await page.locator('#llg-restart').click();
@@ -75,11 +82,14 @@ async function run(engine,mobile){
       else await page.keyboard.press('ArrowLeft');
       await page.locator('#llg-back').click();
     }
-    await go('editor');await page.locator('#llideProject').selectOption('p-js');
+    await go('editor');await page.locator('[data-ide="run"]').click();
+    await page.waitForFunction(()=>document.querySelector('#llideOutput').textContent.includes('Willkommen bei'));
+    await page.locator('#llideProject').selectOption('p-js');
     await page.locator('.CodeMirror').waitFor();await page.locator('[data-ide="wrap"]').click();
     await page.locator('[data-ide="run"]').click();await page.waitForFunction(()=>document.querySelector('#llideOutput').textContent.includes('Hallo Alex'));
     await checkDownload(page,'[data-ide="download"]','PK');
     await go('music');await page.locator('[data-step]').first().click();
+    await page.locator('#llm-play').click();await page.locator('#llm-play').click();
     await page.locator('[data-music5="tap"]').click();await page.locator('[data-music5="save"]').click();
     await checkDownload(page,'[data-music5="export"]','RIFF');
     await go('studio3d');await page.locator('#ll3-canvas canvas').waitFor();
