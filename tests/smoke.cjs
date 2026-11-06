@@ -18,7 +18,7 @@ assert(css.includes('@media(max-width:560px)'),'Mobile breakpoint missing');
 assert(!/sb_secret_|SUPABASE_SERVICE_ROLE_KEY\s*[:=]/.test(read('site/config.js')),'Secret key detected in public config');
 assert(/sb_publishable_/.test(read('site/config.js')),'Supabase publishable key missing');
 for(const feature of ['academy_voucher_apply','academy_voucher_create','academy_voucher_list','academy_voucher_status','academy_voucher_set_active','academy_open_lesson','academy_project_examples','redeem-voucher','create-voucher','membership-card','daily-strip'])assert(js.includes(feature),'Missing membership feature: '+feature);
-for(const token of ['reference-data.js?release=','app-v15.css?release=','LiveryLab v15'])assert(html.includes(token),'Missing v15 asset: '+token);
+for(const token of ['reference-data.js?release=','app-v15.css?release=','LiveryLab v16'])assert(html.includes(token),'Missing v15 asset: '+token);
 for(const token of ['registerAccount','waitingApproval','reference-language','reference-search','approval-card','academy_exam_questions','setTier','access_status','3 pro Tag','6 pro Tag'])assert(js.includes(token),'Missing v15 capability: '+token);
 const reference=read('site/reference-data.js');assert(reference.includes('window.LL_REFERENCE_DATA'),'Reference library missing');
 for(const name of ['Lua','Python','JavaScript','TypeScript','FiveM','Blender','SQL','HTML','CSS','Rust','Java'])assert(reference.includes(name),'Reference language missing: '+name);
