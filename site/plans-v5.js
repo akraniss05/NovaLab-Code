@@ -20,7 +20,7 @@ async function use(feature){
  try{
   const {data,error}=await client.rpc('academy_consume_tool',{p_feature:feature});
   if(error)throw error;
-  return{...data,reason:data?.allowed?'':data?.ultimate_only?'Das Studio ist exklusiv für Ultimate freigeschaltet. Bitte frage die Administration nach einer Freigabe.':data?.pro_only?'Dieses Werkzeug benötigt Ultimate.':'Dieses Werkzeug ist derzeit nicht verfügbar.'};
+  return{...data,reason:data?.allowed?'':data?.ultimate_only?'Dieses Zusatzwerkzeug gehört nicht mehr zur Kurs-Akademie.':data?.pro_only?'Diese Funktion ist in der Kurs-Akademie nicht mehr verfügbar.':'Dieses Werkzeug ist derzeit nicht verfügbar.'};
  }catch(err){console.warn('Feature access',err);return{allowed:false,reason:'Freischaltung momentan nicht prüfbar: '+(err.message||'Serverfehler')}}
 }
 async function setTier(uid,next){
@@ -42,7 +42,7 @@ async function openLesson(id){
  try{
   const {data,error}=await client.rpc('academy_open_lesson',{p_lesson:id});
   if(error)throw error;
-  return {...data,reason:data?.allowed?'':'Dein Tageskontingent ist aufgebraucht ('+(data?.limit||0)+' verschiedene Lektionen). Morgen ab 00:00 UTC geht es weiter. Pro bietet sechs, Ultimate unbegrenzt.'};
+  return {...data,reason:data?.allowed?'':'Dein Tageskontingent ist aufgebraucht ('+(data?.limit||0)+' verschiedene Lektionen). Morgen ab 00:00 UTC geht es weiter. Pro bietet sechs, Plus unbegrenzt.'};
  }catch(err){console.warn('Kursfreigabe',err);return{allowed:false,reason:'Kursfreigabe nicht verfügbar: '+(err.message||'Verbindungsfehler')}}
 }
 window.LLPro={configure,use,setTier,memberTiers,openLesson,get tier(){return tier},get isPro(){return tier==='pro'||tier==='ultimate'},get canUseStudios(){return tier==='ultimate'},subscribe:fn=>{listeners.add(fn);return()=>listeners.delete(fn)}};

@@ -1,4 +1,4 @@
-name: Deploy LiveryLab Academy 8.0
+name: Deploy LiveryLab Academy 9.0 (Learning Only)
 on:
   push:
     branches: [main]
@@ -20,58 +20,48 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Validate code and private curriculum design
+      - name: Validate learning platform and no studios
         run: |
           set -e
-          for f in site/config.js site/lua-mini.js site/plans-v5.js site/videos-v5.js site/music-studio.js site/music-v5.js site/code-studio.js site/studio3d-v5.js site/games-v5.js site/shell-v5.js site/auth-mfa-v5.js site/video-lab-v5.js site/workspace-v6.js site/social-v7.js site/app.js site/service-worker.js; do node --check "$f"; done
+          for f in site/config.js site/shell-v5.js site/auth-mfa-v5.js site/plans-v5.js site/videos-v5.js site/learn-v9.js site/app.js site/service-worker.js; do
+            node --check "$f"
+          done
           node - <<'NODE'
-          const fs=require('node:fs'),html=fs.readFileSync('site/index.html','utf8'),app=fs.readFileSync('site/app.js','utf8'),conf=fs.readFileSync('site/config.js','utf8');
-          for(const f of ['site/index.html','site/styles.css','site/studio-v4.css','site/studio-v5.css','site/shell-v5.css','site/studio-polish-v5.css','site/workspace-v6.css','site/workspace-v6.js','site/academy-v7.css','site/shop-inspired-v8.css','site/assets/liverylab-academy-wordmark.svg','site/assets/liverylab-server-banner.webp','site/social-v7.js','site/shell-v5.js','site/auth-mfa-v5.js','site/video-lab-v5.js','site/plans-v5.js','site/videos-v5.js','site/music-studio.js','site/music-v5.js','site/code-studio.js','site/studio3d-v5.js','site/games-v5.js','site/shell-v5.js','site/auth-mfa-v5.js','site/video-lab-v5.js','site/assets/category-code.svg','site/assets/category-music.svg','site/assets/category-fivem.svg','site/assets/category-blender.svg','site/assets/category-games.svg','site/manifest.webmanifest','site/privacy.html','site/assets/icon.svg'])if(!fs.existsSync(f))throw Error('Missing '+f);
-          if(!conf.includes('requireLogin: true'))throw Error('Authentication required');
-          if(!conf.includes('sb_publishable_'))throw Error('Missing public publishable key');
-          if(!app.includes("from('academy_curriculum')"))throw Error('Private curriculum is not used');
-          if(!app.includes("window.LLMusic.renderLesson"))throw Error('Music lesson integration absent');
-          if(!app.includes("window.LLIDE.render"))throw Error('Code IDE integration absent');
-          if(!app.includes("academy_claim_daily"))throw Error('Reward integration absent');
-          if(!html.includes('music-studio.js')||!html.includes('code-studio.js')||!html.includes('studio-v4.css'))throw Error('Missing UI module refs');
-          if(html.includes('design-lab.js'))throw Error('Legacy design module still loaded');
-          if(!html.includes('type="importmap"')||!html.includes('studio3d-v5.js'))throw Error('3D module mapping missing');
-          if(!html.includes('workspace-v6.js')||!html.includes('workspace-v6.css'))throw Error('Workspace 6 assets missing');if(!html.includes('academy-v7.css')||!html.includes('social-v7.js'))throw Error('Academy 7 assets missing');
-          if(!html.includes('shop-inspired-v8.css')||!html.includes('liverylab-academy-wordmark.svg'))throw Error('Shop-inspired 8.0 assets missing');
-          if(fs.statSync('site/assets/liverylab-server-banner.webp').size<1000)throw Error('Original LiveryLab banner file missing');
-          if(!html.includes('ll-menu-button')||!html.includes('data-go="settings"')||!html.includes('auth-mfa-v5.js')||!html.includes('video-lab-v5.js'))throw Error('New shell and MFA integration missing');
-          if(!app.includes('window.LLMFA.refresh')||!app.includes('window.LLVideoLab.render'))throw Error('New account or video routes missing');
-          if(!app.includes('roadmapsView')||!app.includes('window.LLPro'))throw Error('Roadmaps or Pro integration missing');
-          const vm=require('node:vm'),context={window:{},document:{},console};
-          const scripts=Array.from(html.matchAll(/<script\s+src="([\w.-]+\.js)"/g),match=>'site/'+match[1]);
-          for(const f of scripts.filter(file=>file!=='site/app.js')){
-            vm.runInNewContext(fs.readFileSync(f,'utf8'),context,{timeout:2000,filename:f});
+          const fs=require('node:fs');
+          const html=fs.readFileSync('site/index.html','utf8');
+          const app=fs.readFileSync('site/app.js','utf8');
+          const config=fs.readFileSync('site/config.js','utf8');
+          for(const f of ['site/index.html','site/learn-v9.js','site/course-only-v9.css','site/styles.css','site/shop-inspired-v8.css','site/shell-v5.css','site/shell-v5.js','site/plans-v5.js','site/auth-mfa-v5.js','site/videos-v5.js','site/app.js','site/config.js','site/privacy.html','site/manifest.webmanifest','site/assets/liverylab-academy-wordmark.svg']) {
+            if(!fs.existsSync(f))throw Error('Missing required '+f)
           }
-          if(typeof context.window.LL3D.render!=='function'||typeof context.window.LLMusic.renderStudio!=='function'||typeof context.window.LLGames.render!=='function'||typeof context.window.LLIDE.render!=='function'||typeof context.window.LLShell.renderSettings!=='function'||typeof context.window.LLMFA.renderGate!=='function'||typeof context.window.LLVideoLab.render!=='function')throw Error('Studio modules failed to initialize');
-          const v=context.window.LLVideo.suggest({lang:'javascript',title:'Arrays'},{category:'Sprachen'});
-          if(v.id!=='Zi-Q0t4gMC8'||v.start<100)throw Error('Video selection incorrect');
-          if(fs.existsSync('site/data.js')||fs.existsSync('site/data.json'))throw Error('Public curriculum files must not be deployed');
-          if(/sb_secret_[A-Za-z0-9]/.test(conf))throw Error('Unsafe secret exposed');
-          console.log('LiveryLab Academy 8.0 static checks passed');
+          for(const asset of ['learn-v9.js','course-only-v9.css','auth-mfa-v5.js','videos-v5.js']){
+            if(!html.includes(asset))throw Error('Missing course-only module '+asset)
+          }
+          for(const unwanted of ['code-studio.js','music-v5.js','music-studio.js','studio3d-v5.js','video-lab-v5.js','workspace-v6.js','games-v5.js']) {
+            if(html.includes(unwanted))throw Error('Unwanted editor or studio script '+unwanted)
+          }
+          for(const item of ['username','Passwort','discord.gg/livery-lab','nyxatheris','LL9.learning','academy_open_lesson']){
+            if(!app.toLowerCase().includes(item.toLowerCase()))throw Error('Missing learning/account feature '+item)
+          }
+          if(!config.includes('requireLogin: true'))throw Error('Login must remain required')
+          if(!config.includes('sb_publishable_'))throw Error('Only public Supabase key expected')
+          if(/sb_secret_[A-Za-z0-9]|service_role_key|SUPABASE_SERVICE_ROLE/.test(config))throw Error('Secret key present in published configuration')
+          if(fs.existsSync('site/data.json')||fs.existsSync('site/data.js'))throw Error('Private curriculum cannot be stored on GitHub Pages')
+          console.log('Academy 9 static checks passed');
           NODE
-      - name: Test studios in Chromium and mobile WebKit
+      - name: Install browsers and test desktop/iPhone course flows
         run: |
-          npm install --prefix "$RUNNER_TEMP/academy-qa" --no-audit --no-fund playwright@1.56.1 three@0.180.0 codemirror@5.65.20 jszip@3.10.1
+          npm install --prefix "$RUNNER_TEMP/academy-qa" --no-audit --no-fund playwright@1.56.1
           "$RUNNER_TEMP/academy-qa/node_modules/.bin/playwright" install --with-deps chromium webkit
-          command -v ffmpeg >/dev/null || sudo apt-get install -y ffmpeg
-          ffmpeg -loglevel error -f lavfi -i color=c=blue:s=320x240:d=2 -f lavfi -i sine=duration=2 -c:v libx264 -pix_fmt yuv420p -c:a aac "$RUNNER_TEMP/academy-clip.mp4"
-          ffmpeg -loglevel error -i "$RUNNER_TEMP/academy-clip.mp4" -c:v libvpx -c:a libopus "$RUNNER_TEMP/academy-clip.webm"
           python3 -m http.server 8080 --bind 127.0.0.1 --directory site &
           trap 'kill $!' EXIT
-          NODE_PATH="$RUNNER_TEMP/academy-qa/node_modules" QA_CLIP="$RUNNER_TEMP/academy-clip.mp4" node tests/browser.cjs
+          NODE_PATH="$RUNNER_TEMP/academy-qa/node_modules" node tests/browser.cjs
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
-      - name: Upload static site
+      - name: Upload static website
         uses: actions/upload-pages-artifact@v4
         with:
           path: site
-      - name: Allow artifact indexing
-        run: sleep 10
       - name: Publish
         id: deployment
         uses: actions/deploy-pages@v4
