@@ -1,10 +1,10 @@
-/* LiveryLab Academy v14: actual Chromium mobile layout regression tests */
+/* LiveryLab Academy v15: actual Chromium mobile layout regression tests */
 'use strict';
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),assert=require('node:assert/strict');
 const {chromium}=require('playwright-core');
 const root=path.join(__dirname,'..');
 const source=fs.readFileSync(path.join(root,'site/academy.js'),'utf8');
-const css=fs.readFileSync(path.join(root,'site/app-v14.css'),'utf8');
+const css=fs.readFileSync(path.join(root,'site/app-v15.css'),'utf8');
 const expose='\nwindow.__views={s,trackPage,lessonPage,scriptPage,examPage,referencePage,plansPage,adminPage,login};\n})();';
 assert.match(source,/\ninit\(\);\n\}\)\(\);\s*$/);
 const rewritten=source.replace(/\ninit\(\);\n\}\)\(\);\s*$/,expose);

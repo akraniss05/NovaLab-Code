@@ -244,6 +244,16 @@ async function navigateCurrent(){
  render();window.scrollTo({top:0,behavior:'instant'});
 }
 
+function renderMFA(){
+ const target=$('#mfa-settings');
+ if(!target)return;
+ if(!window.LLMFA||typeof window.LLMFA.renderSettings!=='function'){
+  target.innerHTML='<div class="mfa-error-card"><strong>Authenticator konnte nicht geladen werden.</strong><p>Lade die Website neu, um 2FA zu öffnen.</p></div>';return;
+ }
+ Promise.resolve(window.LLMFA.renderSettings(target,api)).catch(err=>{
+  target.innerHTML='<div class="mfa-error-card"><strong>2FA konnte nicht geladen werden.</strong><p>'+esc(formatError(err))+'</p></div>';
+ });
+}
 function render(){
  if(!s.ready){login();return;}
  frame();const r=parseRoute();
@@ -744,8 +754,9 @@ function settingsPage(){
  '<div class="settings-row"><div class="setting-info"><span class="setting-icon">↗</span><span><b>Abmelden</b><p>Beendet deine aktuelle Sitzung auf diesem Gerät.</p></span></div>'+
  '<button type="button" class="btn small" data-action="logout">Abmelden</button></div>'+
  '</div></section>'+
+ '<section class="section panel mfa-settings-section"><span class="eyebrow">KONTOSICHERHEIT</span><h2>Authenticator-App & 2FA</h2><p class="muted">Verbinde, verwalte und entferne deine Authenticator-Geräte direkt hier.</p><div id="mfa-settings"></div></section>'+
  '<section class="section panel"><span class="eyebrow">LIVERYLAB STUDIOS</span><h3>Über diese Academy</h3>'+
- '<p class="micro">Eine Lernplattform für Programmierung, FiveM und Blender. Version 11 · Lerninhalte werden von der Community weiterentwickelt.</p>'+
+ '<p class="micro">Eine Lernplattform für Programmierung, FiveM und Blender. Version 15 · Lerninhalte werden von der Community weiterentwickelt.</p>'+
  '<a href="./privacy.html">Datenschutzhinweise ansehen ↗</a><p class="smallprint" style="margin-top:16px">Made with 💙 from NyxAtheris (LiveryLab Studios)</p></section>';
 }
 

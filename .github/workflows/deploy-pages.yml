@@ -1,4 +1,4 @@
-name: Deploy LiveryLab Academy v14 • access approvals and references
+name: Deploy LiveryLab Academy v15 • authenticator security
 on:
   push:
     branches: [main]
@@ -21,7 +21,7 @@ jobs:
         run: |
           node --check site/reference-data.js
           node --check site/academy.js
-          node --check site/auth-mfa-v5.js
+          node --check site/auth-mfa-v15.js
           node --check site/config.js
           node tests/smoke.cjs
           node tests/render.cjs
@@ -29,11 +29,13 @@ jobs:
         run: npm install --no-save --ignore-scripts --no-package-lock playwright-core@1.56.1
       - name: Validate mobile layouts in Chrome
         run: node tests/browser.cjs
+      - name: Validate authenticator setup, login and removal
+        run: node tests/mfa-browser.cjs
       - name: Upload visual test captures
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: academy-v14-mobile-captures
+          name: academy-v15-mobile-captures
           path: test-results/
           if-no-files-found: ignore
       - uses: actions/configure-pages@v5

@@ -114,3 +114,12 @@ Unter Repository Settings > Pages muss „GitHub Actions“ aktiviert sein. Push
 - Free: drei neue Lektionen täglich, Plus (`pro`): sechs, Ultimate (`ultimate`): unbegrenzt. PostgreSQL RPC erzwingt Limits; bisher geöffnete Lektionen bleiben erneut abrufbar.
 - 24 Programmiersprachen/Tools, 485 kompakte Referenzeinträge, offizielle Dokumentationslinks, filter- und suchbar.
 - Abschlussprüfungen: bis zu 20 zufällig gewählte Fragen via geschützter `academy_exam_questions` RPC nach Kursabschluss, Bewertung und Auswertung. Die Prüfung ist ein Lern-Test, keine betrugssichere Zertifikatsprüfung.
+
+
+## v15 · Authenticator-App / 2FA
+
+- `site/auth-mfa-v15.js`: Supabase MFA-Verwaltung zum Verknüpfen einer TOTP-App, QR-Code, manuellem Sicherheitsschlüssel, Codebestätigung sowie Entfernen eines verbundenen Geräts (nur nach AAL2-Bestätigung).
+- `site/academy.js`: `renderMFA()` verbindet die Authenticator-Einstellungen mit Profil und Einstellungen. Bei neuem Login folgt nach Passwort die sechsstellige Codeeingabe, sofern das Konto einen verifizierten Faktor besitzt.
+- Supabase erzwingt in `academy_private.session_verified()` AAL2 für angemeldete Accounts mit bestätigtem MFA-Faktor und schützt Daten unabhängig vom Frontend.
+- `tests/mfa-browser.cjs` testet Enrollment, QR, ungültigen/gültigen Code, die nächste Anmeldung und das Entfernen des Geräts mit mock-Supabase im echten Chromium. Ein Live-Enrollment eines echten Kontos wird dadurch nicht ersetzt.
+- Wunschdomain `github.liverylabacademy.app`: siehe `CUSTOM_DOMAIN.md`. Domaininhaberschaft, DNS-Zugriff und GitHub Pages Custom Domain Settings sind vor dem Live-Switch erforderlich.
