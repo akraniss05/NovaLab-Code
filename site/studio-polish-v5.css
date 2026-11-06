@@ -78,3 +78,11 @@ body[data-workspace=blender] .ll3-layout{box-shadow:0 19px 60px #160a184f}
 .llv-timeline input,.llv-inspector input{max-width:100%}
 @media(max-width:850px){.llv-layout{grid-template-columns:1fr}.llv-inspector{display:grid;grid-template-columns:1fr}.llv-heading{padding:19px}.llv-title-icon{font-size:60px}}
 @media(max-width:600px){#content{padding-top:15px}.topbar{min-height:58px}.topbar .xp-tag{font-size:10px}.llv-heading{border-radius:13px}.llv-title-icon{display:none}.llv-toolbar>.btn,.llv-upload{flex:1;min-width:120px;text-align:center}.llv-canvas{min-height:190px;padding:8px}.llv-transport{gap:7px;padding:10px}.llv-timeline{padding:13px}.llv-range{gap:10px}.llv-timeline-track{font-size:10px}.llide-layout{border-radius:0 0 13px 13px}.llide-editwrap .CodeMirror{height:355px!important}.llide-files{max-height:130px}.llide-file{white-space:nowrap}.llide-shortcuts button{flex:0 0 34px}.llide-actions .btn{flex:1;min-width:120px}.ll3-layout{border-radius:13px}.ll-profile-actions .btn{flex:1;min-width:160px}}
+
+@media (max-width: 700px) {
+  .ll-menu-sheet {max-height: 100dvh; padding-bottom: env(safe-area-inset-bottom)}
+  .ll-head-action, .ll-head-menu, .ll-head-account, .llide-shortcuts button {min-height: 44px; min-width: 44px}
+  .ll-pref-main, .llv-workspace, .llide-main {min-width: 0}
+  .app input:not([type="range"]):not([type="checkbox"]), .app select, .app textarea {font-size: 16px}
+}
+.llide-actions [aria-pressed="true"] {outline: 2px solid currentColor}

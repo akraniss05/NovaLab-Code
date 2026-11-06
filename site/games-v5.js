@@ -3,7 +3,7 @@
 'use strict';
 const $=(s,r=document)=>r.querySelector(s);
 let abort=null,raf=null,tick=null,canvas=null,context=null,game='',state=null,root=null;
-function teardown(){abort?.abort();abort=null;if(raf)cancelAnimationFrame(raf);raf=null;if(tick)clearInterval(tick);tick=null;canvas=null;context=null;root=null}
+function teardown(){abort?.abort();abort=null;if(raf)cancelAnimationFrame(raf);raf=null;if(tick)clearInterval(tick);tick=null;state=null;canvas=null;context=null;root=null}
 function render(node,mode,{onBack,onCode}={}){
  teardown();root=node;game=mode;abort=new AbortController();const signal=abort.signal;
  node.innerHTML=`<div class="eyebrow">LIVERYLAB · PLAY & CODE</div><h1>${mode==='snake'?'Snake 🐍':mode==='pong'?'Pong 🏓':'Memory 🧠'}</h1><p class="text-muted">Ein echtes Browsergame mit funktionierender Eingabe. Spiele zuerst und öffne danach den Code Studio, um eine eigene Version zu programmieren.</p><div class="flex"><button id="llg-back" class="btn">← Training</button><button id="llg-code" class="btn primary">⌘ Selber programmieren</button><button id="llg-restart" class="btn">↻ Neustart</button></div><div class="llg-stage">${mode==='memory'?'<div id="llg-memory" class="llg-memory"></div>':'<canvas id="llg-canvas" width="360" height="300" tabindex="0" aria-label="Spielbereich"></canvas>'}<p id="llg-score" role="status">Score: 0</p></div>${mode==='memory'?'':'<div class="llg-controls"><button data-dir="left">◀</button><button data-dir="up">▲</button><button data-dir="down">▼</button><button data-dir="right">▶</button></div>'}<p class="micro">Touch-Buttons, Maus oder Pfeiltasten benutzen. Die Spiele laufen lokal und senden keine Score-Daten an die Rangliste.</p>`;
@@ -77,7 +77,7 @@ function drawMemory(){
   if(!state||state.busy)return;
   const i=+b.dataset.memory;if(state.flipped.includes(i)||state.matched.includes(i))return;
   state.flipped.push(i);drawMemory();
-  if(state.flipped.length===2){state.moves++;const[a,z]=state.flipped;if(state.cards[a]===state.cards[z]){state.matched.push(a,z);state.flipped=[];drawMemory();if(state.matched.length===16)$('#llg-score',root).textContent+=' · Gewonnen!'}else{state.busy=true;setTimeout(()=>{if(game==='memory'&&state){state.flipped=[];state.busy=false;drawMemory()}},650)}}
+  if(state.flipped.length===2){state.moves++;const[a,z]=state.flipped;if(state.cards[a]===state.cards[z]){state.matched.push(a,z);state.flipped=[];drawMemory();if(state.matched.length===16)$('#llg-score',root).textContent+=' · Gewonnen!'}else{state.busy=true;const round=state;setTimeout(()=>{if(state===round){state.flipped=[];state.busy=false;drawMemory()}},650)}}
  },{signal:abort.signal}));
 }
 window.LLGames={render,stop:teardown};

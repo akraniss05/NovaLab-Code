@@ -3,7 +3,7 @@
 'use strict';
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-let client=null,pending=false,error='',draft=null,factors=[];
+let client=null,pending=false,error='',factors=[];
 async function refresh(c){
  client=c;pending=false;error='';
  if(!c)return false;
@@ -12,7 +12,7 @@ async function refresh(c){
   if(res.error)throw res.error;
   pending=res.data.currentLevel==='aal1'&&res.data.nextLevel==='aal2';
   return pending;
- }catch(e){error=e.message||'Status nicht verfügbar';console.warn('MFA',e);return false}
+ }catch(e){error=e.message||'Status nicht verfügbar';console.warn('MFA',e);pending=true;return true}
 }
 async function list(c){
  const res=await c.auth.mfa.listFactors();if(res.error)throw res.error;factors=res.data.totp||[];return factors;
@@ -27,9 +27,17 @@ async function renderGate(node,{client:c,onSuccess,onLogout}={}){
  if(!c)return;
  node.innerHTML=`<section class="ll-mfa-gate"><div class="ll-mfa-symbol">🛡</div><span class="eyebrow">SICHERHEIT / ZWEITER FAKTOR</span><h1>Bestätige deine Anmeldung.</h1><p>Öffne deine Authenticator-App und gib deinen aktuellen sechsstelligen Code ein. Erst danach wird die Academy freigegeben.</p><label>Authenticator-Code<input id="ll-mfa-login-code" class="input" autocomplete="one-time-code" inputmode="numeric" maxlength="6" placeholder="000000"></label><div id="ll-mfa-login-message" role="status"></div><div class="flex"><button class="btn primary" id="ll-mfa-login-check">Anmeldung bestätigen</button><button class="btn" id="ll-mfa-login-logout">Abmelden</button></div><p class="micro">Keinen Zugriff mehr? Wende dich an deinen Administrator. Teile Authenticator-Codes niemals mit anderen.</p></section>`;
  const status=$('#ll-mfa-login-message',node);
+ if(error){
+  status.textContent='Authenticator-Status konnte nicht geladen werden.';
+  const retry=$('#ll-mfa-login-check',node);
+  retry.textContent='Verbindung erneut prüfen';
+  retry.onclick=async()=>{await refresh(c);if(!pending)await onSuccess?.();else renderGate(node,{client:c,onSuccess,onLogout})};
+  $('#ll-mfa-login-logout',node).onclick=()=>onLogout?.();
+  return;
+ }
  $('#ll-mfa-login-logout',node).onclick=()=>onLogout?.();
  $('#ll-mfa-login-check',node).onclick=async()=>{
-  try{status.textContent='Code wird geprüft …';const all=await list(c),factor=all.find(f=>f.status==='verified')||all[0];if(!factor)throw Error('Kein verifizierter Authenticator gefunden');await verify(c,factor.id,$('#ll-mfa-login-code',node).value.trim());status.textContent='✓ Erfolgreich';await onSuccess?.()}catch(err){status.textContent='Fehler: '+(err.message||'Code ungültig')}
+  try{status.textContent='Code wird geprüft …';const all=await list(c),factor=all.find(f=>f.status==='verified');if(!factor)throw Error('Kein verifizierter Authenticator gefunden');await verify(c,factor.id,$('#ll-mfa-login-code',node).value.trim());status.textContent='✓ Erfolgreich';await onSuccess?.()}catch(err){status.textContent='Fehler: '+(err.message||'Code ungültig')}
  };
 }
 async function renderSettings(node,c){
@@ -49,12 +57,12 @@ async function renderSettings(node,c){
    const area=$('#ll-mfa-enroll-area',node);area.textContent='Einrichtung starten …';
    try{
     const res=await c.auth.mfa.enroll({factorType:'totp',friendlyName:'LiveryLab Academy'});if(res.error)throw res.error;
-    draft=res.data;const qr=draft.totp?.qr_code||'';
+    const draft=res.data;const qr=draft.totp?.qr_code||'';
     area.innerHTML=`<div class="ll-mfa-setup"><h3>Authenticator koppeln</h3><p>Scanne den QR-Code mit deiner Authenticator-App. Falls du am selben Handy bist, kopiere das Geheimnis und gib es manuell ein. Teile es niemals mit anderen.</p><div id="ll-mfa-qr"></div><label>Manueller Schlüssel <input readonly class="input" id="ll-mfa-secret"></label><label>Sechsstelliger Code <input class="input" id="ll-mfa-setup-code" maxlength="6" inputmode="numeric" autocomplete="one-time-code" placeholder="000000"></label><div class="flex"><button class="btn primary" id="ll-mfa-activate">2FA aktivieren</button><button class="btn" id="ll-mfa-cancel">Abbrechen</button></div><p id="ll-mfa-setup-status" role="status"></p></div>`;
     const image=document.createElement('img');image.alt='TOTP QR-Code';image.className='ll-mfa-qr';if(/^data:image\/svg\+xml[;,]/i.test(qr))image.src=qr;$('#ll-mfa-qr',area).append(image);
     $('#ll-mfa-secret',area).value=draft.totp?.secret||'';
-    $('#ll-mfa-cancel',area).onclick=async()=>{try{await c.auth.mfa.unenroll({factorId:draft.id})}catch{}draft=null;renderSettings(node,c)};
-    $('#ll-mfa-activate',area).onclick=async()=>{const status=$('#ll-mfa-setup-status',area);try{await verify(c,draft.id,$('#ll-mfa-setup-code',area).value.trim());draft=null;status.textContent='✓ Authenticator aktiviert';await renderSettings(node,c)}catch(err){status.textContent=err.message}};
+    $('#ll-mfa-cancel',area).onclick=async()=>{try{await c.auth.mfa.unenroll({factorId:draft.id})}catch{}renderSettings(node,c)};
+    $('#ll-mfa-activate',area).onclick=async()=>{const status=$('#ll-mfa-setup-status',area);try{await verify(c,draft.id,$('#ll-mfa-setup-code',area).value.trim());status.textContent='✓ Authenticator aktiviert';await renderSettings(node,c)}catch(err){status.textContent=err.message}};
    }catch(e){area.textContent='Einrichtung fehlgeschlagen: '+e.message}
   };
  }catch(e){node.textContent='Authenticator-Status konnte nicht geladen werden: '+e.message}

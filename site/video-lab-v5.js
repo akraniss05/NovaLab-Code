@@ -41,7 +41,8 @@ function stop(){
  abort?.abort();abort=null;
  if(raf!==null)cancelAnimationFrame(raf);raf=null;
  try{video?.pause()}catch{}
- if(recorder?.state==='recording'){try{recorder.stop()}catch{}}
+ stopExport('Export abgebrochen');
+ if(video?._llAudio)video._llAudio.close().catch(()=>{});
  recorder=null;isExporting=false;
  if(objectURL)URL.revokeObjectURL(objectURL);objectURL=null;video=null;root=null;outputCanvas=null;renderCtx=null;srcFile=null;
 }
@@ -61,9 +62,10 @@ function render(node){
   const f=e.target.files?.[0];if(!f)return;if(f.size>150e6)return status('Die Datei ist zu groß. Maximal 150 MB.');
   if(objectURL)URL.revokeObjectURL(objectURL);objectURL=URL.createObjectURL(f);srcFile=f;video.src=objectURL;
   try{await new Promise((res,rej)=>{video.onloadedmetadata=res;video.onerror=()=>rej(new Error('Format nicht lesbar'))});
-   project.start=0;project.end=duration();$('#llv-seek',root).max=String(duration());$('#llv-dur',root).textContent=time(duration());update();previewLoop();status('Clip geladen: '+f.name);
+   project.start=0;project.end=duration();$('#llv-seek',root).max=String(duration());$('#llv-dur',root).textContent=time(duration());update();if(raf===null)previewLoop();status('Clip geladen: '+f.name);
   }catch(err){status('Datei konnte nicht gelesen werden: '+err.message)}
  };
+ video.onpause=()=>{$('#llv-play',root).textContent='▶'};
  video.ontimeupdate=()=>{if(!root)return;$('#llv-pos',root).textContent=time(video.currentTime);$('#llv-seek',root).value=String(video.currentTime);if(!isExporting&&video.currentTime>=project.end&&project.end>0)video.pause()};
 }
 const time=s=>`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
@@ -89,45 +91,82 @@ async function toggle(){
  if(!srcFile)return status('Bitte zuerst ein Video importieren');
  try{if(video.paused){if(video.currentTime<project.start||video.currentTime>=project.end)video.currentTime=project.start;await video.play();$('#llv-play',root).textContent='Ⅱ'}else{video.pause();$('#llv-play',root).textContent='▶'}}catch(e){status(e.message)}
 }
-let currentStream=null,recorded=[];
+let exportJob=null;
+function finish(job,message){
+ if(exportJob!==job)return;
+ exportJob=null;isExporting=false;
+ job.controller.abort();
+ if(job.frame)cancelAnimationFrame(job.frame);
+ video?.pause();
+ if(job.recorder?.state==='recording')job.recorder.stop();
+ job.stream?.getTracks().forEach(track=>track.stop());
+ if(root){
+  for(const control of job.controls)control.disabled=false;
+  $('#llv-cancel',root).hidden=true;
+  if(message)status(message);
+ }
+}
 function stopExport(message){
- if(!isExporting)return;
- isExporting=false;
- try{video?.pause()}catch{}
- if(raf!==null)cancelAnimationFrame(raf);raf=null;
- if(recorder?.state==='recording')recorder.stop();
- else currentStream?.getTracks().forEach(t=>t.stop());
- if(root){$('#llv-export',root).disabled=false;$('#llv-cancel',root).hidden=true;if(message)status(message)}
+ if(!exportJob)return;
+ exportJob.save=!message;
+ finish(exportJob,message);
 }
 async function exportVideo(){
  if(!srcFile)return status('Bitte zuerst ein Video importieren');
- if(isExporting)return;
- if(!window.MediaRecorder||!outputCanvas.captureStream)return status('Dein Browser unterstützt diesen Videoexport nicht. Versuche Safari/Chrome mit aktuellem System.');
+ if(exportJob)return;
+ if(!window.MediaRecorder||!outputCanvas.captureStream)return status('Dieser Browser unterstützt den Videoexport nicht.');
  if(project.end-project.start<.2)return status('Clip muss mindestens 0,2 Sekunden lang sein.');
- const formats=['video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'];const mime=formats.find(x=>MediaRecorder.isTypeSupported(x));if(!mime)return status('Kein unterstütztes Videoformat verfügbar.');
- const gate=await LLPro.use('video_export');if(!gate.allowed)return status(gate.reason);
+ const mime=['video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(x=>MediaRecorder.isTypeSupported(x));
+ if(!mime)return status('Kein unterstütztes Videoformat verfügbar.');
+ const job={controller:new AbortController(),controls:root.querySelectorAll('.llv-toolbar input, .llv-toolbar button:not(#llv-cancel), .llv-layout input, .llv-layout select, #llv-play'),save:false};
+ exportJob=job;isExporting=true;
+ for(const control of job.controls)control.disabled=true;
+ $('#llv-cancel',root).hidden=false;
  try{
-  isExporting=true;recorded=[];$('#llv-export',root).disabled=true;$('#llv-cancel',root).hidden=false;
-  const stream=outputCanvas.captureStream(30);currentStream=stream;
-  // Video without audio fallback when a browser does not allow the audio graph.
-  try{
-   const audio=new (window.AudioContext||window.webkitAudioContext)(),source=audio.createMediaElementSource(video),destination=audio.createMediaStreamDestination();
-   source.connect(destination);source.connect(audio.destination);await audio.resume();
-   destination.stream.getAudioTracks().forEach(t=>stream.addTrack(t));video._llAudio=audio;
-  }catch(e){status('Hinweis: Browser kann Audio beim Export eventuell nicht einbinden.')}
-  recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:3500000});
-  recorder.ondataavailable=e=>{if(e.data?.size)recorded.push(e.data)};
-  recorder.onerror=e=>status('Exportfehler: '+(e.error?.message||'MediaRecorder'));
-  recorder.onstop=()=>{
-   const blob=new Blob(recorded,{type:mime});if(blob.size){const link=URL.createObjectURL(blob),a=document.createElement('a');a.href=link;a.download='LiveryLab-Clip.'+(mime.includes('mp4')?'mp4':'webm');a.click();setTimeout(()=>URL.revokeObjectURL(link),20000);status('Clip lokal exportiert ('+Math.round(blob.size/1024)+' KB).')}else status('Keine Videodaten erstellt.');
-   stream.getTracks().forEach(t=>t.stop());video?._llAudio?.close?.();currentStream=null;recorder=null;
+  const gate=await LLPro.use('video_export');
+  if(exportJob!==job)return;
+  if(!gate.allowed)return finish(job,gate.reason);
+  video.pause();
+  if(video.seeking||Math.abs(video.currentTime-project.start)>.001){
+   await new Promise((resolve,reject)=>{
+    const signal=job.controller.signal;
+    const timer=setTimeout(()=>reject(Error('Clipanfang konnte nicht geladen werden.')),8000);
+    signal.addEventListener('abort',()=>{clearTimeout(timer);reject(Error('Abgebrochen'))},{once:true});
+    video.addEventListener('seeked',()=>{clearTimeout(timer);resolve()},{once:true,signal});
+    video.currentTime=project.start;
+   });
+  }
+  if(exportJob!==job)return;
+  job.stream=outputCanvas.captureStream(30);
+  const Audio=window.AudioContext||window.webkitAudioContext;
+  if(!Audio)throw Error('Audiospur wird in diesem Browser nicht unterstützt.');
+  if(!video._llAudio){
+   video._llAudio=new Audio();
+   const source=video._llAudio.createMediaElementSource(video);
+   video._llDestination=video._llAudio.createMediaStreamDestination();
+   source.connect(video._llDestination);source.connect(video._llAudio.destination);
+  }
+  await video._llAudio.resume();
+  if(exportJob!==job)return;
+  video._llDestination.stream.getAudioTracks().forEach(t=>job.stream.addTrack(t.clone()));
+  const chunks=[],rec=new MediaRecorder(job.stream,{mimeType:mime,videoBitsPerSecond:3500000});
+  job.recorder=rec;
+  rec.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data)};
+  rec.onerror=()=>finish(job,'Aufnahme fehlgeschlagen.');
+  rec.onstop=()=>{
+   if(exportJob===job)finish(job,'Aufnahme wurde unterbrochen.');
+   if(!job.save)return;
+   const blob=new Blob(chunks,{type:mime});
+   if(!blob.size)return status('Keine Videodaten erstellt.');
+   const url=URL.createObjectURL(blob),link=document.createElement('a');
+   link.href=url;link.download='LiveryLab-Clip.'+(mime.includes('mp4')?'mp4':'webm');
+   link.click();setTimeout(()=>URL.revokeObjectURL(url),20000);status('Clip lokal exportiert.');
   };
-  video.pause();video.currentTime=project.start;
-  await new Promise(res=>video.addEventListener('seeked',res,{once:true}));
-  recorder.start(250);await video.play();
-  const check=()=>{if(!isExporting)return;if(video.currentTime>=project.end||video.ended)stopExport();else requestAnimationFrame(check)};requestAnimationFrame(check);
-  status('Export läuft in Echtzeit – Seite geöffnet lassen. '+mime);
- }catch(err){stopExport();status('Export fehlgeschlagen: '+err.message)}
+  rec.start(250);await video.play();
+  if(exportJob!==job)return;
+  const check=()=>{if(exportJob!==job)return;if(video.currentTime>=project.end||video.ended)stopExport();else job.frame=requestAnimationFrame(check)};
+  check();if(exportJob===job)status('Export läuft in Echtzeit. Bitte lasse die Seite geöffnet.');
+ }catch(err){finish(job,'Export fehlgeschlagen: '+err.message)}
 }
 window.LLVideoLab={render,stop};
 })();

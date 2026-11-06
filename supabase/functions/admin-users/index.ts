@@ -34,6 +34,18 @@ Deno.serve(async(req:Request)=>{
     const {data:{user},error:authError}=await caller.auth.getUser(token);
     if(authError||!user)return reply(401,{error:'Invalid session'});
     const admin=createClient(url,secret,{auth:{persistSession:false,autoRefreshToken:false}});
+    const {data:registeredFactors,error:mfaError}=await admin.auth.admin.mfa.listFactors({userId:user.id});
+    if(mfaError)return reply(503,{error:'Authenticator verification unavailable'});
+    const requiresMfa=(registeredFactors?.factors||[]).some((factor:{status?:string})=>factor.status==='verified');
+    if(requiresMfa){
+      let aal='aal1';
+      try{
+        const dataPart=token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+        const jwtPayload=JSON.parse(atob(dataPart.padEnd(Math.ceil(dataPart.length/4)*4,'=')));
+        aal=jwtPayload?.aal||'aal1';
+      }catch(_err){}
+      if(aal!=='aal2')return reply(403,{error:'Bitte zuerst den Authenticator-Code bestätigen.'});
+    }
     const {data:profile,error:profileError}=await admin.from('academy_profiles').select('role,active,needs_password_change').eq('id',user.id).single();
     if(profileError||!profile)return reply(403,{error:'Account not enrolled'});
     let body:Record<string,unknown>;

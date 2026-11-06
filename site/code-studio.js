@@ -112,7 +112,7 @@ async function upgradeEditor(container){
     await window[key];
    }
   }
-  if(root!==container||controller?.signal.aborted)return;
+  if(root!==container||!textarea.isConnected||controller?.signal.aborted)return;
   mirror?.toTextArea();mirror=window.CodeMirror.fromTextArea(textarea,{lineNumbers:true,indentUnit:2,tabSize:2,lineWrapping:false,styleActiveLine:true,mode:mode==='python'?'text/x-python':mode==='lua'?'text/x-lua':mode||'text/plain',theme:'default',inputStyle:'textarea'});
   mirror.setSize('100%','420px');
   const wrap=$('.llide-editwrap',container);wrap?.classList.add('cm-ready');
@@ -130,7 +130,7 @@ function render(container,{state:source,save,userId}={}){
  <div class="llide-small-actions"><button class="btn small" data-ide="rename-file">Umbenennen</button><button class="btn small danger" data-ide="delete-file">Löschen</button></div></aside>
  <div class="llide-main"><div class="llide-editorhead"><strong>⌘ ${esc(p.file)}</strong><span>${editorLanguage(p.file)} · Lokal</span></div><div class="llide-editwrap"><pre id="llideLines" aria-hidden="true">${Array.from({length:Math.max(5,(p.files[p.file]||'').split('\n').length)},(_,i)=>i+1).join('\n')}</pre><textarea id="llideCode" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" aria-label="Quellcode">${esc(p.files[p.file]||'')}</textarea></div>
  <div class="llide-shortcuts">${['  ','()','{}','[]','""',"''",'=','=>',';',':'].map(x=>`<button type="button" data-ide="insert" data-text="${esc(x)}">${esc(x.trim()||'⇥')}</button>`).join('')}</div>
- <div class="flex llide-actions"><button class="btn primary" data-ide="run">▶ Ausführen / Vorschau</button><button class="btn" data-ide="save">✓ Speichern</button><button class="btn" data-ide="download">↓ Projekt ZIP</button><button class="btn" data-ide="format">▤ Formatieren</button><button class="btn" data-ide="audit">✦ Code-Audit Pro</button><button class="btn ghost" data-ide="import">↑ Datei importieren</button></div><input hidden id="llideImport" type="file" accept=".lua,.js,.ts,.py,.html,.css,.json,.txt,.cs,.java,.cpp,.xml,.md,.json"><section class="llide-output"><div class="eyebrow">KONSOLE</div><pre id="llideOutput">${esc(output||'Bereit.')}</pre></section><div id="llideFrameBox"></div>
+ <div class="flex llide-actions"><button class="btn primary" data-ide="run">▶ Ausführen / Vorschau</button><button class="btn" data-ide="save">✓ Speichern</button><button class="btn" data-ide="download">↓ Projekt ZIP</button><button class="btn" data-ide="wrap" aria-pressed="false">Zeilenumbruch</button><button class="btn" data-ide="format">▤ Formatieren</button><button class="btn" data-ide="audit">✦ Code-Audit Pro</button><button class="btn ghost" data-ide="import">↑ Datei importieren</button></div><input hidden id="llideImport" type="file" accept=".lua,.js,.ts,.py,.html,.css,.json,.txt,.cs,.java,.cpp,.xml,.md,.json"><section class="llide-output"><div class="eyebrow">KONSOLE</div><pre id="llideOutput">${esc(output||'Bereit.')}</pre></section><div id="llideFrameBox"></div>
  </div></div><p class="micro">Sandbox-Tests: JavaScript in Worker, HTML/CSS/JS in isolierter Vorschau, einfacher Lua-Runner und optional Python über Pyodide. FiveM/C#/Java/C++ benötigen echte Laufzeiten. Dateien bleiben lokal, solange du sie nicht selbst exportierst.</p>`;
  container.addEventListener('click',click,{signal:controller.signal});
  container.addEventListener('change',change,{signal:controller.signal});
@@ -150,6 +150,13 @@ async function click(e){const b=e.target.closest('[data-ide]');if(!b)return;cons
  case 'rename-file':{let name=prompt('Neuer Dateiname',p.file);if(!name||name===p.file)return;if(!/^[a-z0-9_./-]{1,80}$/i.test(name)||name.includes('..')||p.files[name]!==undefined)return msg('Ungültiger oder belegter Dateiname');p.files[name]=p.files[p.file];delete p.files[p.file];p.file=name;saveState();render(root,{state,save:saveState});break}
  case 'delete-file':if(Object.keys(p.files).length<=1)return msg('Mindestens eine Datei wird benötigt');if(confirm('Datei '+p.file+' wirklich löschen?')){delete p.files[p.file];p.file=Object.keys(p.files)[0];saveState();render(root,{state,save:saveState})}break;
  case 'insert':{let text=b.dataset.text;if(mirror){mirror.replaceSelection(text);mirror.focus();break}const t=$('#llideCode',root),a=t.selectionStart,z=t.selectionEnd;t.setRangeText(text,a,z,'end');t.dispatchEvent(new Event('input',{bubbles:true}));t.focus();break}
+ case 'wrap':{
+  const enabled=b.getAttribute('aria-pressed')!=='true';
+  b.setAttribute('aria-pressed',String(enabled));
+  if(mirror)mirror.setOption('lineWrapping',enabled);
+  $('#llideCode',root).style.whiteSpace=enabled?'pre-wrap':'pre';
+  break;
+ }
  case 'save':saveState();msg('✓ Projekt lokal im Browser gespeichert. Für dauerhafte Sicherung ZIP exportieren.');break;
  case 'run':await run();break;
  case 'download':await archive();break;

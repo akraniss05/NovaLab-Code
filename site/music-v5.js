@@ -106,7 +106,7 @@ function bars(){
 function render(node,{userId='guest'}={}){
  stop();abort?.abort();abort=new AbortController();root=node;uid=userId;proj=load();
  root.innerHTML=`<div class="eyebrow">LIVERYLAB · MUSIC STUDIO 5.0</div><h1>Dein eigener <em>Sound.</em></h1><p class="text-muted">Mehrspur-Sequencer, Patterns, Timeline, Mixer und ein Audio-Bass-Lab. Eigene Audiodaten bleiben auf deinem Gerät.</p>
- <div class="llm-toolbar"><input id="llm-title" class="input" maxlength="70" value="${esc(proj.name)}" aria-label="Projektname"><select id="llm-genre">${Object.keys(packs).map(x=>`<option value="${x}" ${proj.genre===x?'selected':''}>${({hardtekk:'⚡ Hardtekk',techno:'◉ Techno',house:'♫ House',hiphop:'🎤 Hip-Hop',dnb:'🥁 Drum & Bass'})[x]}</option>`).join('')}</select><label>BPM <b id="llm-bpmvalue">${proj.bpm}</b><input id="llm-bpm" type="range" min="70" max="220" value="${proj.bpm}"></label><button class="btn primary" id="llm-play" data-music5="play">▶ Play</button><button class="btn" data-music5="export">↓ WAV</button><button class="btn" data-music5="save">Speichern</button></div>
+ <div class="llm-toolbar"><input id="llm-title" class="input" maxlength="70" value="${esc(proj.name)}" aria-label="Projektname"><select id="llm-genre">${Object.keys(packs).map(x=>`<option value="${x}" ${proj.genre===x?'selected':''}>${({hardtekk:'⚡ Hardtekk',techno:'◉ Techno',house:'♫ House',hiphop:'🎤 Hip-Hop',dnb:'🥁 Drum & Bass'})[x]}</option>`).join('')}</select><button class="btn" data-music5="tap">Tempo tippen</button><label>BPM <b id="llm-bpmvalue">${proj.bpm}</b><input id="llm-bpm" type="range" min="70" max="220" value="${proj.bpm}"></label><button class="btn primary" id="llm-play" data-music5="play">▶ Play</button><button class="btn" data-music5="export">↓ WAV</button><button class="btn" data-music5="save">Speichern</button></div>
  <div class="llm-tabs"><button data-mtab="seq" class="selected">▦ Sequencer</button><button data-mtab="arrange">◫ Arrangement</button><button data-mtab="bass">♬ Audio & Bass</button><button data-mtab="fx">✦ Mixer & Effekte</button></div>
  <section class="llm-pane" id="llm-seq"><div class="llm-panehead"><h2>Drum Machine & Piano</h2><span class="pill" id="llm-position">1:1</span></div><div class="llm-patterns">${'ABCD'.split('').map(x=>`<button data-pattern="${x}" class="${x===proj.activePattern?'on':''}">Pattern ${x}${'CD'.includes(x)?' ✦':''}</button>`).join('')}<button data-music5="copy-pattern">⧉ Kopie → nächste</button></div><div id="llm-grid"></div><p class="micro">Klick auf Steps aktiviert Noten. Free: 4 Spuren und 2 Patterns. ✦ Pro: 8 Spuren, Synth, Percussion und 4 Patterns.</p></section>
  <section class="llm-pane" id="llm-arrange" hidden><h2>Song Arrangement</h2><p class="text-muted">Jeder Block entspricht einem Takt. Tippe auf einen Takt, um zwischen Pattern A/B/C/D zu wechseln.</p><div id="llm-bars" class="llm-arrange"></div><div class="flex"><button class="btn" data-music5="add-bar">＋ Takt hinzufügen</button><button class="btn" data-music5="remove-bar">− Letzten Takt entfernen</button></div><p class="micro">Free: bis 4 Takte. ✦ Pro: bis 16 Takte pro Export (Browser-Leistungsgrenze).</p></section>
@@ -116,6 +116,7 @@ function render(node,{userId='guest'}={}){
  grid();bars();
  node.addEventListener('click',click,{signal:abort.signal});node.addEventListener('input',input,{signal:abort.signal});node.addEventListener('change',change,{signal:abort.signal});
 }
+let lastTap=0;
 async function click(e){
  const b=e.target.closest('[data-step],[data-mute],[data-pattern],[data-bar],[data-mtab],[data-music5]');if(!b||!root?.contains(b))return;
  if(b.dataset.step!==undefined){const i=+b.dataset.step,n=+b.dataset.i;proj.patterns[proj.activePattern][i][n]=!proj.patterns[proj.activePattern][i][n];b.classList.toggle('on');save();return}
@@ -124,12 +125,21 @@ async function click(e){
  if(b.dataset.bar!==undefined){const i=+b.dataset.bar,opts=isPro()?'ABCD':'AB';proj.bars[i]=opts[(opts.indexOf(proj.bars[i])+1)%opts.length];bars();save();return}
  if(b.dataset.mtab){tab=b.dataset.mtab;root.querySelectorAll('.llm-pane').forEach(x=>x.hidden=x.id!=='llm-'+tab);root.querySelectorAll('[data-mtab]').forEach(x=>x.classList.toggle('selected',x.dataset.mtab===tab));return}
  const action=b.dataset.music5;
+ if(action==='tap'){
+  const now=performance.now(), interval=now-lastTap;
+  if(lastTap&&interval>=260&&interval<=900){
+   const slider=$('#llm-bpm',root);
+   slider.value=String(Math.round(60000/interval));
+   slider.dispatchEvent(new Event('input',{bubbles:true}));
+  }else report('Tippe noch einmal im Rhythmus.');
+  lastTap=now;return;
+ }
  if(action==='play')return play();
  if(action==='save'){save();return report('Projekt im Browser gespeichert. Für ein dauerhaftes Backup nutze Export oder WAV.')}
  if(action==='export')return exportWav();
  if(action==='add-bar'){if(proj.bars.length>=(isPro()?16:4))return report('Taktlimit erreicht. Pro bietet bis zu 16 Takte pro Export.');proj.bars.push(proj.activePattern);bars();save();return}
  if(action==='remove-bar'){if(proj.bars.length>1){proj.bars.pop();bars();save()}return}
- if(action==='copy-pattern'){const current=proj.activePattern,nextId='ABCD'[('ABCD'.indexOf(current)+1)%4];if('CD'.includes(nextId)){const g=await LLPro.use('music_multitrack');if(!g.allowed)return report(g.reason)}proj.patterns[nextId]=proj.patterns[current].map(x=>[...x]);proj.activePattern=nextId;render(root,{userId:uid});return}
+ if(action==='copy-pattern'){const current=proj.activePattern,nextId='ABCD'[('ABCD'.indexOf(current)+1)%4];if('CD'.includes(nextId)){const g=await LLPro.use('music_multitrack');if(!g.allowed)return report(g.reason)}proj.patterns[nextId]=proj.patterns[current].map(x=>[...x]);proj.activePattern=nextId;save();render(root,{userId:uid});return}
  if(action==='stop-preview'){sampleSrc?.stop?.();sampleSrc=null;return}
  if(action==='preview'||action==='bass-export'){
   if(!sample)return report('Bitte zuerst eine eigene Audiodatei laden.');

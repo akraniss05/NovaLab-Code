@@ -40,7 +40,8 @@ jobs:
           if(!app.includes('window.LLMFA.refresh')||!app.includes('window.LLVideoLab.render'))throw Error('New account or video routes missing');
           if(!app.includes('roadmapsView')||!app.includes('window.LLPro'))throw Error('Roadmaps or Pro integration missing');
           const vm=require('node:vm'),context={window:{},document:{},console};
-          for(const f of ['site/plans-v5.js','site/videos-v5.js','site/music-studio.js','site/music-v5.js','site/code-studio.js','site/studio3d-v5.js','site/games-v5.js','site/shell-v5.js','site/auth-mfa-v5.js','site/video-lab-v5.js']){
+          const scripts=Array.from(html.matchAll(/<script\s+src="([\w.-]+\.js)"/g),match=>'site/'+match[1]);
+          for(const f of scripts.filter(file=>file!=='site/app.js')){
             vm.runInNewContext(fs.readFileSync(f,'utf8'),context,{timeout:2000,filename:f});
           }
           if(typeof context.window.LL3D.render!=='function'||typeof context.window.LLMusic.renderStudio!=='function'||typeof context.window.LLGames.render!=='function'||typeof context.window.LLIDE.render!=='function'||typeof context.window.LLShell.renderSettings!=='function'||typeof context.window.LLMFA.renderGate!=='function'||typeof context.window.LLVideoLab.render!=='function')throw Error('Studio modules failed to initialize');
@@ -50,6 +51,15 @@ jobs:
           if(/sb_secret_[A-Za-z0-9]/.test(conf))throw Error('Unsafe secret exposed');
           console.log('LiveryLab Academy 5.0.1 static checks passed');
           NODE
+      - name: Test studios in Chromium and mobile WebKit
+        run: |
+          npm install --prefix "$RUNNER_TEMP/academy-qa" --no-audit --no-fund playwright@1.56.1 three@0.180.0 codemirror@5.65.20 jszip@3.10.1
+          "$RUNNER_TEMP/academy-qa/node_modules/.bin/playwright" install --with-deps chromium webkit
+          command -v ffmpeg >/dev/null || sudo apt-get install -y ffmpeg
+          ffmpeg -loglevel error -f lavfi -i color=c=blue:s=320x240:d=2 -f lavfi -i sine=duration=2 -c:v libx264 -pix_fmt yuv420p -c:a aac "$RUNNER_TEMP/academy-clip.mp4"
+          python3 -m http.server 8080 --bind 127.0.0.1 --directory site &
+          trap 'kill $!' EXIT
+          NODE_PATH="$RUNNER_TEMP/academy-qa/node_modules" QA_CLIP="$RUNNER_TEMP/academy-clip.mp4" node tests/browser.cjs
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
       - name: Upload static site

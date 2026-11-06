@@ -33,7 +33,7 @@ function dl(blob,name){const u=URL.createObjectURL(blob),a=document.createElemen
 async function render(node,{userId='guest'}={}){
  stop();root=node;uid=userId;world=load();selected=world.objects[0]?.id;history=[];abort=new AbortController();
  root.innerHTML=`<div class="eyebrow">3D DESIGN ACADEMY · WEBGL STUDIO</div><h1>Shape your <em>world.</em></h1><p class="text-muted">Szenen aus echten 3D-Objekten erstellen, bewegen, skalieren, färben und als GLB exportieren. Für Sculpting, UV-Mapping und professionelle Animation nutzt du später Blender.</p>
- <div class="ll3-toolbar"><select id="ll3-primitive">${types.map(t=>`<option>${t}${basic.includes(t)?'':' ✦'}</option>`).join('')}</select><button class="btn primary" data-three="add">＋ Objekt</button><button class="btn" data-three="undo">↶ Rückgängig</button><button class="btn" data-three="save">Speichern</button><button class="btn" data-three="export">↓ GLB</button><button class="btn" data-three="json">↓ JSON</button><button class="btn" data-three="import">↑ Import</button></div><input type="file" id="ll3-upload" accept=".json" hidden>
+ <div class="ll3-toolbar"><select id="ll3-primitive">${types.map(t=>`<option>${t}${basic.includes(t)?'':' ✦'}</option>`).join('')}</select><button class="btn primary" data-three="add">＋ Objekt</button><button class="btn" data-three="camera">Ansicht zentrieren</button><button class="btn" data-three="undo">↶ Rückgängig</button><button class="btn" data-three="save">Speichern</button><button class="btn" data-three="export">↓ GLB</button><button class="btn" data-three="json">↓ JSON</button><button class="btn" data-three="import">↑ Import</button></div><input type="file" id="ll3-upload" accept=".json" hidden>
  <div class="ll3-layout"><aside><div class="eyebrow">HIERARCHIE</div><div id="ll3-tree"></div></aside><div class="ll3-view"><div id="ll3-canvas"></div><div class="ll3-overlay">☝ Ziehen: Drehen · Zwei Finger: Zoomen</div></div><aside id="ll3-inspector"></aside></div>
  <div class="callout" id="ll3-status" role="status">Lade 3D Engine …</div><div class="v5-plans-note">FREE: 6 Objekte, Grundformen, 2 GLB-Exporte pro Tag. ✦ PRO: 100 Objekte (Browser-Leistungsgrenze), alle Formen, Materialien und unbegrenzte Exporte.</div>`;
  node.addEventListener('click',click,{signal:abort.signal});node.addEventListener('change',change,{signal:abort.signal});
@@ -58,6 +58,12 @@ async function click(e){
  if(a==='delete'&&x){snap();world.objects=world.objects.filter(o=>o.id!==x.id);selected=world.objects[0]?.id;sync();inspector();save();return}
  if(a==='duplicate'&&x){const g=await LLPro.use('studio3d_advanced');if(!g.allowed)return status(g.reason);if(world.objects.length>=100)return status('Browser-Leistungsgrenze erreicht.');snap();const o=clean({...x,id:'copy'+Date.now(),name:x.name+' Kopie',pos:[x.pos[0]+1,x.pos[1],x.pos[2]]});world.objects.push(o);selected=o.id;sync();inspector();save();return}
  if(a==='undo'){if(!history.length)return status('Keine Änderung gespeichert');world=JSON.parse(history.pop());selected=world.objects[0]?.id;sync();inspector();save();return}
+ if(a==='camera'&&controls&&camera){
+  const target=x?.pos||[0,0,0], distance=Math.max(3,...(x?.scale||[1]))*2;
+  controls.target.fromArray(target);
+  camera.position.set(target[0]+distance,target[1]+distance*.65,target[2]+distance);
+  controls.update();return;
+ }
  if(a==='save'){save();return}
  if(a==='json'){dl(new Blob([JSON.stringify(world,null,2)],{type:'application/json'}),'LiveryLab-Szene.json');return}
  if(a==='import'){$('#ll3-upload',root).click();return}

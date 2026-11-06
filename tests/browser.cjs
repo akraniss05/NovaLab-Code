@@ -1,0 +1,100 @@
+// Run from the repository root with the site served on 127.0.0.1:8080.
+// Fixtures intercept only in this browser context. Production accounts are never used by CI.
+const { chromium, webkit, devices } = require('playwright');
+const assert = require('node:assert/strict');
+const fs = require('node:fs/promises');
+const path = require('node:path');
+
+const user = {id:'00000000-0000-4000-a000-000000000001',email:'student@example.invalid'};
+const lesson = {id:'qa-lesson',courseId:'qa',chapterId:'qa-ch',title:'Arrays',lang:'javascript',level:'beginner',options:['A','B'],correct:0,steps:[],keyPoints:[],starter:'console.log(42)',rubric:[]};
+const course = {id:'qa',name:'JavaScript',category:'Sprachen',level:'beginner',chapters:[{id:'qa-ch',name:'Grundlagen',lessons:[lesson]}]};
+const fixtures = {
+  academy_profiles:{id:user.id,display_name:'QA',active:true,role:'student'},
+  academy_plans:{tier:'pro'},
+  academy_curriculum:{payload:{courses:[course]}},
+};
+function mockSdk() {
+  return {auth:{
+    async getSession(){return {data:{session:{user}}}},
+    onAuthStateChange(){},
+    mfa:{async getAuthenticatorAssuranceLevel(){return {data:{currentLevel:'aal1',nextLevel:'aal1'}}}},
+  },from(table){
+    const end=()=>Promise.resolve({data:fixtures[table]||null});
+    return {select(){return this},eq(){return this},single:end,maybeSingle:end,upsert:end};
+  },async rpc(){return {data:{allowed:true,remaining:-1}}}};
+}
+const sdk = 'const user='+JSON.stringify(user)+';const fixtures='+JSON.stringify(fixtures)+';export const createClient='+mockSdk.toString();
+async function checkDownload(page,selector,magic){
+  const pending=page.waitForEvent('download',{timeout:30000});
+  await page.locator(selector).click();
+  const file=await pending;
+  const bytes=await fs.readFile(await file.path());
+  assert.ok(bytes.length>32,file.suggestedFilename());
+  if(magic)assert.equal(bytes.subarray(0,magic.length).toString(),magic);
+}
+async function run(engine,mobile){
+  const browser=await engine.launch(mobile?{}:{args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+  try{
+    const context=await browser.newContext({...mobile&&devices['iPhone 13'],serviceWorkers:'block'});
+    const page=await context.newPage();page.setDefaultTimeout(12000);
+    const errors=[];page.on('pageerror',err=>errors.push(err.message));
+    page.on('dialog',dialog=>dialog.accept());
+    await page.route('https://esm.sh/@supabase/**',route=>route.fulfill({contentType:'application/javascript',body:sdk}));
+    // Serve pinned upstream packages locally so CDN outages do not affect this test.
+    await page.route('https://cdn.jsdelivr.net/npm/**',async route=>{
+      const name=new URL(route.request().url()).pathname.replace('/npm/','').replace(/@[^/]+\//,'/');
+      const file=name.startsWith('codemirror/')?name.replace('.min.','.'):name;
+      await route.fulfill({path:require.resolve(file)});
+    });
+    const three=path.resolve(path.dirname(require.resolve('three')), '..');
+    await page.route('https://esm.sh/three@0.180.0**',async route=>{
+      const target=new URL(route.request().url()).pathname.replace('/three@0.180.0','');
+      await route.fulfill({path:path.join(three,target||'build/three.module.js'),contentType:'application/javascript'});
+    });
+    await page.route('https://esm.sh/three.core.js',route=>route.fulfill({path:path.join(three,'build/three.core.js'),contentType:'application/javascript'}));
+    await page.goto('http://127.0.0.1:8080/');
+    const go=async id=>{
+      await page.locator('#ll-menu-button').click();
+      await page.locator('#ll-menu-overlay [data-go="'+id+'"]').click();
+    };
+    await page.locator('.v5-mainhero').waitFor();
+    await go('settings');await page.locator('[data-ll-theme="carbon"]:is(button)').click();
+    assert.equal(await page.locator('html').getAttribute('data-ll-theme'),'carbon');
+    await page.locator('[data-ll-reset]').click();
+    await go('profile');await page.locator('[data-act="customize-profile"]').click();
+    await page.locator('[data-ll-avatar]').first().click();
+    await go('catalog');await page.locator('[data-course="qa"]').first().click();
+    const chapter=page.locator('[data-chapter="qa-ch"]');await chapter.click();
+    assert.equal(await chapter.getAttribute('aria-expanded'),'false');await chapter.click();
+    await page.locator('[data-lesson="qa-lesson"]').first().click();
+    await page.locator('[data-quiz-opt="0"]').click();await page.locator('[data-act="bookmark"]').click();
+    await go('practice');
+    for(const game of ['memory','pong','snake']){
+      await page.locator('[data-game="'+game+'"]').click();await page.locator('#llg-restart').click();
+      if(game==='memory')await page.locator('[data-memory="0"]').click();
+      else await page.keyboard.press('ArrowLeft');
+      await page.locator('#llg-back').click();
+    }
+    await go('editor');await page.locator('#llideProject').selectOption('p-js');
+    await page.locator('.CodeMirror').waitFor();await page.locator('[data-ide="wrap"]').click();
+    await page.locator('[data-ide="run"]').click();await page.waitForFunction(()=>document.querySelector('#llideOutput').textContent.includes('Hallo Alex'));
+    await checkDownload(page,'[data-ide="download"]','PK');
+    await go('music');await page.locator('[data-step]').first().click();
+    await page.locator('[data-music5="tap"]').click();await page.locator('[data-music5="save"]').click();
+    await checkDownload(page,'[data-music5="export"]','RIFF');
+    await go('studio3d');await page.locator('#ll3-canvas canvas').waitFor();
+    await page.locator('[data-three="add"]').click();await page.locator('[data-three="camera"]').click();
+    await checkDownload(page,'[data-three="json"]');await checkDownload(page,'[data-three="export"]','glTF');
+    await go('videolab');await page.locator('#llv-import').setInputFiles(process.env.QA_CLIP);
+    await page.waitForFunction(()=>document.querySelector('#llv-status').textContent.includes('Clip geladen'));
+    await page.locator('#llv-text').fill('Academy QA');
+    await page.locator('#llv-preview').click();await page.locator('#llv-play').click();
+    if(await page.evaluate(()=>!!window.MediaRecorder&&!!HTMLCanvasElement.prototype.captureStream)){
+      await checkDownload(page,'#llv-export');
+    }
+    if(mobile)assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Layout wider than mobile viewport');
+    assert.deepEqual(errors,[]);
+    console.log(mobile?'iPhone / WebKit passed':'Desktop / Chromium passed');
+  }finally{await browser.close()}
+}
+(async()=>{await run(chromium,false);await run(webkit,true)})().catch(err=>{console.error(err);process.exitCode=1});
