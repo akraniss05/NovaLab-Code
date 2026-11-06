@@ -5,7 +5,7 @@ const {chromium}=require('playwright-core');
 const root=path.join(__dirname,'..');
 const source=fs.readFileSync(path.join(root,'site/academy.js'),'utf8');
 const css=fs.readFileSync(path.join(root,'site/app-v13.css'),'utf8');
-const expose='\nwindow.__views={s,trackPage,lessonPage,scriptPage,examPage,referencePage};\n})();';
+const expose='\nwindow.__views={s,trackPage,lessonPage,scriptPage,examPage,referencePage,plansPage};\n})();';
 assert.match(source,/\ninit\(\);\n\}\)\(\);\s*$/);
 const rewritten=source.replace(/\ninit\(\);\n\}\)\(\);\s*$/,expose);
 const fake=()=>({innerHTML:'',classList:{toggle(){},add(){},remove(){},contains(){return false}}});
