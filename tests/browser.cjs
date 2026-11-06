@@ -51,7 +51,7 @@ const scenes=[
  ['script',app.scriptPage(),['.file-tree','.file-tabs','.file-preview']],
  ['reference',app.referencePage(),['.reference-row','.reference-block']],
  ['plans',app.plansPage(),['.membership-card','.voucher-panel','.voucher-input-row']],
- ['profile',app.profilePage(),['.social-banner','.social-customizer','.social-avatar','.style-picker']],
+ ['profile',app.profilePage(),['.profile-overview-card','.profile-overview-avatar','.achievement-grid']],
  ['friends',app.friendsPage(),['.friends-overview','.friend-navigation','.friend-empty']],
  ['settings',app.settingsPage(),['.settings-appearance-card','.appearance-picker','.account-settings-grid','#mfa-settings']],
  ['paywall-script',app.paywall('Script','Plus','Gesperrt für Free'),['.feature-gate','.feature-gate-actions']],

@@ -85,13 +85,13 @@ function frame(){
  const route=parseRoute().page;
  if(!authenticated){sidebar.innerHTML='';bottom.innerHTML='';}
  else{
-  sidebar.innerHTML='<div class="sidebar-logo"><img class="ll-brand-symbol" src="./liverylab-symbol.svg" alt=""><span>LiveryLab<br><span class="gradient">Academy</span></span></div>'+
+  sidebar.innerHTML='<div class="sidebar-logo"><img class="ll-brand-symbol" src="./liverylab-symbol.svg" alt=""><span>LiveryLab<br><span class="gradient">Academy</span></span><button type="button" class="sidebar-close" data-nav-close aria-label="Menü schließen">×</button></div>'+
   '<div class="side-label">Navigation</div>'+navHTML(route)+
   '<div class="side-bottom"><span class="eyebrow">DEIN PROFIL</span><strong>'+
   esc(s.profile.display_name||s.profile.username||'Developer')+'</strong>'+
   '<small>'+esc(plans[s.tier]||'Free')+' · '+((s.progress.done||[]).length*30)+' XP</small>'+
   '<a class="discord-small" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord Community</a></div>';
-  const nav=[['home','home','Home'],['courses','learn','Lernen'],['script','code','Script'],['exams','exam','Prüfung'],['profile','profile','Profil']];
+ const nav=[['home','home','Home'],['courses','learn','Lernen'],['script','code','Script'],['exams','exam','Prüfung'],['reference','book','Referenz']];
   bottom.innerHTML=nav.map(([id,icon,label])=>'<button type="button" data-go="'+id+'" class="bottom-item'+
    ((route===id||(id==='courses'&&['track','lesson'].includes(route))||(id==='exams'&&route==='exam'))?' active':'')+
    '" aria-label="'+label+'"><span class="side-icon" aria-hidden="true">'+llIcon(icon)+'</span><span>'+label+'</span></button>').join('');
@@ -712,7 +712,7 @@ function plansPage(){
   const current=own===tier,included=(tier==='free'&&own!=='free')||(tier==='pro'&&own==='ultimate');
   return '<article class="membership-card tier-'+tier+(current?' current':'')+'">'+
    '<div class="membership-top"><div><span class="eyebrow">'+(tier==='free'?'KOSTENLOS':tier==='pro'?'MEHR LERNEN':'VOLLER ZUGRIFF')+'</span><h2>'+name+'</h2></div>'+
-   '<span class="membership-price">'+price+'<small>/Monat</small></span></div>'+
+   '<span class="membership-price">'+price+'<small>/Monat</small>'+(tier==='free'?'':'<em class="membership-beta">BETA · nur auf Anfrage</em>')+'</span></div>'+
    '<div class="membership-limits"><span>▦ '+cap+' Kurse</span><span>◷ '+stations+'</span></div>'+
    '<p class="membership-desc">'+desc+'</p>'+
    '<ul class="membership-benefits">'+benefits.map(x=>'<li>'+x+'</li>').join('')+'</ul>'+
@@ -1094,18 +1094,13 @@ function achievementGallery(){
 function profilePage(){
  const name=s.profile?.display_name||s.profile?.username||'Developer';
  const streak=Number(s.loginStreak?.current||0),best=Number(s.loginStreak?.best||0);
- return pageHeading('DEIN PROFIL','Deine Developer-<span class="gradient">Identität.</span>',
- 'Passe Bio, Profilbild, Banner, Titel und Namen an. Passwort, Login und 2FA findest du bei den Einstellungen.')+
- socialProfilePanel()+
+ return pageHeading('DEIN PROFIL','Dein Lern-<span class="gradient">fortschritt.</span>',
+ 'Hier siehst du deine wichtigsten Werte und freigeschalteten Erfolge. Persönliche App-Farben und Hintergründe findest du in den Einstellungen.')+
+ '<section class="profile-overview-card"><div class="profile-overview-avatar">'+esc(name.slice(0,1).toUpperCase())+'</div><div><span class="eyebrow">LIVERYLAB DEVELOPER</span><h2>'+esc(name)+'</h2><p>@'+esc(s.profile?.username||'developer')+' · '+esc(tierLabel(s.tier))+'</p></div><button class="btn small" data-go="settings">App-Design ändern →</button></section>'+
  '<section class="profile-quick-stats"><div class="profile-quick-tile"><span>🔥</span><strong>'+streak+'</strong><small>Login-Streak in Tagen</small></div>'+
  '<div class="profile-quick-tile"><span>🏅</span><strong>'+best+'</strong><small>Bisheriger Rekord</small></div>'+
  '<div class="profile-quick-tile"><span>✦</span><strong>'+((s.progress.done||[]).length*30)+'</strong><small>Erlernte XP</small></div></section>'+
  '<p class="micro streak-explanation">Deine Streak zählt nur, wenn du täglich den Claim bestätigst. Nach dem Einlösen wartest du mindestens 24 Stunden. Der Kalendertag richtet sich nach Europe/Berlin.</p>'+
- '<section class="panel profile-name-panel"><span class="eyebrow">[ ✎ ] DEIN ÖFFENTLICHER NAME</span><h3>Anzeigename ändern</h3>'+
- '<p class="micro">Dein sichtbarer Name. Dein Anmelde-Benutzername wird dadurch nicht geändert.</p>'+
- '<form data-form="profile" class="profile-display-form"><div class="form-group"><label class="form-label">Anzeigename</label>'+
- '<input class="input" name="display_name" value="'+esc(name)+'" minlength="2" maxlength="40" required></div>'+
- '<button class="btn primary" type="submit">Namen speichern</button></form></section>'+
  achievementGallery()+
  '<section class="profile-friends-link"><div><span class="eyebrow">[ ♡ ] NETZWERK</span><h3>Freunde & gemeinsame Fortschritte</h3>'+
  '<p>Sieh den freiwillig freigegebenen Lernfortschritt deiner bestätigten Freunde.</p></div>'+
@@ -1129,19 +1124,14 @@ function settingsPage(){
   '<input type="checkbox" class="settings-toggle" data-pref="'+key+'" '+(getPreference(key)?'checked':'')+' aria-label="'+title+'"></label>';
  }
  return pageHeading('EINSTELLUNGEN','Deine Academy. <span class="gradient">Dein Design.</span>',
- 'Hier verwaltest du Farben, Darstellung, Anmeldedaten, Passwort, Authenticator und deinen Lernfortschritt.')+
+ 'Passe den Hintergrund und die Farben deiner App an. Darunter verwaltest du Anmeldung, Passwort und Sicherheit.')+
  '<section class="setting-section appearance-section"><div class="section-heading"><div><span class="eyebrow">01 · PERSÖNLICHES DESIGN</span>'+
  '<h2>Farben & Hintergrund</h2><p>Die Änderungen werden sofort auf diesem Gerät gespeichert.</p></div></div>'+
  '<div class="settings-appearance-card"><h3>Hintergrund & Oberflächen</h3>'+
  appearanceChoices(COLOR_THEMES,getChoicePreference('theme','violet'),'theme-choice')+
  '<h3>Akzentfarbe</h3>'+appearanceChoices(ACCENT_THEMES,getChoicePreference('accent','lavender'),'accent-choice')+
- '<h3>Lesbarkeit & Layout</h3><div class="settings-list">'+
- toggle('compact','Kompakte Kurskarten','Mehr Lerninhalte auf dem Bildschirm anzeigen.')+
- toggle('largeTypography','Größere Schrift','Texte und Eingabefelder besser lesbar anzeigen.')+
- toggle('contrast','Erhöhter Kontrast','Text und Umrandungen deutlicher hervorheben.')+
- toggle('softCorners','Weiche Ecken','Buttons und Karten stärker abrunden.')+
+ '<h3>App-Hintergrund</h3><div class="settings-list">'+
  toggle('backgroundArt','Hintergrund-Effekte','Dezente Lichtverläufe für mehr Atmosphäre anzeigen.')+
- toggle('motion','Bewegungen reduzieren','Animationen und Übergänge verringern.')+
  '</div><button class="btn ghost settings-reset" data-action="reset-appearance">↺ Standarddarstellung wiederherstellen</button></div></section>'+
  '<section class="setting-section"><span class="eyebrow">02 · DEIN ACCOUNT</span><h2>Anmeldedaten</h2>'+
  '<div class="account-settings-grid"><div class="panel"><h3>Zugangsdaten</h3>'+
@@ -1323,7 +1313,7 @@ document.addEventListener('click',async function(e){
  if(streakClaim){await claimDailyStreak();return;}
  var goTarget=e.target.closest('[data-go]');
  if(goTarget){e.preventDefault();go(goTarget.dataset.go);return;}
- if(e.target.id==='nav-backdrop'){sidebar.classList.remove('open');syncBackdrop();return;}
+ if(e.target.id==='nav-backdrop'||e.target.closest('[data-nav-close]')){sidebar.classList.remove('open');syncBackdrop();return;}
  if(e.target.id==='menu-toggle'){sidebar.classList.toggle('open');syncBackdrop();return;}
  var socialRemove=e.target.closest('[data-social-remove]');
  if(socialRemove){if(!confirm('Dieses Profilbild / Banner wirklich entfernen?'))return;try{await removeSocialImage(socialRemove.dataset.socialRemove);render();notice('Bild entfernt.');}catch(err){notice('Bild: '+formatError(err))}return;}
@@ -1623,7 +1613,6 @@ document.addEventListener('submit',async function(e){
 window.addEventListener('hashchange',function(){if(s.ready)navigateCurrent();});
 async function init(){
  applyPreferences();
- installCriticalStyles();
  if(typeof window.setInterval==='function')window.setInterval(updateStreakClocks,1000);
  document.head.insertAdjacentHTML('beforeend','<style>.is-auth .sidebar,.is-auth .bottom-nav{display:none}.is-auth .topbar{background:#0d0a19}.is-auth .content{max-width:1100px}.is-auth .app-column{width:100%}</style>');
  if(!window.supabase||!cfg.supabaseUrl||!cfg.supabasePublishableKey){content.innerHTML='<div class="auth-layout panel"><h2>Verbindung nicht verfügbar</h2><p>Supabase konnte nicht geladen werden. Bitte lade die Seite erneut oder überprüfe deine Verbindung.</p></div>';return;}

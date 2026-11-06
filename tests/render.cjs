@@ -41,11 +41,14 @@ assert(app.referencePage().includes('485 Referenzeinträge'),'Full reference lib
 const lessonHtml=app.lessonPage('python-01');
 for(const value of ['practice-input','complete-practice','load-video','video-check','Wissen anwenden'])
  assert(lessonHtml.includes(value),'Missing lesson feature '+value);
-assert(app.profilePage().includes('Profil gestalten'),'Discord-like profile customization renders');
+assert(app.profilePage().includes('Dein Lern-'),'Read-only learning profile renders');
+assert(!app.profilePage().includes('Profil gestalten'),'Profile configuration was removed');
+assert(!app.profilePage().includes('Anzeigename ändern'),'Profile name configuration was removed');
 assert(app.friendsPage().includes('Freund hinzufügen'),'Friends page rendered');
 assert(app.friendsPage().includes('friend-navigation'),'Friends tabs rendered');
 state.friendTab='search';assert(app.friendsPage().includes('friends-search-panel'),'Friend search tab rendered');state.friendTab='friends';
-assert(app.settingsPage().includes('Kompakte Kurskarten'),'Settings rendered');
+assert(app.settingsPage().includes('App-Hintergrund'),'Personal app background setting rendered');
+assert(!app.settingsPage().includes('Kompakte Kurskarten'),'Unneeded profile/layout configuration removed');
 assert(app.settingsPage().includes('Authenticator & 2FA'),'Two-factor settings moved to settings');
 assert(!app.profilePage().includes('mfa-settings'),'Profile must not display account security');
 assert(app.profilePage().includes('Login-Streak'),'Login streak stats on profile');
@@ -54,6 +57,7 @@ assert(app.settingsPage().includes('Hintergrund & Oberflächen'),'Background the
 assert(app.settingsPage().includes('Standarddarstellung wiederherstellen'),'Appearance reset present');
 assert(app.plansPage().includes('1,99 €'),'Plus price visible');
 assert(app.plansPage().includes('3,99 €'),'Pro price visible');
+assert.equal((app.plansPage().match(/BETA · nur auf Anfrage/g)||[]).length,2,'Plus and Pro are marked as request-only beta plans');
 assert(app.plansPage().includes('redeem-voucher'),'Coupon redemption visible');
 assert(app.plansPage().includes('3 pro Tag'),'Free daily limit visible');
 assert(app.plansPage().includes('6 pro Tag'),'Plus daily limit visible');
@@ -70,7 +74,7 @@ assert(app.lessonPage('python-01').includes('KURSINHALT GESCHÜTZT'),'Pro lesson
 state.ready=true;
 sandbox.location.hash='#script';app.frame();
 assert(fakeNodes['#bottom-nav'].innerHTML.includes('Script'),'Script navigation visible');
-assert(fakeNodes['#bottom-nav'].innerHTML.includes('Profil'),'New five-item bottom navigation visible');
+assert(fakeNodes['#bottom-nav'].innerHTML.includes('Referenz'),'Reference is available in the five-item bottom navigation');
 state.members=[{id:'pending-user',username:'TestUser',email:'test@example.com',access_status:'pending',email_confirmed:true,active:false,role:'student'}];
 state.profile.role='admin';
 assert(app.adminPage().includes('Registrierungsanfragen'),'Pending approval cards render');
