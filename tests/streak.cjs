@@ -1,7 +1,7 @@
 /* LiveryLab Academy v19 — client-side claim UX, with mocked Supabase. */
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),assert=require('node:assert/strict');
-const js=fs.readFileSync(path.join(__dirname,'../site/academy-v20.js'),'utf8');
+const js=fs.readFileSync(path.join(__dirname,'../site/academy-v21.js'),'utf8');
 const re=/\ninit\(\);\n\}\)\(\);\s*$/;
 assert(re.test(js),'Expected app init closure');
 const body=js.replace(re,"\nwindow.__streakTest={s,streakModalHtml,claimDailyStreak,refreshStreakStatus,streakRemaining,durationDisplay,setApi(client){api=client}};\n})();");

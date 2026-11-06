@@ -1,4 +1,4 @@
-name: Deploy LiveryLab Academy v20 • iOS layout, daily modal and cache repair
+name: Deploy LiveryLab Academy v21 • iOS layout, daily modal and cache repair
 on:
   push:
     branches: [main]
@@ -26,7 +26,7 @@ jobs:
         run: |
           node --check site/reference-data.js
           node --check site/academy.js
-          node --check site/academy-v20.js
+          node --check site/academy-v21.js
           node --check site/auth-mfa-v15.js
           node --check site/config.js
           node tests/smoke.cjs
@@ -37,13 +37,15 @@ jobs:
         run: npm install --no-save --ignore-scripts --no-package-lock playwright-core@1.56.1
       - name: Validate mobile layouts in Chrome
         run: node tests/browser.cjs
+      - name: Test real logged-in Daily Streak popup and claim
+        run: node tests/login-browser.cjs
       - name: Validate authenticator setup, login and removal
         run: node tests/mfa-browser.cjs
       - name: Upload visual test captures
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: academy-v20-mobile-captures
+          name: academy-v21-mobile-captures
           path: test-results/
           if-no-files-found: ignore
       - name: Remove restricted reference data from public site artifact
