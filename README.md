@@ -12,6 +12,7 @@ Kontakt: nyxatheris
 
 - Kurse für Lua, Python, JavaScript, HTML, CSS, Java, TypeScript, C#, C++, SQL, Go, Rust, PHP, FiveM, QBCore, ESX, Blender und viele weitere. Neu ergänzt: C, Swift, Ruby, Dart, PowerShell, R, Zig, Scala, Elixir, Haskell, Perl und Julia.
 - Verständliche Lektionen: Erklärung, Codebeispiel, externe Videos, Praxisaufgabe und Quiz.
+- **Neu:** vollständig kostenloser 12-teiliger Einstiegskurs „Programmieren von Null – Dein erster Code“ mit Erklärungen vom ersten Befehl über Variablen und Funktionen bis zum eigenen Projekt.
 - Abschlussprüfung mit maximal zehn Fragen (bestehen ab 80 %), XP und Supabase-synchronisierter Lernfortschritt.
 - Login mit Benutzername + Passwort, optionale TOTP-Authenticator-2FA und obligatorischer Passwortwechsel beim ersten Login.
 - Admin-Bereich: Benutzer erstellen, Passwort zurücksetzen, sperren, löschen sowie Free / Plus / Pro vergeben.
