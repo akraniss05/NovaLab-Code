@@ -25,7 +25,9 @@ state.user={email:'demo@example.com'};
 state.tier='free';state.courses=[course];state.lessons=[lesson];state.referenceData=sandbox.window.LL_REFERENCE_DATA;
 state.progress={done:[],watched:[],practiced:[],exams:{}};
 state.lesson={payload:{theory:'Eine Variable speichert einen Wert.',example:'zahl = 1',goal:'Verstehe Variablen',task:'Lege eine Variable an.',quiz:'Welche Zuweisung ist gültig?',correct:0,options:['zahl = 1','zahl ===','nichts']},video_id:'e6vPt_e9sRw',video_start:597};
-assert(app.homePage().includes('Lerne programmieren'),'Home rendered');
+assert(app.homePage().includes('Developer Academy'),'Neon dashboard home rendered');
+assert(app.homePage().includes('liverylab-banner.webp'),'Original site banner displayed');
+assert(app.homePage().includes('ll-home-shortcuts'),'Dashboard menu displayed');
 assert(/kursbibliothek/i.test(app.coursesPage()),'Catalog rendered');
 assert(app.trackPage('python').includes('Variablen'),'Learning track rendered');
 assert(app.trackPage('python').includes('status-ring'),'Reference-style lesson status rings rendered');
@@ -68,7 +70,7 @@ assert(app.lessonPage('python-01').includes('KURSINHALT GESCHÜTZT'),'Pro lesson
 state.ready=true;
 sandbox.location.hash='#script';app.frame();
 assert(fakeNodes['#bottom-nav'].innerHTML.includes('Script'),'Script navigation visible');
-assert(fakeNodes['#bottom-nav'].innerHTML.includes('Referenz'),'Reference navigation visible');
+assert(fakeNodes['#bottom-nav'].innerHTML.includes('Profil'),'New five-item bottom navigation visible');
 state.members=[{id:'pending-user',username:'TestUser',email:'test@example.com',access_status:'pending',email_confirmed:true,active:false,role:'student'}];
 state.profile.role='admin';
 assert(app.adminPage().includes('Registrierungsanfragen'),'Pending approval cards render');
@@ -92,5 +94,5 @@ app.setApi({rpc:async()=>({data:{ok:true,score:1,total:2,passed:false,review:[{q
  await app.submitExamAnswer(0);
  assert.equal(state.exam.at,2,'Exam completes');
  assert(fakeNodes['#content'].innerHTML.includes('Deine Auswertung'),'Exam feedback rendered');
- console.log('All v18 profile, friend tabs, appearance, registration, quotas and server-graded exam tests passed');
+ console.log('All v19 dashboard, profile, friend tabs, registration and server-graded exam tests passed');
 })().catch(e=>{console.error(e);process.exitCode=1;});

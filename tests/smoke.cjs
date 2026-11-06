@@ -2,10 +2,10 @@
 'use strict';
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const read=file=>fs.readFileSync(path.join(__dirname,'..',file),'utf8');
-const html=read('site/index.html'),js=read('site/academy.js'),css=read('site/app-v18.css');
-for(const file of ['site/reference-data.js','site/app-v18.css','site/app-v12.css','site/config.js','site/auth-mfa-v15.js','site/academy.js','site/privacy.html','site/manifest.webmanifest','site/icon.svg','supabase/functions/academy-signin/index.ts','supabase/functions/admin-users/index.ts'])
+const html=read('site/index.html'),js=read('site/academy.js'),css=read('site/app-v19.css');
+for(const file of ['site/reference-data.js','site/app-v19.css','site/app-v12.css','site/config.js','site/auth-mfa-v15.js','site/academy.js','site/privacy.html','site/manifest.webmanifest','site/icon.svg','supabase/functions/academy-signin/index.ts','supabase/functions/admin-users/index.ts'])
  assert(fs.existsSync(path.join(__dirname,'..',file)),file+' missing');
-for(const token of ['app-v18.css?release=','academy.js?release=','auth-mfa-v15.js?release=','config.js?release=','LiveryLab v18'])
+for(const token of ['app-v19.css?release=','academy.js?release=','auth-mfa-v15.js?release=','config.js?release=','LiveryLab v19'])
  assert(html.includes(token),'Versioned asset missing: '+token);
 for(const obsolete of ['styles.css','refined.css','music-studio.js','studio3d-v5.js'])
  assert(!html.includes(obsolete),'Old asset still linked: '+obsolete);
@@ -18,7 +18,7 @@ assert(css.includes('@media(max-width:560px)'),'Mobile breakpoint missing');
 assert(!/sb_secret_|SUPABASE_SERVICE_ROLE_KEY\s*[:=]/.test(read('site/config.js')),'Secret key detected in public config');
 assert(/sb_publishable_/.test(read('site/config.js')),'Supabase publishable key missing');
 for(const feature of ['academy_voucher_apply','academy_voucher_create','academy_voucher_list','academy_voucher_status','academy_voucher_set_active','academy_open_lesson','academy_project_examples','redeem-voucher','create-voucher','membership-card','daily-strip'])assert(js.includes(feature),'Missing membership feature: '+feature);
-for(const token of ['app-v18.css?release=','LiveryLab v18'])assert(html.includes(token),'Missing v15 asset: '+token);
+for(const token of ['app-v19.css?release=','LiveryLab v19'])assert(html.includes(token),'Missing v15 asset: '+token);
 for(const token of ['registerAccount','waitingApproval','reference-language','reference-search','approval-card','academy_exam_start','setTier','access_status','3 pro Tag','6 pro Tag'])assert(js.includes(token),'Missing v15 capability: '+token);
 const reference=read('site/reference-data.js');assert(reference.includes('window.LL_REFERENCE_DATA'),'Reference data source missing');
 assert(!html.includes('reference-data.js?release='),'Reference dataset must not be loaded by all users');
@@ -33,6 +33,12 @@ assert(mfa.includes('mfa.challenge')&&mfa.includes('mfa.verify')&&mfa.includes('
 assert(js.includes('function renderMFA(){'),'Authenticator rendering bridge missing');
 assert(js.includes('id="mfa-settings"'),'Authenticator mount missing');
 new Function(js);
-for(const token of ['academy_login_streak','academy_voucher_create_custom','academy_voucher_delete','data-voucher-delete','getChoicePreference','achievementGallery','friend-navigation','reset-appearance','data-social-upload']) assert(js.includes(token),'Missing v18 feature: '+token);
+for(const token of ['academy_streak_status','academy_streak_claim','streakModalHtml','data-streak-claim','ll-home-brand-banner','ll-home-shortcuts','academy_streak_status','academy_voucher_create_custom','academy_voucher_delete','data-voucher-delete','getChoicePreference','achievementGallery','friend-navigation','reset-appearance','data-social-upload']) assert(js.includes(token),'Missing v18 feature: '+token);
 for(const token of ['.appearance-picker','.achievement-grid','.friends-overview','.voucher-manage-card','.profile-quick-stats'])assert(css.includes(token),'Missing v18 style: '+token);
-console.log('App v18 social, daily-streak, custom vouchers, styling, auth and access smoke tests passed');
+for(const asset of ['site/liverylab-banner.webp','site/liverylab-symbol.svg']) assert(fs.existsSync(path.join(__dirname,'..',asset)),'Missing new branding asset: '+asset);
+const banner=fs.readFileSync(path.join(__dirname,'../site/liverylab-banner.webp'));
+assert.equal(banner.subarray(0,4).toString(),'RIFF','LiveryLab banner is not an actual WebP');
+assert.equal(banner.subarray(8,12).toString(),'WEBP','LiveryLab banner invalid');
+for(const selector of ['.ll-home-shortcuts','.ll-home-brand-banner','.ll-streak-modal','.ll-streak-claim','.ll-streak-backdrop'])assert(css.includes(selector),'Missing v19 interface style: '+selector);
+assert(html.includes('id="streak-portal"')&&html.includes('data-streak-open'),'Streak mount and header button missing');
+console.log('App v19 dashboard, banner, daily claim, memberships and 2FA smoke tests passed');

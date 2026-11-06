@@ -162,3 +162,14 @@ Unter Repository Settings > Pages muss „GitHub Actions“ aktiviert sein. Push
 - Freundescenter mit getrennten Tabs **Freundesliste / Anfragen / Freund hinzufügen**, persönlichen Karten und optional sichtbaren Lernwerten.
 - Veröffentlichte URL: https://akraniss05.github.io/liverylab-academy/
 - `supabase` bleibt das Backend: GitHub Pages hostet ausschließlich HTML, CSS und JavaScript. Keine Supabase-Secrets im Browser veröffentlichen.
+
+
+## v19 · Neues Dashboard mit Originalbanner und manuellen Daily Claims
+
+- Startbildschirm im violetten Neon-Stil mit dem vom Studio gelieferten Livery-Lab-Banner (mobil optimiert als WebP), Level-/XP-Karte, „Weiterlernen“, 9+ Funktionsverknüpfungen und Bottom-Navigation mit Home, Lernen, Script, Prüfungen und Profil.
+- Nach Anmeldung erscheint ein zugängliches „Daily Streak“-Popup, wenn ein Claim bereitsteht. Schließen lässt den Anspruch bestehen. Ein bewusster Klick auf **Claim** ruft die geschützte Datenbankfunktion `academy_streak_claim` auf.
+- Der Claim wird **pro Konto serverseitig** gespeichert. Eine Sperrzeit von mindestens 24 Stunden gilt, zusätzlich maximal ein Claim je deutschem Kalendertag von 00:00 bis 00:00 Uhr, Europe/Berlin. Ein ganzer ausgelassener Kalendertag setzt die laufende Serie auf 1 zurück. Wiederholtes Klicken oder Reload bringen keine zusätzlichen Punkte.
+- Nach dem Einlösen zeigt das Popup den persistenten Countdown, der mit der Supabase-Serveruhr synchronisiert ist. Der Streak ist jederzeit über das Startmenü und die Kopfzeile zugänglich.
+- Zur Sicherheit verwendet `academy_streak_status` read-only Daten, während nur `academy_streak_claim` Ansprüche ändert. Die alte Routine `academy_login_streak` wurde kompatibel belassen, löst aber keinen Claim mehr automatisch aus.
+- Im GitHub Pages-Workflow wird das Originalbanner aus versionierten Base64-Teilen rekonstruiert und gegen einen SHA-256-Prüfwert validiert; die Teile werden **vor Veröffentlichung aus dem Site-Ordner entfernt**.
+- Das vorbereitete Banner wurde für die Website auf 600 × 338 Pixel komprimiert. Die volle Originaldatei bleibt in der Nutzerunterhaltung erhalten und ist nicht durch den Build überschrieben.

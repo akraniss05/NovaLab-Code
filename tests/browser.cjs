@@ -4,8 +4,8 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),asse
 const {chromium}=require('playwright-core');
 const root=path.join(__dirname,'..');
 const source=fs.readFileSync(path.join(root,'site/academy.js'),'utf8');
-const css=fs.readFileSync(path.join(root,'site/app-v18.css'),'utf8');
-const expose='\nwindow.__views={s,trackPage,lessonPage,scriptPage,examPage,referencePage,plansPage,adminPage,login,profilePage,friendsPage,settingsPage,paywall};\n})();';
+const css=fs.readFileSync(path.join(root,'site/app-v19.css'),'utf8');
+const expose='\nwindow.__views={s,trackPage,lessonPage,scriptPage,examPage,referencePage,plansPage,adminPage,login,profilePage,friendsPage,settingsPage,homePage,streakModalHtml,paywall};\n})();';
 assert.match(source,/\ninit\(\);\n\}\)\(\);\s*$/);
 const rewritten=source.replace(/\ninit\(\);\n\}\)\(\);\s*$/,expose);
 const fake=()=>({innerHTML:'',classList:{toggle(){},add(){},remove(){},contains(){return false}}});
@@ -27,8 +27,10 @@ const titles=['Variablen, Typen & print','Bedingungen & Schleifen','Funktionen',
 s.lessons=Array.from({length:13},(_,i)=>({id:'fivem-'+String(i+1).padStart(2,'0'),course_id:'fivem',chapter:i<5?'01 · Lua-Grundlagen':i<10?'02 · FiveM-Scripting':'03 · Fortgeschritten',position:i+1,title:titles[i],summary:'Jede Lektion erklärt ein Konzept und zeigt einen praktischen Anwendungsfall.',minutes:12,required_plan:'free'}));
 s.progress={done:['fivem-01'],watched:[],practiced:[],exams:{}};
 s.lesson={payload:{title:titles[0],theory:'Mit Variablen speicherst du Werte, die du später wiederverwenden kannst.',example:'local name = "LiveryLab"\nlocal points = 10\nprint(name, points)',task:'Schreibe eine eigene Variable und gib sie mit print aus.',quiz:'Wofür steht local in Lua?',options:['Lokale Variable','Globale Datei','Neuer Server'],correct:0,goal:'Du kannst Variablen erklären und verwenden.'},video_id:'xcmGSRdCXc4',video_start:510};
+const bannerB64=fs.readFileSync(path.join(root,'site/liverylab-banner.webp')).toString('base64');
 function capture(html){
-const nav=['Lernen','Script','Prüfung','Referenz'].map((n,i)=>'<button class="bottom-item '+(i===0?'active':'')+'"><span class="side-icon">'+['⌂','⌘','☆','▤'][i]+'</span>'+n+'</button>').join('');
+html=html.replaceAll('src="./liverylab-banner.webp"','src="data:image/webp;base64,'+bannerB64+'"');
+const nav=['Home','Lernen','Script','Prüfung','Profil'].map((n,i)=>'<button class="bottom-item '+(i===0?'active':'')+'"><span class="side-icon">'+['⌂','▦','⌘','☆','◉'][i]+'</span>'+n+'</button>').join('');
 return '<!doctype html><html lang="de"><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+'</style></head><body>'+
 '<div class="app-shell"><aside class="sidebar"><div class="sidebar-logo"><span class="logo-mark">fx</span>LiveryLab Academy</div></aside>'+
 '<div class="app-column"><header class="topbar"><div class="brandbox"><button class="icon-btn mobile-only">☰</button><a class="brand" href="#"><span class="brand-mark">fx</span><span>LiveryLab <strong>Academy</strong></span></a></div>'+
@@ -43,6 +45,7 @@ const browser=await chromium.launch({headless:true,executablePath:executable,arg
 try{
 fs.mkdirSync(path.join(root,'test-results'),{recursive:true});
 const scenes=[
+ ['home',app.homePage(),['.ll-home-brand-banner img','.ll-home-shortcuts','.ll-home-continue','.ll-streak-shortcut']],
  ['track',app.trackPage('fivem'),['.lesson-card','.lesson-main strong','.lesson-summary','.status-ring']],
  ['lesson',app.lessonPage('fivem-01'),['.lesson-steps','.lesson-step','.step-box','.video-frame','.quiz-choice','.exercise-textarea']],
  ['script',app.scriptPage(),['.file-tree','.file-tabs','.file-preview']],
@@ -54,6 +57,13 @@ const scenes=[
  ['paywall-script',app.paywall('Script','Plus','Gesperrt für Free'),['.feature-gate','.feature-gate-actions']],
  ['paywall-reference',app.paywall('Referenzen','Pro / Ultimate','Gesperrt für Plus'),['.feature-gate','.feature-gate-actions']]
 ];
+const initial=s.loginStreak;
+s.loginStreak={current:13,best:14,claimable:true};
+s.streakModalOpen=true;
+scenes.push(['streak-ready',app.streakModalHtml(),['.ll-streak-backdrop','.ll-streak-modal','[data-streak-claim]']]);
+s.loginStreak={current:14,best:14,claimable:false,next_claim_at:new Date(Date.now()+24*3600e3).toISOString()};
+scenes.push(['streak-timer',app.streakModalHtml(),['.ll-streak-backdrop','.ll-streak-next','[data-streak-countdown]']]);
+s.streakModalOpen=false;s.loginStreak=initial;
 s.friendTab='search';scenes.push(['friend-search',app.friendsPage(),['.friends-search-panel','#friend-search-result']]);s.friendTab='friends';
 s.progress.done=s.lessons.map(l=>l.id);
 s.exam={items:Array.from({length:20},()=>({payload:{quiz:'Wofür benutzt man eine Variable?',options:['Wert speichern','Zum Löschen','Nur für Videos'],correct:0}})),at:0,answers:[]};

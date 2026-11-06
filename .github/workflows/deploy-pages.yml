@@ -1,4 +1,4 @@
-name: Deploy LiveryLab Academy v18 • voucher manager streak and creator profiles
+name: Deploy LiveryLab Academy v19 • neon dashboard and manual streak claims
 on:
   push:
     branches: [main]
@@ -17,6 +17,11 @@ jobs:
       name: github-pages
     steps:
       - uses: actions/checkout@v4
+      - name: Restore original LiveryLab banner
+        run: |
+          cat site/banner-src/part-*.b64 | base64 --decode > site/liverylab-banner.webp
+          echo '8feba3844a4ed453bc5d6e7b6835f8c54ae0b41565454abe56cda7501cbe9aa6  site/liverylab-banner.webp' | sha256sum -c -
+          rm -rf site/banner-src
       - name: Validate sources
         run: |
           node --check site/reference-data.js
@@ -26,6 +31,7 @@ jobs:
           node tests/smoke.cjs
           node tests/render.cjs
           node tests/registration.cjs
+          node tests/streak.cjs
       - name: Install browser test dependency
         run: npm install --no-save --ignore-scripts --no-package-lock playwright-core@1.56.1
       - name: Validate mobile layouts in Chrome
@@ -36,7 +42,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: academy-v18-mobile-captures
+          name: academy-v19-mobile-captures
           path: test-results/
           if-no-files-found: ignore
       - name: Remove restricted reference data from public site artifact

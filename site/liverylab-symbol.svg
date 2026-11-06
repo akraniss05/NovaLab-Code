@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="LiveryLab">
+<defs><linearGradient id="purple" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e094ff"/><stop offset=".47" stop-color="#a63fff"/><stop offset="1" stop-color="#6200f8"/></linearGradient><linearGradient id="light" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d8a0ff"/><stop offset="1" stop-color="#8b39e8"/></linearGradient></defs>
+<path fill="url(#purple)" d="M35 8h29L27 76h45l16 25H7z"/><path fill="url(#light)" d="M91 54 108 78 91 103 74 78z"/><path fill="#f0bcff" opacity=".16" d="M35 8h29L38 54H21z"/>
+</svg>

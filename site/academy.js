@@ -7,7 +7,7 @@
 'use strict';
 var cfg=window.LL_CONFIG||{}, $=function(q,root){return (root||document).querySelector(q);};
 var content=$('#content'), sidebar=$('#sidebar'), bottom=$('#bottom-nav'), toastNode=$('#toast');
-var api=null, s={loginStreak:null,friendTab:'friends',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},adminPage:1,catalogLimit:9,practiceChecked:false,draft:'',prefs:null,projectTab:0,projectSource:'',projectLoading:false};
+var api=null, s={streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,loginStreak:null,friendTab:'friends',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},adminPage:1,catalogLimit:9,practiceChecked:false,draft:'',prefs:null,projectTab:0,projectSource:'',projectLoading:false};
 var plans={free:'Free',pro:'Plus',ultimate:'Pro / Ultimate'};
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];});}
 function safeLink(url){return /^https:\/\/[^\s<>"]+$/i.test(String(url||''))?esc(url):'#';}
@@ -68,7 +68,7 @@ function videoInfo(id){var sources={
 
 function navHTML(route){
  const items=[
-  ['home','⌂','Lernen'],['courses','▦','Alle Kurse'],['script','⌘',hasScript()?'Script':'Script 🔒'],
+  ['home','⌂','Startseite'],['courses','▦','Lernen'],['script','⌘',hasScript()?'Script':'Script 🔒'],
   ['exams','☆','Prüfung'],['reference','▤',fullAccess()?'Referenz':'Referenz 🔒'],['plans','✦','Free / Plus / Pro'],
   ['profile','◉','Mein Profil'],['friends','♡','Freunde'],['settings','⚙','Einstellungen']
  ];
@@ -85,24 +85,25 @@ function frame(){
  const route=parseRoute().page;
  if(!authenticated){sidebar.innerHTML='';bottom.innerHTML='';}
  else{
-  sidebar.innerHTML='<div class="sidebar-logo"><span class="logo-mark">fx</span><span>LiveryLab<br><span class="gradient">Academy</span></span></div>'+
+  sidebar.innerHTML='<div class="sidebar-logo"><img class="ll-brand-symbol" src="./liverylab-symbol.svg" alt=""><span>LiveryLab<br><span class="gradient">Academy</span></span></div>'+
   '<div class="side-label">Navigation</div>'+navHTML(route)+
   '<div class="side-bottom"><span class="eyebrow">DEIN PROFIL</span><strong>'+
   esc(s.profile.display_name||s.profile.username||'Developer')+'</strong>'+
   '<small>'+esc(plans[s.tier]||'Free')+' · '+((s.progress.done||[]).length*30)+' XP</small>'+
   '<a class="discord-small" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord Community</a></div>';
-  const nav=[['home','⌂','Lernen'],['script','⌘','Script'],['exams','☆','Prüfung'],['reference','▤','Referenz']];
+  const nav=[['home','home','Home'],['courses','learn','Lernen'],['script','code','Script'],['exams','exam','Prüfung'],['profile','profile','Profil']];
   bottom.innerHTML=nav.map(([id,icon,label])=>'<button type="button" data-go="'+id+'" class="bottom-item'+
-   ((route===id||(id==='home'&&['track','lesson','courses'].includes(route))||(id==='exams'&&route==='exam'))?' active':'')+
-   '" aria-label="'+label+'"><span class="side-icon" aria-hidden="true">'+icon+'</span><span>'+label+'</span></button>').join('');
+   ((route===id||(id==='courses'&&['track','lesson'].includes(route))||(id==='exams'&&route==='exam'))?' active':'')+
+   '" aria-label="'+label+'"><span class="side-icon" aria-hidden="true">'+llIcon(icon)+'</span><span>'+label+'</span></button>').join('');
  }
- const head=$('#xp-head');if(head)head.textContent=((s.progress.done||[]).length*30)+' XP';
+ const head=$('#xp-head');if(head)head.textContent='✦ '+((s.progress.done||[]).length*30).toLocaleString('de-DE')+' XP';
+ const st=$('#streak-head');if(st){st.innerHTML=llIcon('fire')+' '+Number(s.loginStreak?.current||0)+' Tage';st.classList.toggle('can-claim',!!s.loginStreak?.claimable);}
  const avatar=$('.avatar-btn');if(avatar)avatar.textContent=String(s.profile?.display_name||s.profile?.username||'N').slice(0,1).toUpperCase();
 }
 
 function login(){
  s.ready=false;frame();
- const brand='<div class="brandmark"><span class="logo-mark">fx</span><span>LiveryLab <span class="gradient">Academy</span></span></div>';
+ const brand='<img class="ll-login-banner" src="./liverylab-banner.webp" alt="Livery-Lab Premium FiveM Systems Banner"><div class="brandmark"><img class="ll-brand-symbol" src="./liverylab-symbol.svg" alt=""><span>LiveryLab <span class="gradient">Academy</span></span></div>';
  if(s.authScreen==='register'){
  content.innerHTML='<div class="auth-layout"><section class="auth-card">'+brand+
  '<span class="eyebrow">[ + ] BEWERBUNG</span><h1>Dein Weg in die <span class="gradient">Academy.</span></h1>'+
@@ -270,11 +271,12 @@ async function loadData(){
  var data=all[3].data?.payload||{};
  s.progress={done:Array.isArray(data.done)?data.done:[],watched:Array.isArray(data.watched)?data.watched:[],exams:data.exams||{},practiced:Array.isArray(data.practiced)?data.practiced:[]};
  s.ready=true;
- try{const streak=await api.rpc('academy_login_streak');s.loginStreak=streak.error?null:streak.data;}catch(_){}
+ try{const streak=await api.rpc('academy_streak_status');s.loginStreak=streak.error?null:streak.data;if(s.loginStreak?.server_now)s.streakClockOffsetMs=Date.parse(s.loginStreak.server_now)-Date.now();}catch(_){}
  try{const [exam,social,courses,media]=await Promise.all([api.rpc('academy_exam_status'),api.rpc('academy_social_list'),api.rpc('academy_entitled_courses'),api.rpc('academy_social_media_list')]);s.examStatus=exam.error?null:exam.data;s.social=social.error?null:social.data;s.entitledCourses=courses.error?null:courses.data;s.socialMedia=media.error?{}:media.data||{};}catch(_){}
+ s.streakModalOpen=!!s.loginStreak?.claimable;
  frame();await navigateCurrent();
 }
-async function logout(){try{await api.auth.signOut();}catch(e){}s.authScreen='login';s.ready=false;s.user=null;s.profile=null;s.lesson=null;s.courses=[];s.lessons=[];location.hash='#home';login();}
+async function logout(){try{await api.auth.signOut();}catch(e){}s.authScreen='login';s.ready=false;s.streakModalOpen=false;s.loginStreak=null;paintStreakModal();s.user=null;s.profile=null;s.lesson=null;s.courses=[];s.lessons=[];location.hash='#home';login();}
 async function saveProgress(){
  var res=await api.from('academy_progress').upsert({user_id:s.user.id,key:'liverylab-v10',payload:s.progress,updated_at:new Date().toISOString()},{onConflict:'user_id,key'});
  if(res.error)throw res.error;frame();
@@ -315,7 +317,8 @@ function render(){
   script:()=>hasScript()?scriptPage():paywall('Script-Werkstatt','Plus','Codebeispiele sind ab Plus verfügbar.'),plans:plansPage,exams:examsPage,exam:()=>examPage(r.id),
   reference:()=>fullAccess()?referencePage():paywall('Code-Referenzen','Pro / Ultimate','Die vollständige Sprachbibliothek gehört zum höchsten Tarif.'),profile:profilePage,friends:friendsPage,settings:settingsPage,admin:adminPage};
  content.innerHTML=(pages[r.page]||homePage)();
- if(r.page==='settings'||r.page==='profile')renderMFA();
+ if(r.page==='settings')renderMFA();
+ paintStreakModal();
 }
 
 
@@ -340,28 +343,139 @@ function courseCard(c){
  '<button class="btn block" type="button" data-go="track/'+esc(c.id)+'">'+(complete?'Kurs ansehen ✓':done?'Weiterlernen →':'Lernpfad öffnen →')+'</button></article>';
 }
 
+
+function llIcon(name){
+ const paths={
+ home:'<path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+ learn:'<path d="m2 10 10-5 10 5-10 5zM6 12.5V18c4 3 8 3 12 0v-5.5M22 10v6"/>',
+ code:'<path d="m8 5-6 7 6 7M16 5l6 7-6 7M14 3l-4 18"/>',
+ exam:'<rect x="5" y="4" width="14" height="18" rx="2"/><path d="M9 4h6V2H9zM9 12l2 2 4-4M9 18h6"/>',
+ book:'<path d="M12 6c-3-2-7-2-10-1v15c4-2 7-1 10 1 3-2 6-3 10-1V5c-3-1-7-1-10 1zM12 6v15"/>',
+ fire:'<path d="M12 22c-4.4 0-7-3.2-7-7.5 0-3.2 2-5.7 5-8.5 0 3 1.6 5 2.1 5.5C13.3 8.2 16 5 16 2c3.8 4 4.9 8.3 4 12.6-.7 4.7-3.4 9.4-8 9.4zM12 21c-2 0-3.2-1.7-3.2-3.6 0-2.2 1.2-3.5 2.4-4.4.1 1.8 1.2 2.5 1.5 2.7 1.1-1.1 1.7-2.2 1.9-3.2 3.4 1.9 8.5-2.6 8.5z"/>',
+ friends:'<circle cx="9" cy="8" r="3"/><path d="M2 21v-2a7 7 0 0 1 14 0v2M17 5a3 3 0 0 1 0 6M18 14a6 6 0 0 1 4 6v1"/>',
+ settings:'<circle cx="12" cy="12" r="3"/><path d="M10 2h4l.6 2.5 2 1L19 4l3 3-1.5 2.4.7 2.1L23 12v3l-2.5.8-1 2L21 20l-3 2-2.4-1.5-2.1.7L13 23h-3l-.8-2.5-2-.8L5 21l-3-3 1.5-2.4-.7-2.1L1 13v-3l2.5-.8 1-2L3 5l3-3 2.4 1.5L10 3z"/>',
+ profile:'<circle cx="12" cy="8" r="4"/><path d="M4 22v-2a8 8 0 0 1 16 0v2"/>',
+ arrow:'<path d="m9 5 7 7-7 7"/>',check:'<path d="m4 12 5 5L20 6"/>',
+ xp:'<path d="m12 2 3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/>',
+ clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+ close:'<path d="M5 5 19 19M19 5 5 19"/>'
+ };
+ return '<svg class="ll-icon ll-icon-'+esc(name)+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(paths[name]||paths.code)+'</svg>';
+}
+function streakRemaining(){
+ const st=s.loginStreak;
+ if(!st||!st.next_claim_at||st.claimable)return 0;
+ return Math.max(0,Math.ceil((Date.parse(st.next_claim_at)-Date.now()-s.streakClockOffsetMs)/1000));
+}
+function durationDisplay(value){
+ const n=Math.max(0,Math.ceil(Number(value)||0));
+ return [Math.floor(n/3600),Math.floor(n%3600/60),n%60].map(x=>String(x).padStart(2,'0')).join(':');
+}
+async function refreshStreakStatus(){
+ if(!api||!s.ready)return;
+ const r=await api.rpc('academy_streak_status');if(r.error)throw r.error;
+ s.loginStreak=r.data||null;
+ if(s.loginStreak?.server_now)s.streakClockOffsetMs=Date.parse(s.loginStreak.server_now)-Date.now();
+ return s.loginStreak;
+}
+function streakModalHtml(){
+ if(!s.ready||!s.streakModalOpen)return '';
+ const st=s.loginStreak||{current:0,best:0,claimable:false},ready=st.claimable===true,n=Number(st.current||0);
+ return '<div class="ll-streak-backdrop" id="streak-overlay"><section role="dialog" aria-modal="true" aria-labelledby="streak-dialog-title" class="ll-streak-modal">'+
+ '<button class="ll-modal-close" type="button" aria-label="Fenster schließen" data-streak-close>'+llIcon('close')+'</button>'+
+ '<div class="ll-streak-emblem"><span class="ll-laurel">❧</span><span class="ll-fire-emblem">'+llIcon('fire')+'</span><span class="ll-laurel right">❧</span></div>'+
+ '<span class="eyebrow ll-streak-kicker">DEINE TÄGLICHE BELOHNUNG</span>'+
+ '<h2 id="streak-dialog-title">Daily <span class="gradient">Streak</span></h2>'+
+ '<p class="ll-streak-lede">'+(ready?'Dein täglicher Claim ist bereit!':'Dein heutiger Claim ist gespeichert.')+'</p>'+
+ '<div class="ll-streak-counter">'+llIcon('fire')+'<strong>'+n+' '+(n===1?'Tag':'Tage')+' Streak</strong><span>Rekord: '+Number(st.best||0)+'</span></div>'+
+ (ready?'<p class="ll-streak-instructions">Drücke auf <strong>Claim</strong>, damit deine Streak weiterläuft. Danach startet die 24-Stunden-Wartezeit.</p>'+
+ '<button class="ll-streak-claim" type="button" data-streak-claim '+(s.streakBusy?'disabled':'')+'>'+(s.streakBusy?'Wird eingelöst …':'Claim')+llIcon('arrow')+'</button>'+
+ '<div class="ll-streak-next">'+llIcon('clock')+'<span>Nächster Claim nach dem Einlösen: <strong>24:00:00</strong></span></div>':
+ '<p class="ll-streak-instructions">Komm morgen wieder und sichere deine Serie. Das nächste Zeitfenster öffnet nach 24 Stunden.</p>'+
+ '<div class="ll-streak-claimed">'+llIcon('check')+' Für heute eingelöst</div>'+
+ '<div class="ll-streak-next">'+llIcon('clock')+'<span>Nächster Claim in <strong data-streak-countdown>'+durationDisplay(streakRemaining())+'</strong></span></div>')+
+ '<p class="ll-streak-timezone">Ein Claim pro Kalendertag (00:00–00:00 Uhr, Deutschland). Wird ein ganzer Tag übersprungen, startet die Serie wieder bei 1.</p></section></div>';
+}
+function paintStreakModal(){
+ const root=document.querySelector('#streak-portal');if(!root)return;
+ root.innerHTML=streakModalHtml();
+ const opened=!!(s.ready&&s.streakModalOpen);
+ document.body.classList.toggle('streak-modal-visible',opened);
+ const shell=document.querySelector('#app');if(shell&&'inert' in shell)shell.inert=opened;
+}
+function updateStreakClocks(){
+ if(!s.ready)return;
+ const v=durationDisplay(streakRemaining());
+ document.querySelectorAll('[data-streak-countdown]').forEach(x=>{if(x.textContent!==v)x.textContent=v;});
+ if(s.loginStreak?.next_claim_at&&!s.loginStreak.claimable&&streakRemaining()===0&&!s.streakRefreshBusy){
+  s.streakRefreshBusy=true;
+  refreshStreakStatus().then(st=>{if(st?.claimable&&s.streakModalOpen)paintStreakModal();
+    if(parseRoute().page==='home')render();
+  }).catch(()=>{}).finally(()=>{s.streakRefreshBusy=false;});
+ }
+}
+async function claimDailyStreak(){
+ if(s.streakBusy||!s.loginStreak?.claimable)return;
+ s.streakBusy=true;paintStreakModal();
+ try{
+  const r=await api.rpc('academy_streak_claim');if(r.error)throw r.error;
+  if(r.data?.status){s.loginStreak=r.data.status;
+   if(s.loginStreak.server_now)s.streakClockOffsetMs=Date.parse(s.loginStreak.server_now)-Date.now();
+  }else await refreshStreakStatus();
+  if(r.data?.ok){
+   notice('🔥 Claim erfolgreich! '+Number(s.loginStreak?.current||0)+' Tage Streak.');
+   try{const social=await api.rpc('academy_social_list');if(!social.error)s.social=social.data;}catch(_){}
+  }else notice(r.data?.error||'Dein nächster Claim ist noch nicht bereit.');
+ }catch(e){notice('Claim fehlgeschlagen: '+formatError(e));try{await refreshStreakStatus()}catch(_){}}
+ finally{s.streakBusy=false;render();paintStreakModal();}
+}
+
+
+function homeShortcut(icon,label,description,route,locked,wide){
+ return '<button type="button" class="ll-home-shortcut'+(wide?' wide':'')+(locked?' is-locked':'')+'" data-go="'+esc(route)+'">'+
+ '<span class="ll-shortcut-symbol">'+llIcon(icon)+'</span>'+
+ '<span class="ll-shortcut-text"><strong>'+esc(label)+(locked?' <span class="ll-shortcut-lock" aria-label="Tarif erforderlich">🔒</span>':'')+'</strong>'+
+ '<small>'+esc(description)+'</small></span>'+llIcon('arrow')+'</button>';
+}
 function homePage(){
- const top=['coding-basics','lua','python','javascript','blender-fundamentals','fivem'].map(courseOf).filter(Boolean);
- const completed=doneIds(),next=s.lessons.filter(allowed).find(l=>!completed.has(l.id)&&['coding-basics','lua','python','fivem'].includes(l.course_id))||
- s.lessons.filter(allowed).find(l=>!completed.has(l.id));
+ const completed=doneIds(),available=s.lessons.filter(allowed);
+ const next=available.find(l=>!completed.has(l.id)&&['coding-basics','lua','python','fivem'].includes(l.course_id))||
+ available.find(l=>!completed.has(l.id));
  const nextCourse=next?courseOf(next.course_id):null;
- return '<section class="page-hero"><span class="eyebrow">[ 00 ] LERNPFAD · LIVERYLAB ACADEMY</span>'+
- '<h1>Lerne programmieren.<br><em>Baue deine eigenen Projekte.</em></h1>'+
- '<p class="lede">Verstehe die Grundlagen, probiere eigene Lösungen aus und werde Schritt für Schritt sicherer in Code, FiveM und Blender.</p>'+
- '<div class="hero-actions"><button class="btn primary" data-go="'+(next?'lesson/'+esc(next.id):'courses')+'">Jetzt starten <span>→</span></button>'+
- '<button class="btn" data-go="courses">Alle Lernpfade</button></div></section>'+
- stats()+
- '<button class="streak-home" type="button" data-go="profile"><span class="streak-fire">🔥</span><span><strong>'+
- Number(s.loginStreak?.current||0)+' Tage in Folge gelernt</strong><small>'+
- 'Dein Bestwert: '+Number(s.loginStreak?.best||0)+' Tage · Reset jeden Tag um 00:00 Uhr</small></span><span class="streak-arrow">Profil →</span></button>'+
- dailyStrip()+
- (next?'<section class="section"><div class="section-heading"><div><span class="eyebrow">WEITERLERNEN</span><h2>Deine nächste Lektion</h2></div></div>'+
- '<div class="next-lesson"><span class="eyebrow">'+esc(nextCourse?.name||'Lernpfad')+'</span><h3>'+esc(next.title)+'</h3>'+
- '<p>'+esc(next.summary)+'</p><button class="btn primary" data-go="lesson/'+esc(next.id)+'">Lektion öffnen →</button></div></section>':'')+
- '<section class="section"><div class="section-heading"><div><span class="eyebrow">[ 01 ] DEINE LERNPFADE</span><h2>Womit möchtest du anfangen?</h2>'+
- '<p>Kleine Schritte, klare Themen und eigener Lernfortschritt.</p></div><a href="#courses">Alle Kurse ansehen</a></div>'+
- '<div class="course-grid">'+top.map(courseCard).join('')+'</div></section>'+
- membershipHelp();
+ const currentDone=nextCourse?countDone(nextCourse.id):0,total=nextCourse?lessonsOf(nextCourse.id).length:0,progress=pct(currentDone,total);
+ const xp=(s.progress.done||[]).length*30,level=Math.floor(xp/500)+1,levelXp=xp%500;
+ const nickname=s.profile?.display_name||s.profile?.username||'Developer';
+ const streak=Number(s.loginStreak?.current||0),ready=!!s.loginStreak?.claimable;
+ const picks=['coding-basics','lua','python','javascript'].map(courseOf).filter(Boolean);
+ return '<div class="ll-home-dashboard">'+
+ '<section class="ll-home-brand-banner"><img src="./liverylab-banner.webp" alt="Livery-Lab – Premium FiveM Systems, violette Skyline" loading="eager" fetchpriority="high"></section>'+
+ '<div class="ll-home-greeting"><div><span class="eyebrow">WILLKOMMEN ZURÜCK, '+esc(nickname.toUpperCase())+'</span>'+
+ '<h1>Deine <span class="gradient">Developer Academy.</span></h1><p>Lerne programmieren, entwickle Projekte und erreiche deine nächsten Ziele.</p></div>'+
+ '<div class="ll-home-level"><div class="ll-level-top">'+llIcon('xp')+'<span>Level '+level+'</span></div>'+
+ '<small>'+levelXp+' / 500 XP bis Level '+(level+1)+'</small><div class="ll-level-bar"><span style="width:'+(levelXp/5)+'%"></span></div></div></div>'+
+ '<section class="ll-home-continue"><div class="ll-continue-icon">'+llIcon('code')+'</div>'+
+ '<div class="ll-continue-copy"><span class="eyebrow">WEITERLERNEN</span>'+
+ '<h2>'+esc(nextCourse?.name||'Deine Lernreise beginnt hier')+'</h2>'+
+ '<p>'+esc(next?.title||'Wähle deinen ersten Kurs und starte mit dem Programmieren.')+'</p>'+
+ '<div class="ll-continue-progress"><div class="ll-level-bar"><span style="width:'+progress+'%"></span></div><strong>'+progress+' %</strong></div></div>'+
+ '<button type="button" class="btn primary ll-continue-button" data-go="'+(next?'lesson/'+esc(next.id):'courses')+'">Jetzt fortsetzen '+llIcon('arrow')+'</button></section>'+
+ '<div class="ll-home-heading"><span class="eyebrow">[ ✦ ] DEINE ACADEMY</span><h2>Was möchtest du heute machen?</h2><p>Alle wichtigen Bereiche auf einen Blick.</p></div>'+
+ '<div class="ll-home-shortcuts">'+
+ homeShortcut('learn','Lernen','Kurse, Tutorials und praxisnahe Projekte.','courses',false,false)+
+ homeShortcut('code','Script','Fertige FiveM-Skripte Schritt für Schritt.','script',!hasScript(),false)+
+ homeShortcut('exam','Prüfungen','Teste dein Wissen in passenden Kursprüfungen.','exams',false,false)+
+ homeShortcut('book','Referenzen','Funktionen und APIs schnell nachschlagen.','reference',!fullAccess(),false)+
+ '<button type="button" class="ll-home-shortcut ll-streak-shortcut" data-streak-open>'+
+ '<span class="ll-shortcut-symbol fire">'+llIcon('fire')+'</span><span class="ll-shortcut-text"><strong>Daily Streak <span class="ll-streak-day-pill">'+streak+' '+(streak===1?'Tag':'Tage')+'</span></strong>'+
+ '<small>'+(ready?'Dein Claim ist bereit – sichere deine Serie!':s.loginStreak?.next_claim_at?'Nächster Claim in <span data-streak-countdown>'+durationDisplay(streakRemaining())+'</span>':'Melde dich an und starte deine erste Serie.')+'</small></span>'+llIcon('arrow')+'</button>'+
+ homeShortcut('friends','Freunde','Vernetze dich und vergleiche Lernfortschritte.','friends',false,false)+
+ homeShortcut('settings','Einstellungen','Account, Sicherheit und persönliches Design.','settings',false,true)+
+ homeShortcut('profile','Mein Profil','Bilder, Banner, Erfolgstitel und Bio.','profile',false,false)+
+ homeShortcut('xp','Mitgliedschaften','Free, Plus und Pro vergleichen.','plans',false,false)+
+ (s.profile?.role==='admin'?homeShortcut('settings','Administration','Freigaben, Mitglieder und Gutscheine verwalten.','admin',false,true):'')+'</div>'+
+ '<section class="ll-home-more"><div class="section-heading"><div><span class="eyebrow">[ ▦ ] WEITERLERNEN</span><h2>Empfohlene Lernpfade</h2></div><button class="btn small" data-go="courses">Alle Kurse →</button></div>'+
+ '<div class="course-grid">'+picks.map(courseCard).join('')+'</div></section>'+
+ membershipHelp()+'</div>';
 }
 
 function filteredCourses(){
@@ -943,7 +1057,7 @@ function profilePage(){
  '<section class="profile-quick-stats"><div class="profile-quick-tile"><span>🔥</span><strong>'+streak+'</strong><small>Login-Streak in Tagen</small></div>'+
  '<div class="profile-quick-tile"><span>🏅</span><strong>'+best+'</strong><small>Bisheriger Rekord</small></div>'+
  '<div class="profile-quick-tile"><span>✦</span><strong>'+((s.progress.done||[]).length*30)+'</strong><small>Erlernte XP</small></div></section>'+
- '<p class="micro streak-explanation">Der nächste Streak-Tag beginnt um 00:00 Uhr in der Zeitzone Europe/Berlin.</p>'+
+ '<p class="micro streak-explanation">Deine Streak zählt nur, wenn du täglich den Claim bestätigst. Nach dem Einlösen wartest du mindestens 24 Stunden. Der Kalendertag richtet sich nach Europe/Berlin.</p>'+
  '<section class="panel profile-name-panel"><span class="eyebrow">[ ✎ ] DEIN ÖFFENTLICHER NAME</span><h3>Anzeigename ändern</h3>'+
  '<p class="micro">Dein sichtbarer Name. Dein Anmelde-Benutzername wird dadurch nicht geändert.</p>'+
  '<form data-form="profile" class="profile-display-form"><div class="form-group"><label class="form-label">Anzeigename</label>'+
@@ -1156,6 +1270,12 @@ async function adminAction(action,node){
  }catch(e){notice('Admin-Fehler: '+formatError(e));}
 }
 document.addEventListener('click',async function(e){
+ var streakOpen=e.target.closest('[data-streak-open]');
+ if(streakOpen){s.streakModalOpen=true;paintStreakModal();return;}
+ var streakClose=e.target.closest('[data-streak-close]');
+ if(streakClose){s.streakModalOpen=false;paintStreakModal();return;}
+ var streakClaim=e.target.closest('[data-streak-claim]');
+ if(streakClaim){await claimDailyStreak();return;}
  var goTarget=e.target.closest('[data-go]');
  if(goTarget){e.preventDefault();go(goTarget.dataset.go);return;}
  if(e.target.id==='nav-backdrop'){sidebar.classList.remove('open');syncBackdrop();return;}
@@ -1285,7 +1405,18 @@ document.addEventListener('keydown',function(e){
   el.value=el.value.slice(0,a)+'\t'+el.value.slice(b);el.selectionStart=el.selectionEnd=a+1;
   s.draft=el.value;saveDraft(parseRoute().id,el.value);return;
  }
- if(e.key==='Escape'){sidebar.classList.remove('open');syncBackdrop();}
+ if(e.key==='Tab'&&s.streakModalOpen){
+  const modal=document.querySelector('.ll-streak-modal');
+  if(modal&&typeof modal.querySelectorAll==='function'){
+   const controls=Array.from(modal.querySelectorAll('button:not([disabled]),a[href]'));
+   if(controls.length){
+    const first=controls[0],last=controls[controls.length-1];
+    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+    else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+   }
+  }
+ }
+ if(e.key==='Escape'){if(s.streakModalOpen){s.streakModalOpen=false;paintStreakModal();}sidebar.classList.remove('open');syncBackdrop();}
 });
 document.addEventListener('input',function(e){
  if(e.target.id==='reference-search'){
@@ -1447,6 +1578,7 @@ document.addEventListener('submit',async function(e){
 window.addEventListener('hashchange',function(){if(s.ready)navigateCurrent();});
 async function init(){
  applyPreferences();
+ if(typeof window.setInterval==='function')window.setInterval(updateStreakClocks,1000);
  document.head.insertAdjacentHTML('beforeend','<style>.is-auth .sidebar,.is-auth .bottom-nav{display:none}.is-auth .topbar{background:#0d0a19}.is-auth .content{max-width:1100px}.is-auth .app-column{width:100%}</style>');
  if(!window.supabase||!cfg.supabaseUrl||!cfg.supabasePublishableKey){content.innerHTML='<div class="auth-layout panel"><h2>Verbindung nicht verfügbar</h2><p>Supabase konnte nicht geladen werden. Bitte lade die Seite erneut oder überprüfe deine Verbindung.</p></div>';return;}
  try{api=window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});await boot();}
