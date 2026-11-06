@@ -1,5 +1,5 @@
 /* LiveryLab Academy offline assets: never cache credentials, API calls or private user data. */
-const CACHE = 'liverylab-v8.0.0';
+const CACHE = 'liverylab-v8.0.1';
 const ASSETS=['./','./index.html','./styles.css','./app.js','./isolated-worker.js','./lua-mini.js','./music-studio.js','./code-studio.js','./studio-v4.css','./config.js','./privacy.html','./assets/icon.svg','./assets/liverylab-hero.jpg','./manifest.webmanifest','./plans-v5.js','./videos-v5.js','./music-v5.js','./studio3d-v5.js','./games-v5.js','./studio-v5.css','./shell-v5.js','./auth-mfa-v5.js','./video-lab-v5.js','./shell-v5.css','./studio-polish-v5.css','./workspace-v6.js','./workspace-v6.css','./academy-v7.css','./shop-inspired-v8.css','./assets/liverylab-academy-wordmark.svg','./assets/liverylab-server-banner.webp','./social-v7.js','./assets/category-video.svg','./assets/category-music.svg','./assets/category-code.svg','./assets/category-fivem.svg','./assets/category-blender.svg','./assets/category-games.svg'];
 self.addEventListener('install',event=>{
  event.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)));

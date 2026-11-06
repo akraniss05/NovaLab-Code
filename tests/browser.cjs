@@ -128,7 +128,7 @@ async function run(engine,mobile){
     if(mobile){
       await page.locator('#ll-menu-button').click();
       const drawerWidth=await page.locator('.ll-menu-sheet').evaluate(el=>el.getBoundingClientRect().width);
-      assert.ok(drawerWidth>=200&&drawerWidth<=260,'Drawer too wide or narrow: '+drawerWidth);
+      assert.ok(drawerWidth>=265&&drawerWidth<=305,'Drawer does not match reference proportion: '+drawerWidth);
       await page.locator('#ll-menu-overlay button[data-ll-close]').click();
       assert.equal(await page.locator('.mobile-nav').evaluate(el=>getComputedStyle(el).display),'none');
       const layout=await page.evaluate(()=>({
