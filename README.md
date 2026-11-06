@@ -58,3 +58,14 @@ Das bereits verbundene Supabase-Projekt LiveryLab wurde weiterverwendet. Bestehe
 ## Deployment
 
 Unter Repository Settings > Pages muss „GitHub Actions“ aktiviert sein. Push auf main triggert Prüfungen und Deployment. Alte Codeversionen bleiben über Git-Historie abrufbar; der aktive Datei-Baum wird komplett ersetzt.
+
+
+## Anmeldung mit E-Mail ODER Benutzername
+
+- Bestehende Supabase-E-Mail-Konten: E-Mail-Adresse und Passwort direkt auf der Website eingeben.
+- Bereits vergebene Benutzernamen: denselben Account mit Benutzername + Passwort öffnen.
+- Für E-Mail-Konten ohne Benutzernamen: nach dem Login unter **Profil → Zusätzlichen Benutzernamen festlegen** ein Login-Kürzel wählen (einmalig). Das Konto bleibt dasselbe.
+- Das Anmeldefeld erkennt selbst, ob du eine E-Mail-Adresse oder einen Benutzernamen eingegeben hast. Keine öffentliche Selbstregistrierung.
+- Administratoren können unter **Admin** wahlweise Konten per **Benutzername** (verwalteter Alias) oder per **echter E-Mail-Adresse** erstellen.
+- Username-Anmeldung löst die private E-Mail-Adresse nur serverseitig über die Supabase Edge Function \`academy-signin\` auf. Danach prüft Supabase Auth das Passwort. Die Function gibt E-Mail-Adressen nicht an nicht angemeldete Nutzer preis.
+- Die Supabase Function \`academy-signin\` nutzt \`verify_jwt = false\`, da noch keine Sitzung besteht; sie prüft die eingesendeten Zugangsdaten selbst. Die separate Admin-Funktion bleibt \`verify_jwt = true\`.

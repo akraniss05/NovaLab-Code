@@ -83,6 +83,29 @@ Deno.serve(async(req:Request)=>{
       return reply(200,{users,page,hasMore:members.users.length===100});
     }
 
+    if(body.action==='createEmail'){
+      const email=String(body.email||'').trim().toLowerCase();
+      const pwd=String(body.password||'');
+      if(email.length>254||!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)||email.endsWith('@accounts.livery-lab.app'))return reply(400,{error:'Bitte eine gültige eigene E-Mail-Adresse eingeben'});
+      if(pwd.length<14||pwd.length>256)return reply(400,{error:'Startpasswort muss 14-256 Zeichen lang sein'});
+      const name=String(body.displayName||email.split('@')[0]).trim().slice(0,40)||'Student';
+      const {data:created,error:createError}=await admin.auth.admin.createUser({
+        email,password:pwd,email_confirm:true,
+        user_metadata:{name},
+        app_metadata:{academy_managed:true}
+      });
+      if(createError)return reply(400,{error:'E-Mail-Konto konnte nicht erstellt werden: '+createError.message});
+      if(!created?.user?.id)return reply(500,{error:'Auth provider returned no user'});
+      const id=created.user.id;
+      const {error:profileError}=await admin.from('academy_profiles')
+        .upsert({id,display_name:name,role:'student',active:true,needs_password_change:true},{onConflict:'id'});
+      if(profileError){
+        await admin.auth.admin.deleteUser(id);
+        return reply(500,{error:'Profil konnte nicht eingerichtet werden'});
+      }
+      return reply(200,{ok:true,id,email,notice:'E-Mail-Konto erstellt. Startpasswort sicher an die Person übermitteln. Benutzername kann im Profil ergänzt werden.'});
+    }
+
     if(body.action==='createUsername'){
       const username=String(body.username||'').trim();
       const pwd=String(body.password||'');
@@ -113,7 +136,7 @@ Deno.serve(async(req:Request)=>{
       if(!isUUID(id)||id===user.id)return reply(400,{error:'Ungültige Nutzer-ID'});
       if(pwd.length<14||pwd.length>256)return reply(400,{error:'Passwort muss 14-256 Zeichen lang sein'});
       const {data:target,error:lookupError}=await admin.from('academy_profiles').select('role,username').eq('id',id).single();
-      if(lookupError||!target||target.role!=='student'||!target.username)return reply(403,{error:'Nur verwaltete Schülerkonten erlaubt'});
+      if(lookupError||!target||target.role!=='student')return reply(403,{error:'Nur Schülerkonten erlaubt'});
       const {error:resetError}=await admin.auth.admin.updateUserById(id,{password:pwd});
       if(resetError)throw resetError;
       const {error:flagError}=await admin.from('academy_profiles').update({needs_password_change:true}).eq('id',id);

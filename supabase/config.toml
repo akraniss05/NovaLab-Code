@@ -1,0 +1,5 @@
+[functions.admin-users]
+verify_jwt = true
+
+[functions.academy-signin]
+verify_jwt = false
