@@ -1,4 +1,4 @@
-# LiveryLab Academy v10
+# LiveryLab Academy v11
 
 **Made with 💙 from NyxAtheris (LiveryLab Studios)**
 
@@ -16,7 +16,7 @@ Kontakt: nyxatheris
 - Abschlussprüfung mit maximal zehn Fragen (bestehen ab 80 %), XP und Supabase-synchronisierter Lernfortschritt.
 - Login mit Benutzername + Passwort, optionale TOTP-Authenticator-2FA und obligatorischer Passwortwechsel beim ersten Login.
 - Admin-Bereich: Benutzer erstellen, Passwort zurücksetzen, sperren, löschen sowie Free / Plus / Pro vergeben.
-- Keine Music-, Video-, 3D- oder Code-Editoren mehr. Kein eingebautes Bezahl- oder Registrierungssystem.
+- Konzentrierte Lernplattform mit eingebauten Schreibübungen statt umfangreicher Studio-Werkzeuge.
 
 ## Zugangsstufen
 
@@ -69,3 +69,14 @@ Unter Repository Settings > Pages muss „GitHub Actions“ aktiviert sein. Push
 - Administratoren können unter **Admin** wahlweise Konten per **Benutzername** (verwalteter Alias) oder per **echter E-Mail-Adresse** erstellen.
 - Username-Anmeldung löst die private E-Mail-Adresse nur serverseitig über die Supabase Edge Function \`academy-signin\` auf. Danach prüft Supabase Auth das Passwort. Die Function gibt E-Mail-Adressen nicht an nicht angemeldete Nutzer preis.
 - Die Supabase Function \`academy-signin\` nutzt \`verify_jwt = false\`, da noch keine Sitzung besteht; sie prüft die eingesendeten Zugangsdaten selbst. Die separate Admin-Funktion bleibt \`verify_jwt = true\`.
+
+## UX-Überarbeitung v11
+
+- Neue responsive Designschicht in `site/refined.css` (mobiler Header, Drawer-Menü, Navigationsleiste, Kurskarten, Profil und Einstellungen).
+- Erledigte Lektionen und gesamte Kurse sind vollständig grün hinterlegt.
+- Reduzierter Katalog: 9 Lernpfade pro Ansicht, mit Filter, Suche und „Weitere anzeigen“; Kapitel sind einklappbar.
+- Kurzer Ablauf jeder Lektion: Theorie, Video-Tutorial (falls redaktionell zugeordnet), eigene Code-/Praxisaufgabe in einem Textfeld, Wissenstest und Abschließen. Eigener Code wird **nicht ausgeführt**, sondern lokal als Entwurf gespeichert. Das Ergebnis des Praxisschritts wird mit Supabase synchronisiert.
+- Echte Einstellungen für kompakte Kurskarten, reduzierte Animationen, Fortschrittsreset und Konto-/Authenticator-Verwaltung.
+- Free: 58 Lektionen. Plus: insgesamt 116 Lektionen (2 × Free). Pro: voller Zugriff auf 471 Lektionen. Die Freigabe wird auch in Supabase-RLS geprüft.
+- Nur für die ersten geprüften Lernmodule sind bestimmte Videos mit Kapitelstart hinterlegt; sonst wird eine präzise YouTube-Suche angeboten. Externe Videos werden erst nach Klick geladen.
+- `node tests/render.cjs` prüft die wesentlichen Screens anhand der echten Rendering-Funktionen.

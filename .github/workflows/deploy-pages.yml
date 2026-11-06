@@ -23,6 +23,7 @@ jobs:
           node --check site/auth-mfa-v5.js
           node --check site/config.js
           node tests/smoke.cjs
+          node tests/render.cjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:

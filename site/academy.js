@@ -7,7 +7,7 @@
 'use strict';
 var cfg=window.LL_CONFIG||{}, $=function(q,root){return (root||document).querySelector(q);};
 var content=$('#content'), sidebar=$('#sidebar'), bottom=$('#bottom-nav'), toastNode=$('#toast');
-var api=null, s={user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,videoChecked:false,videoLoaded:false,exam:null,members:[],memberPlans:{},adminPage:1};
+var api=null, s={user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,videoChecked:false,videoLoaded:false,exam:null,members:[],memberPlans:{},adminPage:1,catalogLimit:9,practiceChecked:false,draft:'',prefs:null};
 var plans={free:'Free',pro:'Plus',ultimate:'Pro'};
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];});}
 function safeLink(url){return /^https:\/\/[^\s<>"]+$/i.test(String(url||''))?esc(url):'#';}
@@ -24,6 +24,21 @@ function tierLabel(t){return t==='plus'?'Plus':t==='pro'?'Pro':'Free';}
 function allowed(l){return !!s.profile&&(s.profile.role==='admin'||l.required_plan==='free'||(l.required_plan==='plus'&&['pro','ultimate'].includes(s.tier))||(l.required_plan==='pro'&&s.tier==='ultimate'));}
 function badge(t){return '<span class="chip '+esc(t)+'">'+tierLabel(t)+'</span>';}
 function levelText(l){var x=String(l||'beginner').toLowerCase();return /beginner|anfänger/.test(x)?'Anfänger':/intermediate|mittelstufe/.test(x)?'Aufbau':'Fortgeschritten';}
+
+function readDraft(id){try{return localStorage.getItem('liverylab-draft-'+id)||''}catch(_){return ''}}
+function saveDraft(id,value){try{localStorage.setItem('liverylab-draft-'+id,String(value).slice(0,10000))}catch(_){}}
+function setPreference(key,value){try{localStorage.setItem('liverylab-pref-'+key,value?'1':'0')}catch(_){}applyPreferences()}
+function getPreference(key){try{return localStorage.getItem('liverylab-pref-'+key)==='1'}catch(_){return false}}
+function applyPreferences(){document.body.classList.toggle('compact-cards',getPreference('compact'));document.body.classList.toggle('less-motion',getPreference('motion'))}
+function syncBackdrop(){var b=$('#nav-backdrop');if(b)b.classList.toggle('visible',sidebar.classList.contains('open'))}
+function pageHeading(label,title,description){return '<header class="page-heading"><span class="eyebrow">'+esc(label)+'</span><h1>'+title+'</h1><p class="lede">'+esc(description)+'</p></header>'}
+function planCounts(){var f=s.lessons.filter(l=>l.required_plan==='free').length;var pl=s.lessons.filter(l=>l.required_plan==='plus').length;return {free:f,plus:f+pl,pro:s.lessons.length}}
+function courseAccent(c){return c.category==='3D & Blender'?'✦':c.category==='FiveM'||c.category==='Frameworks'?'⬡':'⌘'}
+function videoInfo(id){var sources={
+ 'e6vPt_e9sRw':{name:'Python · Komplettkurs für Anfänger',author:'Fabian Rappert',language:'Deutsch'},
+ 'xcmGSRdCXc4':{name:'Lua in 30 Minuten · Grundlagen',author:'Programmieren lernen',language:'Deutsch'},
+ 'FtaQSdrl7YA':{name:'JavaScript Crash Course',author:'TechWorld with Nana',language:'Englisch'}
+};return sources[id]||{name:'Video-Tutorial',author:'YouTube',language:'Tutorial'}}
 function navHTML(route){var nav=[['home','⌂','Start'],['courses','◈','Kurse'],['exams','☆','Prüfung'],['reference','▤','Referenz'],['plans','✦','Mitgliedschaft'],['profile','◉','Profil']];
  if(s.profile&&s.profile.role==='admin')nav.push(['admin','⚙','Admin']);
  nav.push(['settings','☷','Einstellungen']);
@@ -111,7 +126,7 @@ async function loadData(){
  s.courses=all[0].data||[];s.lessons=all[1].data||[];
  s.tier=['free','pro','ultimate'].includes(all[2].data?.tier)?all[2].data.tier:'free';
  var data=all[3].data?.payload||{};
- s.progress={done:Array.isArray(data.done)?data.done:[],watched:Array.isArray(data.watched)?data.watched:[],exams:data.exams||{}};
+ s.progress={done:Array.isArray(data.done)?data.done:[],watched:Array.isArray(data.watched)?data.watched:[],exams:data.exams||{},practiced:Array.isArray(data.practiced)?data.practiced:[]};
  s.ready=true;frame();await navigateCurrent();
 }
 async function logout(){try{await api.auth.signOut();}catch(e){}s.ready=false;s.user=null;s.profile=null;s.lesson=null;s.courses=[];s.lessons=[];location.hash='#home';login();}
@@ -119,13 +134,13 @@ async function saveProgress(){
  var res=await api.from('academy_progress').upsert({user_id:s.user.id,key:'liverylab-v10',payload:s.progress,updated_at:new Date().toISOString()},{onConflict:'user_id,key'});
  if(res.error)throw res.error;frame();
 }
-function go(path){var h='#'+path;if(location.hash===h){navigateCurrent();}else{location.hash=h;}sidebar.classList.remove('open');}
+function go(path){var h='#'+path;if(location.hash===h){navigateCurrent();}else{location.hash=h;}sidebar.classList.remove('open');syncBackdrop();}
 function parseRoute(){var raw=decodeURIComponent((location.hash||'#home').replace(/^#/,'')).split('/');return {page:raw[0]||'home',id:raw[1]||''};}
 async function navigateCurrent(){
  if(!s.ready)return;
  var route=parseRoute();s.route=route.page;
  if(route.page==='lesson'){
-   s.choice=null;s.videoChecked=watchedIds().has(route.id);s.videoLoaded=false;s.lesson=null;
+   s.choice=null;s.videoChecked=watchedIds().has(route.id);s.practiceChecked=(s.progress.practiced||[]).includes(route.id);s.draft=readDraft(route.id);s.videoLoaded=false;s.lesson=null;
    frame();content.innerHTML='<div class="center-screen"><div class="spinner"></div><p>Geschützte Lektion wird geladen …</p></div>';
    var meta=s.lessons.find(function(l){return l.id===route.id;});
    if(meta&&allowed(meta)){var result=await api.from('ll_lesson_content').select('payload,video_id,video_start').eq('lesson_id',route.id).maybeSingle();if(result.error)notice(formatError(result.error));s.lesson=result.data||null;}
@@ -146,84 +161,230 @@ function stats(){
  return '<div class="stats-grid"><div class="stat-card"><strong>'+done+'<small style="display:inline;font-size:14px">/'+all+'</small></strong><small>Lektionen</small></div><div class="stat-card"><strong>'+done*30+'</strong><small>XP gesammelt</small></div><div class="stat-card"><strong>'+started+'</strong><small>Kurse gestartet</small></div><div class="stat-card"><strong>'+pct(done,all)+'%</strong><small>Gesamtfortschritt</small></div></div>';
 }
 function courseCard(c){
- var lessons=lessonsOf(c.id),done=countDone(c.id),first=lessons[0],firstTier=first?.required_plan||'free';
- return '<article class="course-card"><div class="course-head"><span class="course-icon">'+esc(c.icon||'⌘')+'</span>'+badge(firstTier)+'</div><div><span class="micro">'+esc(c.category)+' · '+levelText(c.level)+'</span><h3>'+esc(c.name)+'</h3></div><p>'+lessons.length+' verständliche Lektionen, Übungen, Lernvideos und Wissenstests.</p><div class="progress" aria-label="'+pct(done,lessons.length)+' Prozent abgeschlossen"><span style="width:'+pct(done,lessons.length)+'%"></span></div><div class="meta-line"><span>'+done+'/'+lessons.length+' erledigt</span><span>'+pct(done,lessons.length)+'%</span></div><button class="btn block" type="button" data-go="track/'+esc(c.id)+'">'+(done?'Fortsetzen →':'Kurs ansehen →')+'</button></article>';
+ var lessons=lessonsOf(c.id),done=countDone(c.id),complete=lessons.length>0&&done===lessons.length,free=lessons.some(l=>l.required_plan==='free');
+ return '<article class="course-card'+(complete?' is-complete':'')+'">'+
+ '<div class="course-head"><span class="course-icon">'+esc(courseAccent(c))+'</span><span class="chip '+(complete||free?'free':'plus')+'">'+(complete?'✓ Abgeschlossen':free?'Einstieg frei':'Aufbaukurs')+'</span></div>'+
+ '<div><span class="micro">'+esc(c.category)+' · '+levelText(c.level)+'</span><h3>'+esc(c.name)+'</h3></div>'+
+ '<p>'+lessons.length+' Lektionen · Verständliche Schritte, Tutorials und Praxis.</p>'+
+ '<div class="progress" role="progressbar" aria-valuenow="'+done+'" aria-valuemin="0" aria-valuemax="'+lessons.length+'" aria-label="Kursfortschritt"><span style="width:'+pct(done,lessons.length)+'%"></span></div>'+
+ '<div class="meta-line"><span>'+done+' / '+lessons.length+' abgeschlossen</span><span>'+pct(done,lessons.length)+'%</span></div>'+
+ '<button class="btn block" type="button" data-go="track/'+esc(c.id)+'">'+(complete?'Kurs ansehen ✓':done?'Weiterlernen →':'Lernpfad öffnen →')+'</button></article>';
 }
 function homePage(){
- var next=s.lessons.find(function(l){return !doneIds().has(l.id)&&allowed(l)&&['coding-basics','lua','python','javascript','html','blender-fundamentals'].includes(l.course_id);})||s.lessons.find(function(l){return !doneIds().has(l.id)&&allowed(l);});
- var c=next?courseOf(next.course_id):null;
- var recommended=['coding-basics','lua','python','javascript','html','blender-fundamentals','fivem'].map(courseOf).filter(Boolean);
- return '<section class="hero"><div class="hero-content"><span class="eyebrow">[ 00 ] LERNPLATTFORM · CODING & 3D</span><h1>Dein Weg vom <span class="gradient">Anfänger</span> zum Developer.</h1><p class="lede">Lerne Lua, JavaScript, Python, HTML, C#, C++, FiveM-Scripting, Blender und viele weitere Technologien. Mit verständlichen Schritt-für-Schritt-Lektionen, Videotutorials, Praxis und Quiz – ohne komplizierte Editoren.</p><div class="hero-actions"><button class="btn primary" data-go="courses">Alle Kurse entdecken →</button><button class="btn" data-go="plans">Free · Plus · Pro</button></div></div></section>'+stats()+
- (next?'<section class="section"><div class="section-heading"><div><span class="eyebrow">WEITERLERNEN</span><h2>Deine nächste Lektion</h2></div></div><div class="next-lesson"><span class="eyebrow">'+esc(c?.name||'Kurs')+' · '+esc(next.chapter)+'</span><h3>'+esc(next.title)+'</h3><p>'+esc(next.summary)+'</p><button class="btn primary" data-go="lesson/'+esc(next.id)+'">Jetzt lernen →</button></div></section>':'')+
- '<section class="section"><div class="section-heading"><div><span class="eyebrow">DEIN START</span><h2>Beliebte Lernpfade</h2><p>Finde den richtigen Einstieg – von Grundlagen bis zum echten Projekt.</p></div><a href="#courses">Alle '+s.courses.length+' Kurse ansehen ↗</a></div><div class="course-grid">'+recommended.map(courseCard).join('')+'</div></section>'+
- '<section class="section panel"><span class="eyebrow">COMMUNITY</span><h2>Zusammen besser werden.</h2><p class="muted">Du möchtest LiveryLab testen oder brauchst einen Zugang? Kontaktiere <strong>nyxatheris</strong> auf Discord.</p><a class="btn discord" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">LiveryLab Discord öffnen</a></section>';
+ var finished=doneIds(),recommended=['coding-basics','lua','python','javascript','blender-fundamentals','fivem'].map(courseOf).filter(Boolean),next=null;
+ for(var c of recommended){next=lessonsOf(c.id).find(l=>!finished.has(l.id)&&allowed(l));if(next)break;}
+ if(!next)next=s.lessons.find(l=>!finished.has(l.id)&&allowed(l));
+ var course=next?courseOf(next.course_id):null,isNew=s.progress.done.length===0;
+ return '<section class="hero"><div class="hero-content"><span class="eyebrow">LIVERYLAB STUDIOS · DEVELOPER ACADEMY</span>'+
+ '<h1>Aus Ideen werden <span class="gradient">eigene Projekte.</span></h1>'+
+ '<p class="lede">Lerne Programmierung und Blender Schritt für Schritt. Klar erklärte Lektionen, passende Tutorials und eigene Praxisaufgaben – ohne überladene Werkzeuge.</p>'+
+ '<div class="hero-actions"><button class="btn primary" data-go="'+(next?'lesson/'+esc(next.id):'courses')+'">'+(isNew?'Mit der ersten Lektion starten':'Weiterlernen')+' →</button>'+
+ '<button class="btn" data-go="courses">Lernpfade entdecken</button></div></div></section>'+stats()+
+ (next?'<section class="section"><div class="section-heading"><div><span class="eyebrow">DEIN NÄCHSTER SCHRITT</span><h2>Eine Lektion nach der anderen.</h2><p>Konzentriere dich auf einen Schritt, bevor du zum nächsten gehst.</p></div></div>'+
+ '<div class="next-lesson"><span class="eyebrow">'+esc(course?.name||'Lernpfad')+' · '+esc(next.chapter)+'</span><h3>'+esc(next.title)+'</h3>'+
+ '<p>'+esc(next.summary)+'</p><button class="btn primary" data-go="lesson/'+esc(next.id)+'">Lektion starten →</button></div></section>':'')+
+ '<section class="section"><div class="section-heading"><div><span class="eyebrow">EMPFOHLENER EINSTIEG</span><h2>Starte mit einem Lernpfad.</h2><p>Die wichtigsten Kurse für Developer. Alles Weitere findest du in der Bibliothek.</p></div><a href="#courses">Alle Kurse ↗</a></div>'+
+ '<div class="course-grid">'+recommended.map(courseCard).join('')+'</div></section>'+
+ '<section class="section panel"><span class="eyebrow">LIVERYLAB COMMUNITY</span><h2>Fragen gehören zum Lernen.</h2>'+
+ '<p class="muted">Du brauchst Unterstützung? Melde dich bei <strong>nyxatheris</strong> auf Discord.</p>'+
+ '<a class="btn discord" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Zum Community-Discord ↗</a></section>';
 }
 function filteredCourses(){
  return s.courses.filter(function(c){return (s.filter==='Alle'||c.category===s.filter)&&(!s.search||(c.name+' '+c.category).toLowerCase().includes(s.search.toLowerCase()));}).sort(function(a,b){var aP=['coding-basics','lua','python','javascript','html','css','blender-fundamentals','fivem'].indexOf(a.id),bP=['coding-basics','lua','python','javascript','html','css','blender-fundamentals','fivem'].indexOf(b.id);if(aP>=0||bP>=0)return (aP<0?99:aP)-(bP<0?99:bP);return a.name.localeCompare(b.name,'de');});
 }
+function catalogItems(){
+ var all=filteredCourses();
+ return '<div id="catalog-list" class="course-grid">'+
+ (all.slice(0,s.catalogLimit).map(courseCard).join('')||'<div class="empty">Keine passenden Kurse gefunden.</div>')+
+ '</div><div class="catalog-footer" id="catalog-footer">'+(all.length>s.catalogLimit?
+ '<button class="btn" type="button" data-action="more-courses">Weitere '+Math.min(9,all.length-s.catalogLimit)+' Kurse anzeigen ↓</button><p class="micro">'+s.catalogLimit+' von '+all.length+' Kursen angezeigt</p>':'<p class="micro">'+all.length+' Kurse angezeigt</p>')+'</div>';
+}
 function coursesPage(){
- var cats=['Alle'].concat(Array.from(new Set(s.courses.map(function(c){return c.category;}))).sort());
- return '<section><span class="eyebrow">[ 01 ] LERNBIBLIOTHEK</span><h1>Wähle dein <span class="gradient">nächstes Skill.</span></h1><p class="lede">Alle Lernpfade auf einen Blick. Grundlagen sind kostenlos; weiterführende Lektionen werden durch Plus oder Pro freigeschaltet.</p></section><section class="section"><div class="controls"><input class="input searchbar" id="course-search" type="search" placeholder="🔎  Sprache, Framework oder Tool suchen …" value="'+esc(s.search)+'" aria-label="Kurse durchsuchen"><div class="pillset">'+cats.map(function(c){return '<button class="pill'+(s.filter===c?' active':'')+'" data-filter="'+esc(c)+'">'+esc(c)+'</button>';}).join('')+'</div></div><div class="section-heading"><div><h2>Alle Kurse</h2><p id="course-count">'+filteredCourses().length+' passende Lernpfade</p></div></div><div id="catalog-list" class="course-grid">'+(filteredCourses().map(courseCard).join('')||'<div class="empty">Keine passenden Kurse gefunden.</div>')+'</div></section>';
+ var cats=['Alle','Programmieren','Sprachen','FiveM','Frameworks','Webentwicklung','3D & Blender','Backend','Tools','Profi-Wissen'].filter(c=>c==='Alle'||s.courses.some(x=>x.category===c));
+ return pageHeading('KURSBIBLIOTHEK','Dein Weg zum <span class="gradient">Developer.</span>',
+ 'Finde deinen Schwerpunkt. Wir zeigen zunächst die wichtigsten Lernpfade statt einer endlosen Liste.')+
+ '<section class="section"><div class="catalog-toolbar"><input class="input searchbar" id="course-search" type="search" placeholder="Kurse durchsuchen …" value="'+esc(s.search)+'" aria-label="Kurse durchsuchen"><span class="chip">'+s.courses.length+' Lernpfade</span></div>'+
+ '<div class="catalog-tags">'+cats.map(c=>'<button class="pill'+(s.filter===c?' active':'')+'" data-filter="'+esc(c)+'">'+esc(c)+'</button>').join('')+'</div>'+
+ '<div class="section-heading" style="margin-top:22px"><div><h2>Passende Kurse</h2><p id="course-count">'+filteredCourses().length+' Ergebnisse · Schritt für Schritt</p></div></div>'+
+ '<div id="catalog-container">'+catalogItems()+'</div></section>';
 }
 function trackPage(id){
  var c=courseOf(id);if(!c)return notFound();
- var all=lessonsOf(id),d=countDone(id),next=all.find(function(l){return !doneIds().has(l.id)&&allowed(l);}),group=[];
- all.forEach(function(l){var last=group[group.length-1];if(!last||last.name!==l.chapter)group.push({name:l.chapter,items:[l]});else last.items.push(l);});
- var html='<a class="back" href="#courses">← Alle Kurse</a><section class="track-top"><span class="eyebrow">[ 00 ] LERNPFAD · '+all.length+' LEKTIONEN</span><h1>'+esc(c.name)+' <span class="gradient">lernen.</span></h1><p class="lede">Starte bei den Grundlagen und baue Wissen Schritt für Schritt auf. Jede Lektion enthält Theorie, ein Praxisbeispiel, ein Video oder einen gezielten Tutorial-Link und einen Wissenstest.</p></section>'+
- '<div class="stats-grid"><div class="stat-card"><strong>'+d+'/'+all.length+'</strong><small>Lektionen</small></div><div class="stat-card"><strong>'+d*30+'</strong><small>XP im Kurs</small></div><div class="stat-card"><strong>'+pct(d,all.length)+'%</strong><small>Fortschritt</small></div><div class="stat-card"><strong>'+((s.progress.exams||{})[c.id]?'✓':'—')+'</strong><small>Prüfung</small></div></div>';
- if(next)html+='<div class="next-lesson"><span class="eyebrow">NÄCHSTE LEKTION</span><h3>'+esc(next.title)+'</h3><p>'+esc(next.summary)+'</p><button class="btn primary" data-go="lesson/'+esc(next.id)+'">Jetzt starten →</button></div>';
- group.forEach(function(g,gi){html+='<div class="chapter-title">[ '+String(gi+1).padStart(2,'0')+' ] '+esc(g.name)+'</div><div class="lesson-list">'+g.items.map(function(l,i){var finished=doneIds().has(l.id),grant=allowed(l);return '<article class="lesson-card '+(grant?'clickable':'locked')+'" tabindex="0" role="link" data-go="lesson/'+esc(l.id)+'"><small>'+String(l.position%100||l.position).padStart(2,'0')+'</small><div><h3>'+esc(l.title)+'</h3><p>'+esc(l.summary)+'</p><div class="tag-bottom">'+safeNumber(l.minutes)+' Min · Video + Übung + Quiz · '+(grant?'Freigeschaltet':tierLabel(l.required_plan)+' erforderlich')+'</div></div><span class="status-dot '+(finished?'done':'')+'">'+(finished?'✓':grant?'':'🔒')+'</span></article>';}).join('')+'</div>';});
- html+='<section class="section"><div class="panel"><span class="eyebrow">ABSCHLUSS</span><h2>Deine Prüfung</h2><p class="muted">Nach allen Lektionen: 10 zufällig ausgewählte Fragen. Bestanden ab 80 %.</p><button class="btn primary" data-go="exam/'+esc(id)+'" '+(d!==all.length?'disabled':'')+'>Prüfung '+(d===all.length?'starten →':'noch gesperrt')+'</button></div></section>';
- return html;
+ var all=lessonsOf(id),done=countDone(id),complete=done===all.length,remaining=all.find(l=>!doneIds().has(l.id)&&allowed(l)),groups=[];
+ all.forEach(l=>{var group=groups[groups.length-1];if(!group||group.name!==l.chapter)groups.push({name:l.chapter,items:[l]});else group.items.push(l);});
+ var result='<a class="back" href="#courses">← Kursbibliothek</a>'+
+ pageHeading('LERNPFAD · '+all.length+' LEKTIONEN',esc(c.name),
+ 'Arbeite dich in Ruhe durch die Kapitel. Ein eigener praktischer Schritt ist wichtiger als zehn übersprungene Lektionen.')+
+ '<div class="track-meter"><span class="course-icon" style="width:44px;height:44px;font-size:22px">'+esc(courseAccent(c))+'</span>'+
+ '<div style="flex:1;min-width:0"><div class="meta-line" style="margin-bottom:9px"><span>Dein Kursfortschritt</span><strong>'+pct(done,all.length)+'%</strong></div>'+
+ '<div class="progress" aria-label="Kursfortschritt"><span style="width:'+pct(done,all.length)+'%"></span></div></div><small>'+done+' / '+all.length+'</small></div>';
+ if(remaining)result+='<div class="next-lesson"><span class="eyebrow">WEITERLERNEN</span><h3>'+esc(remaining.title)+'</h3><p>'+esc(remaining.summary)+'</p>'+
+ '<button class="btn primary" data-go="lesson/'+esc(remaining.id)+'">Lektion öffnen →</button></div>';
+ else if(complete)result+='<div class="done-banner"><strong>✓ Lernpfad abgeschlossen</strong><p>Du hast alle Lektionen dieses Kurses bearbeitet.</p></div>';
+ groups.forEach((group,i)=>{
+  var n=group.items.filter(l=>doneIds().has(l.id)).length,open=i===0||group.items.some(l=>l.id===remaining?.id);
+  result+='<details class="chapter-group" '+(open?'open':'')+'><summary class="chapter-title" style="cursor:pointer">[ '+String(i+1).padStart(2,'0')+' ] '+esc(group.name)+
+  ' <span style="margin-left:auto;white-space:nowrap;color:'+(n===group.items.length?'#90e8ba':'#ad9ebf')+';letter-spacing:0;font-size:11px">'+n+'/'+group.items.length+'</span></summary><div class="lesson-list">'+
+  group.items.map(l=>{
+   var finished=doneIds().has(l.id),grant=allowed(l);
+   return '<article class="lesson-card '+(grant?'clickable':'locked')+(finished?' is-complete':'')+'" tabindex="0" role="link" data-go="lesson/'+esc(l.id)+'">'+
+   '<small>'+(finished?'✓':String(l.position%100||l.position).padStart(2,'0'))+'</small>'+
+   '<div><h3>'+esc(l.title)+'</h3><p>'+esc(l.summary)+'</p>'+
+   '<div class="tag-bottom">'+(finished?'✓ Abgeschlossen':!grant?'🔒 '+tierLabel(l.required_plan)+' erforderlich':l.minutes+' Min · Erklärung · Praxis · Quiz')+'</div></div>'+
+   '<span class="status-dot '+(finished?'done':'')+'">'+(finished?'✓':grant?'›':'🔒')+'</span></article>';
+  }).join('')+'</div></details>';
+ });
+ result+='<section class="section panel"><span class="eyebrow">DEIN ABSCHLUSS</span><h2>Abschlussprüfung</h2>'+
+ '<p class="muted">Schließe zuerst alle Lektionen ab. Danach kannst du eine Prüfung mit maximal zehn Fragen schreiben.</p>'+
+ '<button class="btn primary" data-go="exam/'+esc(id)+'" '+(!complete?'disabled':'')+'>'+(complete?'Prüfung beginnen →':'Noch '+(all.length-done)+' Lektionen offen')+'</button></section>';
+ return result;
 }
 function notFound(){return '<div class="empty"><h2>Inhalt nicht gefunden</h2><p>Dieser Lernpfad ist nicht verfügbar.</p><button class="btn" data-go="courses">Zur Kursbibliothek</button></div>';}
 function lessonPage(id){
- var l=s.lessons.find(function(x){return x.id===id;});if(!l)return notFound();var c=courseOf(l.course_id),index=lessonsOf(l.course_id).findIndex(function(x){return x.id===id;});
+ var l=s.lessons.find(x=>x.id===id);if(!l)return notFound();
+ var c=courseOf(l.course_id),all=lessonsOf(l.course_id),index=all.findIndex(x=>x.id===id);
  var back='<a class="back" href="#track/'+esc(l.course_id)+'">← '+esc(c?.name||'Lernpfad')+'</a>';
- if(!allowed(l))return back+'<section class="panel locked-panel"><div class="lock-icon">🔒</div><span class="eyebrow">GESCHÜTZTE LEKTION</span><h1>'+esc(l.title)+'</h1><p class="lede" style="margin:auto">'+esc(l.summary)+'</p><p>Diese Lektion benötigt <strong>'+tierLabel(l.required_plan)+'</strong>. Nur allgemeine Grundlagen sind kostenlos freigegeben.</p><div class="hero-actions" style="justify-content:center"><button class="btn primary" data-go="plans">Freischaltungen ansehen</button><a class="btn discord" target="_blank" rel="noopener noreferrer" href="https://discord.gg/livery-lab">Discord kontaktieren</a></div></section>';
- if(!s.lesson)return back+'<div class="empty">Der geschützte Lerninhalt konnte gerade nicht abgerufen werden. Lade die Seite erneut.</div>';
- var p=s.lesson.payload||{},video=s.lesson.video_id,correct=Number(p.correct)||0,options=Array.isArray(p.options)?p.options:[],finished=doneIds().has(id);
- var next=lessonsOf(l.course_id)[index+1];
- var url=video&&/^[a-zA-Z0-9_-]{11}$/.test(video)?'https://www.youtube.com/watch?v='+video:null;
- var search='https://www.youtube.com/results?search_query='+encodeURIComponent(c.name+' '+l.title+' Tutorial deutsch');
- return '<article class="lesson-article">'+back+'<header><span class="eyebrow">[ '+String(index+1).padStart(2,'0')+' / '+lessonsOf(l.course_id).length+' ] '+esc(l.chapter)+' · '+tierLabel(l.required_plan)+'</span><h1>'+esc(l.title)+'</h1><p>'+esc(p.goal||l.summary)+'</p><div class="chips"><span class="chip">'+l.minutes+' Minuten</span><span class="chip">'+(finished?'✓ Abgeschlossen':'30 XP nach Quiz')+'</span></div></header>'+
- '<section class="step-box"><span class="eyebrow">01 / VERSTEHEN</span><h2>Einfach erklärt.</h2><p>'+esc(p.theory||l.summary)+'</p>'+(Array.isArray(p.keyPoints)?'<ul>'+p.keyPoints.map(function(t){return '<li>'+esc(t)+'</li>';}).join('')+'</ul>':'')+(p.mistake?'<div class="note"><strong>Typischer Fehler:</strong> '+esc(p.mistake)+'</div>':'')+'</section>'+
- '<section class="step-box"><span class="eyebrow">02 / BEISPIEL</span><h2>Sieh es im Code.</h2>'+(p.example?'<div class="codebox"><pre><code>'+esc(p.example)+'</code></pre></div>':'<p class="muted">Wende das Thema direkt in deiner eigenen Entwicklungsumgebung an.</p>')+(p.resource?'<a href="'+safeLink(p.resource)+'" target="_blank" rel="noopener noreferrer">Offizielle Dokumentation öffnen ↗</a>':'')+'</section>'+
- '<section class="step-box"><span class="eyebrow">03 / VIDEO · PFLICHT</span><h2>Lernen mit Video.</h2><p class="muted">Sieh das zugehörige Tutorial aufmerksam an. Bei längeren Komplettkursen konzentriere dich auf das Kapitel, das zu dieser Lektion passt.</p>'+
- (url?'<div class="video-frame" id="video-frame"><div class="video-placeholder"><div class="play">▶</div><strong>Video-Tutorial</strong><button type="button" class="btn primary" data-action="load-video">Video hier laden</button><small>Externer YouTube-Inhalt wird erst nach Klick geladen.</small></div></div><p class="micro" style="margin-top:10px"><a href="'+url+'" rel="noopener noreferrer" target="_blank">Video direkt auf YouTube öffnen ↗</a></p>':
- '<div class="note"><strong>Gezielte Videosuche:</strong> Für dieses Spezialthema ist noch kein verifiziertes einzelnes Video hinterlegt. Suche ein passendes Tutorial und bearbeite es vor dem Quiz.</div><a class="btn" href="'+search+'" target="_blank" rel="noopener noreferrer">Passendes Tutorial auf YouTube suchen ↗</a>')+
- '<label class="video-check"><input type="checkbox" id="video-check" '+(s.videoChecked?'checked':'')+'><span>Ich habe das passende Video aufmerksam angesehen und die Inhalte nachvollzogen.<br><small class="micro">Selbstbestätigung: Eine tatsächliche Wiedergabe kann diese Website nicht unabhängig prüfen.</small></span></label></section>'+
- '<section class="step-box"><span class="eyebrow">04 / SELBST MACHEN</span><h2>Deine Praxisaufgabe.</h2><p>'+esc(p.task||'Setze das Gelernte in einem eigenen kleinen Beispiel um.')+'</p>'+(p.hint?'<div class="note"><strong>Tipp:</strong> '+esc(p.hint)+'</div>':'')+'<p class="micro">Arbeite in deiner eigenen Software. Diese Academy enthält absichtlich keinen eingebauten Editor.</p></section>'+
- '<section class="step-box" id="quiz-area"><span class="eyebrow">05 / WISSENSTEST</span><h2>Überprüfe dein Wissen.</h2><p>'+esc(p.quiz||'Hast du das Thema verstanden?')+'</p>'+
- options.map(function(option,i){return '<button type="button" class="quiz-choice'+(s.choice===i?' selected':'')+'" data-answer="'+i+'"><span>'+String.fromCharCode(65+i)+'</span>'+esc(option)+'</button>';}).join('')+
- '<p id="answer-result" class="micro" aria-live="polite">'+(finished?'✓ Bereits bestanden.':'Wähle die richtige Antwort. Es gibt genau eine korrekte Antwort.')+'</p><button id="mark-lesson" class="btn primary" type="button" data-action="finish-lesson" '+(finished?'disabled':'disabled')+'>'+(finished?'✓ Bestanden · 30 XP':'Lektion abschließen →')+'</button></section>'+
- '<div class="btn-row"><button class="btn" data-go="track/'+esc(l.course_id)+'">← Übersicht</button>'+(next?'<button class="btn" data-go="lesson/'+esc(next.id)+'">Nächste Lektion →</button>':'<button class="btn" data-go="exam/'+esc(l.course_id)+'">Zur Prüfung →</button>')+'</div></article>';
+ if(!allowed(l))return back+'<section class="panel locked-panel"><div class="lock-icon">🔒</div><span class="eyebrow">KURSINHALT GESCHÜTZT</span>'+
+ '<h1>'+esc(l.title)+'</h1><p class="lede" style="margin:auto">'+esc(l.summary)+'</p>'+
+ '<p>Diese Lektion ist mit <strong>'+tierLabel(l.required_plan)+'</strong> freigeschaltet.</p>'+
+ '<div class="hero-actions" style="justify-content:center"><button class="btn primary" data-go="plans">Stufen vergleichen</button>'+
+ '<a class="btn discord" rel="noopener noreferrer" target="_blank" href="https://discord.gg/livery-lab">Freischaltung anfragen</a></div></section>';
+ if(!s.lesson)return back+'<div class="empty"><h2>Lektion konnte nicht geladen werden.</h2>Bitte überprüfe deine Internetverbindung und lade die Seite neu.</div>';
+ var p=s.lesson.payload||{},video=s.lesson.video_id,info=videoInfo(video),options=Array.isArray(p.options)?p.options:[],finished=doneIds().has(id),isBlender=c?.category==='3D & Blender';
+ var validVideo=video&&/^[a-zA-Z0-9_-]{11}$/.test(video),url=validVideo?'https://www.youtube.com/watch?v='+video+'&t='+Math.max(0,Number(s.lesson.video_start)||0)+'s':null;
+ var search='https://www.youtube.com/results?search_query='+encodeURIComponent(c.name+' '+l.title+' Anleitung Tutorial deutsch');
+ var next=all[index+1],d=esc(s.draft),isPracticeDone=s.practiceChecked||finished;
+ return '<article class="lesson-article">'+back+
+ '<header><span class="eyebrow">'+esc(c.name)+' · '+esc(l.chapter)+'</span><h1>'+esc(l.title)+'</h1>'+
+ '<p>'+esc(p.goal||l.summary)+'</p><div class="chips"><span class="chip">'+(index+1)+' von '+all.length+'</span><span class="chip">'+l.minutes+' Minuten</span>'+
+ '<span class="chip '+(finished?'free':'')+'">'+(finished?'✓ Abgeschlossen':'30 XP möglich')+'</span></div>'+
+ '<div class="lesson-steps"><div class="lesson-step done"><span class="step-index">01</span>Verstehen</div>'+
+ '<div class="lesson-step '+(s.videoChecked?'done':'')+'"><span class="step-index">02</span>Video</div>'+
+ '<div class="lesson-step '+(isPracticeDone?'done':'')+'"><span class="step-index">03</span>Praxis</div>'+
+ '<div class="lesson-step '+(finished?'done':'')+'"><span class="step-index">04</span>Quiz</div></div></header>'+
+ (finished?'<div class="done-banner" style="margin:15px 0"><strong>✓ Lektion abgeschlossen</strong><p>Du hast diese Lektion bereits bearbeitet und 30 XP gesammelt.</p></div>':'')+
+ '<section class="step-box"><span class="eyebrow">SCHRITT 01 · VERSTEHEN</span><h2>Die Idee dahinter.</h2>'+
+ '<p>'+esc(p.theory||l.summary)+'</p>'+
+ (Array.isArray(p.keyPoints)?'<ul>'+p.keyPoints.slice(0,4).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+
+ (p.mistake?'<div class="note"><strong>Typischer Fehler:</strong> '+esc(p.mistake)+'</div>':'')+
+ (p.example?'<div class="codebox"><pre><code>'+esc(p.example)+'</code></pre></div>':'')+
+ (p.resource?'<a href="'+safeLink(p.resource)+'" target="_blank" rel="noopener noreferrer">Offizielle Dokumentation ↗</a>':'')+
+ '</section>'+
+ '<section class="step-box"><span class="eyebrow">SCHRITT 02 · VIDEO-TUTORIAL</span><h2>Erklärung ansehen.</h2>'+
+ (validVideo?
+ '<p class="muted">Passender Videoguide: <strong>'+esc(info.name)+'</strong>. Wenn das Video länger ist, konzentriere dich auf das Kapitel zu dieser Lektion.</p>'+
+ '<div class="video-frame" id="video-frame"><div class="video-placeholder"><div class="play">▶</div><strong>'+esc(info.name)+'</strong>'+
+ '<small>'+esc(info.author)+' · '+esc(info.language)+' · YouTube</small>'+
+ '<button type="button" class="btn primary" data-action="load-video">Video abspielen →</button>'+
+ '<small>Der externe Player wird erst auf deinen Klick geladen.</small></div></div>'+
+ '<div class="video-source"><p class="micro">Quelle: '+esc(info.author)+' · Start ab passendem Kapitel</p><a href="'+url+'" target="_blank" rel="noopener noreferrer">Auf YouTube öffnen ↗</a></div>':
+ '<p class="muted">Für dieses Spezialthema gibt es noch keinen einzeln geprüften Videoguide. Öffne eine gezielte Suche, wähle ein Tutorial und arbeite das passende Thema durch.</p>'+
+ '<div class="video-frame"><div class="video-placeholder"><div class="play">▷</div><strong>Ein Tutorial zum Thema finden</strong>'+
+ '<small>'+esc(c.name)+' · '+esc(l.title)+'</small><a href="'+search+'" class="btn primary" target="_blank" rel="noopener noreferrer">Passendes Lernvideo suchen ↗</a></div></div>')+
+ '<label class="video-check"><input type="checkbox" id="video-check" '+(s.videoChecked?'checked':'')+'><span>Ich habe die passende Erklärung angesehen und verstanden.'+
+ '<small class="micro" style="display:block">Deine eigene Bestätigung – die Videowiedergabe lässt sich nicht verlässlich messen.</small></span></label></section>'+
+ '<section class="step-box"><span class="eyebrow">SCHRITT 03 · SELBST AUSPROBIEREN</span><h2>'+(isBlender?'Dein Arbeitsschritt.':'Schreib selbst etwas Code.')+'</h2>'+
+ '<p>'+esc(p.task||'Setze die Erklärung eigenständig in einem Beispiel um.')+'</p>'+
+ '<div class="practice-workspace'+(isPracticeDone?' is-complete':'')+'" id="practice-workspace"><div class="practice-title"><strong>'+(isBlender?'Deine Umsetzung':'Dein Code-Entwurf')+'</strong>'+
+ '<span class="practice-status" id="practice-status">'+(isPracticeDone?'✓ Praxis erledigt':'Noch nicht abgeschlossen')+'</span></div>'+
+ '<label class="micro" for="practice-input">'+(isBlender?'Beschreibe, was du in Blender umgesetzt hast:':'Schreibe hier deinen eigenen Lösungsansatz:')+'</label>'+
+ '<textarea class="exercise-textarea" id="practice-input" spellcheck="false" rows="7" maxlength="10000" placeholder="'+(isBlender?'Welche Schritte hast du ausgeführt und was ist dabei entstanden?':'// Deine eigene Lösung – erst überlegen, dann schreiben')+'">'+d+'</textarea>'+
+ '<p class="practice-tip">Dein Entwurf wird nur auf diesem Gerät gespeichert. Die Academy führt ihn nicht automatisch aus. Teste '+(isBlender?'deine Szene in Blender.':'deinen Code in deiner eigenen Entwicklungsumgebung.')+'</p>'+
+ (p.hint?'<details style="margin:15px 0 0"><summary class="micro" style="cursor:pointer;color:#c6a7ff">Hinweis zur Aufgabe ansehen</summary><p class="micro">'+esc(p.hint)+'</p></details>':'')+
+ '<button class="btn '+(isPracticeDone?'':'primary')+'" type="button" data-action="complete-practice" '+(isPracticeDone?'disabled':'')+'>'+(isPracticeDone?'✓ Praxisschritt gespeichert':'Praxis als erledigt markieren ✓')+'</button>'+
+ '</div></section>'+
+ '<section class="step-box" id="quiz-area"><span class="eyebrow">SCHRITT 04 · WISSENSTEST</span><h2>Wissen anwenden.</h2><p>'+esc(p.quiz||'Hast du das Thema verstanden?')+'</p>'+
+ options.map((answer,i)=>'<button type="button" class="quiz-choice'+(s.choice===i?' selected':'')+'" data-answer="'+i+'"><span>'+String.fromCharCode(65+i)+'</span>'+esc(answer)+'</button>').join('')+
+ '<p class="quiz-feedback micro" id="answer-result" aria-live="polite">'+(finished?'✓ Bereits abgeschlossen.':'Wähle die richtige Antwort. Danach kannst du die Lektion abschließen.')+'</p>'+
+ '<button class="btn primary" id="mark-lesson" data-action="finish-lesson" type="button" disabled>'+(finished?'✓ Lektion abgeschlossen':'Lektion abschließen →')+'</button></section>'+
+ '<div class="btn-row"><button class="btn" data-go="track/'+esc(l.course_id)+'">← Kursübersicht</button>'+
+ (next?'<button class="btn" data-go="lesson/'+esc(next.id)+'">Nächste Lektion →</button>':'<button class="btn" data-go="exam/'+esc(l.course_id)+'">Abschlussprüfung →</button>')+'</div></article>';
 }
 function updateLessonControls(){
- var l=s.lessons.find(function(x){return x.id===parseRoute().id;});if(!l||!s.lesson)return;
- var correct=Number(s.lesson.payload?.correct)||0,finished=doneIds().has(l.id),ready=s.videoChecked&&s.choice===correct;
- document.querySelectorAll('[data-answer]').forEach(function(b){var selected=Number(b.dataset.answer)===s.choice;b.classList.toggle('selected',selected);b.classList.toggle('good',selected&&ready);b.classList.toggle('bad',selected&&s.choice!==correct);});
+ var id=parseRoute().id,l=s.lessons.find(x=>x.id===id);if(!l||!s.lesson)return;
+ var correct=Number(s.lesson.payload?.correct)||0,finished=doneIds().has(id);
+ var ready=s.videoChecked&&s.practiceChecked&&s.choice===correct;
+ document.querySelectorAll('[data-answer]').forEach(b=>{
+  var selected=Number(b.dataset.answer)===s.choice;
+  b.classList.toggle('selected',selected);b.classList.toggle('good',selected&&s.choice===correct);
+  b.classList.toggle('bad',selected&&s.choice!==correct);
+ });
  var btn=$('#mark-lesson');if(btn)btn.disabled=finished||!ready;
- var status=$('#answer-result');if(status&&!finished)status.textContent=s.choice==null?'Wähle eine Antwort.':s.choice!==correct?'Noch nicht richtig. Lies die Erklärung und probiere es erneut.':!s.videoChecked?'Richtig! Bestätige noch das angeschautе Video.':'✓ Richtig! Du kannst die Lektion abschließen.';
+ var status=$('#answer-result');
+ if(status&&!finished)status.textContent=
+  s.choice==null?'Wähle eine Antwort und löse die Schritte darüber.':
+  s.choice!==correct?'Das ist noch nicht die richtige Antwort. Sieh dir die Erklärung erneut an.':
+  !s.videoChecked?'Richtige Antwort ✓ · Sieh noch das Tutorial an und bestätige es.':
+  !s.practiceChecked?'Richtige Antwort ✓ · Schließe noch deinen eigenen Praxisschritt ab.':
+  '✓ Alle Schritte bearbeitet. Du kannst die Lektion abschließen.';
+ var video=$('#video-check'),practice=$('#practice-workspace');
+ if(video)video.checked=s.videoChecked;
+ if(practice)practice.classList.toggle('is-complete',s.practiceChecked);
+}
+async function completePractice(){
+ var id=parseRoute().id,box=$('#practice-input');if(!box||!s.lesson)return;
+ var value=box.value.trim();
+ if(value.length<15){notice('Schreibe zuerst eine eigene Lösung oder mindestens einen kurzen Bericht (15 Zeichen).');box.focus();return;}
+ saveDraft(id,value);s.practiceChecked=true;
+ if(!s.progress.practiced)s.progress.practiced=[];
+ if(!s.progress.practiced.includes(id))s.progress.practiced.push(id);
+ try{await saveProgress();}catch(e){s.practiceChecked=false;s.progress.practiced=s.progress.practiced.filter(x=>x!==id);notice('Praxis konnte nicht gespeichert werden: '+formatError(e));return;}
+ var workspace=$('#practice-workspace'),status=$('#practice-status'),btn=$('[data-action="complete-practice"]');
+ if(workspace)workspace.classList.add('is-complete');
+ if(status)status.textContent='✓ Praxis erledigt';
+ if(btn){btn.textContent='✓ Praxisschritt gespeichert';btn.disabled=true;}
+ updateLessonControls();notice('Dein Praxisfortschritt wurde gespeichert.');
 }
 async function markLesson(){
- var id=parseRoute().id,l=s.lessons.find(function(x){return x.id===id;});
+ var id=parseRoute().id,l=s.lessons.find(x=>x.id===id);
  if(!l||!s.lesson||!allowed(l))return;
- if(!s.videoChecked||s.choice!==Number(s.lesson.payload.correct||0)){notice('Bitte zuerst Video und Quiz abschließen.');return;}
+ if(!s.videoChecked||!s.practiceChecked||s.choice!==Number(s.lesson.payload.correct||0)){
+  notice('Bitte Video, praktische Übung und Quiz abschließen.');return;
+ }
  if(!s.progress.done.includes(id))s.progress.done.push(id);
  if(!s.progress.watched.includes(id))s.progress.watched.push(id);
- try{await saveProgress();notice('Lektion abgeschlossen! +30 XP 🎉');render();}
- catch(e){s.progress.done=s.progress.done.filter(function(x){return x!==id;});notice('Speichern fehlgeschlagen: '+formatError(e));}
+ try{await saveProgress();notice('Lektion abgeschlossen! +30 XP ✓');render();}
+ catch(e){s.progress.done=s.progress.done.filter(x=>x!==id);notice('Speichern fehlgeschlagen: '+formatError(e));}
 }
+
 function plansPage(){
- return '<section><span class="eyebrow">[ + ] MITGLIEDSCHAFT</span><h1>Wissen, das <span class="gradient">mit dir wächst.</span></h1><p class="lede">Alle Stufen behalten. Dein aktueller Plan: <strong>'+esc(plans[s.tier])+'</strong>. Die Zugänge werden vom Academy-Administrator vergeben – keine automatische Zahlung auf dieser Website.</p></section><section class="section plan-grid">'+
- '<article class="plan-card"><span class="chip free">EINSTIEG</span><h3>Free</h3><div class="price">Kostenlos</div><p class="muted">Für deinen ersten Code.</p><ul><li>Allgemeine Grundlagenkurse</li><li>Theorie, ausgewählte Lernvideos & Quiz</li><li>Fortschritt und XP speichern</li><li>Private Anmeldung</li></ul><button class="btn block" disabled>Basiszugang</button></article>'+
- '<article class="plan-card featured"><span class="chip plus">WEITERLERNEN</span><h3>Plus</h3><div class="price">Freischaltung</div><p class="muted">Für fortgeschrittene Grundlagen und echte Projekte.</p><ul><li>Alles aus Free</li><li>Plus-Lektionen und vertiefte Kurse</li><li>Praxisaufgaben & Zertifikatsprüfungen</li><li>Mehr Programmiersprachen</li></ul><a class="btn primary block" href="https://discord.gg/livery-lab" target="_blank" rel="noopener">Plus auf Discord anfragen ↗</a></article>'+
- '<article class="plan-card"><span class="chip pro">VOLLER ZUGRIFF</span><h3>Pro</h3><div class="price">Freischaltung</div><p class="muted">Für alle anspruchsvollen Themen.</p><ul><li>Alles aus Plus</li><li>Alle verfügbaren Pro-Lektionen</li><li>FiveM / Blender Fortgeschritten</li><li>Frei zugängliche Abschlussprüfungen nach Lernfortschritt</li></ul><a class="btn block" href="https://discord.gg/livery-lab" target="_blank" rel="noopener">Pro auf Discord anfragen ↗</a></article></section><div class="note">Keine eingebauten Code-, Music-, Video- oder Blender-Editoren. Die Website ist ausschließlich zum Lernen konzipiert.</div>';
+ var counts=planCounts(),current=s.tier;
+ function tile(id,name,label,desc,benefits,featured){
+  var n=id==='free'?counts.free:id==='pro'?counts.plus:counts.pro,own=current===id;
+  return '<article class="plan-card '+(featured?'featured':id==='ultimate'?'full':'')+'">'+
+  '<span class="chip '+(id==='free'?'free':id==='pro'?'plus':'pro')+'">'+label+'</span>'+
+  '<h3>'+name+'</h3><div class="price">'+n+' <span style="font-size:14px;font-weight:600;color:#b7a6d0">Lektionen</span></div>'+
+  '<div class="plan-cap '+(own?'current-plan':'')+'">'+(own?'✓ Dein aktueller Tarif':id==='free'?'Der kostenlose Einstieg':id==='pro'?'Doppelt so viel wie Free':'Voller Zugriff auf die Academy')+'</div>'+
+  '<p class="muted">'+desc+'</p><ul>'+benefits.map(x=>'<li>'+x+'</li>').join('')+'</ul>'+
+  (own?'<button class="btn block" disabled>Bereits freigeschaltet</button>':
+  '<a class="btn '+(featured?'primary':'discord')+' block" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">'+name+' beim Team anfragen ↗</a>')+'</article>';
+ }
+ return pageHeading('MITGLIEDSCHAFT','Lernen in deinem <span class="gradient">Tempo.</span>',
+ 'Drei einfache Stufen. Der Zugriff wird von deinem Academy-Team verwaltet – ohne integrierten Kaufprozess.')+
+ '<section class="section plan-grid">'+
+ tile('free','Free','EINSTIEG','Alles, was du für deinen ersten Einstieg brauchst.',[
+  'Allgemeine Grundlagenkurse','Passende Lernvideos oder gezielte Tutorialsuchen','Eigene Praxisaufgaben, Quiz und Fortschritt'],false)+
+ tile('pro','Plus','WEITERLERNEN','Nach den ersten Schritten lernst du weiter.',[
+  'Alles aus Free','Doppelt so viele freigeschaltete Lektionen wie Free','Mehr Programmierung, Projekte und vertiefende Praxis'],true)+
+ tile('ultimate','Pro','VOLLER ZUGRIFF','Für alle Kurse der LiveryLab Academy.',[
+  'Alles aus Plus','Zugang zu sämtlichen verfügbaren Lektionen','Fortgeschrittene Programmierung, FiveM und Blender'],false)+
+ '</section><section class="section panel"><h3>Eine Freischaltung anfragen</h3>'+
+ '<p class="muted">Schreibe <strong>nyxatheris</strong> auf Discord. Ein Administrator kann deinen Tarif direkt zuweisen.</p>'+
+ '<a class="btn discord" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord öffnen ↗</a></section>';
 }
 function examsPage(){
- var eligible=s.courses.filter(function(c){return lessonsOf(c.id).length>=3;}).sort(function(a,b){return countDone(b.id)-countDone(a.id);});
- return '<section><span class="eyebrow">[ ★ ] ABSCHLUSS</span><h1>Zeig, was du <span class="gradient">gelernt hast.</span></h1><p class="lede">Nach Abschluss aller Lektionen eines Kurses kannst du eine Prüfung mit bis zu zehn zufälligen Fragen ablegen. Du bestehst ab 80 %.</p></section><section class="section"><div class="course-grid">'+eligible.map(function(c){var n=lessonsOf(c.id).length,done=countDone(c.id),best=(s.progress.exams||{})[c.id];return '<article class="course-card"><div class="course-head"><span class="course-icon">'+esc(c.icon)+'</span><span class="chip '+(best?'free':'')+'">'+(best?'✓ Bestanden':'Prüfung')+'</span></div><h3>'+esc(c.name)+'</h3><p>'+done+'/'+n+' Lektionen abgeschlossen</p><div class="progress"><span style="width:'+pct(done,n)+'%"></span></div><button class="btn block" data-go="exam/'+esc(c.id)+'" '+(done!==n?'disabled':'')+'>'+(best?'Prüfung wiederholen':'Zur Prüfung')+'</button></article>';}).join('')+'</div></section>';
+ var recommended=['coding-basics','lua','python','javascript','html','blender-fundamentals','fivem','sql']
+  .map(courseOf).filter(Boolean),ready=s.courses.filter(c=>countDone(c.id)===lessonsOf(c.id).length&&lessonsOf(c.id).length>=3);
+ var display=Array.from(new Map([...ready,...recommended].map(c=>[c.id,c])).values()).slice(0,9);
+ return pageHeading('PRÜFUNGEN','Zeig, was du <span class="gradient">gelernt hast.</span>',
+ 'Schließe erst die Lektionen deines Kurses ab. Danach kannst du eine Prüfung mit maximal zehn Fragen schreiben.')+
+ '<section class="section"><div class="course-grid">'+display.map(c=>{
+  var n=lessonsOf(c.id).length,done=countDone(c.id),best=(s.progress.exams||{})[c.id];
+  return '<article class="course-card '+(best?'is-complete':'')+'"><div class="course-head"><span class="course-icon">'+esc(courseAccent(c))+'</span><span class="chip '+(best?'free':'')+'">'+(best?'✓ Bestanden':'Abschluss')+'</span></div>'+
+  '<h3>'+esc(c.name)+'</h3><p>'+done+' von '+n+' Lektionen abgeschlossen. '+(best?'Dein Abschluss ist gespeichert.':'Bereite dich in Ruhe vor.')+'</p>'+
+  '<div class="progress"><span style="width:'+pct(done,n)+'%"></span></div>'+
+  '<button class="btn block" data-go="'+(done===n?'exam/':'track/')+esc(c.id)+'">'+(done===n?'Prüfung '+(best?'wiederholen':'starten')+' →':'Weiterlernen →')+'</button></article>';
+ }).join('')+'</div><div class="catalog-footer"><button class="btn" data-go="courses">Alle Lernpfade ansehen →</button></div></section>';
 }
 async function loadExam(id){
  s.exam=null;var lessons=lessonsOf(id);if(!lessons.length||lessons.some(function(l){return !doneIds().has(l.id);}))return;
@@ -256,18 +417,95 @@ function referencePage(){
  return '<section><span class="eyebrow">[ ≡ ] NACHSCHLAGEN</span><h1>Dein <span class="gradient">Spickzettel.</span></h1><p class="lede">Die wichtigsten Einstiege und Originaldokumentationen – direkt beim Lernen erreichbar.</p></section><section class="section panel"><h2>Code & Referenzen</h2><div class="tablewrap"><table class="ref-table"><tbody>'+refs.map(function(v){return '<tr><td><strong>'+esc(v[0])+'</strong></td><td><code>'+esc(v[1])+'</code></td><td><a href="'+safeLink(v[2])+'" target="_blank" rel="noopener noreferrer">Dokumentation ↗</a></td></tr>';}).join('')+'</tbody></table></div></section><section class="section panel"><h2>FiveM: Event-Richtungen</h2><div class="codebox"><pre><code>TriggerEvent(name, ...)         -- lokal\nTriggerServerEvent(name, ...)   -- Client → Server\nTriggerClientEvent(name, id)    -- Server → Client</code></pre></div><p class="micro">Sicherheitsregel: Client-Daten niemals ungeprüft vertrauen. Geld, Items und Berechtigungen ausschließlich serverseitig validieren.</p></section>';
 }
 function profilePage(){
- return '<section><span class="eyebrow">[ ◉ ] MEIN PROFIL</span><h1>Dein <span class="gradient">Account.</span></h1><p class="lede">Verwalte deinen Anzeigenamen, dein Passwort und deine Sicherheit.</p></section><section class="section account-layout"><div class="panel"><h3>Profil bearbeiten</h3><p class="muted">E-Mail: <strong>'+esc(s.user.email||'')+'</strong><br>Benutzername: <strong>'+esc(s.profile.username||'Noch nicht vergeben')+'</strong><br>Plan: '+esc(plans[s.tier])+' · '+(s.progress.done||[]).length*30+' XP</p>'+(s.profile.username
- ?'<p class="micro">Du kannst dich mit deiner E-Mail-Adresse oder mit diesem Benutzernamen anmelden.</p>'
- :'<form data-form="set-username"><div class="form-group"><label class="form-label">Zusätzlichen Benutzernamen festlegen</label><input class="input" name="username" pattern="[A-Za-z][A-Za-z0-9_]{2,23}" maxlength="24" required placeholder="z. B. developer23"></div><button class="btn" type="submit">Benutzernamen aktivieren</button></form><p class="micro">Danach kannst du dich wahlweise per E-Mail oder Benutzername einloggen.</p>')+'<form data-form="profile"><div class="form-group"><label class="form-label">Anzeigename</label><input class="input" name="display_name" value="'+esc(s.profile.display_name)+'" minlength="2" maxlength="40" required></div><button class="btn primary" type="submit">Änderungen speichern</button></form></div><div class="panel"><h3>Passwort ändern</h3><form data-form="password"><div class="form-group"><label class="form-label">Neues Passwort</label><input class="input" type="password" name="password" minlength="14" autocomplete="new-password" required placeholder="Mindestens 14 Zeichen"></div><button class="btn" type="submit">Passwort aktualisieren</button></form><button type="button" class="btn ghost" data-action="logout" style="margin-top:12px">Abmelden</button></div></section><section class="section panel"><h2>Zwei-Faktor-Authentifizierung</h2><div id="mfa-settings"></div></section>';
+ var done=s.progress.done.length,name=s.profile.display_name||s.profile.username||'Developer',
+ initial=String(name).slice(0,1).toUpperCase(),username=s.profile.username,activeCourse=s.courses.filter(c=>countDone(c.id)>0).length;
+ return pageHeading('MEIN ACCOUNT','Dein <span class="gradient">Developer-Profil.</span>',
+ 'Deine Lernreise, dein Konto und deine Sicherheit an einem Ort.')+
+ '<section class="profile-hero"><div class="profile-avatar-large">'+esc(initial)+'</div>'+
+ '<div class="profile-summary"><span class="eyebrow">LIVERYLAB ACADEMY</span><h2>'+esc(name)+'</h2>'+
+ '<p>'+esc(username?'@'+username:(s.user.email?.endsWith('@accounts.livery-lab.app')?'Verwaltetes Konto ohne private E-Mail':s.user.email||''))+'</p></div>'+
+ '<span class="profile-status">'+esc(plans[s.tier]||'Free')+'</span></section>'+
+ '<div class="profile-stats"><div class="profile-stat"><strong>'+done*30+'</strong><small>Gesammelte XP</small></div>'+
+ '<div class="profile-stat"><strong>'+done+'</strong><small>Lektionen erledigt</small></div>'+
+ '<div class="profile-stat"><strong>'+activeCourse+'</strong><small>Kurse begonnen</small></div></div>'+
+ '<section class="section account-layout"><div class="panel"><span class="eyebrow">PERSÖNLICHE ANGABEN</span><h3>Profil bearbeiten</h3>'+
+ '<p class="micro">Dein Benutzername wird für deine Anmeldung verwendet. Dein Anzeigename erscheint nur in der Academy.</p>'+
+ '<form data-form="profile"><div class="form-group"><label class="form-label">Anzeigename</label><input class="input" name="display_name" value="'+esc(name)+'" minlength="2" maxlength="40" required></div>'+
+ '<button class="btn primary" type="submit">Profil speichern</button></form></div>'+
+ '<div class="panel"><span class="eyebrow">ANMELDUNG</span><h3>Dein Login</h3>'+
+ '<div class="settings-row" style="padding:10px 0"><div><b>E-Mail-Adresse</b><p>'+esc(s.user.email||'')+'</p></div><span class="chip free">Aktiv</span></div>'+
+ '<div class="settings-row" style="padding:11px 0"><div><b>Benutzername</b><p>'+esc(username||'Noch nicht festgelegt')+'</p></div><span class="chip '+(username?'free':'plus')+'">'+(username?'✓ Aktiv':'Optional')+'</span></div>'+
+ (!username?'<form data-form="set-username"><div class="form-group"><label class="form-label">Neuen Benutzernamen festlegen</label><input class="input" name="username" pattern="[A-Za-z][A-Za-z0-9_]{2,23}" minlength="3" maxlength="24" required placeholder="z. B. developer23"></div><button class="btn" type="submit">Benutzernamen aktivieren</button></form>':'<p class="micro">Du kannst dich mit deinem Benutzernamen oder deiner E-Mail-Adresse anmelden.</p>')+
+ '</div></section>'+
+ '<section class="section account-layout"><div class="panel"><span class="eyebrow">KONTOSICHERHEIT</span><h3>Passwort ändern</h3>'+
+ '<p class="micro">Wähle ein individuelles Passwort mit mindestens 14 Zeichen.</p>'+
+ '<form data-form="password"><div class="form-group"><label class="form-label">Neues Passwort</label><input class="input" type="password" name="password" minlength="14" autocomplete="new-password" required placeholder="Neues sicheres Passwort"></div>'+
+ '<button class="btn" type="submit">Passwort aktualisieren</button></form></div>'+
+ '<div class="panel"><span class="eyebrow">ZWEITER FAKTOR</span><h3>Authenticator-App</h3><div id="mfa-settings"></div></div></section>';
 }
 function settingsPage(){
- return '<section><span class="eyebrow">[ ⚙ ] EINSTELLUNGEN</span><h1>Sicher lernen. <span class="gradient">Einfach bleiben.</span></h1><p class="lede">Diese Academy ist bewusst dunkel und übersichtlich gestaltet wie ein natives Lern-Dashboard.</p></section><section class="section account-layout"><div class="panel"><h3>Sicherheit & 2FA</h3><div id="mfa-settings"></div></div><div class="panel"><h3>Konto & Community</h3><p class="muted">Anmeldung über Benutzername und Passwort. Ein Konto kann nur ein Administrator erstellen.</p><a class="btn discord block" target="_blank" rel="noopener noreferrer" href="https://discord.gg/livery-lab">Zum LiveryLab Discord ↗</a><button class="btn ghost block" type="button" style="margin-top:10px" data-action="logout">Abmelden</button><p class="smallprint" style="margin-top:16px">Made with 💙 from NyxAtheris (LiveryLab Studios)</p></div></section>';
+ var compact=getPreference('compact'),motion=getPreference('motion');
+ return pageHeading('EINSTELLUNGEN','Dein Workspace, <span class="gradient">deine Regeln.</span>',
+ 'Klar strukturiert. Nur Einstellungen, die hier tatsächlich etwas verändern.')+
+ '<section class="setting-section"><h2>Darstellung</h2><div class="settings-list">'+
+ '<label class="settings-row"><span class="setting-info"><span class="setting-icon">▦</span><span><b>Kompakte Kurskarten</b><p>Weniger Abstand, mehr Lernpfade auf einen Blick.</p></span></span>'+
+ '<input type="checkbox" class="settings-toggle" data-pref="compact" '+(compact?'checked':'')+' aria-label="Kompakte Kurskarten"></label>'+
+ '<label class="settings-row"><span class="setting-info"><span class="setting-icon">◌</span><span><b>Bewegungen reduzieren</b><p>Animationen und Übergänge abschalten.</p></span></span>'+
+ '<input type="checkbox" class="settings-toggle" data-pref="motion" '+(motion?'checked':'')+' aria-label="Animationen reduzieren"></label>'+
+ '</div></section>'+
+ '<section class="setting-section"><h2>Lernen & Fortschritt</h2><div class="settings-list">'+
+ '<div class="settings-row"><div class="setting-info"><span class="setting-icon">✓</span><span><b>Mein Lernfortschritt</b><p>'+s.progress.done.length+' Lektionen bearbeitet. Alle abgeschlossenen Kapitel sind in Grün markiert.</p></span></div>'+
+ '<button type="button" class="btn small" data-go="courses">Kurse</button></div>'+
+ '<div class="settings-row"><div class="setting-info"><span class="setting-icon">▷</span><span><b>Lernvideos & Datenschutz</b><p>YouTube wird erst geladen, wenn du auf Abspielen klickst.</p></span></div><span class="chip free">Geschützt</span></div>'+
+ '<div class="settings-row"><div class="setting-info"><span class="setting-icon">↺</span><span><b>Lernfortschritt zurücksetzen</b><p>Setzt XP und Abschlüsse dieses Accounts zurück. Nicht rückgängig zu machen.</p></span></div>'+
+ '<button type="button" class="btn small danger" data-action="reset-progress">Zurücksetzen</button></div>'+
+ '</div></section>'+
+ '<section class="setting-section"><h2>Konto & Sicherheit</h2><div class="settings-list">'+
+ '<div class="settings-row"><div class="setting-info"><span class="setting-icon">◉</span><span><b>Profil und Passwort</b><p>Benutzername, E-Mail und Kennwort verwalten.</p></span></div>'+
+ '<button type="button" class="btn small" data-go="profile">Öffnen</button></div>'+
+ '<div class="settings-row"><div class="setting-info"><span class="setting-icon">⌁</span><span><b>Authenticator und 2FA</b><p>Eine zusätzliche Bestätigung schützt deinen Account.</p></span></div>'+
+ '<button type="button" class="btn small" data-go="profile">Einrichten</button></div>'+
+ '<div class="settings-row"><div class="setting-info"><span class="setting-icon">↗</span><span><b>Abmelden</b><p>Beendet deine aktuelle Sitzung auf diesem Gerät.</p></span></div>'+
+ '<button type="button" class="btn small" data-action="logout">Abmelden</button></div>'+
+ '</div></section>'+
+ '<section class="section panel"><span class="eyebrow">LIVERYLAB STUDIOS</span><h3>Über diese Academy</h3>'+
+ '<p class="micro">Eine Lernplattform für Programmierung, FiveM und Blender. Version 11 · Lerninhalte werden von der Community weiterentwickelt.</p>'+
+ '<a href="./privacy.html">Datenschutzhinweise ansehen ↗</a><p class="smallprint" style="margin-top:16px">Made with 💙 from NyxAtheris (LiveryLab Studios)</p></section>';
 }
-async function renderMFA(){if(!s.ready)return;var node=$('#mfa-settings');if(node&&window.LLMFA){try{await window.LLMFA.renderSettings(node,api);}catch(e){node.textContent='Authenticator konnte nicht geladen werden.';}}}
 function adminPage(){
  if(s.profile?.role!=='admin')return '<section class="locked-panel"><h2>Nur für Administratoren.</h2></section>';
- var rows=(s.members||[]).map(function(u){var tier=s.memberPlans[u.id]||'free';return '<tr><td><strong>'+esc(u.username||u.email||'Einladung')+'</strong><br><small class="micro">'+esc(u.email||'')+' · '+esc(u.role)+'</small></td><td><span class="chip '+(u.active?'free':'pro')+'">'+(u.active?'Aktiv':'Gesperrt')+'</span></td><td><select class="select" data-admin-tier="'+esc(u.id)+'" '+(u.role==='admin'?'disabled':'')+'><option value="free" '+(tier==='free'?'selected':'')+'>Free</option><option value="pro" '+(tier==='pro'?'selected':'')+'>Plus</option><option value="ultimate" '+(tier==='ultimate'?'selected':'')+'>Pro</option></select></td><td><div class="btn-row"><button class="btn small" data-reset-user="'+esc(u.id)+'" '+(u.role==='admin'?'disabled':'')+'>Passwort</button><button class="btn small" data-active-user="'+esc(u.id)+'" data-active-value="'+(!u.active)+'" '+(u.role==='admin'?'disabled':'')+'>'+(u.active?'Sperren':'Aktivieren')+'</button><button class="btn small danger" data-delete-user="'+esc(u.id)+'" '+(u.role==='admin'?'disabled':'')+'>Löschen</button></div></td></tr>';}).join('');
- return '<section><span class="eyebrow">[ ⚙ ] ADMINISTRATOR</span><h1>Academy <span class="gradient">verwalten.</span></h1><p class="lede">Erstelle Benutzerkonten und schalte Free, Plus oder Pro frei. Die Aktionen werden auf dem Supabase-Server überprüft.</p></section><section class="section panel"><h2>Schülerkonto per Benutzername</h2><p class="muted">Benutzername und Startpasswort, ohne E-Mail-Eingabe. Beim ersten Login ist ein Passwortwechsel erforderlich.</p><form data-form="create-user"><div class="form-row"><div class="form-group"><label class="form-label">Benutzername</label><input class="input" name="username" pattern="[A-Za-z][A-Za-z0-9_]{2,23}" maxlength="24" placeholder="neuer_user" required></div><div class="form-group"><label class="form-label">Vorläufiges Passwort (mind. 14 Zeichen)</label><input class="input" type="password" name="password" minlength="14" autocomplete="new-password" required></div><div class="form-group"><label class="form-label">Start-Tarif</label><select class="select" name="tier"><option value="free">Free</option><option value="pro">Plus</option><option value="ultimate">Pro</option></select></div></div><button type="submit" class="btn primary">Konto anlegen →</button></form></section><section class="section panel"><span class="eyebrow">ALTERNATIVE · E-MAIL</span><h2>Schülerkonto per E-Mail erstellen</h2><p class="muted">Verwende eine echte E-Mail-Adresse. Der Nutzer meldet sich zunächst per E-Mail an und kann im Profil zusätzlich einen Benutzernamen einrichten.</p><form data-form="create-email"><div class="form-row"><div class="form-group"><label class="form-label">E-Mail-Adresse</label><input class="input" type="email" name="email" required autocomplete="off" placeholder="name@beispiel.de"></div><div class="form-group"><label class="form-label">Anzeigename</label><input class="input" name="display_name" maxlength="40" placeholder="Name (optional)"></div><div class="form-group"><label class="form-label">Startpasswort (mind. 14 Zeichen)</label><input class="input" type="password" name="password" minlength="14" autocomplete="new-password" required></div><div class="form-group"><label class="form-label">Start-Tarif</label><select class="select" name="tier"><option value="free">Free</option><option value="pro">Plus</option><option value="ultimate">Pro</option></select></div></div><button type="submit" class="btn primary">E-Mail-Konto erstellen →</button></form></section><section class="section"><div class="section-heading"><div><h2>Benutzerverwaltung</h2><p>Accounts freischalten, zurücksetzen und sperren.</p></div><button class="btn small" data-action="refresh-admin">Aktualisieren</button></div><div class="tablewrap"><table class="account-table"><thead><tr><th>Nutzer</th><th>Status</th><th>Mitgliedschaft</th><th>Aktionen</th></tr></thead><tbody>'+rows+'</tbody></table></div><div class="btn-row" style="margin-top:18px"><button class="btn small" data-action="admin-prev" '+(s.adminPage===1?'disabled':'')+'>← Vorherige</button><span class="micro" style="align-self:center">Seite '+s.adminPage+'</span><button class="btn small" data-action="admin-next" '+(s.members.length<100?'disabled':'')+'>Nächste →</button></div></section>';
+ var rows=(s.members||[]).map(u=>{
+  var tier=s.memberPlans[u.id]||'free',owner=u.role==='admin';
+  return '<tr><td><strong>'+esc(u.username||u.email||'Mitglied')+'</strong><br><small class="micro">'+esc(u.email||'')+' · '+(owner?'Admin':'Member')+'</small></td>'+
+  '<td><span class="chip '+(u.active?'free':'pro')+'">'+(u.active?'✓ Aktiv':'Gesperrt')+'</span></td>'+
+  '<td><select class="select" data-admin-tier="'+esc(u.id)+'" '+(owner?'disabled':'')+' aria-label="Tarif ändern"><option value="free" '+(tier==='free'?'selected':'')+'>Free</option>'+
+  '<option value="pro" '+(tier==='pro'?'selected':'')+'>Plus</option><option value="ultimate" '+(tier==='ultimate'?'selected':'')+'>Pro</option></select></td>'+
+  '<td><div class="btn-row"><button class="btn small" data-reset-user="'+esc(u.id)+'" '+(owner?'disabled':'')+'>Passwort</button>'+
+  '<button class="btn small" data-active-user="'+esc(u.id)+'" data-active-value="'+(!u.active)+'" '+(owner?'disabled':'')+'>'+(u.active?'Sperren':'Aktivieren')+'</button>'+
+  '<button class="btn small danger" data-delete-user="'+esc(u.id)+'" '+(owner?'disabled':'')+'>Löschen</button></div></td></tr>';
+ }).join('');
+ return pageHeading('ADMINISTRATION','Dein <span class="gradient">Team verwalten.</span>',
+ 'Erstelle Test- und Teamkonten. Vergib Freischaltungen und verwalte Zugänge direkt in der Academy.')+
+ '<section class="section"><div class="section-heading"><div><h2>Neue Konten erstellen</h2><p>Wähle E-Mail oder einen reinen Benutzernamen.</p></div></div>'+
+ '<details class="panel admin-create" open><summary><strong>✉ Konto mit E-Mail-Adresse</strong><span class="micro"> Empfohlen für feste Teammitglieder</span></summary>'+
+ '<p class="muted">Der Nutzer meldet sich per E-Mail an und kann später einen Benutzernamen festlegen.</p>'+
+ '<form data-form="create-email"><div class="form-row"><div class="form-group"><label class="form-label">E-Mail-Adresse</label><input class="input" type="email" name="email" required autocomplete="off" placeholder="name@beispiel.de"></div>'+
+ '<div class="form-group"><label class="form-label">Anzeigename</label><input class="input" name="display_name" maxlength="40" placeholder="Optional"></div></div>'+
+ '<div class="form-row"><div class="form-group"><label class="form-label">Vorläufiges Passwort (mind. 14 Zeichen)</label><input class="input" type="password" name="password" minlength="14" required autocomplete="new-password"></div>'+
+ '<div class="form-group"><label class="form-label">Mitgliedschaft</label><select class="select" name="tier"><option value="free">Free</option><option value="pro">Plus</option><option value="ultimate">Pro</option></select></div></div>'+
+ '<button class="btn primary" type="submit">E-Mail-Konto anlegen →</button></form></details>'+
+ '<details class="panel admin-create" style="margin-top:14px"><summary><strong>◉ Konto mit Benutzername</strong><span class="micro"> Ohne eigene E-Mail-Adresse</span></summary>'+
+ '<p class="muted">Das Startpasswort muss beim ersten Login geändert werden.</p>'+
+ '<form data-form="create-user"><div class="form-row"><div class="form-group"><label class="form-label">Benutzername</label><input class="input" name="username" pattern="[A-Za-z][A-Za-z0-9_]{2,23}" maxlength="24" placeholder="developer23" required></div>'+
+ '<div class="form-group"><label class="form-label">Vorläufiges Passwort (mind. 14 Zeichen)</label><input class="input" type="password" name="password" minlength="14" required autocomplete="new-password"></div>'+
+ '<div class="form-group"><label class="form-label">Mitgliedschaft</label><select class="select" name="tier"><option value="free">Free</option><option value="pro">Plus</option><option value="ultimate">Pro</option></select></div></div>'+
+ '<button class="btn primary" type="submit">Benutzerkonto anlegen →</button></form></details></section>'+
+ '<section class="section"><div class="section-heading"><div><h2>Deine Teamkonten</h2><p>Änderungen an Tarifen gelten über Supabase sofort.</p></div>'+
+ '<button type="button" class="btn small" data-action="refresh-admin">Aktualisieren</button></div>'+
+ '<div class="tablewrap"><table class="account-table"><thead><tr><th>Konto</th><th>Status</th><th>Tarif</th><th>Aktionen</th></tr></thead><tbody>'+
+ (rows||'<tr><td colspan="4">Noch keine Konten geladen. Tippe auf Aktualisieren.</td></tr>')+
+ '</tbody></table></div><div class="btn-row" style="margin-top:18px"><button class="btn small" data-action="admin-prev" '+(s.adminPage===1?'disabled':'')+'>← Vorherige</button>'+
+ '<span class="micro" style="align-self:center">Seite '+s.adminPage+'</span><button class="btn small" data-action="admin-next" '+(s.members.length<100?'disabled':'')+'>Nächste →</button></div></section>';
 }
 async function fetchMembers(){
  if(s.profile?.role!=='admin')return;
@@ -300,43 +538,76 @@ async function adminAction(action,node){
  }catch(e){notice('Admin-Fehler: '+formatError(e));}
 }
 document.addEventListener('click',async function(e){
- var link=e.target.closest('[data-go]');if(link){e.preventDefault();go(link.dataset.go);return;}
+ var goTarget=e.target.closest('[data-go]');
+ if(goTarget){e.preventDefault();go(goTarget.dataset.go);return;}
+ if(e.target.id==='nav-backdrop'){sidebar.classList.remove('open');syncBackdrop();return;}
+ if(e.target.id==='menu-toggle'){sidebar.classList.toggle('open');syncBackdrop();return;}
  var action=e.target.closest('[data-action]');
  if(action){
-  var a=action.dataset.action;
-  if(a==='logout'){await logout();return;}
-  if(a==='refresh-admin'||a==='admin-prev'||a==='admin-next'){await adminAction(a,action);return;}
-  if(a==='load-video'){
-   var video=s.lesson?.video_id;if(!/^[a-zA-Z0-9_-]{11}$/.test(String(video||'')))return;
-   var frame=$('#video-frame');if(frame){var f=document.createElement('iframe');f.src='https://www.youtube-nocookie.com/embed/'+video+'?rel=0&start='+Math.max(0,safeNumber(s.lesson.video_start));f.title='Lernvideo von YouTube';f.loading='lazy';f.allow='accelerometer; encrypted-media; gyroscope; picture-in-picture; web-share';f.allowFullscreen=true;frame.replaceChildren(f);s.videoLoaded=true;}return;
+  var name=action.dataset.action;
+  if(name==='logout'){await logout();return;}
+  if(name==='more-courses'){
+   s.catalogLimit=Math.min(filteredCourses().length,s.catalogLimit+9);
+   var wrap=$('#catalog-container');if(wrap)wrap.innerHTML=catalogItems();return;
   }
-  if(a==='finish-lesson'){await markLesson();return;}
-  if(a==='restart-exam'){await loadExam(parseRoute().id);render();return;}
+  if(name==='complete-practice'){await completePractice();return;}
+  if(name==='reset-progress'){
+   if(!confirm('Wirklich alle Lernabschlüsse, XP und Prüfungsergebnisse dieses Kontos zurücksetzen? Diese Aktion kann nicht rückgängig gemacht werden.'))return;
+   var before=s.progress;
+   s.progress={done:[],watched:[],practiced:[],exams:{}};
+   try{
+    await saveProgress();
+    for(var l of s.lessons){try{localStorage.removeItem('liverylab-draft-'+l.id)}catch(_){}}
+    notice('Dein Kursfortschritt wurde zurückgesetzt.');render();
+   }catch(err){s.progress=before;notice('Zurücksetzen fehlgeschlagen: '+formatError(err))}
+   return;
+  }
+  if(['refresh-admin','admin-prev','admin-next'].includes(name)){await adminAction(name,action);return;}
+  if(name==='load-video'){
+   var video=s.lesson?.video_id;if(!/^[a-zA-Z0-9_-]{11}$/.test(String(video||'')))return;
+   var frame=$('#video-frame');
+   if(frame){var iframe=document.createElement('iframe');iframe.src='https://www.youtube-nocookie.com/embed/'+video+'?rel=0&start='+Math.max(0,safeNumber(s.lesson.video_start));
+    iframe.title='Externes Video-Tutorial von YouTube';iframe.loading='lazy';iframe.referrerPolicy='strict-origin-when-cross-origin';
+    iframe.allow='accelerometer; encrypted-media; gyroscope; picture-in-picture; web-share';iframe.allowFullscreen=true;frame.replaceChildren(iframe);s.videoLoaded=true;}
+   return;
+  }
+  if(name==='finish-lesson'){await markLesson();return;}
+  if(name==='restart-exam'){await loadExam(parseRoute().id);render();return;}
  }
  var answer=e.target.closest('[data-answer]');if(answer){s.choice=Number(answer.dataset.answer);updateLessonControls();return;}
  var exam=e.target.closest('[data-exam-answer]');if(exam){await submitExamAnswer(Number(exam.dataset.examAnswer));return;}
- var filter=e.target.closest('[data-filter]');if(filter){s.filter=filter.dataset.filter;render();return;}
+ var filter=e.target.closest('[data-filter]');if(filter){s.filter=filter.dataset.filter;s.catalogLimit=9;render();return;}
  if(s.profile?.role==='admin'){
   var admin=e.target.closest('[data-reset-user],[data-active-user],[data-delete-user]');
   if(admin){await adminAction('',admin);return;}
  }
- if(e.target.id==='menu-toggle'){sidebar.classList.toggle('open');return;}
- if(sidebar.classList.contains('open')&&!e.target.closest('#sidebar'))sidebar.classList.remove('open');
+ if(sidebar.classList.contains('open')&&!e.target.closest('#sidebar')){sidebar.classList.remove('open');syncBackdrop();}
 });
 document.addEventListener('keydown',function(e){
  if((e.key==='Enter'||e.key===' ')&&e.target.matches('.lesson-card[data-go]')){e.preventDefault();go(e.target.dataset.go);}
- if(e.key==='Escape')sidebar.classList.remove('open');
+ if(e.key==='Escape'){sidebar.classList.remove('open');syncBackdrop();}
 });
 document.addEventListener('input',function(e){
- if(e.target.id==='course-search'){s.search=e.target.value;var list=$('#catalog-list'),count=$('#course-count');if(list)list.innerHTML=filteredCourses().map(courseCard).join('')||'<div class="empty">Keine passenden Kurse gefunden.</div>';if(count)count.textContent=filteredCourses().length+' passende Lernpfade';}
+ if(e.target.id==='course-search'){
+  s.search=e.target.value;s.catalogLimit=9;
+  var list=$('#catalog-container'),count=$('#course-count');
+  if(list)list.innerHTML=catalogItems();
+  if(count)count.textContent=filteredCourses().length+' Ergebnisse · Schritt für Schritt';
+ }
+ if(e.target.id==='practice-input'){
+  s.draft=e.target.value;saveDraft(parseRoute().id,s.draft);
+  var status=$('#practice-status');if(status&&!s.practiceChecked)status.textContent='Entwurf lokal gespeichert';
+ }
 });
 document.addEventListener('change',async function(e){
  if(e.target.id==='video-check'){s.videoChecked=e.target.checked;updateLessonControls();return;}
+ if(e.target.hasAttribute('data-pref')){setPreference(e.target.dataset.pref,e.target.checked);return;}
  if(e.target.hasAttribute('data-admin-tier')){
   var select=e.target,old=s.memberPlans[select.dataset.adminTier]||'free';
-  try{await updateTier(select.dataset.adminTier,select.value);}catch(err){select.value=old;notice(formatError(err));}
+  try{await updateTier(select.dataset.adminTier,select.value)}catch(err){select.value=old;notice(formatError(err))}
  }
 });
+
 document.addEventListener('submit',async function(e){
  var form=e.target.closest('form[data-form]');if(!form)return;e.preventDefault();
  var fd=new FormData(form),button=$('button[type="submit"]',form),mode=form.dataset.form;
@@ -379,6 +650,7 @@ document.addEventListener('submit',async function(e){
 });
 window.addEventListener('hashchange',function(){if(s.ready)navigateCurrent();});
 async function init(){
+ applyPreferences();
  document.head.insertAdjacentHTML('beforeend','<style>.is-auth .sidebar,.is-auth .bottom-nav{display:none}.is-auth .topbar{background:#0d0a19}.is-auth .content{max-width:1100px}.is-auth .app-column{width:100%}</style>');
  if(!window.supabase||!cfg.supabaseUrl||!cfg.supabasePublishableKey){content.innerHTML='<div class="auth-layout panel"><h2>Verbindung nicht verfügbar</h2><p>Supabase konnte nicht geladen werden. Bitte lade die Seite erneut oder überprüfe deine Verbindung.</p></div>';return;}
  try{api=window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});await boot();}
