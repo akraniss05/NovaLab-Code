@@ -1,4 +1,4 @@
-name: Deploy LiveryLab Academy v10
+name: Deploy LiveryLab Academy v12
 on:
   push:
     branches: [main]

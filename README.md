@@ -1,4 +1,4 @@
-# LiveryLab Academy v11
+# LiveryLab Academy v12
 
 **Made with 💙 from NyxAtheris (LiveryLab Studios)**
 
@@ -80,3 +80,15 @@ Unter Repository Settings > Pages muss „GitHub Actions“ aktiviert sein. Push
 - Free: 58 Lektionen. Plus: insgesamt 116 Lektionen (2 × Free). Pro: voller Zugriff auf 471 Lektionen. Die Freigabe wird auch in Supabase-RLS geprüft.
 - Nur für die ersten geprüften Lernmodule sind bestimmte Videos mit Kapitelstart hinterlegt; sonst wird eine präzise YouTube-Suche angeboten. Externe Videos werden erst nach Klick geladen.
 - `node tests/render.cjs` prüft die wesentlichen Screens anhand der echten Rendering-Funktionen.
+
+
+## v12 · Referenzgetreues mobiles App-Design
+
+- Ein neues Stylesheet unter site/app-v12.css ersetzt die alte CSS-Kaskade. Versionierte URLs vermeiden veraltete Browser-Caches.
+- Vier mobile Tabs: Lernen, Script, Prüfung, Referenz. Profil, Admin, Tarife und Einstellungen im seitlichen Menü.
+- Lernpfade: Nummer links, Titel und Zusammenfassung mit eigener Typografie, Statusring rechts, ganze grüne Karte bei abgeschlossenen Lektionen.
+- Script: schreibgeschütztes sh_shop-Lernprojekt mit Dateibaum, Tabs und serverseitig geladenen Ausschnitten bereits abgeschlossener, erlaubter FiveM-Lektionen. Kein direkt startbares Shop-System.
+- Prüfung: bis zu 20 Fragen, Fortschrittspunkte, große Antworten, ab 80 % bestanden. Abschlussprüfung nach allen Lektionen.
+- Referenz: FiveM-Natives und Lua-Spickzettel als mobil lesbare Funktionsliste.
+- Lektionen: Theorie, Video, eigener Code-Entwurf, Wissenstest. Entwürfe lokal; Praxis- und Videostatus in Supabase.
+- Login, Admin-Konten, Free / Plus / Pro und Authenticator-Zwei-Faktor-Anmeldung bleiben erhalten.

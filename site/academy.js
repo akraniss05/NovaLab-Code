@@ -7,7 +7,7 @@
 'use strict';
 var cfg=window.LL_CONFIG||{}, $=function(q,root){return (root||document).querySelector(q);};
 var content=$('#content'), sidebar=$('#sidebar'), bottom=$('#bottom-nav'), toastNode=$('#toast');
-var api=null, s={user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,videoChecked:false,videoLoaded:false,exam:null,members:[],memberPlans:{},adminPage:1,catalogLimit:9,practiceChecked:false,draft:'',prefs:null};
+var api=null, s={user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,videoChecked:false,videoLoaded:false,exam:null,members:[],memberPlans:{},adminPage:1,catalogLimit:9,practiceChecked:false,draft:'',prefs:null,projectTab:0,projectSource:'',projectLoading:false};
 var plans={free:'Free',pro:'Plus',ultimate:'Pro'};
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];});}
 function safeLink(url){return /^https:\/\/[^\s<>"]+$/i.test(String(url||''))?esc(url):'#';}
@@ -42,22 +42,41 @@ function videoInfo(id){var sources={
  'A2E3FHoB33Q':{name:'CSS in 40 Minuten · Grundlagen',author:'Programmieren lernen',language:'Deutsch'},
  'Ci3Has4L5W4':{name:'Blender Tutorial für Anfänger',author:'Kevin Stratvert',language:'Englisch'}
 };return sources[id]||{name:'Video-Tutorial',author:'YouTube',language:'Tutorial'}}
-function navHTML(route){var nav=[['home','⌂','Start'],['courses','◈','Kurse'],['exams','☆','Prüfung'],['reference','▤','Referenz'],['plans','✦','Mitgliedschaft'],['profile','◉','Profil']];
- if(s.profile&&s.profile.role==='admin')nav.push(['admin','⚙','Admin']);
- nav.push(['settings','☷','Einstellungen']);
- return nav.map(function(v){var active=route===v[0]||(route==='track'&&v[0]==='courses')||(route==='lesson'&&v[0]==='courses')||(route==='exam'&&v[0]==='exams');return '<button type="button" class="side-link'+(active?' active':'')+'" data-go="'+v[0]+'"><span class="side-icon">'+v[1]+'</span><span>'+v[2]+'</span></button>';}).join('');
+
+function navHTML(route){
+ const items=[
+  ['home','⌂','Lernen'],['courses','▦','Alle Kurse'],['script','⌘','Script'],
+  ['exams','☆','Prüfung'],['reference','▤','Referenz'],['plans','✦','Free / Plus / Pro'],
+  ['profile','◉','Mein Profil'],['settings','⚙','Einstellungen']
+ ];
+ if(s.profile?.role==='admin')items.push(['admin','♢','Administration']);
+ return items.map(([id,icon,label])=>{
+  const active=route===id||((route==='track'||route==='lesson')&&id==='home')||(route==='exam'&&id==='exams');
+  return '<button type="button" class="side-link'+(active?' active':'')+'" data-go="'+id+'">'+
+   '<span class="side-icon" aria-hidden="true">'+icon+'</span><span>'+label+'</span></button>';
+ }).join('');
 }
 function frame(){
- var auth=!s.ready;document.body.classList.toggle('is-auth',auth);
- var topRoute=(location.hash.replace(/^#/,'').split('/')[0]||'home');
- if(auth){sidebar.innerHTML='';bottom.innerHTML='';}
+ const authenticated=!!s.ready;
+ document.body.classList.toggle('is-auth',!authenticated);
+ const route=parseRoute().page;
+ if(!authenticated){sidebar.innerHTML='';bottom.innerHTML='';}
  else{
-   sidebar.innerHTML='<div class="sidebar-logo"><span class="logo-mark">&lt;/&gt;</span><span>LiveryLab<br><span class="gradient">Academy</span></span></div><div class="side-label">Navigation</div>'+navHTML(topRoute)+'<div class="side-bottom"><span class="eyebrow">Dein Account</span><strong>'+esc(s.profile.display_name||s.profile.username||'Developer')+'</strong><small>'+esc(plans[s.tier]||'Free')+' · '+safeNumber((s.progress.done||[]).length)*30+' XP</small><a class="discord-small" target="_blank" rel="noopener noreferrer" href="https://discord.gg/livery-lab">Discord beitreten</a></div>';
-   bottom.innerHTML=[['home','⌂','Lernen'],['courses','◇','Kurse'],['exams','☆','Prüfung'],['reference','▤','Referenz']].map(function(n){return '<button type="button" data-go="'+n[0]+'" class="bottom-item '+((topRoute===n[0]||(topRoute==='track'&&n[0]==='courses')||(topRoute==='lesson'&&n[0]==='courses')||(topRoute==='exam'&&n[0]==='exams'))?'active':'')+'"><span class="side-icon">'+n[1]+'</span><span>'+n[2]+'</span></button>';}).join('');
+  sidebar.innerHTML='<div class="sidebar-logo"><span class="logo-mark">fx</span><span>LiveryLab<br><span class="gradient">Academy</span></span></div>'+
+  '<div class="side-label">Navigation</div>'+navHTML(route)+
+  '<div class="side-bottom"><span class="eyebrow">DEIN PROFIL</span><strong>'+
+  esc(s.profile.display_name||s.profile.username||'Developer')+'</strong>'+
+  '<small>'+esc(plans[s.tier]||'Free')+' · '+((s.progress.done||[]).length*30)+' XP</small>'+
+  '<a class="discord-small" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord Community</a></div>';
+  const nav=[['home','⌂','Lernen'],['script','⌘','Script'],['exams','☆','Prüfung'],['reference','▤','Referenz']];
+  bottom.innerHTML=nav.map(([id,icon,label])=>'<button type="button" data-go="'+id+'" class="bottom-item'+
+   ((route===id||(id==='home'&&['track','lesson','courses'].includes(route))||(id==='exams'&&route==='exam'))?' active':'')+
+   '" aria-label="'+label+'"><span class="side-icon" aria-hidden="true">'+icon+'</span><span>'+label+'</span></button>').join('');
  }
- $('#xp-head').textContent='✦ '+((s.progress.done||[]).length*30)+' XP';
- $('.avatar-btn').textContent=String(s.profile?.display_name||s.profile?.username||'N').charAt(0).toUpperCase();
+ const head=$('#xp-head');if(head)head.textContent=((s.progress.done||[]).length*30)+' XP';
+ const avatar=$('.avatar-btn');if(avatar)avatar.textContent=String(s.profile?.display_name||s.profile?.username||'N').slice(0,1).toUpperCase();
 }
+
 function login(){
  s.ready=false;frame();
  content.innerHTML='<div class="auth-layout"><section class="auth-card"><div class="brandmark"><span class="logo-mark">&lt;/&gt;</span><span>LiveryLab <span class="gradient">Academy</span></span></div><span class="eyebrow">[ 01 ] PRIVATE LERNPLATTFORM</span><h1>Wissen. Code.<br><span class="gradient">Dein nächstes Level.</span></h1><p class="lede">Melde dich mit deiner E-Mail-Adresse oder deinem Benutzernamen an. Ein bereits in Supabase angelegtes E-Mail-Konto funktioniert direkt. Neue Konten kann das LiveryLab-Team erstellen.</p><form data-form="login"><div class="form-group"><label class="form-label" for="username">Benutzername oder E-Mail-Adresse</label><input class="input" id="username" name="username" autocomplete="username" required minlength="3" maxlength="254" placeholder="name@beispiel.de oder dein_name"></div><div class="form-group"><label class="form-label" for="password">Passwort</label><input class="input" type="password" id="password" name="password" autocomplete="current-password" required placeholder="Dein Passwort"></div><button class="btn primary block" type="submit">Anmelden →</button></form><p class="micro">Noch kein Konto? Adde <strong>nyxatheris</strong> auf Discord, wenn du die Academy testen oder nutzen möchtest.</p><a class="btn discord block discord-block" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">◈ Direkt zum LiveryLab Discord</a><p class="smallprint" style="text-align:center;margin-top:19px">Made with 💙 from NyxAtheris (LiveryLab Studios)</p></section></div>';
@@ -149,20 +168,32 @@ async function navigateCurrent(){
    if(meta&&allowed(meta)){var result=await api.from('ll_lesson_content').select('payload,video_id,video_start').eq('lesson_id',route.id).maybeSingle();if(result.error)notice(formatError(result.error));s.lesson=result.data||null;}
  }
  if(route.page==='admin'&&s.profile?.role==='admin'){try{await fetchMembers();}catch(e){notice('Adminliste: '+formatError(e));}}
+ if(route.page==='script'){await loadProjectTab();}
  if(route.page==='exam'&&route.id){await loadExam(route.id);}
  render();window.scrollTo({top:0,behavior:'instant'});
 }
+
 function render(){
- if(!s.ready){login();return;}frame();var r=parseRoute();
- var pages={home:homePage,courses:coursesPage,track:function(){return trackPage(r.id);},lesson:function(){return lessonPage(r.id);},plans:plansPage,exams:examsPage,exam:function(){return examPage(r.id);},reference:referencePage,profile:profilePage,settings:settingsPage,admin:adminPage};
- var fn=pages[r.page]||homePage;
- content.innerHTML=fn();
+ if(!s.ready){login();return;}
+ frame();const r=parseRoute();
+ const pages={home:homePage,courses:coursesPage,track:()=>trackPage(r.id),lesson:()=>lessonPage(r.id),
+  script:scriptPage,plans:plansPage,exams:examsPage,exam:()=>examPage(r.id),
+  reference:referencePage,profile:profilePage,settings:settingsPage,admin:adminPage};
+ content.innerHTML=(pages[r.page]||homePage)();
  if(r.page==='settings'||r.page==='profile')renderMFA();
 }
+
+
 function stats(){
- var done=(s.progress.done||[]).length,all=s.lessons.length,started=s.courses.filter(function(c){return countDone(c.id)>0;}).length;
- return '<div class="stats-grid"><div class="stat-card"><strong>'+done+'<small style="display:inline;font-size:14px">/'+all+'</small></strong><small>Lektionen</small></div><div class="stat-card"><strong>'+done*30+'</strong><small>XP gesammelt</small></div><div class="stat-card"><strong>'+started+'</strong><small>Kurse gestartet</small></div><div class="stat-card"><strong>'+pct(done,all)+'%</strong><small>Gesamtfortschritt</small></div></div>';
+ const done=(s.progress.done||[]).length,available=s.lessons.filter(allowed).length,started=s.courses.filter(c=>countDone(c.id)>0).length;
+ return '<div class="stats-grid">'+
+  '<div class="stat-card"><strong>'+done+'<span class="stat-total">/'+available+'</span></strong><small>LEKTIONEN</small></div>'+
+  '<div class="stat-card"><strong>'+done*30+'</strong><small>XP</small></div>'+
+  '<div class="stat-card"><strong>'+started+'</strong><small>LERNPFADE</small></div>'+
+  '<div class="stat-card"><strong>'+pct(done,available)+'%</strong><small>FORTSCHRITT</small></div>'+
+  '</div>';
 }
+
 function courseCard(c){
  var lessons=lessonsOf(c.id),done=countDone(c.id),complete=lessons.length>0&&done===lessons.length,free=lessons.some(l=>l.required_plan==='free');
  return '<article class="course-card'+(complete?' is-complete':'')+'">'+
@@ -173,25 +204,29 @@ function courseCard(c){
  '<div class="meta-line"><span>'+done+' / '+lessons.length+' abgeschlossen</span><span>'+pct(done,lessons.length)+'%</span></div>'+
  '<button class="btn block" type="button" data-go="track/'+esc(c.id)+'">'+(complete?'Kurs ansehen ✓':done?'Weiterlernen →':'Lernpfad öffnen →')+'</button></article>';
 }
+
 function homePage(){
- var finished=doneIds(),recommended=['coding-basics','lua','python','javascript','blender-fundamentals','fivem'].map(courseOf).filter(Boolean),next=null;
- for(var c of recommended){next=lessonsOf(c.id).find(l=>!finished.has(l.id)&&allowed(l));if(next)break;}
- if(!next)next=s.lessons.find(l=>!finished.has(l.id)&&allowed(l));
- var course=next?courseOf(next.course_id):null,isNew=s.progress.done.length===0;
- return '<section class="hero"><div class="hero-content"><span class="eyebrow">LIVERYLAB STUDIOS · DEVELOPER ACADEMY</span>'+
- '<h1>Aus Ideen werden <span class="gradient">eigene Projekte.</span></h1>'+
- '<p class="lede">Lerne Programmierung und Blender Schritt für Schritt. Klar erklärte Lektionen, passende Tutorials und eigene Praxisaufgaben – ohne überladene Werkzeuge.</p>'+
- '<div class="hero-actions"><button class="btn primary" data-go="'+(next?'lesson/'+esc(next.id):'courses')+'">'+(isNew?'Mit der ersten Lektion starten':'Weiterlernen')+' →</button>'+
- '<button class="btn" data-go="courses">Lernpfade entdecken</button></div></div></section>'+stats()+
- (next?'<section class="section"><div class="section-heading"><div><span class="eyebrow">DEIN NÄCHSTER SCHRITT</span><h2>Eine Lektion nach der anderen.</h2><p>Konzentriere dich auf einen Schritt, bevor du zum nächsten gehst.</p></div></div>'+
- '<div class="next-lesson"><span class="eyebrow">'+esc(course?.name||'Lernpfad')+' · '+esc(next.chapter)+'</span><h3>'+esc(next.title)+'</h3>'+
- '<p>'+esc(next.summary)+'</p><button class="btn primary" data-go="lesson/'+esc(next.id)+'">Lektion starten →</button></div></section>':'')+
- '<section class="section"><div class="section-heading"><div><span class="eyebrow">EMPFOHLENER EINSTIEG</span><h2>Starte mit einem Lernpfad.</h2><p>Die wichtigsten Kurse für Developer. Alles Weitere findest du in der Bibliothek.</p></div><a href="#courses">Alle Kurse ↗</a></div>'+
- '<div class="course-grid">'+recommended.map(courseCard).join('')+'</div></section>'+
- '<section class="section panel"><span class="eyebrow">LIVERYLAB COMMUNITY</span><h2>Fragen gehören zum Lernen.</h2>'+
- '<p class="muted">Du brauchst Unterstützung? Melde dich bei <strong>nyxatheris</strong> auf Discord.</p>'+
- '<a class="btn discord" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Zum Community-Discord ↗</a></section>';
+ const top=['coding-basics','lua','python','javascript','blender-fundamentals','fivem'].map(courseOf).filter(Boolean);
+ const completed=doneIds(),next=s.lessons.filter(allowed).find(l=>!completed.has(l.id)&&['coding-basics','lua','python','fivem'].includes(l.course_id))||
+ s.lessons.filter(allowed).find(l=>!completed.has(l.id));
+ const nextCourse=next?courseOf(next.course_id):null;
+ return '<section class="page-hero"><span class="eyebrow">[ 00 ] LERNPFAD · LIVERYLAB ACADEMY</span>'+
+ '<h1>Lerne programmieren.<br><em>Baue deine eigenen Projekte.</em></h1>'+
+ '<p class="lede">Verstehe die Grundlagen, probiere eigene Lösungen aus und werde Schritt für Schritt sicherer in Code, FiveM und Blender.</p>'+
+ '<div class="hero-actions"><button class="btn primary" data-go="'+(next?'lesson/'+esc(next.id):'courses')+'">Jetzt starten <span>→</span></button>'+
+ '<button class="btn" data-go="courses">Alle Lernpfade</button></div></section>'+
+ stats()+
+ (next?'<section class="section"><div class="section-heading"><div><span class="eyebrow">WEITERLERNEN</span><h2>Deine nächste Lektion</h2></div></div>'+
+ '<div class="next-lesson"><span class="eyebrow">'+esc(nextCourse?.name||'Lernpfad')+'</span><h3>'+esc(next.title)+'</h3>'+
+ '<p>'+esc(next.summary)+'</p><button class="btn primary" data-go="lesson/'+esc(next.id)+'">Lektion öffnen →</button></div></section>':'')+
+ '<section class="section"><div class="section-heading"><div><span class="eyebrow">[ 01 ] DEINE LERNPFADE</span><h2>Womit möchtest du anfangen?</h2>'+
+ '<p>Kleine Schritte, klare Themen und eigener Lernfortschritt.</p></div><a href="#courses">Alle Kurse ansehen</a></div>'+
+ '<div class="course-grid">'+top.map(courseCard).join('')+'</div></section>'+
+ '<section class="section panel community"><span class="eyebrow">LIVERYLAB STUDIOS</span><h2>Gemeinsam entwickeln.</h2>'+
+ '<p>Du hast Fragen oder möchtest Zugang? Kontaktiere <strong>nyxatheris</strong> auf Discord.</p>'+
+ '<a class="btn discord" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord beitreten →</a></section>';
 }
+
 function filteredCourses(){
  return s.courses.filter(function(c){return (s.filter==='Alle'||c.category===s.filter)&&(!s.search||(c.name+' '+c.category).toLowerCase().includes(s.search.toLowerCase()));}).sort(function(a,b){var aP=['coding-basics','lua','python','javascript','html','css','blender-fundamentals','fivem'].indexOf(a.id),bP=['coding-basics','lua','python','javascript','html','css','blender-fundamentals','fivem'].indexOf(b.id);if(aP>=0||bP>=0)return (aP<0?99:aP)-(bP<0?99:bP);return a.name.localeCompare(b.name,'de');});
 }
@@ -211,37 +246,42 @@ function coursesPage(){
  '<div class="section-heading" style="margin-top:22px"><div><h2>Passende Kurse</h2><p id="course-count">'+filteredCourses().length+' Ergebnisse · Schritt für Schritt</p></div></div>'+
  '<div id="catalog-container">'+catalogItems()+'</div></section>';
 }
+
 function trackPage(id){
- var c=courseOf(id);if(!c)return notFound();
- var all=lessonsOf(id),done=countDone(id),complete=done===all.length,remaining=all.find(l=>!doneIds().has(l.id)&&allowed(l)),groups=[];
- all.forEach(l=>{var group=groups[groups.length-1];if(!group||group.name!==l.chapter)groups.push({name:l.chapter,items:[l]});else group.items.push(l);});
- var result='<a class="back" href="#courses">← Kursbibliothek</a>'+
- pageHeading('LERNPFAD · '+all.length+' LEKTIONEN',esc(c.name),
- 'Arbeite dich in Ruhe durch die Kapitel. Ein eigener praktischer Schritt ist wichtiger als zehn übersprungene Lektionen.')+
- '<div class="track-meter"><span class="course-icon" style="width:44px;height:44px;font-size:22px">'+esc(courseAccent(c))+'</span>'+
- '<div style="flex:1;min-width:0"><div class="meta-line" style="margin-bottom:9px"><span>Dein Kursfortschritt</span><strong>'+pct(done,all.length)+'%</strong></div>'+
- '<div class="progress" aria-label="Kursfortschritt"><span style="width:'+pct(done,all.length)+'%"></span></div></div><small>'+done+' / '+all.length+'</small></div>';
- if(remaining)result+='<div class="next-lesson"><span class="eyebrow">WEITERLERNEN</span><h3>'+esc(remaining.title)+'</h3><p>'+esc(remaining.summary)+'</p>'+
- '<button class="btn primary" data-go="lesson/'+esc(remaining.id)+'">Lektion öffnen →</button></div>';
- else if(complete)result+='<div class="done-banner"><strong>✓ Lernpfad abgeschlossen</strong><p>Du hast alle Lektionen dieses Kurses bearbeitet.</p></div>';
- groups.forEach((group,i)=>{
-  var n=group.items.filter(l=>doneIds().has(l.id)).length,open=i===0||group.items.some(l=>l.id===remaining?.id);
-  result+='<details class="chapter-group" '+(open?'open':'')+'><summary class="chapter-title" style="cursor:pointer">[ '+String(i+1).padStart(2,'0')+' ] '+esc(group.name)+
-  ' <span style="margin-left:auto;white-space:nowrap;color:'+(n===group.items.length?'#90e8ba':'#ad9ebf')+';letter-spacing:0;font-size:11px">'+n+'/'+group.items.length+'</span></summary><div class="lesson-list">'+
-  group.items.map(l=>{
-   var finished=doneIds().has(l.id),grant=allowed(l);
-   return '<article class="lesson-card '+(grant?'clickable':'locked')+(finished?' is-complete':'')+'" tabindex="0" role="link" data-go="lesson/'+esc(l.id)+'">'+
-   '<small>'+(finished?'✓':String(l.position%100||l.position).padStart(2,'0'))+'</small>'+
-   '<div><h3>'+esc(l.title)+'</h3><p>'+esc(l.summary)+'</p>'+
-   '<div class="tag-bottom">'+(finished?'✓ Abgeschlossen':!grant?'🔒 '+tierLabel(l.required_plan)+' erforderlich':l.minutes+' Min · Erklärung · Praxis · Quiz')+'</div></div>'+
-   '<span class="status-dot '+(finished?'done':'')+'">'+(finished?'✓':grant?'›':'🔒')+'</span></article>';
-  }).join('')+'</div></details>';
+ const course=courseOf(id);if(!course)return notFound();
+ const all=lessonsOf(id),completed=doneIds(),done=countDone(id),next=all.find(l=>!completed.has(l.id)&&allowed(l));
+ const chapters=[];
+ for(const l of all){const last=chapters.at(-1);if(last?.title===l.chapter)last.items.push(l);else chapters.push({title:l.chapter,items:[l]});}
+ let out='<a class="back" href="#courses">← Alle Kurse</a>'+
+ '<section class="track-top"><span class="eyebrow">[ 00 ] LERNPFAD · '+all.length+' LEKTIONEN</span>'+
+ '<h1>'+esc(course.name)+' <em>lernen.</em></h1>'+
+ '<p class="lede">Jede Lektion erklärt ein Konzept. Danach schaust du ein passendes Tutorial an, löst eine Praxisaufgabe und überprüfst dein Wissen.</p></section>'+
+ '<div class="stats-grid track-stats"><div class="stat-card"><strong>'+done+'/'+all.length+'</strong><small>LEKTIONEN</small></div>'+
+ '<div class="stat-card"><strong>'+done*30+'</strong><small>XP</small></div>'+
+ '<div class="stat-card"><strong>'+pct(done,all.length)+'%</strong><small>FORTSCHRITT</small></div>'+
+ '<div class="stat-card"><strong>'+((s.progress.exams||{})[id]?'✓':'–')+'</strong><small>PRÜFUNG</small></div></div>';
+ if(next)out+='<div class="next-lesson"><span class="eyebrow">NÄCHSTE LEKTION</span><h3>'+esc(next.title)+'</h3>'+
+ '<p>'+esc(next.summary)+'</p><button class="btn primary" data-go="lesson/'+esc(next.id)+'">Jetzt starten →</button></div>';
+ chapters.forEach((chapter,ci)=>{
+  const complete=chapter.items.filter(l=>completed.has(l.id)).length;
+  out+='<section class="chapter"><div class="chapter-title"><span>[ '+String(ci+1).padStart(2,'0')+' ] '+esc(chapter.title)+'</span>'+
+   '<span class="chapter-count">'+complete+'/'+chapter.items.length+'</span></div><div class="lesson-list">'+
+   chapter.items.map((l,i)=>{
+     const ok=completed.has(l.id),unlocked=allowed(l);
+     return '<button type="button" class="lesson-card '+(ok?'is-complete ':'')+(!unlocked?'locked':'')+
+      '" data-go="lesson/'+esc(l.id)+'" aria-label="'+esc(l.title)+(ok?', abgeschlossen':!unlocked?', gesperrt':'')+'">'+
+      '<span class="lesson-num">'+String(i+1).padStart(2,'0')+'</span><span class="lesson-main"><strong>'+esc(l.title)+'</strong>'+
+      '<span class="lesson-summary">'+esc(l.summary)+'</span>'+
+      '<span class="lesson-meta">'+l.minutes+' MIN · PRAXIS + QUIZ'+(!unlocked?' · '+tierLabel(l.required_plan).toUpperCase():'')+'</span></span>'+
+      '<span class="status-ring">'+(ok?'✓':!unlocked?'⌑':'')+'</span></button>';
+   }).join('')+'</div></section>';
  });
- result+='<section class="section panel"><span class="eyebrow">DEIN ABSCHLUSS</span><h2>Abschlussprüfung</h2>'+
- '<p class="muted">Schließe zuerst alle Lektionen ab. Danach kannst du eine Prüfung mit maximal zehn Fragen schreiben.</p>'+
- '<button class="btn primary" data-go="exam/'+esc(id)+'" '+(!complete?'disabled':'')+'>'+(complete?'Prüfung beginnen →':'Noch '+(all.length-done)+' Lektionen offen')+'</button></section>';
- return result;
+ out+='<section class="section exam-callout"><span class="eyebrow">[ ★ ] ABSCHLUSS</span>'+
+ '<h2>Bereit für die Prüfung?</h2><p>Trainiere dein Wissen mit Fragen aus diesem Kurs.</p>'+
+ '<button class="btn primary" data-go="exam/'+esc(id)+'">Prüfung ansehen →</button></section>';
+ return out;
 }
+
 function notFound(){return '<div class="empty"><h2>Inhalt nicht gefunden</h2><p>Dieser Lernpfad ist nicht verfügbar.</p><button class="btn" data-go="courses">Zur Kursbibliothek</button></div>';}
 function lessonPage(id){
  var l=s.lessons.find(x=>x.id===id);if(!l)return notFound();
@@ -395,30 +435,128 @@ async function loadExam(id){
  if(res.error){notice(formatError(res.error));return;}
  var questions=(res.data||[]).filter(function(x){return x.payload&&Array.isArray(x.payload.options)&&x.payload.options.length>1;});
  for(var i=questions.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),temp=questions[i];questions[i]=questions[j];questions[j]=temp;}
- s.exam={items:questions.slice(0,10),at:0,answers:[]};
+ s.exam={items:questions.slice(0,20),at:0,answers:[]};
 }
+
 function examPage(id){
- var c=courseOf(id);if(!c)return notFound();var lessons=lessonsOf(id);
- if(lessons.some(function(l){return !doneIds().has(l.id);}))return '<a class="back" href="#exams">← Prüfungsübersicht</a><div class="panel locked-panel"><h2>Prüfung noch gesperrt.</h2><p>Schließe zunächst alle '+lessons.length+' Lektionen dieses Kurses ab.</p><button class="btn primary" data-go="track/'+esc(id)+'">Zum Lernpfad</button></div>';
- if(!s.exam||!s.exam.items.length)return '<div class="empty">Für diese Prüfung sind noch nicht genügend Fragen hinterlegt.</div>';
- var ex=s.exam,fin=ex.at>=ex.items.length;
- if(fin){var score=ex.answers.filter(Boolean).length,pass=score>=Math.ceil(ex.items.length*.8);return '<a class="back" href="#exams">← Prüfungsübersicht</a><section class="panel locked-panel"><div class="award">'+(pass?'🏆':'📚')+'</div><span class="eyebrow">PRÜFUNG · '+esc(c.name)+'</span><h1>'+score+' / '+ex.items.length+' richtig</h1><p class="lede" style="margin:auto">'+(pass?'Glückwunsch! Du hast die Prüfung bestanden.':'Noch nicht bestanden. Wiederhole die Erklärungen und versuche es erneut.')+'</p><button class="btn primary" data-action="restart-exam">Prüfung wiederholen</button></section>';}
- var q=ex.items[ex.at],p=q.payload;
- return '<a class="back" href="#exams">← Prüfungsübersicht</a><section class="lesson-article"><span class="eyebrow">[ '+String(ex.at+1).padStart(2,'0')+' / '+ex.items.length+' ] ABSCHLUSSPRÜFUNG · '+esc(c.name)+'</span><h1>Wissenstest</h1><div class="progress" style="margin-bottom:24px"><span style="width:'+pct(ex.at,ex.items.length)+'%"></span></div><div class="step-box"><h2>'+esc(p.quiz||p.title)+'</h2>'+p.options.map(function(o,i){return '<button type="button" class="quiz-choice" data-exam-answer="'+i+'"><span>'+String.fromCharCode(65+i)+'</span>'+esc(o)+'</button>';}).join('')+'</div></section>';
-}
-async function submitExamAnswer(choice){
- if(!s.exam||s.exam.at>=s.exam.items.length)return;
- var q=s.exam.items[s.exam.at],correct=Number(q.payload.correct)||0;s.exam.answers.push(choice===correct);s.exam.at++;
- if(s.exam.at>=s.exam.items.length&&s.exam.answers.filter(Boolean).length>=Math.ceil(s.exam.items.length*.8)){
-   s.progress.exams[parseRoute().id]={score:s.exam.answers.filter(Boolean).length,total:s.exam.items.length,at:new Date().toISOString()};
-   try{await saveProgress();}catch(e){notice('Prüfung konnte nicht gespeichert werden: '+formatError(e));}
+ const course=courseOf(id);if(!course)return notFound();
+ const all=lessonsOf(id),done=countDone(id),ready=done===all.length;
+ const back='<a class="back" href="#exams">← Prüfungen</a>';
+ if(!ready)return back+'<section class="exam-intro"><span class="eyebrow">[ ★ ] ABSCHLUSS</span>'+
+ '<h1>Abschlussprüfung</h1><p class="lede">'+esc(course.name)+' · 20 Fragen maximal, bestanden ab 80 %.</p>'+
+ '<div class="progress-pill">'+done+'/'+all.length+' Lektionen</div>'+
+ '<div class="project-message"><strong>Dein Lernpfad ist noch nicht vollständig.</strong>'+
+ '<p>Schließe zuerst alle '+all.length+' Lektionen ab, um die Abschlussprüfung zu starten.</p></div>'+
+ '<button class="btn primary" data-go="track/'+esc(id)+'">Zum Lernpfad →</button></section>';
+ if(!s.exam||!s.exam.items.length)return back+'<div class="empty">Keine Prüfungsfragen hinterlegt.</div>';
+ const ex=s.exam,finished=ex.at>=ex.items.length;
+ if(finished){
+  const score=ex.answers.filter(Boolean).length,pass=score>=Math.ceil(ex.items.length*.8);
+  return back+'<section class="exam-result"><div class="award">'+(pass?'🏆':'◈')+'</div>'+
+  '<span class="eyebrow">PRÜFUNG · '+esc(course.name)+'</span><h1>'+score+' von '+ex.items.length+' richtig</h1>'+
+  '<p class="lede">'+(pass?'Prüfung bestanden. Dein Ergebnis ist gespeichert.':'Noch nicht bestanden. Wiederhole die Lektionen und versuche es erneut.')+'</p>'+
+  '<button class="btn primary" data-action="restart-exam">Erneut versuchen →</button></section>';
  }
- render();
+ const q=ex.items[ex.at],p=q.payload;
+ return back+'<section class="exam-intro"><span class="eyebrow">[ ★ ] ABSCHLUSS</span><h1>Abschlussprüfung</h1>'+
+ '<p class="lede">'+esc(course.name)+' · '+ex.items.length+' Fragen, bestanden ab '+Math.ceil(ex.items.length*.8)+' richtigen Antworten.</p>'+
+ '<div class="progress-pill">Aufgabe '+(ex.at+1)+' von '+ex.items.length+'</div></section>'+
+ '<div class="exam-question"><div class="exam-question-head"><span>AUFGABE '+(ex.at+1)+' / '+ex.items.length+'</span>'+
+ '<div class="exam-dots" aria-label="Fortschritt">'+ex.items.map((_,i)=>'<i class="'+(i===ex.at?'current':i<ex.at?'done':'')+'"></i>').join('')+'</div></div>'+
+ '<div class="exam-question-content"><h2>'+esc(p.quiz||p.title||'Wähle die richtige Antwort.')+'</h2>'+
+ p.options.map((answer,i)=>'<button class="exam-option" type="button" data-exam-answer="'+i+'">'+
+ '<span>'+String.fromCharCode(65+i)+'</span><span>'+esc(answer)+'</span></button>').join('')+'</div></div>';
 }
+
+
+const PROJECT_FILES=[
+ {name:'fxmanifest.lua',ids:[5]},
+ {name:'config.lua',ids:[0,1,3,12]},
+ {name:'shared/utils.lua',ids:[2,4]},
+ {name:'client/main.lua',ids:[6,7]},
+ {name:'server/main.lua',ids:[8,9,10,11]}
+];
+function projectLessons(){return lessonsOf('fivem').slice(0,13)}
+function projectUnblocked(file){
+ const all=projectLessons(),done=doneIds();
+ return file.ids.map(i=>all[i]).filter(l=>l&&done.has(l.id)&&allowed(l));
+}
+function projectTotal(){return projectLessons().filter(l=>doneIds().has(l.id)).length}
+async function loadProjectTab(){
+ const file=PROJECT_FILES[s.projectTab]||PROJECT_FILES[0],unlocked=projectUnblocked(file);
+ s.projectSource='';
+ if(!unlocked.length)return;
+ s.projectLoading=true;
+ try{
+  const r=await api.from('ll_lesson_content').select('lesson_id,payload').in('lesson_id',unlocked.map(l=>l.id));
+  if(r.error)throw r.error;
+  s.projectSource=(r.data||[]).map(row=>{
+   const lesson=unlocked.find(l=>l.id===row.lesson_id);
+   return '-- '+(lesson?.title||'Lernbeispiel')+'\n'+(row.payload?.example||'-- Kein Codebeispiel vorhanden.');
+  }).join('\n\n');
+ }catch(e){notice('Projektansicht: '+formatError(e))}
+ finally{s.projectLoading=false}
+}
+function scriptPage(){
+ const all=projectLessons(),done=projectTotal(),file=PROJECT_FILES[s.projectTab]||PROJECT_FILES[0],
+ unlocked=projectUnblocked(file),code=s.projectSource||'';
+ return '<section class="track-top"><span class="eyebrow">[ ++ ] DEIN PROJEKT</span>'+
+ '<h1>sh_shop</h1><p class="lede">Ein FiveM-Lernprojekt, das mit deinen Lektionen wächst. Abgeschlossene Abschnitte schalten passende Codebeispiele frei.</p>'+
+ '<span class="progress-pill">'+done+'/'+all.length+' Teile freigeschaltet</span></section>'+
+ '<div class="file-tree"><div class="file-root">resources/[scripts]/<strong>sh_shop/</strong></div>'+
+ PROJECT_FILES.map((f,i)=>'<button type="button" class="tree-file'+(s.projectTab===i?' selected':'')+'" data-project-tab="'+i+'">'+
+ '<span class="tree-branch">├─</span><span>'+esc(f.name)+'</span><span class="tree-count">'+projectUnblocked(f).length+'/'+f.ids.filter(k=>all[k]).length+'</span></button>').join('')+'</div>'+
+ '<div class="file-tabs" role="tablist" aria-label="Projektdateien">'+PROJECT_FILES.map((f,i)=>
+ '<button type="button" role="tab" aria-selected="'+(s.projectTab===i)+'" class="file-tab'+(i===s.projectTab?' active':'')+'" data-project-tab="'+i+'">'+esc(f.name)+'</button>').join('')+'</div>'+
+ '<div class="file-preview"><div class="file-preview-head"><span>'+esc(file.name)+'</span>'+
+ (unlocked.length?'<button class="btn small" type="button" data-action="copy-project">Kopieren</button>':'<span class="lock-mini">🔒 Gesperrt</span>')+'</div>'+
+ '<pre class="file-code"><code>'+(unlocked.length?esc(code||'-- Codebeispiele werden geladen …'):
+ '-- 🔒 Zu diesem Teil fehlen noch bestandene Lektionen.\n-- Bearbeite die passenden Kapitel, um ihn freizuschalten.')+'</code></pre></div>'+
+ '<div class="project-message"><strong>'+(unlocked.length?'Lernbeispiel freigeschaltet.':'Teile gesperrt.')+'</strong>'+
+ '<p>'+(unlocked.length?'Die Beispiele sind zum Verstehen gedacht, nicht als fertiges Produktiv-Script.':
+ 'Schließe die zugehörigen Lektionen ab, um die Codebeispiele zu erhalten.')+'</p></div>'+
+ '<div class="actions-pair"><button class="btn" data-go="home">← Übersicht</button>'+
+ '<button class="btn primary" data-go="track/fivem">FiveM-Lernpfad →</button></div>';
+}
+
 function referencePage(){
- var refs=[['Lua','local name = "Alex"','https://www.lua.org/manual/5.4/'],['JavaScript','const x = 2;','https://developer.mozilla.org/de/docs/Web/JavaScript'],['Python','print("Hallo")','https://docs.python.org/3/tutorial/'],['HTML','<h1>Hallo</h1>','https://developer.mozilla.org/de/docs/Web/HTML'],['CSS','.box { display: flex; }','https://developer.mozilla.org/de/docs/Web/CSS'],['SQL','SELECT * FROM users;','https://www.postgresql.org/docs/current/tutorial.html'],['FiveM Lua','RegisterCommand("hi", function() end)','https://docs.fivem.net/docs/scripting-reference/'],['Blender','Shift + A → Neues Objekt','https://docs.blender.org/manual/en/latest/']];
- return '<section><span class="eyebrow">[ ≡ ] NACHSCHLAGEN</span><h1>Dein <span class="gradient">Spickzettel.</span></h1><p class="lede">Die wichtigsten Einstiege und Originaldokumentationen – direkt beim Lernen erreichbar.</p></section><section class="section panel"><h2>Code & Referenzen</h2><div class="tablewrap"><table class="ref-table"><tbody>'+refs.map(function(v){return '<tr><td><strong>'+esc(v[0])+'</strong></td><td><code>'+esc(v[1])+'</code></td><td><a href="'+safeLink(v[2])+'" target="_blank" rel="noopener noreferrer">Dokumentation ↗</a></td></tr>';}).join('')+'</tbody></table></div></section><section class="section panel"><h2>FiveM: Event-Richtungen</h2><div class="codebox"><pre><code>TriggerEvent(name, ...)         -- lokal\nTriggerServerEvent(name, ...)   -- Client → Server\nTriggerClientEvent(name, id)    -- Server → Client</code></pre></div><p class="micro">Sicherheitsregel: Client-Daten niemals ungeprüft vertrauen. Geld, Items und Berechtigungen ausschließlich serverseitig validieren.</p></section>';
+ const functions=[
+  ['PlayerPedId()','Deine Spielfigur (Client)'],
+  ['GetPlayerPed(source)','Ped eines Spielers (Server)'],
+  ['GetEntityCoords(entity)','Position einer Entity'],
+  ['SetEntityCoords(entity, x, y, z)','Entity versetzen'],
+  ['RegisterNetEvent(name, cb)','Netzwerk-Event empfangen'],
+  ['TriggerServerEvent(name, ...)','Client → Server'],
+  ['TriggerClientEvent(name, id, ...)','Server → Client'],
+  ['RegisterCommand(name, fn, restricted)','Befehl registrieren'],
+  ['RegisterKeyMapping(cmd, label, device, key)','Tastenbelegung erlauben'],
+  ['CreateThread(fn) / Wait(ms)','Nebenläufige Schleife'],
+  ['AddBlipForCoord(x, y, z)','Kartensymbol'],
+  ['DrawMarker(type, ...)','Marker darstellen']
+ ];
+ const cheats=[
+  ['local x = 1','Lokale Variable'],
+  ['x ~= y','Ungleich'],
+  ['"Hallo" .. name','Text verketten'],
+  ['#liste','Länge einer Liste'],
+  ['if ok then ... end','Bedingung'],
+  ['for i = 1, 5 do ... end','Zählschleife'],
+  ['for k, v in pairs(t) do ... end','Table durchlaufen'],
+  ['local ok, err = pcall(fn)','Fehler abfangen']
+ ];
+ return '<section class="track-top"><span class="eyebrow">[ ≡ ] NACHSCHLAGEN</span>'+
+ '<h1>Spickzettel</h1><p class="lede">Die wichtigsten Lua- und FiveM-Funktionen schnell nachschlagen – ohne überladene Menüs.</p>'+
+ '<p class="micro">Vollständige FiveM-Dokumentation: <a href="https://docs.fivem.net/natives/" target="_blank" rel="noopener noreferrer">docs.fivem.net/natives</a></p></section>'+
+ '<section class="reference-block"><div class="reference-head">FUNKTION <span>BEDEUTUNG</span></div>'+
+ functions.map(([fn,desc])=>'<div class="reference-row"><code>'+esc(fn)+'</code><span>'+esc(desc)+'</span></div>').join('')+'</section>'+
+ '<section class="section"><h2>Lua auf einen Blick</h2><div class="reference-block">'+
+ cheats.map(([fn,desc])=>'<div class="reference-row"><code>'+esc(fn)+'</code><span>'+esc(desc)+'</span></div>').join('')+
+ '</div></section>'+
+ '<section class="section"><h2>Event-Richtungen</h2><div class="codebox"><pre><code>'+esc('TriggerEvent(name, ...)         -- lokal\nTriggerServerEvent(name, ...)   -- Client zu Server\nTriggerClientEvent(name, id)    -- Server zu Client')+'</code></pre></div>'+
+ '<p class="micro">Wichtig: Werte vom Client serverseitig überprüfen, besonders bei Geld, Inventar und Berechtigungen.</p></section>'+
+ '<div class="actions-pair"><button class="btn" data-go="home">← Übersicht</button><button class="btn primary" data-go="script">Dein Script →</button></div>';
 }
+
 function profilePage(){
  var done=s.progress.done.length,name=s.profile.display_name||s.profile.username||'Developer',
  initial=String(name).slice(0,1).toUpperCase(),username=s.profile.username,activeCourse=s.courses.filter(c=>countDone(c.id)>0).length;
@@ -575,7 +713,21 @@ document.addEventListener('click',async function(e){
    return;
   }
   if(name==='finish-lesson'){await markLesson();return;}
+
+  if(name==='copy-project'){
+   if(!s.projectSource){notice('Noch kein Code freigeschaltet.');return;}
+   try{await navigator.clipboard.writeText(s.projectSource);notice('Code kopiert.');}
+   catch(_){notice('Kopieren nicht möglich. Markiere den Text im Codefeld.');}
+   return;
+  }
   if(name==='restart-exam'){await loadExam(parseRoute().id);render();return;}
+ }
+
+ var pt=e.target.closest('[data-project-tab]');
+ if(pt){
+  const index=Number(pt.dataset.projectTab);
+  if(Number.isInteger(index)&&index>=0&&index<PROJECT_FILES.length){s.projectTab=index;await loadProjectTab();render();}
+  return;
  }
  var answer=e.target.closest('[data-answer]');if(answer){s.choice=Number(answer.dataset.answer);updateLessonControls();return;}
  var exam=e.target.closest('[data-exam-answer]');if(exam){await submitExamAnswer(Number(exam.dataset.examAnswer));return;}
@@ -588,6 +740,11 @@ document.addEventListener('click',async function(e){
 });
 document.addEventListener('keydown',function(e){
  if((e.key==='Enter'||e.key===' ')&&e.target.matches('.lesson-card[data-go]')){e.preventDefault();go(e.target.dataset.go);}
+ if(e.key==='Tab'&&e.target.id==='practice-input'){
+  e.preventDefault();const el=e.target,a=el.selectionStart,b=el.selectionEnd;
+  el.value=el.value.slice(0,a)+'\t'+el.value.slice(b);el.selectionStart=el.selectionEnd=a+1;
+  s.draft=el.value;saveDraft(parseRoute().id,el.value);return;
+ }
  if(e.key==='Escape'){sidebar.classList.remove('open');syncBackdrop();}
 });
 document.addEventListener('input',function(e){
@@ -603,7 +760,20 @@ document.addEventListener('input',function(e){
  }
 });
 document.addEventListener('change',async function(e){
- if(e.target.id==='video-check'){s.videoChecked=e.target.checked;updateLessonControls();return;}
+ if(e.target.id==='video-check'){
+  const id=parseRoute().id,previous=s.videoChecked;
+  s.videoChecked=e.target.checked;
+  if(!Array.isArray(s.progress.watched))s.progress.watched=[];
+  const oldWatched=s.progress.watched.slice();
+  if(s.videoChecked&&!s.progress.watched.includes(id))s.progress.watched.push(id);
+  if(!s.videoChecked)s.progress.watched=s.progress.watched.filter(x=>x!==id);
+  updateLessonControls();
+  try{await saveProgress()}catch(err){
+   s.videoChecked=previous;s.progress.watched=oldWatched;
+   updateLessonControls();notice('Video-Fortschritt konnte nicht gespeichert werden.');
+  }
+  return;
+ }
  if(e.target.hasAttribute('data-pref')){setPreference(e.target.dataset.pref,e.target.checked);return;}
  if(e.target.hasAttribute('data-admin-tier')){
   var select=e.target,old=s.memberPlans[select.dataset.adminTier]||'free';
