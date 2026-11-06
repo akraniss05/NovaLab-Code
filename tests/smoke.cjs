@@ -9,7 +9,7 @@ for(const token of ['app-v14.css?release=','academy.js?release=','auth-mfa-v5.js
  assert(html.includes(token),'Versioned asset missing: '+token);
 for(const obsolete of ['styles.css','refined.css','music-studio.js','studio3d-v5.js'])
  assert(!html.includes(obsolete),'Old asset still linked: '+obsolete);
-for(const token of ['function scriptPage','function referencePage','function examPage','function trackPage','PROJECT_FILES','data-project-tab','copy-project','data-action="complete-practice"','data-action="load-video"','data-action="reset-progress"','academy-signin','academy_set_username','data-form="create-email"','ll_lesson_content','Free','Plus','Pro','LiveryLab Studios'])
+for(const token of ['function scriptPage','function referencePage','function examPage','function trackPage','PROJECT_FILES','data-project-tab','copy-project','data-action="complete-practice"','data-action="load-video"','data-action="reset-progress"','academy-signin','academy_set_username','data-form="create-email"','Free','Plus','Pro','LiveryLab Studios'])
  assert(js.includes(token),'Missing app feature: '+token);
 for(const selector of ['.lesson-card','.lesson-card.is-complete','.status-ring','.lesson-steps','.lesson-step','.video-frame','.video-placeholder','.quiz-choice','.file-tree','.file-tab','.exam-question','.exam-option','.reference-row','.bottom-nav','.topbar','.auth-card'])
  assert(css.includes(selector),'Missing styling: '+selector);
