@@ -661,9 +661,9 @@ function voucherAdminSection(){
  '<option value="gift">Gratis-Mitgliedschaft</option><option value="discount">Rabattcode</option></select></div>'+
  '<div class="form-group"><label class="form-label">Für welchen Tarif?</label><select class="select" name="tier">'+
  '<option value="pro">Plus · 1,99 €/Monat</option><option value="ultimate">Pro · 3,99 €/Monat</option></select></div>'+
- '<div class="form-group"><label class="form-label">Rabatt in % (bei Rabattcodes)</label>'+
+ '<div class="form-group voucher-discount-field" hidden><label class="form-label">Rabatt in % (bei Rabattcodes)</label>'+
  '<input class="input" type="number" name="percent" min="1" max="90" value="20"></div>'+
- '<div class="form-group"><label class="form-label">Gratis-Mitgliedschaft für</label><select class="select" name="membership_days">'+
+ '<div class="form-group voucher-gift-field"><label class="form-label">Gratis-Mitgliedschaft für</label><select class="select" name="membership_days">'+
  '<option value="7">7 Tage</option><option value="30" selected>30 Tage</option><option value="90">90 Tage</option><option value="365">365 Tage</option></select></div>'+
  '<div class="form-group"><label class="form-label">Maximale Einlösungen</label><input class="input" type="number" name="max_uses" min="1" max="1000" value="1" required></div>'+
  '<div class="form-group"><label class="form-label">Code gültig für</label><select class="select" name="valid_days">'+
@@ -716,7 +716,7 @@ async function fetchMembers(){
 }
 async function updateTier(uid,tier){
  if(s.profile?.role!=='admin'||!['free','pro','ultimate'].includes(tier))return;
- var res=await api.from('academy_plans').upsert({user_id:uid,tier:tier,granted_by:s.user.id,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+ var res=await api.from('academy_plans').upsert({user_id:uid,tier:tier,granted_by:s.user.id,expires_at:null,updated_at:new Date().toISOString()},{onConflict:'user_id'});
  if(res.error)throw res.error;s.memberPlans[uid]=tier;
  notice('Tarif auf '+(plans[tier]||tier)+' geändert.');if(uid===s.user.id){s.tier=tier;frame();}
 }
@@ -840,6 +840,13 @@ document.addEventListener('input',function(e){
  }
 });
 document.addEventListener('change',async function(e){
+ if(e.target.matches('select[name="kind"]')&&e.target.closest('form[data-form="create-voucher"]')){
+  const frm=e.target.closest('form'),discount=frm.querySelector('.voucher-discount-field'),gift=frm.querySelector('.voucher-gift-field');
+  if(discount)discount.hidden=e.target.value!=='discount';
+  if(gift)gift.hidden=e.target.value==='discount';
+  return;
+ }
+
  if(e.target.id==='video-check'){
   const id=parseRoute().id,previous=s.videoChecked;
   s.videoChecked=e.target.checked;
