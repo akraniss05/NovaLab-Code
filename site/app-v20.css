@@ -961,3 +961,7 @@ body.streak-modal-visible{overflow:hidden}
 .header-streak-chip .ll-icon{width:17px!important;height:17px!important;color:#ffaa46}
 .header-streak-chip.can-claim{box-shadow:0 0 11px #c576ec80;border-color:#d2a0ff}
 @media(max-width:500px){.header-streak-chip{padding:5px 6px;font-size:10px}.topbar .brand-mark .ll-brand-symbol{width:30px;height:30px}.topbar .top-right{gap:5px}}
+
+/* Critical fix: take the banner image out of normal flow to preserve the wide hero ratio. */
+.ll-home-dashboard .ll-home-brand-banner{position:relative;aspect-ratio:2.63 / 1!important;height:auto;min-height:0;overflow:hidden}
+.ll-home-dashboard .ll-home-brand-banner>img{position:absolute!important;inset:0;display:block;width:100%;height:100%;object-fit:cover}
