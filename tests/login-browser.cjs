@@ -71,7 +71,7 @@ for(const width of [390,430,1280]){
  await page.locator('[data-streak-claim]').click();
  await page.locator('.ll-streak-claimed').waitFor({state:'visible',timeout:6000});
  assert.equal(await page.evaluate(()=>window.__mock.claims),1,'Claim must call backend exactly once');
- assert(await page.locator('[data-streak-countdown]').innerText()!=='00:00:00','24-hour countdown is live');
+ assert(await page.locator('.ll-streak-modal [data-streak-countdown]').innerText()!=='00:00:00','24-hour countdown is live');
  await page.locator('[data-streak-close]').first().click();
  assert.equal(await page.locator('#streak-overlay').count(),0,'Close hides dialog');
  assert.equal(await page.evaluate(()=>document.querySelector('#app').inert),false,'Close makes the Academy interactive again');
