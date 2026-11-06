@@ -104,3 +104,13 @@ Unter Repository Settings > Pages muss „GitHub Actions“ aktiviert sein. Push
 - Gutschein-Erstellung nur mit Admin-Konto; Gutscheine werden in `academy_private.academy_vouchers` verwaltet, Einlösungen atomar gezählt.
 - Gratis-Codes aktivieren zeitlich befristet Plus oder Pro; nach Ablauf fällt das Konto zurück. Rabatt-Codes reservieren nur ein Angebot, sie führen keine Zahlung aus.
 - Derzeit KEIN automatischer Zahlungsanbieter, keine automatische Abo-Abrechnung. Preise werden angezeigt, Aktivierung kostenpflichtiger Mitgliedschaften erfolgt nach Bestätigung durch das Team.
+
+
+## v14 · Registrierung, Adminfreigabe und Sprachreferenz
+
+- Registrieren per E-Mail, Benutzername und Passwort (min. 14 Zeichen). Neue selbst registrierte Konten werden im Backend auf `pending` gesetzt, sie können keine Lerninhalte laden, bis das Adminteam freigibt.
+- Im Adminbereich: offene Anfragen mit E-Mail-Bestätigungsstatus, Genehmigen/Ablehnen, Zugriffe sperren/reaktivieren und serverseitig geschützte Tarifwechsel über die `admin-users` Edge Function.
+- User-eigene Metadata bestimmen niemals Rollen oder Aktivierung. Kein automatisches Hochstufen einer E-Mail-Adresse zum Admin.
+- Free: drei neue Lektionen täglich, Plus (`pro`): sechs, Ultimate (`ultimate`): unbegrenzt. PostgreSQL RPC erzwingt Limits; bisher geöffnete Lektionen bleiben erneut abrufbar.
+- 24 Programmiersprachen/Tools, 485 kompakte Referenzeinträge, offizielle Dokumentationslinks, filter- und suchbar.
+- Abschlussprüfungen: bis zu 20 zufällig gewählte Fragen via geschützter `academy_exam_questions` RPC nach Kursabschluss, Bewertung und Auswertung. Die Prüfung ist ein Lern-Test, keine betrugssichere Zertifikatsprüfung.

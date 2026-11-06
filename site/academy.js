@@ -7,7 +7,7 @@
 'use strict';
 var cfg=window.LL_CONFIG||{}, $=function(q,root){return (root||document).querySelector(q);};
 var content=$('#content'), sidebar=$('#sidebar'), bottom=$('#bottom-nav'), toastNode=$('#toast');
-var api=null, s={daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,videoChecked:false,videoLoaded:false,exam:null,members:[],memberPlans:{},adminPage:1,catalogLimit:9,practiceChecked:false,draft:'',prefs:null,projectTab:0,projectSource:'',projectLoading:false};
+var api=null, s={authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,videoChecked:false,videoLoaded:false,exam:null,members:[],memberPlans:{},adminPage:1,catalogLimit:9,practiceChecked:false,draft:'',prefs:null,projectTab:0,projectSource:'',projectLoading:false};
 var plans={free:'Free',pro:'Plus',ultimate:'Pro'};
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];});}
 function safeLink(url){return /^https:\/\/[^\s<>"]+$/i.test(String(url||''))?esc(url):'#';}
@@ -79,7 +79,71 @@ function frame(){
 
 function login(){
  s.ready=false;frame();
- content.innerHTML='<div class="auth-layout"><section class="auth-card"><div class="brandmark"><span class="logo-mark">&lt;/&gt;</span><span>LiveryLab <span class="gradient">Academy</span></span></div><span class="eyebrow">[ 01 ] PRIVATE LERNPLATTFORM</span><h1>Wissen. Code.<br><span class="gradient">Dein nächstes Level.</span></h1><p class="lede">Melde dich mit deiner E-Mail-Adresse oder deinem Benutzernamen an. Ein bereits in Supabase angelegtes E-Mail-Konto funktioniert direkt. Neue Konten kann das LiveryLab-Team erstellen.</p><form data-form="login"><div class="form-group"><label class="form-label" for="username">Benutzername oder E-Mail-Adresse</label><input class="input" id="username" name="username" autocomplete="username" required minlength="3" maxlength="254" placeholder="name@beispiel.de oder dein_name"></div><div class="form-group"><label class="form-label" for="password">Passwort</label><input class="input" type="password" id="password" name="password" autocomplete="current-password" required placeholder="Dein Passwort"></div><button class="btn primary block" type="submit">Anmelden →</button></form><p class="micro">Noch kein Konto? Adde <strong>nyxatheris</strong> auf Discord, wenn du die Academy testen oder nutzen möchtest.</p><a class="btn discord block discord-block" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">◈ Direkt zum LiveryLab Discord</a><p class="smallprint" style="text-align:center;margin-top:19px">Made with 💙 from NyxAtheris (LiveryLab Studios)</p></section></div>';
+ const brand='<div class="brandmark"><span class="logo-mark">fx</span><span>LiveryLab <span class="gradient">Academy</span></span></div>';
+ if(s.authScreen==='register'){
+ content.innerHTML='<div class="auth-layout"><section class="auth-card">'+brand+
+ '<span class="eyebrow">[ + ] BEWERBUNG</span><h1>Dein Weg in die <span class="gradient">Academy.</span></h1>'+
+ '<p class="lede">Erstelle dein Konto. Danach muss NyxAtheris deine Anmeldung erst freigeben, bevor du die Kurse nutzen kannst.</p>'+
+ '<form data-form="register"><div class="form-group"><label class="form-label" for="reg-email">E-Mail-Adresse</label>'+
+ '<input class="input" type="email" id="reg-email" name="email" autocomplete="email" required maxlength="254" placeholder="du@beispiel.de"></div>'+
+ '<div class="form-group"><label class="form-label" for="reg-user">Benutzername</label>'+
+ '<input class="input" id="reg-user" name="username" autocomplete="username" required minlength="3" maxlength="24" pattern="[A-Za-z][A-Za-z0-9_]{2,23}" placeholder="DeinBenutzername"></div>'+
+ '<div class="form-group"><label class="form-label" for="reg-pass">Passwort (mind. 14 Zeichen)</label>'+
+ '<input class="input" type="password" id="reg-pass" name="password" autocomplete="new-password" minlength="14" maxlength="256" required></div>'+
+ '<div class="form-group"><label class="form-label" for="reg-confirm">Passwort wiederholen</label>'+
+ '<input class="input" type="password" id="reg-confirm" name="confirm_password" autocomplete="new-password" minlength="14" required></div>'+
+ '<button class="btn primary block" type="submit">Registrierungsanfrage senden →</button></form>'+
+ '<p class="micro">Dein Passwort wird über Supabase Auth verarbeitet. Du musst möglicherweise deine E-Mail bestätigen. Die Freischaltung erfolgt erst durch einen Administrator.</p>'+
+ '<button type="button" class="btn ghost block" data-action="show-login">← Bereits registriert? Anmelden</button>'+
+ '<p class="smallprint" style="text-align:center;margin-top:18px">Made with 💙 from NyxAtheris (LiveryLab Studios)</p></section></div>';return;
+ }
+ if(s.authScreen==='sent'){
+ content.innerHTML='<div class="auth-layout"><section class="auth-card auth-success">'+brand+
+ '<span class="auth-check">✓</span><span class="eyebrow">ANFRAGE VERSENDET</span>'+
+ '<h1>Registrierung <span class="gradient">eingegangen.</span></h1>'+
+ '<p class="lede">Deine Registrierungsanfrage wurde gesendet. Bitte bestätige deine E-Mail-Adresse, falls du eine Bestätigungsnachricht bekommst. Erst nach Freigabe durch NyxAtheris kannst du die Academy benutzen.</p>'+
+ '<button class="btn primary block" type="button" data-action="show-login">Zur Anmeldung →</button>'+
+ '<a class="btn ghost block" style="margin-top:10px" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord-Support</a></section></div>';return;
+ }
+ content.innerHTML='<div class="auth-layout"><section class="auth-card">'+brand+
+ '<span class="eyebrow">[ 01 ] DEVELOPER ACADEMY</span><h1>Lernen. Entwickeln.<br><span class="gradient">Weiterkommen.</span></h1>'+
+ '<p class="lede">Melde dich mit deinem Benutzernamen oder deiner E-Mail-Adresse an.</p>'+
+ '<form data-form="login"><div class="form-group"><label class="form-label" for="username">Benutzername oder E-Mail</label>'+
+ '<input class="input" id="username" name="username" autocomplete="username" required minlength="3" maxlength="254" placeholder="name@beispiel.de oder dein_name"></div>'+
+ '<div class="form-group"><label class="form-label" for="password">Passwort</label>'+
+ '<input class="input" type="password" id="password" name="password" autocomplete="current-password" required placeholder="Dein Passwort"></div>'+
+ '<button class="btn primary block" type="submit">Anmelden →</button></form>'+
+ '<div class="auth-secondary"><span>Noch kein Konto?</span><button type="button" class="btn" data-action="show-register">Jetzt registrieren →</button></div>'+
+ '<p class="micro">Du benötigst nach der Registrierung eine Freigabe durch das Team.</p>'+
+ '<a class="btn discord block discord-block" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord beitreten</a>'+
+ '<p class="smallprint" style="text-align:center;margin-top:19px">Made with 💙 from NyxAtheris (LiveryLab Studios)</p></section></div>';
+}
+async function registerAccount(fd){
+ const email=String(fd.get('email')||'').trim().toLowerCase();
+ const username=String(fd.get('username')||'').trim();
+ const password=String(fd.get('password')||'');
+ if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)||email.length>254)throw Error('Bitte eine gültige E-Mail-Adresse eingeben.');
+ if(!/^[A-Za-z][A-Za-z0-9_]{2,23}$/.test(username))throw Error('Benutzername: 3–24 Zeichen, Buchstaben, Zahlen und Unterstrich.');
+ if(password.length<14||password.length>256)throw Error('Das Passwort muss 14–256 Zeichen lang sein.');
+ if(password!==String(fd.get('confirm_password')||''))throw Error('Die beiden Passwörter stimmen nicht überein.');
+ const res=await api.auth.signUp({email,password,options:{
+  data:{username:username.toLowerCase(),name:username},
+  emailRedirectTo:'https://akraniss05.github.io/liverylab-academy/'
+ }});
+ if(res.error)throw res.error;
+ if(res.data?.session)await api.auth.signOut({scope:'local'});
+ s.authScreen='sent';login();
+}
+function waitingApproval(status){
+ s.ready=false;frame();
+ const pending=status==='pending';
+ content.innerHTML='<div class="auth-layout"><section class="auth-card auth-success"><span class="auth-check">'+(pending?'◷':'⛔')+'</span>'+
+ '<span class="eyebrow">'+(pending?'ANFRAGE IN PRÜFUNG':'ZUGRIFF GESPERRT')+'</span>'+
+ '<h1>'+(pending?'Warte auf deine <span class="gradient">Freigabe.</span>':'Dein Zugang ist <span class="gradient">gesperrt.</span>')+'</h1>'+
+ '<p class="lede">'+(pending?'Dein Konto ist angelegt. Der Administrator muss deine Registrierungsanfrage zuerst genehmigen. Bitte kontrolliere außerdem, ob du deine E-Mail-Adresse bestätigt hast.':'Der Administrator hat den Zugriff auf dieses Konto gesperrt. Du kannst derzeit keine Lektionen, Prüfungen oder Projektdaten abrufen.')+'</p>'+
+ '<button class="btn primary block" type="button" data-action="retry-access">Freigabe erneut prüfen →</button>'+
+ '<button class="btn ghost block" style="margin-top:9px" type="button" data-action="logout">Abmelden</button>'+
+ '<a class="btn discord block" style="margin-top:9px" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Support auf Discord</a></section></div>';
 }
 async function signIn(fd,button){
  var identifier=String(fd.get('username')||'').trim().toLowerCase();
@@ -130,8 +194,10 @@ async function boot(){
   await window.LLMFA.refresh(api);
   if(window.LLMFA.pending){s.ready=false;frame();content.className='content mfa-box';await window.LLMFA.renderGate(content,{client:api,onSuccess:async function(){content.className='content';await boot();},onLogout:logout});return;}
   content.className='content';
-  var r=await api.from('academy_profiles').select('id,display_name,username,role,active,needs_password_change').eq('id',s.user.id).maybeSingle();
-  if(r.error)throw r.error;if(!r.data||!r.data.active)throw Error('Dein Konto ist nicht freigeschaltet.');
+  var r=await api.from('academy_profiles').select('id,display_name,username,role,active,access_status,needs_password_change').eq('id',s.user.id).maybeSingle();
+  if(r.error)throw r.error;
+  if(!r.data)throw Error('Dein Konto wurde noch nicht eingerichtet.');
+  if(!r.data.active||r.data.access_status!=='approved'){s.profile=r.data;waitingApproval(r.data.access_status||'blocked');return;}
   s.profile=r.data;
   if(s.profile.needs_password_change){passwordChangeRequired();return;}
   await loadData();
@@ -156,7 +222,7 @@ async function loadData(){
  s.progress={done:Array.isArray(data.done)?data.done:[],watched:Array.isArray(data.watched)?data.watched:[],exams:data.exams||{},practiced:Array.isArray(data.practiced)?data.practiced:[]};
  s.ready=true;frame();await navigateCurrent();
 }
-async function logout(){try{await api.auth.signOut();}catch(e){}s.ready=false;s.user=null;s.profile=null;s.lesson=null;s.courses=[];s.lessons=[];location.hash='#home';login();}
+async function logout(){try{await api.auth.signOut();}catch(e){}s.authScreen='login';s.ready=false;s.user=null;s.profile=null;s.lesson=null;s.courses=[];s.lessons=[];location.hash='#home';login();}
 async function saveProgress(){
  var res=await api.from('academy_progress').upsert({user_id:s.user.id,key:'liverylab-v10',payload:s.progress,updated_at:new Date().toISOString()},{onConflict:'user_id,key'});
  if(res.error)throw res.error;frame();
@@ -454,7 +520,7 @@ function examsPage(){
   .map(courseOf).filter(Boolean),ready=s.courses.filter(c=>countDone(c.id)===lessonsOf(c.id).length&&lessonsOf(c.id).length>=3);
  var display=Array.from(new Map([...ready,...recommended].map(c=>[c.id,c])).values()).slice(0,9);
  return pageHeading('PRÜFUNGEN','Zeig, was du <span class="gradient">gelernt hast.</span>',
- 'Schließe erst die Lektionen deines Kurses ab. Danach kannst du eine Prüfung mit maximal zehn Fragen schreiben.')+
+ 'Schließe alle Lektionen eines Kurses ab. Danach startet die Abschlussprüfung mit bis zu 20 Fragen. Du bestehst ab 80 %.')+
  '<section class="section"><div class="course-grid">'+display.map(c=>{
   var n=lessonsOf(c.id).length,done=countDone(c.id),best=(s.progress.exams||{})[c.id];
   return '<article class="course-card '+(best?'is-complete':'')+'"><div class="course-head"><span class="course-icon">'+esc(courseAccent(c))+'</span><span class="chip '+(best?'free':'')+'">'+(best?'✓ Bestanden':'Abschluss')+'</span></div>'+
@@ -464,14 +530,38 @@ function examsPage(){
  }).join('')+'</div><div class="catalog-footer"><button class="btn" data-go="courses">Alle Lernpfade ansehen →</button></div></section>';
 }
 async function loadExam(id){
- s.exam=null;var lessons=lessonsOf(id);if(!lessons.length||lessons.some(function(l){return !doneIds().has(l.id);}))return;
- var res=await api.from('ll_lesson_content').select('lesson_id,payload').in('lesson_id',lessons.map(function(l){return l.id;}));
- if(res.error){notice(formatError(res.error));return;}
- var questions=(res.data||[]).filter(function(x){return x.payload&&Array.isArray(x.payload.options)&&x.payload.options.length>1;});
- for(var i=questions.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),temp=questions[i];questions[i]=questions[j];questions[j]=temp;}
- s.exam={items:questions.slice(0,20),at:0,answers:[]};
+ s.exam=null;
+ const lessons=lessonsOf(id);
+ if(!lessons.length||lessons.some(l=>!doneIds().has(l.id)))return;
+ const res=await api.rpc('academy_exam_questions',{p_course:id});
+ if(res.error){notice('Prüfungsfragen konnten nicht geladen werden: '+formatError(res.error));return;}
+ const questions=(res.data||[]).filter(x=>x.payload&&Array.isArray(x.payload.options)&&x.payload.options.length>1&&Number.isInteger(Number(x.payload.correct)));
+ s.exam={items:questions.slice(0,20),at:0,answers:[],review:[],busy:false};
 }
-
+async function submitExamAnswer(answerIndex){
+ const ex=s.exam,route=parseRoute();
+ if(!ex||ex.busy||ex.at>=ex.items.length||!Number.isInteger(answerIndex))return;
+ const item=ex.items[ex.at],p=item.payload;
+ if(answerIndex<0||answerIndex>=p.options.length)return;
+ ex.busy=true;
+ const correct=answerIndex===Number(p.correct);
+ ex.answers.push(correct);
+ ex.review.push({quiz:p.quiz||'Wissensfrage',correct,chosen:p.options[answerIndex],expected:p.options[Number(p.correct)]||'—'});
+ ex.at++;
+ if(ex.at===ex.items.length){
+  const score=ex.answers.filter(Boolean).length;
+  const pass=score>=Math.ceil(ex.items.length*.8);
+  if(pass){
+   const existing=(s.progress.exams||{})[route.id];
+   if(!s.progress.exams)s.progress.exams={};
+   if(!existing||existing===true||Number(existing.score||0)<score){
+    s.progress.exams[route.id]={score,total:ex.items.length,passed:true,at:new Date().toISOString()};
+   }
+   try{await saveProgress()}catch(err){notice('Prüfungsergebnis konnte nicht synchronisiert werden: '+formatError(err));}
+  }
+ }
+ ex.busy=false;render();
+}
 function examPage(id){
  const course=courseOf(id);if(!course)return notFound();
  const all=lessonsOf(id),done=countDone(id),ready=done===all.length;
@@ -489,7 +579,7 @@ function examPage(id){
   return back+'<section class="exam-result"><div class="award">'+(pass?'🏆':'◈')+'</div>'+
   '<span class="eyebrow">PRÜFUNG · '+esc(course.name)+'</span><h1>'+score+' von '+ex.items.length+' richtig</h1>'+
   '<p class="lede">'+(pass?'Prüfung bestanden. Dein Ergebnis ist gespeichert.':'Noch nicht bestanden. Wiederhole die Lektionen und versuche es erneut.')+'</p>'+
-  '<button class="btn primary" data-action="restart-exam">Erneut versuchen →</button></section>';
+  '<div class="exam-breakdown"><strong>Deine Auswertung</strong><p>'+Math.round(score/ex.items.length*100)+' % richtig · '+(ex.items.length-score)+' Fehler</p>'+ex.review.filter(x=>!x.correct).slice(0,8).map(x=>'<div class="exam-mistake"><span>'+esc(x.quiz)+'</span><small>Richtig: '+esc(x.expected)+'</small></div>').join('')+'</div><div class="actions-pair"><button class="btn" data-go="exams">← Prüfungen</button><button class="btn primary" data-action="restart-exam">Erneut versuchen →</button></div></section>';
  }
  const q=ex.items[ex.at],p=q.payload;
  return back+'<section class="exam-intro"><span class="eyebrow">[ ★ ] ABSCHLUSS</span><h1>Abschlussprüfung</h1>'+
@@ -553,42 +643,53 @@ function scriptPage(){
  '<button class="btn primary" data-go="track/fivem">FiveM-Lernpfad →</button></div>';
 }
 
+function referenceLibrary(){
+ return window.LL_REFERENCE_DATA||{
+  lua:{name:'Lua',url:'https://www.lua.org/manual/5.4/',
+  groups:{'Grundlagen':[['local x = 1','Lokale Variable'],['print(x)','Wert ausgeben'],['if x > 1 then ... end','Bedingung']]}}
+ };
+}
+function referenceResults(){
+ const lib=referenceLibrary(),entry=lib[s.refLang]||lib.lua||Object.values(lib)[0];
+ if(!entry)return {html:'<div class="empty">Keine Referenzen vorhanden.</div>',count:0};
+ const query=String(s.refSearch||'').toLocaleLowerCase('de-DE').trim();
+ let hits=0;
+ const groups=Object.entries(entry.groups||{}).filter(([name])=>s.refGroup==='Alle'||s.refGroup===name);
+ const html=groups.map(([name,items])=>{
+  const matching=items.filter(row=>!query||[name,...row].some(v=>String(v).toLocaleLowerCase('de-DE').includes(query)));
+  hits+=matching.length;
+  if(!matching.length)return '';
+  return '<section class="reference-section"><div class="ref-section-head"><h2>'+esc(name)+'</h2>'+
+   '<span class="ref-result-count">'+matching.length+' Einträge</span></div>'+
+   '<div class="reference-block"><div class="reference-head">SYNTAX / FUNKTION <span>ERKLÄRUNG</span></div>'+
+   matching.map(([code,meaning])=>'<div class="reference-row"><code>'+esc(code)+'</code>'+
+    '<span>'+esc(meaning)+'</span><button type="button" class="ref-copy" data-ref-copy="'+esc(code)+'" aria-label="Code kopieren: '+esc(meaning)+'" title="Kopieren">⧉</button></div>').join('')+
+   '</div></section>';
+ }).join('');
+ return {html:html||'<div class="empty"><h3>Keine Treffer</h3><p>Versuche einen anderen Suchbegriff oder eine andere Kategorie.</p></div>',count:hits};
+}
 function referencePage(){
- const functions=[
-  ['PlayerPedId()','Deine Spielfigur (Client)'],
-  ['GetPlayerPed(source)','Ped eines Spielers (Server)'],
-  ['GetEntityCoords(entity)','Position einer Entity'],
-  ['SetEntityCoords(entity, x, y, z)','Entity versetzen'],
-  ['RegisterNetEvent(name, cb)','Netzwerk-Event empfangen'],
-  ['TriggerServerEvent(name, ...)','Client → Server'],
-  ['TriggerClientEvent(name, id, ...)','Server → Client'],
-  ['RegisterCommand(name, fn, restricted)','Befehl registrieren'],
-  ['RegisterKeyMapping(cmd, label, device, key)','Tastenbelegung erlauben'],
-  ['CreateThread(fn) / Wait(ms)','Nebenläufige Schleife'],
-  ['AddBlipForCoord(x, y, z)','Kartensymbol'],
-  ['DrawMarker(type, ...)','Marker darstellen']
- ];
- const cheats=[
-  ['local x = 1','Lokale Variable'],
-  ['x ~= y','Ungleich'],
-  ['"Hallo" .. name','Text verketten'],
-  ['#liste','Länge einer Liste'],
-  ['if ok then ... end','Bedingung'],
-  ['for i = 1, 5 do ... end','Zählschleife'],
-  ['for k, v in pairs(t) do ... end','Table durchlaufen'],
-  ['local ok, err = pcall(fn)','Fehler abfangen']
- ];
- return '<section class="track-top"><span class="eyebrow">[ ≡ ] NACHSCHLAGEN</span>'+
- '<h1>Spickzettel</h1><p class="lede">Die wichtigsten Lua- und FiveM-Funktionen schnell nachschlagen – ohne überladene Menüs.</p>'+
- '<p class="micro">Vollständige FiveM-Dokumentation: <a href="https://docs.fivem.net/natives/" target="_blank" rel="noopener noreferrer">docs.fivem.net/natives</a></p></section>'+
- '<section class="reference-block"><div class="reference-head">FUNKTION <span>BEDEUTUNG</span></div>'+
- functions.map(([fn,desc])=>'<div class="reference-row"><code>'+esc(fn)+'</code><span>'+esc(desc)+'</span></div>').join('')+'</section>'+
- '<section class="section"><h2>Lua auf einen Blick</h2><div class="reference-block">'+
- cheats.map(([fn,desc])=>'<div class="reference-row"><code>'+esc(fn)+'</code><span>'+esc(desc)+'</span></div>').join('')+
- '</div></section>'+
- '<section class="section"><h2>Event-Richtungen</h2><div class="codebox"><pre><code>'+esc('TriggerEvent(name, ...)         -- lokal\nTriggerServerEvent(name, ...)   -- Client zu Server\nTriggerClientEvent(name, id)    -- Server zu Client')+'</code></pre></div>'+
- '<p class="micro">Wichtig: Werte vom Client serverseitig überprüfen, besonders bei Geld, Inventar und Berechtigungen.</p></section>'+
- '<div class="actions-pair"><button class="btn" data-go="home">← Übersicht</button><button class="btn primary" data-go="script">Dein Script →</button></div>';
+ const lib=referenceLibrary(),entry=lib[s.refLang]||lib.lua||Object.values(lib)[0];
+ const langs=Object.keys(lib),groups=Object.keys(entry?.groups||{}),allCount=Object.values(lib).reduce((sum,v)=>sum+Object.values(v.groups||{}).reduce((a,arr)=>a+arr.length,0),0);
+ const results=referenceResults();
+ return '<section class="track-top"><span class="eyebrow">[ ≡ ] PROGRAMMIER-REFERENZ</span>'+
+ '<h1>Dein <em>Spickzettel.</em></h1>'+
+ '<p class="lede">Alle wichtigen Grundlagen, Funktionen, Befehle und praktische Beispiele, nach Programmiersprache sortiert. Die komplette Sprachreferenz findest du zusätzlich in der offiziellen Dokumentation.</p>'+
+ '<div class="ref-overview"><span>⌘ '+langs.length+' Sprachen & Tools</span><span>▦ '+allCount+' Referenzeinträge</span></div></section>'+
+ '<section class="reference-picker" aria-label="Programmiersprache wählen">'+
+ '<div class="form-row"><div class="form-group"><label class="form-label" for="reference-language">Programmiersprache auswählen</label>'+
+ '<select id="reference-language" class="select" aria-label="Programmiersprache auswählen">'+
+ langs.map(k=>'<option value="'+esc(k)+'" '+(k===s.refLang?'selected':'')+'>'+esc(lib[k].name)+'</option>').join('')+'</select></div>'+
+ '<div class="form-group"><label class="form-label" for="reference-group">Themengebiet</label><select id="reference-group" class="select">'+
+ '<option value="Alle">Alle Themen</option>'+groups.map(k=>'<option value="'+esc(k)+'" '+(k===s.refGroup?'selected':'')+'>'+esc(k)+'</option>').join('')+'</select></div></div>'+
+ '<label class="form-label" for="reference-search">Funktionen, Befehle oder Begriffe suchen</label>'+
+ '<div class="ref-search-row"><input class="input" id="reference-search" type="search" autocapitalize="off" spellcheck="false" placeholder="z. B. print, loops, array, event ..." value="'+esc(s.refSearch)+'">'+
+ '<span id="reference-count" class="progress-pill">'+results.count+' Treffer</span></div>'+
+ '<a class="ref-official" href="'+safeLink(entry?.url||'https://docs.fivem.net/')+'" target="_blank" rel="noopener noreferrer">Vollständige offizielle '+esc(entry?.name||'')+'-Dokumentation öffnen ↗</a></section>'+
+ '<div id="reference-results">'+results.html+'</div>'+
+ '<section class="section panel"><span class="eyebrow">LERNTIPP</span><h3>Selbst ausprobieren</h3>'+
+ '<p>Nutze die Referenz als Nachschlagewerk und wende die Beispiele direkt in deinen Kursaufgaben an. Verwende bei echten Projekten immer auch die offizielle Dokumentation zur jeweiligen Version.</p>'+
+ '<button type="button" class="btn primary" data-go="courses">Zu den Lernpfaden →</button></section>';
 }
 
 function profilePage(){
@@ -675,38 +776,60 @@ function voucherAdminSection(){
 
 function adminPage(){
  if(s.profile?.role!=='admin')return '<section class="locked-panel"><h2>Nur für Administratoren.</h2></section>';
- var rows=(s.members||[]).map(u=>{
-  var tier=s.memberPlans[u.id]||'free',owner=u.role==='admin';
-  return '<tr><td><strong>'+esc(u.username||u.email||'Mitglied')+'</strong><br><small class="micro">'+esc(u.email||'')+' · '+(owner?'Admin':'Member')+'</small></td>'+
-  '<td><span class="chip '+(u.active?'free':'pro')+'">'+(u.active?'✓ Aktiv':'Gesperrt')+'</span></td>'+
-  '<td><select class="select" data-admin-tier="'+esc(u.id)+'" '+(owner?'disabled':'')+' aria-label="Tarif ändern"><option value="free" '+(tier==='free'?'selected':'')+'>Free</option>'+
-  '<option value="pro" '+(tier==='pro'?'selected':'')+'>Plus</option><option value="ultimate" '+(tier==='ultimate'?'selected':'')+'>Pro</option></select></td>'+
-  '<td><div class="btn-row"><button class="btn small" data-reset-user="'+esc(u.id)+'" '+(owner?'disabled':'')+'>Passwort</button>'+
-  '<button class="btn small" data-active-user="'+esc(u.id)+'" data-active-value="'+(!u.active)+'" '+(owner?'disabled':'')+'>'+(u.active?'Sperren':'Aktivieren')+'</button>'+
-  '<button class="btn small danger" data-delete-user="'+esc(u.id)+'" '+(owner?'disabled':'')+'>Löschen</button></div></td></tr>';
+ const people=s.members||[],pending=people.filter(u=>u.access_status==='pending'),rest=people.filter(u=>u.access_status!=='pending');
+ const requests='<section class="section approval-section"><div class="section-heading"><div><span class="eyebrow">[ ! ] ANTRÄGE</span>'+
+ '<h2>Registrierungsanfragen <span class="pending-bubble">'+pending.length+'</span></h2>'+
+ '<p>Nur du kannst neue Konten genehmigen. Ohne deine Bestätigung bleiben die Kurse gesperrt.</p></div>'+
+ '<button class="btn small" type="button" data-action="refresh-admin">Aktualisieren</button></div>'+
+ (pending.length?'<div class="pending-list">'+pending.map(u=>
+ '<article class="approval-card"><span class="approval-avatar">'+esc((u.username||u.email||'U').slice(0,1).toUpperCase())+'</span>'+
+ '<div class="approval-info"><strong>'+esc(u.username||'Neuer Developer')+'</strong><small>'+esc(u.email||'')+'</small>'+
+ '<span class="chip '+(u.email_confirmed?'free':'plus')+'">'+(u.email_confirmed?'✓ E-Mail bestätigt':'E-Mail noch unbestätigt')+'</span></div>'+
+ '<div class="approval-actions"><button class="btn primary small" data-active-user="'+esc(u.id)+'" data-active-value="true" '+(!u.email_confirmed?'disabled title="E-Mail-Bestätigung fehlt"':'')+'>✓ Genehmigen</button>'+
+ '<button class="btn small danger" data-active-user="'+esc(u.id)+'" data-active-value="false">Ablehnen</button></div></article>').join('')+'</div>':
+ '<div class="empty approval-empty"><strong>Keine offenen Anfragen</strong><p>Neue Registrierungen werden hier angezeigt.</p></div>')+'</section>';
+ const status=u=>u.access_status==='blocked'?'<span class="chip pro">⛔ Gesperrt</span>':
+ u.access_status==='pending'?'<span class="chip plus">Wartet</span>':'<span class="chip free">✓ Aktiv</span>';
+ const cards=rest.map(u=>{
+  const owner=u.role==='admin',tier=s.memberPlans[u.id]||'free';
+  return '<article class="member-card"><div class="member-header">'+
+  '<div class="member-avatar">'+esc((u.username||u.email||'?').slice(0,1).toUpperCase())+'</div>'+
+  '<div class="member-identity"><strong>'+esc(u.username||u.email||'Mitglied')+'</strong>'+
+  '<small>'+esc(u.email||'')+'</small></div>'+status(u)+'</div>'+
+  '<div class="member-management"><div><label class="form-label">Mitgliedschaft</label>'+
+   (owner?'<span class="member-admin-tier">Administrator · Vollzugriff</span>':
+   '<select class="select" data-admin-tier="'+esc(u.id)+'" aria-label="Mitgliedschaft ändern für '+esc(u.username||u.email||'Mitglied')+'">'+
+   '<option value="free" '+(tier==='free'?'selected':'')+'>Free · 3/Tag</option>'+
+   '<option value="pro" '+(tier==='pro'?'selected':'')+'>Plus · 6/Tag</option>'+
+   '<option value="ultimate" '+(tier==='ultimate'?'selected':'')+'>Pro/Ultimate · Unbegrenzt</option></select>')+
+   '</div><div class="member-actions">'+
+   '<button class="btn small" data-reset-user="'+esc(u.id)+'" '+(owner?'disabled':'')+'>Passwort zurücksetzen</button>'+
+   '<button class="btn small '+(u.active?'danger':'primary')+'" data-active-user="'+esc(u.id)+'" data-active-value="'+(!u.active)+'" '+(owner?'disabled':'')+'>'+
+   (u.active?'Zugriff sperren':'Zugriff erlauben')+'</button>'+
+   '<button class="btn small danger" data-delete-user="'+esc(u.id)+'" '+(owner?'disabled':'')+'>Löschen</button></div></div></article>';
  }).join('');
- return pageHeading('ADMINISTRATION','Dein <span class="gradient">Team verwalten.</span>',
- 'Erstelle Test- und Teamkonten. Vergib Freischaltungen und verwalte Zugänge direkt in der Academy.')+
- '<section class="section"><div class="section-heading"><div><h2>Neue Konten erstellen</h2><p>Wähle E-Mail oder einen reinen Benutzernamen.</p></div></div>'+
- '<details class="panel admin-create" open><summary><strong>✉ Konto mit E-Mail-Adresse</strong><span class="micro"> Empfohlen für feste Teammitglieder</span></summary>'+
- '<p class="muted">Der Nutzer meldet sich per E-Mail an und kann später einen Benutzernamen festlegen.</p>'+
- '<form data-form="create-email"><div class="form-row"><div class="form-group"><label class="form-label">E-Mail-Adresse</label><input class="input" type="email" name="email" required autocomplete="off" placeholder="name@beispiel.de"></div>'+
- '<div class="form-group"><label class="form-label">Anzeigename</label><input class="input" name="display_name" maxlength="40" placeholder="Optional"></div></div>'+
- '<div class="form-row"><div class="form-group"><label class="form-label">Vorläufiges Passwort (mind. 14 Zeichen)</label><input class="input" type="password" name="password" minlength="14" required autocomplete="new-password"></div>'+
- '<div class="form-group"><label class="form-label">Mitgliedschaft</label><select class="select" name="tier"><option value="free">Free</option><option value="pro">Plus</option><option value="ultimate">Pro</option></select></div></div>'+
- '<button class="btn primary" type="submit">E-Mail-Konto anlegen →</button></form></details>'+
- '<details class="panel admin-create" style="margin-top:14px"><summary><strong>◉ Konto mit Benutzername</strong><span class="micro"> Ohne eigene E-Mail-Adresse</span></summary>'+
- '<p class="muted">Das Startpasswort muss beim ersten Login geändert werden.</p>'+
- '<form data-form="create-user"><div class="form-row"><div class="form-group"><label class="form-label">Benutzername</label><input class="input" name="username" pattern="[A-Za-z][A-Za-z0-9_]{2,23}" maxlength="24" placeholder="developer23" required></div>'+
- '<div class="form-group"><label class="form-label">Vorläufiges Passwort (mind. 14 Zeichen)</label><input class="input" type="password" name="password" minlength="14" required autocomplete="new-password"></div>'+
- '<div class="form-group"><label class="form-label">Mitgliedschaft</label><select class="select" name="tier"><option value="free">Free</option><option value="pro">Plus</option><option value="ultimate">Pro</option></select></div></div>'+
- '<button class="btn primary" type="submit">Benutzerkonto anlegen →</button></form></details></section>'+
- '<section class="section"><div class="section-heading"><div><h2>Deine Teamkonten</h2><p>Änderungen an Tarifen gelten über Supabase sofort.</p></div>'+
- '<button type="button" class="btn small" data-action="refresh-admin">Aktualisieren</button></div>'+
- '<div class="tablewrap"><table class="account-table"><thead><tr><th>Konto</th><th>Status</th><th>Tarif</th><th>Aktionen</th></tr></thead><tbody>'+
- (rows||'<tr><td colspan="4">Noch keine Konten geladen. Tippe auf Aktualisieren.</td></tr>')+
- '</tbody></table></div><div class="btn-row" style="margin-top:18px"><button class="btn small" data-action="admin-prev" '+(s.adminPage===1?'disabled':'')+'>← Vorherige</button>'+
- '<span class="micro" style="align-self:center">Seite '+s.adminPage+'</span><button class="btn small" data-action="admin-next" '+(s.members.length<100?'disabled':'')+'>Nächste →</button></div></section>'+voucherAdminSection();
+ return pageHeading('ADMINISTRATION','Dein <span class="gradient">Team.</span>',
+ 'Registrierungen prüfen, Zugänge sperren oder wieder freigeben und Mitgliedschaften direkt ändern.')+
+ requests+
+ '<section class="section"><div class="section-heading"><div><span class="eyebrow">[ 02 ] MITGLIEDER</span>'+
+ '<h2>Deine Teamkonten</h2><p>Tarifänderungen werden über den geschützten Administrationsserver gespeichert. Administratoren haben immer Vollzugriff.</p></div></div>'+
+ '<div class="member-list">'+(cards||'<div class="empty">Noch keine aktiven Mitglieder.</div>')+'</div>'+
+ '<div class="admin-pagination"><button class="btn small" data-action="admin-prev" '+(s.adminPage===1?'disabled':'')+'>← Vorherige</button>'+
+ '<span>Seite '+s.adminPage+'</span><button class="btn small" data-action="admin-next" '+(people.length<100?'disabled':'')+'>Nächste →</button></div></section>'+
+ '<section class="section"><details class="panel admin-create"><summary><strong>+ Manuell ein Teamkonto erstellen</strong></summary>'+
+ '<p>Optional: Erstelle selbst ein Konto. Teamkonten werden direkt freigegeben und müssen ihr vorläufiges Passwort ändern.</p>'+
+ '<form data-form="create-email"><h3>Mit E-Mail-Adresse</h3><div class="form-row">'+
+ '<div class="form-group"><label class="form-label">E-Mail-Adresse</label><input class="input" type="email" name="email" required placeholder="name@beispiel.de"></div>'+
+ '<div class="form-group"><label class="form-label">Anzeigename</label><input class="input" name="display_name" maxlength="40" placeholder="Optional"></div>'+
+ '<div class="form-group"><label class="form-label">Vorläufiges Passwort</label><input class="input" type="password" name="password" minlength="14" required autocomplete="new-password"></div>'+
+ '<div class="form-group"><label class="form-label">Tarif</label><select class="select" name="tier"><option value="free">Free</option><option value="pro">Plus</option><option value="ultimate">Pro/Ultimate</option></select></div></div>'+
+ '<button class="btn primary" type="submit">Teamkonto mit E-Mail erstellen →</button></form>'+
+ '<div class="divider-form"></div><form data-form="create-user"><h3>Mit Benutzername</h3><div class="form-row">'+
+ '<div class="form-group"><label class="form-label">Benutzername</label><input class="input" name="username" pattern="[A-Za-z][A-Za-z0-9_]{2,23}" required maxlength="24"></div>'+
+ '<div class="form-group"><label class="form-label">Vorläufiges Passwort</label><input class="input" type="password" name="password" minlength="14" required autocomplete="new-password"></div>'+
+ '<div class="form-group"><label class="form-label">Tarif</label><select class="select" name="tier"><option value="free">Free</option><option value="pro">Plus</option><option value="ultimate">Pro/Ultimate</option></select></div></div>'+
+ '<button class="btn primary" type="submit">Benutzerkonto erstellen →</button></form></details></section>'+
+ voucherAdminSection();
 }
 async function fetchMembers(){
  if(s.profile?.role!=='admin')return;
@@ -715,21 +838,21 @@ async function fetchMembers(){
  if(tier.error)throw tier.error;s.memberPlans={};(tier.data||[]).forEach(function(r){s.memberPlans[r.user_id]=r.tier;});
 }
 async function updateTier(uid,tier){
- if(s.profile?.role!=='admin'||!['free','pro','ultimate'].includes(tier))return;
- var res=await api.from('academy_plans').upsert({user_id:uid,tier:tier,granted_by:s.user.id,expires_at:null,updated_at:new Date().toISOString()},{onConflict:'user_id'});
- if(res.error)throw res.error;s.memberPlans[uid]=tier;
- notice('Tarif auf '+(plans[tier]||tier)+' geändert.');if(uid===s.user.id){s.tier=tier;frame();}
+ if(s.profile?.role!=='admin'||!['free','pro','ultimate'].includes(tier))throw Error('Tarifwechsel nicht erlaubt.');
+ const result=await adminCall({action:'setTier',userId:uid,tier});
+ if(!result.ok)throw Error(result.error||'Tarif konnte nicht geändert werden.');
+ s.memberPlans[uid]=tier;notice('Mitgliedschaft auf '+(plans[tier]||tier)+' geändert.');
 }
 async function adminAction(action,node){
  try{
-  if(action==='refresh-admin'){await fetchMembers();render();return;}
+  if(action==='refresh-admin'){await Promise.all([fetchMembers(),fetchVouchers()]);render();return;}
   if(action==='admin-prev'||action==='admin-next'){s.adminPage=Math.max(1,s.adminPage+(action==='admin-next'?1:-1));await fetchMembers();render();return;}
   if(node.hasAttribute('data-reset-user')){
     var pwd=prompt('Neues vorläufiges Passwort (mindestens 14 Zeichen):');if(pwd===null)return;
     await adminCall({action:'resetUsernamePassword',userId:node.dataset.resetUser,password:pwd});notice('Passwort zurückgesetzt; Nutzer muss es beim Login ändern.');await fetchMembers();render();return;
   }
   if(node.hasAttribute('data-active-user')){
-    var enable=node.dataset.activeValue==='true';if(!confirm(enable?'Konto aktivieren?':'Diesen Account sperren?'))return;
+    var enable=node.dataset.activeValue==='true';if(!confirm(enable?'Zugang freigeben bzw. wieder aktivieren?':'Diesen Account sofort sperren?'))return;
     await adminCall({action:'setActive',userId:node.dataset.activeUser,active:enable});notice('Kontostatus geändert.');await fetchMembers();render();return;
   }
   if(node.hasAttribute('data-delete-user')){
@@ -747,6 +870,9 @@ document.addEventListener('click',async function(e){
  if(action){
   var name=action.dataset.action;
   if(name==='logout'){await logout();return;}
+  if(name==='show-register'){s.authScreen='register';login();return;}
+  if(name==='show-login'){s.authScreen='login';login();return;}
+  if(name==='retry-access'){await boot();return;}
   if(name==='more-courses'){
    s.catalogLimit=Math.min(filteredCourses().length,s.catalogLimit+9);
    var wrap=$('#catalog-container');if(wrap)wrap.innerHTML=catalogItems();return;
@@ -806,6 +932,9 @@ document.addEventListener('click',async function(e){
   }catch(err){notice('Gutschein: '+formatError(err))}
   return;
  }
+ var codeButton=e.target.closest('[data-ref-copy]');
+ if(codeButton){try{await navigator.clipboard.writeText(codeButton.dataset.refCopy);notice('Code kopiert.');}
+ catch(_){notice('Kopieren im Browser nicht verfügbar.');}return;}
  var couponButton=e.target.closest('[data-copy-voucher]');
  if(couponButton){
   try{await navigator.clipboard.writeText(couponButton.dataset.copyVoucher);notice('Gutscheincode kopiert.');}
@@ -828,6 +957,13 @@ document.addEventListener('keydown',function(e){
  if(e.key==='Escape'){sidebar.classList.remove('open');syncBackdrop();}
 });
 document.addEventListener('input',function(e){
+ if(e.target.id==='reference-search'){
+  s.refSearch=e.target.value;const results=referenceResults();
+  const container=$('#reference-results'),counter=$('#reference-count');
+  if(container)container.innerHTML=results.html;
+  if(counter)counter.textContent=results.count+' Treffer';
+  return;
+ }
  if(e.target.id==='course-search'){
   s.search=e.target.value;s.catalogLimit=9;
   var list=$('#catalog-container'),count=$('#course-count');
@@ -840,6 +976,15 @@ document.addEventListener('input',function(e){
  }
 });
 document.addEventListener('change',async function(e){
+ if(e.target.id==='reference-language'){
+  s.refLang=e.target.value;s.refSearch='';s.refGroup='Alle';render();return;
+ }
+ if(e.target.id==='reference-group'){
+  s.refGroup=e.target.value;const results=referenceResults();
+  const list=$('#reference-results'),count=$('#reference-count');
+  if(list)list.innerHTML=results.html;if(count)count.textContent=results.count+' Treffer';
+  return;
+ }
  if(e.target.matches('select[name="kind"]')&&e.target.closest('form[data-form="create-voucher"]')){
   const frm=e.target.closest('form'),discount=frm.querySelector('.voucher-discount-field'),gift=frm.querySelector('.voucher-gift-field');
   if(discount)discount.hidden=e.target.value!=='discount';
@@ -874,6 +1019,7 @@ document.addEventListener('submit',async function(e){
  if(!button)return;button.disabled=true;
  try{
   if(mode==='login'){await signIn(fd,button);return;}
+  if(mode==='register'){await registerAccount(fd);return;}
   if(mode==='first-password'){await finishPassword(fd,button);return;}
   if(mode==='set-username'){
    var chosen=String(fd.get('username')||'').trim();

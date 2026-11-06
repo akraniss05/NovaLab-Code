@@ -1,4 +1,4 @@
-name: Deploy LiveryLab Academy v12 • browser tested
+name: Deploy LiveryLab Academy v14 • access approvals and references
 on:
   push:
     branches: [main]
@@ -19,6 +19,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Validate sources
         run: |
+          node --check site/reference-data.js
           node --check site/academy.js
           node --check site/auth-mfa-v5.js
           node --check site/config.js
@@ -32,7 +33,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: academy-v12-mobile-captures
+          name: academy-v14-mobile-captures
           path: test-results/
           if-no-files-found: ignore
       - uses: actions/configure-pages@v5

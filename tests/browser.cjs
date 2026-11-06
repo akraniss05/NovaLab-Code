@@ -1,21 +1,24 @@
-/* LiveryLab Academy v13: actual Chromium mobile layout regression tests */
+/* LiveryLab Academy v14: actual Chromium mobile layout regression tests */
 'use strict';
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),assert=require('node:assert/strict');
 const {chromium}=require('playwright-core');
 const root=path.join(__dirname,'..');
 const source=fs.readFileSync(path.join(root,'site/academy.js'),'utf8');
-const css=fs.readFileSync(path.join(root,'site/app-v13.css'),'utf8');
-const expose='\nwindow.__views={s,trackPage,lessonPage,scriptPage,examPage,referencePage,plansPage};\n})();';
+const css=fs.readFileSync(path.join(root,'site/app-v14.css'),'utf8');
+const expose='\nwindow.__views={s,trackPage,lessonPage,scriptPage,examPage,referencePage,plansPage,adminPage,login};\n})();';
 assert.match(source,/\ninit\(\);\n\}\)\(\);\s*$/);
 const rewritten=source.replace(/\ninit\(\);\n\}\)\(\);\s*$/,expose);
 const fake=()=>({innerHTML:'',classList:{toggle(){},add(){},remove(){},contains(){return false}}});
+const fakeNodes={};
 const context={
  window:{LL_CONFIG:{},addEventListener(){}},
- document:{querySelector(){return fake()},querySelectorAll(){return[]},addEventListener(){},body:{classList:{toggle(){}}}},
+ document:{querySelector(key){return fakeNodes[key]||(fakeNodes[key]=fake())},querySelectorAll(){return[]},addEventListener(){},body:{classList:{toggle(){}}}},
  location:{hash:'#lesson/fivem-01'},
  localStorage:{getItem(){return null},setItem(){}},setTimeout(){},clearTimeout(){},console
 };
-vm.createContext(context);vm.runInContext(rewritten,context,{filename:'academy.js'});
+vm.createContext(context);
+vm.runInContext(fs.readFileSync(path.join(root,'site/reference-data.js'),'utf8'),context,{filename:'reference-data.js'});
+vm.runInContext(rewritten,context,{filename:'academy.js'});
 const app=context.window.__views,s=app.s;
 s.ready=true;s.profile={display_name:'Developer',username:'developer',role:'student',active:true};
 s.user={email:'developer@example.com'};s.tier='ultimate';
@@ -49,6 +52,16 @@ const scenes=[
 s.progress.done=s.lessons.map(l=>l.id);
 s.exam={items:Array.from({length:20},()=>({payload:{quiz:'Wofür benutzt man eine Variable?',options:['Wert speichern','Zum Löschen','Nur für Videos'],correct:0}})),at:0,answers:[]};
 scenes.push(['exam',app.examPage('fivem'),['.exam-question','.exam-dots','.exam-option']]);
+s.profile.role='admin';
+s.members=[
+ {id:'pending-test',username:'DeveloperNeu',email:'neu@example.com',role:'student',active:false,access_status:'pending',email_confirmed:true},
+ {id:'member-test',username:'DevAktiv',email:'dev@example.com',role:'student',active:true,access_status:'approved',email_confirmed:true}
+];
+s.memberPlans={'member-test':'pro'};
+scenes.push(['admin',app.adminPage(),['.approval-card','.member-card','.member-management','[data-admin-tier]']]);
+s.ready=false;s.authScreen='register';app.login();
+scenes.push(['registration',fakeNodes['#content'].innerHTML,['form[data-form="register"]','.auth-card']]);
+s.ready=true;s.profile.role='student';
 for(const width of [390,430,1280]){
 const page=await browser.newPage({viewport:{width,height:850},deviceScaleFactor:1});
 for(const [name,markup,selectors] of scenes){

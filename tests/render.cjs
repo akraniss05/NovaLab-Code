@@ -4,7 +4,7 @@
 const assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');
 const source=fs.readFileSync(path.join(__dirname,'../site/academy.js'),'utf8');
 assert.match(source,/\ninit\(\);\n\}\)\(\);\s*$/);
-const expose="\nwindow.__test={s,homePage,coursesPage,trackPage,lessonPage,scriptPage,referencePage,examPage,profilePage,settingsPage,plansPage,examsPage,courseCard,updateLessonControls,filteredCourses,frame};\n})();";
+const expose="\nwindow.__test={s,homePage,coursesPage,trackPage,lessonPage,scriptPage,referencePage,examPage,profilePage,settingsPage,plansPage,examsPage,adminPage,login,waitingApproval,courseCard,updateLessonControls,filteredCourses,frame};\n})();";
 const body=source.replace(/\ninit\(\);\n\}\)\(\);\s*$/,expose);
 const mocks=new Map();
 const fakeNode=()=>({innerHTML:'',textContent:'',classList:{add(){},remove(){},toggle(){},contains(){return false}},querySelector(){return null}});
@@ -16,7 +16,7 @@ const sandbox={
  localStorage:{getItem(k){return mocks.get(k)||null},setItem(k,v){mocks.set(k,v)},removeItem(k){mocks.delete(k)}},
  console,setTimeout(){},clearTimeout(){},confirm(){return true},FormData:class{},
 };
-vm.createContext(sandbox);vm.runInContext(body,sandbox,{filename:'academy.js'});
+vm.createContext(sandbox);vm.runInContext(fs.readFileSync(path.join(__dirname,'../site/reference-data.js'),'utf8'),sandbox,{filename:'reference-data.js'});vm.runInContext(body,sandbox,{filename:'academy.js'});
 const app=sandbox.window.__test,state=app.s;
 const course={id:'python',name:'Python',category:'Sprachen',level:'beginner'};
 const lesson={id:'python-01',course_id:'python',chapter:'Grundlagen',position:10,title:'Variablen',summary:'Variablen kennenlernen',minutes:15,required_plan:'free'};
@@ -32,6 +32,8 @@ assert(app.trackPage('python').includes('status-ring'),'Reference-style lesson s
 assert(app.scriptPage().includes('sh_shop'),'Script project page rendered');
 assert(app.scriptPage().includes('file-tabs'),'File tabs rendered');
 assert(app.referencePage().includes('Spickzettel'),'Reference rendered');
+assert(app.referencePage().includes('reference-language'),'Language picker rendered');
+assert(app.referencePage().includes('485 Referenzeinträge'),'Full reference library available');
 const lessonHtml=app.lessonPage('python-01');
 for(const value of ['practice-input','complete-practice','load-video','video-check','Wissen anwenden'])
  assert(lessonHtml.includes(value),'Missing lesson feature '+value);
@@ -55,4 +57,13 @@ state.ready=true;
 sandbox.location.hash='#script';app.frame();
 assert(fakeNodes['#bottom-nav'].innerHTML.includes('Script'),'Script navigation visible');
 assert(fakeNodes['#bottom-nav'].innerHTML.includes('Referenz'),'Reference navigation visible');
-console.log('All v12 views and four navigation tabs render correctly');
+state.members=[{id:'pending-user',username:'TestUser',email:'test@example.com',access_status:'pending',email_confirmed:true,active:false,role:'student'}];
+state.profile.role='admin';
+assert(app.adminPage().includes('Registrierungsanfragen'),'Pending approval cards render');
+assert(app.adminPage().includes('Genehmigen'),'Admin approval action renders');
+assert(app.adminPage().includes('data-admin-tier')===false,'Pending accounts do not have tier controls yet');
+state.authScreen='register';app.login();
+assert(fakeNodes['#content'].innerHTML.includes('Registrierungsanfrage senden'),'Registration form renders');
+app.waitingApproval('pending');
+assert(fakeNodes['#content'].innerHTML.includes('Freigabe'),'Pending approval screen renders');
+console.log('All v14 registration, admin, reference and exam render tests passed');
