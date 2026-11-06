@@ -1,4 +1,4 @@
-name: Deploy LiveryLab Academy v12
+name: Deploy LiveryLab Academy v12 • browser tested
 on:
   push:
     branches: [main]
@@ -24,6 +24,17 @@ jobs:
           node --check site/config.js
           node tests/smoke.cjs
           node tests/render.cjs
+      - name: Install browser test dependency
+        run: npm install --no-save --ignore-scripts --no-package-lock playwright-core@1.56.1
+      - name: Validate mobile layouts in Chrome
+        run: node tests/browser.cjs
+      - name: Upload visual test captures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: academy-v12-mobile-captures
+          path: test-results/
+          if-no-files-found: ignore
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
