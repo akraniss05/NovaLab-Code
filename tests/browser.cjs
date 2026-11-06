@@ -60,7 +60,13 @@ async function run(engine,mobile){
       await page.locator('#ll-menu-overlay [data-go="'+id+'"]').click();
     };
     await page.locator('.v5-mainhero').waitFor();
+    await page.locator('.ll8-page-title').waitFor();
+    await page.locator('.ll8-brand-banner img').waitFor();
+    await page.waitForFunction(()=>{const hero=document.querySelector('.ll8-brand-banner img'),logo=document.querySelector('.topbar .ll8-logo img');return hero?.complete&&hero.naturalWidth>=400&&logo?.complete&&logo.naturalWidth>100});
+    assert.equal(await page.locator('.ll8-page-title h1').textContent(),'Dashboard');
     await page.locator('#ll-menu-button').click();
+    assert.equal(await page.locator('#ll-menu-overlay .ll8-menu-wordmark').count(),1);
+    assert.ok(await page.locator('#ll-menu-overlay .ll7-menu-items svg').count()>=10);
     await page.locator('#ll-menu-search').fill('Designer');
     assert.ok(await page.locator('#ll-menu-overlay [data-go="studio3d"]').isVisible());
     assert.equal(await page.locator('#ll-menu-overlay [data-go="editor"]').isVisible(),false);
@@ -120,6 +126,11 @@ async function run(engine,mobile){
       await checkDownload(page,'#llv-export');
     }
     if(mobile){
+      await page.locator('#ll-menu-button').click();
+      const drawerWidth=await page.locator('.ll-menu-sheet').evaluate(el=>el.getBoundingClientRect().width);
+      assert.ok(drawerWidth>=200&&drawerWidth<=260,'Drawer too wide or narrow: '+drawerWidth);
+      await page.locator('#ll-menu-overlay button[data-ll-close]').click();
+      assert.equal(await page.locator('.mobile-nav').evaluate(el=>getComputedStyle(el).display),'none');
       const layout=await page.evaluate(()=>({
         width:innerWidth,scroll:document.documentElement.scrollWidth,
         overflow:[...document.body.querySelectorAll('*')].filter(el=>el.getBoundingClientRect().right>innerWidth+1)

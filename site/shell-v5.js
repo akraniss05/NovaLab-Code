@@ -3,13 +3,31 @@
 'use strict';
 const $=(s,r=document)=>r.querySelector(s);
 const esc=x=>String(x??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-const defaults={theme:'nebula',accent:'violet',font:'normal',density:'normal',avatar:'◆',cover:'nebula',motion:true,glow:true};
-const options={theme:['nebula','midnight','carbon','daylight'],accent:['violet','cyan','orange','emerald','rose'],font:['small','normal','large'],density:['normal','compact'],avatar:['◆','🦊','🌙','💜','🎵','⌘','🎮','⭐','◈','🐉','💎'],cover:['nebula','aurora','sunset','ocean']};
+const defaults={theme:'nebula',accent:'violet',font:'normal',density:'normal',avatar:'L',cover:'nebula',motion:true,glow:true};
+const options={theme:['nebula','midnight','carbon','daylight'],accent:['violet','cyan','orange','emerald','rose'],font:['small','normal','large'],density:['normal','compact'],avatar:['L','◆','🦊','🌙','💜','🎵','⌘','🎮','⭐','◈','🐉','💎'],cover:['nebula','aurora','sunset','ocean']};
+const icons={
+ home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/>',
+ catalog:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+ roadmaps:'<path d="M3 6 9 3l6 3 6-3v15l-6 3-6-3-6 3Z"/><path d="M9 3v15M15 6v15"/>',
+ videos:'<circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4Z"/>',
+ editor:'<path d="m8 8-4 4 4 4m8-8 4 4-4 4m-3-13-2 18"/>',
+ music:'<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+ studio3d:'<path d="m12 2 9 5v10l-9 5-9-5V7Z"/><path d="m3 7 9 5 9-5m-9 5v10"/>',
+ videolab:'<rect x="3" y="8" width="18" height="13" rx="2"/><path d="M3 8h18V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2Zm5-5 3 5m4-5 3 5"/>',
+ practice:'<path d="M6 11h12a4 4 0 0 1 4 4v2a3 3 0 0 1-5 2l-2-2H9l-2 2a3 3 0 0 1-5-2v-2a4 4 0 0 1 4-4Z"/><path d="M7 13v6m-3-3h6m7-2h.01m2 3h.01"/>',
+ friends:'<path d="M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M20 20v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>',
+ leaderboard:'<path d="M8 21h8m-4-4v4m-7-18h14v5a7 7 0 0 1-14 0Zm0 1H2v3a5 5 0 0 0 5 5m12-6h3v3a5 5 0 0 1-5 5"/>',
+ profile:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="9" r="3"/><path d="M6 19a6 6 0 0 1 12 0"/>',
+ settings:'<path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/><path d="M20.2 13.7a1.7 1.7 0 0 0 0-3.4l-1-.2-.6-1.5.6-.9a1.7 1.7 0 0 0-2.4-2.4l-.9.6-1.5-.6-.2-1a1.7 1.7 0 0 0-3.4 0l-.2 1-1.5.6-.9-.6a1.7 1.7 0 0 0-2.4 2.4l.6.9-.6 1.5-1 .2a1.7 1.7 0 0 0 0 3.4l1 .2.6 1.5-.6.9a1.7 1.7 0 0 0 2.4 2.4l.9-.6 1.5.6.2 1a1.7 1.7 0 0 0 3.4 0l.2-1 1.5-.6.9.6a1.7 1.7 0 0 0 2.4-2.4l-.6-.9.6-1.5Z"/>',
+ admin:'<path d="m12 2 9 4v6c0 5-4 8-9 10-5-2-9-5-9-10V6Z"/><path d="m8 12 3 3 5-6"/>'
+};
+function navIcon(id){return '<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(icons[id]||icons.catalog)+'</svg>';}
 const groups=[
- ['START',[['home','⌂','Dashboard'],['catalog','▤','Lernwelten'],['roadmaps','↗','Roadmaps'],['videos','▶','Tutorials']]],
+ ['ÜBERSICHT',[['home','⌂','Dashboard']]],
+ ['LERNEN',[['catalog','▤','Alle Kurse'],['roadmaps','↗','Roadmaps'],['videos','▶','Videotutorials']]],
  ['STUDIOS',[['editor','⌘','Code Lab'],['music','♫','Music Lab'],['studio3d','◈','Designer Lab'],['videolab','▣','Video Lab']]],
  ['COMMUNITY',[['practice','🎮','Games'],['friends','◉','Freunde & Duelle'],['leaderboard','★','Rangliste']]],
- ['ACCOUNT',[['profile','◉','Mein Profil'],['settings','⚙','Einstellungen'],['admin','♛','Administration']]]
+ ['KONTO',[['profile','◉','Mein Profil'],['settings','⚙','Einstellungen'],['admin','♛','Administration']]]
 ];
 const tabs=[['display','▣','Darstellung','Farben, Schriften, Layout'],['personal','✧','Personalisieren','Avatar, Hintergrund'],['account','◉','Konto & Sicherheit','Passwort, Authenticator'],['storage','▤','Datenschutz & Speicher','Backups und Cookies'],['tools','⌘','Studios & Tools','Freischaltungen'],['community','◉','Freunde & Duelle','Netzwerk und Rangliste'],['about','ⓘ','Über LiveryLab','Version und Hinweise']];
 let owner='guest',prefs={...defaults},role='',tab='display',last=null,open=false,started=false;
@@ -21,7 +39,7 @@ function ownerChanged(id){if(owner===(id||'guest'))return;owner=id||'guest';pref
 function close(){open=false;$('#app').inert=false;$('#ll-menu-button').setAttribute('aria-expanded','false');$('#ll-menu-button').focus();$('#ll-menu-overlay')?.classList.remove('open');document.body.classList.remove('ll-menu-open');const search=$('#ll-menu-search');if(search){search.value='';search.dispatchEvent(new Event('input',{bubbles:true}))}}
 function makeMenu(){
  if($('#ll-menu-overlay'))return;const el=document.createElement('div');el.id='ll-menu-overlay';el.className='ll-menu-overlay';
- el.innerHTML=`<div class="ll-menu-backdrop" data-ll-close></div><aside class="ll-menu-sheet" role="dialog" aria-label="Hauptnavigation" aria-modal="true"><header><b><span>L</span> LIVERYLAB</b><button data-ll-close aria-label="Schließen">✕</button></header><div class="ll-menu-search"><input id="ll-menu-search" type="search" placeholder="Bereich oder Tool suchen …" aria-label="Menü durchsuchen" autocomplete="off"></div><div class="ll-menu-scroll">${groups.map(([name,items])=>`<section><button type="button" class="ll7-menu-heading" data-ll-group="${name}" aria-expanded="true"><small>${name}</small><span>⌄</span></button><div class="ll7-menu-items">${items.map(([id,ico,label])=>`<button data-go="${id}" ${id==='admin'?'class="ll-admin-nav" hidden':''}><i>${ico}</i><strong>${label}</strong><span>›</span></button>`).join('')}</div></section>`).join('')}</div><footer>Made with 💙 by NyxAtheris (LiveryLab)</footer></aside>`;
+ el.innerHTML=`<div class="ll-menu-backdrop" data-ll-close></div><aside class="ll-menu-sheet" role="dialog" aria-label="Hauptnavigation" aria-modal="true"><header><img class="ll8-menu-wordmark" src="./assets/liverylab-academy-wordmark.svg" alt="LiveryLab Academy"><button data-ll-close aria-label="Schließen"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6 18 18M18 6 6 18"/></svg></button></header><div class="ll-menu-search"><input id="ll-menu-search" type="search" placeholder="Bereich oder Tool suchen …" aria-label="Menü durchsuchen" autocomplete="off"></div><div class="ll-menu-scroll">${groups.map(([name,items])=>`<section><button type="button" class="ll7-menu-heading" data-ll-group="${name}" aria-expanded="true"><small>${name}</small><span>⌄</span></button><div class="ll7-menu-items">${items.map(([id,ico,label])=>`<button data-go="${id}" ${id==='admin'?'class="ll-admin-nav" hidden':''}><i>${navIcon(id)}</i><strong>${label}</strong><span class="ll8-menu-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span></button>`).join('')}</div></section>`).join('')}</div><footer>Made with 💙 by NyxAtheris (LiveryLab)</footer></aside>`;
  el.addEventListener('click',e=>{if(e.target.closest('[data-ll-close],[data-go]'))close()});document.body.append(el)
 }
 function setRole(r){role=r||'';if($('.ll-admin-nav'))$('.ll-admin-nav').hidden=role!=='admin'}

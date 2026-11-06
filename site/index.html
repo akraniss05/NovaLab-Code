@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#100b17">
+<meta name="theme-color" content="#0a0815">
 <meta name="description" content="LiveryLab Academy – interaktive Lernwelten für Coding, FiveM, Musikproduktion, Video und Blender/3D mit Studios, Roadmaps, Übungen und geschützten Konten.">
-<title>LiveryLab Academy 7.0 | Lernen, Coden, Musik, Video & 3D</title>
+<title>LiveryLab Academy 8.0 | Lernplattform für Kreative & Entwickler</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjggMTI4Ij48cmVjdCB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyOCIgcng9IjI5IiBmaWxsPSIjMjAxMDM0Ii8+PHBhdGggZD0iTTI2IDkyIDY0IDIwaDM1TDYzIDkyaDM0bC0xMCAxOEgxNnoiIGZpbGw9IiNhOTNmZmYiLz48cGF0aCBkPSJtODIgNDIgMjUgMjgtMjUgMjgtMjAtMjh6IiBmaWxsPSIjZTNhN2ZmIi8+PC9zdmc+Cg==">
 
 <link rel="stylesheet" href="styles.css">
@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="studio-polish-v5.css">
 <link rel="stylesheet" href="workspace-v6.css">
 <link rel="stylesheet" href="academy-v7.css">
+<link rel="stylesheet" href="shop-inspired-v8.css">
 <script type="importmap">{"imports":{"three":"https://esm.sh/three@0.180.0","three/addons/":"https://esm.sh/three@0.180.0/examples/jsm/"}}</script>
 </head>
 <body>
@@ -37,9 +38,9 @@
     <div class="sidebar-bottom"><div class="sidebar-card"><span>ENTWICKLE DEINE IDEEN</span><h3>Learn. Build.<br>Level up.</h3><p>Ohne Zeitdruck. Von den Grundlagen bis zu eigenen Projekten.</p><button class="btn small secondary" data-go="catalog">Alle Kurse ansehen →</button></div><div class="signature">Made with 💙 by <b>NyxAtheris</b><br><small>(LiveryLab)</small></div></div>
   </aside>
   <div class="app-body">
-    <header class="topbar"><button id="ll-menu-button" aria-expanded="false" aria-controls="ll-menu-overlay" class="ll-head-menu" aria-label="Hauptmenü öffnen" title="Menü öffnen">☰</button><div class="mini-logo"><span>L</span> LIVERY<b>LAB</b></div><div class="crumb" id="crumb">Dashboard</div><div class="top-tools"><button class="iconbtn" data-go="catalog" title="Kurse suchen" aria-label="Suchen">⌕</button><span class="xp-tag" id="xpBadge">✦ 0 XP</span><button class="ll-head-action" data-go="settings" aria-label="Einstellungen" title="Einstellungen">⚙</button><button class="user-badge ll-head-account" data-go="profile" aria-label="Mein Profil" title="Profil"><span class="ll-avatar">◆</span></button></div></header>
+    <header class="topbar"><button id="ll-menu-button" aria-expanded="false" aria-controls="ll-menu-overlay" class="ll-head-menu" aria-label="Hauptmenü öffnen" title="Menü öffnen"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><a class="mini-logo ll8-logo" href="#home" data-go="home" aria-label="LiveryLab Academy – Startseite"><img src="./assets/liverylab-academy-wordmark.svg" alt="LiveryLab Academy" width="220" height="53"></a><div class="crumb" id="crumb">Dashboard</div><div class="top-tools"><button class="iconbtn" data-go="catalog" title="Kurse suchen" aria-label="Suchen">⌕</button><span class="xp-tag" id="xpBadge">✦ 0 XP</span><button class="ll-head-action" data-go="settings" aria-label="Einstellungen" title="Einstellungen"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 0-6l-1-.2-.4-1.1.6-.9a1.7 1.7 0 0 0-2.4-2.4l-.9.6-1.1-.4-.2-1a1.7 1.7 0 0 0-3.4 0l-.2 1-1.1.4-.9-.6a1.7 1.7 0 0 0-2.4 2.4l.6.9-.4 1.1-1 .2a1.7 1.7 0 0 0 0 6l1 .2.4 1.1-.6.9a1.7 1.7 0 0 0 2.4 2.4l.9-.6 1.1.4.2 1a1.7 1.7 0 0 0 3.4 0l.2-1 1.1-.4.9.6a1.7 1.7 0 0 0 2.4-2.4l-.6-.9.4-1.1Z"/></svg></button><button class="user-badge ll-head-account" data-go="profile" aria-label="Mein Profil" title="Profil"><span class="ll-avatar">◆</span></button></div></header>
     <main id="content" tabindex="-1"><div class="loading">Lade LiveryLab Academy …</div></main>
-    <footer class="footer">LIVERYLAB CREATOR ACADEMY · <b>Made with 💙 by NyxAtheris (LiveryLab)</b> · <span id="appVersion">v7.0</span></footer>
+    <footer class="footer">LIVERYLAB CREATOR ACADEMY · <b>Made with 💙 by NyxAtheris (LiveryLab)</b> · <span id="appVersion">v8.0</span></footer>
   </div>
   <nav class="mobile-nav" aria-label="Handy-Navigation"><button data-go="home" class="active"><span>⌂</span>Start</button><button data-go="catalog"><span>▤</span>Kurse</button><button data-go="roadmaps"><span>↗</span>Roadmaps</button><button data-go="friends"><span>◉</span>Freunde</button><button data-go="profile"><span>◉</span>Profil</button></nav>
 </div>
