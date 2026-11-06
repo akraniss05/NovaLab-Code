@@ -70,7 +70,7 @@
         try{const f=new Function('print','ipairs','pairs','tostring','type','tableInsert','stringUpper','stringLower','__guard', ev.data);f(print,ipairs,pairs,tostring,type,tableInsert,stringUpper,stringLower,__guard); self.postMessage({ok:true,output:logs.length?logs.join('\\n'):'(Keine print-Ausgabe)'});}catch(e){self.postMessage({ok:false,output:logs.join('\\n'),error:String(e.message||e)});}
       }`;
       let worker,url,finished=false;
-      try{url=URL.createObjectURL(new Blob([workerCode],{type:'text/javascript'}));worker=new Worker(url);}
+      try{worker=window.LLWorker.start(workerCode,'lua');}
       catch(_e){resolve({ok:false,error:'Browser blockiert den Mini-Runner. Nutze den Strukturcheck oder starte die App über localhost.',output:''});return;}
       const done=(v)=>{if(finished)return;finished=true;clearTimeout(t);worker.terminate();URL.revokeObjectURL(url);resolve(v);};
       const t=setTimeout(()=>done({ok:false,output:'',error:'Test gestoppt: Ausführungslimit erreicht.'}),ms);

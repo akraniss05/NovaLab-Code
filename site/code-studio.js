@@ -48,19 +48,19 @@ function showPreview(html){const area=$('#llideFrameBox',root);area.replaceChild
 async function jsRun(code){
  runner?.terminate?.();const c=String(code);
  const source=`const output=[];console.log=(...a)=>output.push(a.map(x=>typeof x==='object'?JSON.stringify(x):String(x)).join(' '));console.error=console.log;try{${c}\nself.postMessage({ok:true,out:output.join('\\n')})}catch(e){self.postMessage({ok:false,out:String(e)})}`;
- const blob=new Blob([source],{type:'text/javascript'}),url=URL.createObjectURL(blob),w=new Worker(url);runner=w;
+ const w=window.LLWorker.start(source);runner=w;
  const guard=setTimeout(()=>{w.terminate();msg('Ausführung nach 3 Sekunden abgebrochen.')},3000);
- w.onmessage=e=>{clearTimeout(guard);msg(e.data.out||'Ausgeführt (keine Konsolenausgabe).');w.terminate();URL.revokeObjectURL(url)};
- w.onerror=e=>{clearTimeout(guard);msg('JavaScript Fehler: '+e.message);w.terminate();URL.revokeObjectURL(url)};
+ w.onmessage=e=>{clearTimeout(guard);msg(e.data.out||'Ausgeführt (keine Konsolenausgabe).');w.terminate()};
+ w.onerror=e=>{clearTimeout(guard);msg('JavaScript Fehler: '+e.message);w.terminate()};
 }
 async function pythonRun(code){
  runner?.terminate?.();
  const workerSource=`importScripts('https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js');let runtime;onmessage=async e=>{try{runtime=runtime||await loadPyodide();runtime.setStdout({batched:s=>postMessage({log:s})});runtime.setStderr({batched:s=>postMessage({log:s})});await runtime.runPythonAsync(e.data);postMessage({done:true})}catch(err){postMessage({error:String(err)})}}`;
- const url=URL.createObjectURL(new Blob([workerSource],{type:'text/javascript'})),w=new Worker(url);runner=w;let logs=[];
+ const w=window.LLWorker.start(workerSource,'python');runner=w;let logs=[];
  msg('Python-Laufzeit wird bei der ersten Ausführung geladen. Internet und zusätzlicher Arbeitsspeicher sind erforderlich.');
- const timeout=setTimeout(()=>{w.terminate();URL.revokeObjectURL(url);msg('Python-Timeout (30 s). Code lokal exportieren und auf dem PC prüfen.')},30000);
- w.onmessage=e=>{if(e.data.log){logs.push(e.data.log);msg(logs.join('\n'))}if(e.data.error||e.data.done){clearTimeout(timeout);msg(logs.join('\n')+(e.data.error?'\n'+e.data.error:'\n✓ Python beendet'));w.terminate();URL.revokeObjectURL(url)}};
- w.onerror=e=>{clearTimeout(timeout);msg('Python nicht verfügbar: '+e.message);w.terminate();URL.revokeObjectURL(url)};w.postMessage(code);
+ const timeout=setTimeout(()=>{w.terminate();msg('Python-Timeout (30 s). Code lokal exportieren und auf dem PC prüfen.')},30000);
+ w.onmessage=e=>{if(e.data.log){logs.push(e.data.log);msg(logs.join('\n'))}if(e.data.error||e.data.done){clearTimeout(timeout);msg(logs.join('\n')+(e.data.error?'\n'+e.data.error:'\n✓ Python beendet'));w.terminate()}};
+ w.onerror=e=>{clearTimeout(timeout);msg('Python nicht verfügbar: '+e.message);w.terminate()};w.postMessage(code);
 }
 async function run(){
  const p=ensure(),name=p.file,code=p.files[name]||'',ext=fileType(name);

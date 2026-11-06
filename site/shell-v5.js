@@ -29,7 +29,7 @@ function boot(){
  if(started)return;started=true;prefs=read();apply();makeMenu();
  document.addEventListener('click',e=>{
   if(e.target.closest('#ll-menu-button')){if(open)close();else{open=true;$('#app').inert=true;$('#ll-menu-button').setAttribute('aria-expanded','true');$('#ll-menu-overlay').classList.add('open');document.body.classList.add('ll-menu-open');$('#ll-menu-overlay button[data-ll-close]')?.focus()}return}
-  const b=e.target.closest('[data-ll-theme],[data-ll-accent],[data-ll-avatar],[data-ll-cover],[data-ll-tab],[data-ll-reset]');
+  const b=e.target.closest('button:is([data-ll-theme],[data-ll-accent],[data-ll-avatar],[data-ll-cover],[data-ll-tab],[data-ll-reset])');
   if(!b)return;
   if(b.hasAttribute('data-ll-reset')){if(!confirm('Nur das Design zurücksetzen? Lernstand und Projekte bleiben erhalten.'))return;prefs={...defaults};save()}
   else if(b.dataset.llTab)tab=b.dataset.llTab;

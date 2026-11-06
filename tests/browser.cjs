@@ -37,7 +37,7 @@ async function run(engine,mobile){
   try{
     const context=await browser.newContext({...mobile&&devices['iPhone 13'],serviceWorkers:'block'});
     const page=await context.newPage();page.setDefaultTimeout(12000);
-    const errors=[];page.on('pageerror',err=>errors.push(err.message));
+    const errors=[];page.on('pageerror',err=>{errors.push(err.message);console.error(err.stack)});
     page.on('dialog',dialog=>dialog.accept());
     await page.route('https://esm.sh/@supabase/**',route=>route.fulfill({contentType:'application/javascript',body:sdk}));
     // Serve pinned upstream packages locally so CDN outages do not affect this test.
@@ -62,7 +62,7 @@ async function run(engine,mobile){
     assert.equal(await page.locator('html').getAttribute('data-ll-theme'),'carbon');
     await page.locator('[data-ll-reset]').click();
     await go('profile');await page.locator('[data-act="customize-profile"]').click();
-    await page.locator('[data-ll-avatar]').first().click();
+    await page.locator('button[data-ll-avatar]').first().click();
     await go('catalog');await page.locator('[data-course="qa"]').first().click();
     const chapter=page.locator('[data-chapter="qa-ch"]');await chapter.click();
     assert.equal(await chapter.getAttribute('aria-expanded'),'false');await chapter.click();
