@@ -5,7 +5,7 @@ const read=file=>fs.readFileSync(path.join(__dirname,'..',file),'utf8');
 const html=read('site/index.html'),js=read('site/academy.js'),css=read('site/app-v15.css');
 for(const file of ['site/reference-data.js','site/app-v15.css','site/app-v12.css','site/config.js','site/auth-mfa-v15.js','site/academy.js','site/privacy.html','site/manifest.webmanifest','site/icon.svg','supabase/functions/academy-signin/index.ts','supabase/functions/admin-users/index.ts'])
  assert(fs.existsSync(path.join(__dirname,'..',file)),file+' missing');
-for(const token of ['app-v15.css?release=','academy.js?release=','auth-mfa-v15.js?release=','config.js?release=','LiveryLab v15'])
+for(const token of ['app-v15.css?release=','academy.js?release=','auth-mfa-v15.js?release=','config.js?release=','LiveryLab v16'])
  assert(html.includes(token),'Versioned asset missing: '+token);
 for(const obsolete of ['styles.css','refined.css','music-studio.js','studio3d-v5.js'])
  assert(!html.includes(obsolete),'Old asset still linked: '+obsolete);
@@ -22,9 +22,13 @@ for(const token of ['reference-data.js?release=','app-v15.css?release=','LiveryL
 for(const token of ['registerAccount','waitingApproval','reference-language','reference-search','approval-card','academy_exam_questions','setTier','access_status','3 pro Tag','6 pro Tag'])assert(js.includes(token),'Missing v15 capability: '+token);
 const reference=read('site/reference-data.js');assert(reference.includes('window.LL_REFERENCE_DATA'),'Reference library missing');
 for(const name of ['Lua','Python','JavaScript','TypeScript','FiveM','Blender','SQL','HTML','CSS','Rust','Java'])assert(reference.includes(name),'Reference language missing: '+name);
+const signup=read('supabase/functions/academy-register/index.ts');
+assert(signup.includes('academy_signup_rate_limit')&&signup.includes("email_confirm:true")&&signup.includes("access_status!=='pending'"),'Public signup fallback must remain pending and quota-limited');
+assert(js.includes("api.functions.invoke('academy-register'"),'Signup-disabled recovery is not wired');
+assert(read('supabase/config.toml').includes('[functions.academy-register]'),'Signup Edge Function configuration missing');
 const mfa=read('site/auth-mfa-v15.js');
 assert(mfa.includes('mfa.challenge')&&mfa.includes('mfa.verify')&&mfa.includes('mfa.enroll')&&mfa.includes('mfa.unenroll'),'Authenticator setup and verification missing');
 assert(js.includes('function renderMFA(){'),'Authenticator rendering bridge missing');
 assert(js.includes('id="mfa-settings"'),'Authenticator mount missing');
 new Function(js);
-console.log('App v15 source, styling, app routes, MFA and server access smoke tests passed');
+console.log('App v16 source, styling, app routes, MFA and server access smoke tests passed');

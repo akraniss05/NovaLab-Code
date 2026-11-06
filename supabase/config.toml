@@ -3,3 +3,6 @@ verify_jwt = true
 
 [functions.academy-signin]
 verify_jwt = false
+
+[functions.academy-register]
+verify_jwt = false

@@ -1,4 +1,4 @@
-name: Deploy LiveryLab Academy v15 • authenticator security
+name: Deploy LiveryLab Academy v16 • cross-browser registration
 on:
   push:
     branches: [main]
@@ -25,6 +25,7 @@ jobs:
           node --check site/config.js
           node tests/smoke.cjs
           node tests/render.cjs
+          node tests/registration.cjs
       - name: Install browser test dependency
         run: npm install --no-save --ignore-scripts --no-package-lock playwright-core@1.56.1
       - name: Validate mobile layouts in Chrome
@@ -35,7 +36,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: academy-v15-mobile-captures
+          name: academy-v16-mobile-captures
           path: test-results/
           if-no-files-found: ignore
       - uses: actions/configure-pages@v5

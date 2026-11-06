@@ -123,3 +123,15 @@ Unter Repository Settings > Pages muss „GitHub Actions“ aktiviert sein. Push
 - Supabase erzwingt in `academy_private.session_verified()` AAL2 für angemeldete Accounts mit bestätigtem MFA-Faktor und schützt Daten unabhängig vom Frontend.
 - `tests/mfa-browser.cjs` testet Enrollment, QR, ungültigen/gültigen Code, die nächste Anmeldung und das Entfernen des Geräts mit mock-Supabase im echten Chromium. Ein Live-Enrollment eines echten Kontos wird dadurch nicht ersetzt.
 - Wunschdomain `github.liverylabacademy.app`: siehe `CUSTOM_DOMAIN.md`. Domaininhaberschaft, DNS-Zugriff und GitHub Pages Custom Domain Settings sind vor dem Live-Switch erforderlich.
+
+
+
+## v16 · Registrierung über alle Browser
+
+- Bei Supabase `signup_disabled` versucht die Academy automatisch den neuen serverseitigen Endpoint `academy-register` statt den Registrierungsversuch abzubrechen.
+- Die Edge Function verwendet nur auf dem Server eine Supabase Secret/Service-Role-Key. Sie legt **keine Administratoren** an, sondern Accounts mit dem Status `pending` und `active=false`.
+- Die Anmeldung per E-Mail und Passwort ist möglich, aber geschützte Kursdaten werden erst nach expliziter Freigabe zugänglich. Die Mitgliedschaft wird ohne Adminfreigabe nicht aktiv.
+- Da Supabase die normalen Registrierungen deaktiviert hat, ist eine E-Mail-Bestätigung über den Standard-Signup-Prozess derzeit nicht möglich. Der Fallback aktiviert die Passwort-Anmeldbarkeit serverseitig, **verifiziert jedoch nicht den Besitz der angegebenen E-Mail-Adresse**. Die Admin-Oberfläche kennzeichnet diesen Unterschied sichtbar und verlangt eine bewusste manuelle Prüfung, bevor sie das Konto freigeben darf.
+- `academy_signup_rate_limit` begrenzt Registrierungsversuche anhand pseudonymisierter Kontakt-/IP-Fingerabdrücke und einer Tagesobergrenze. IP-basierte Limitation ist lediglich Best-Effort; weitere Schutzmechanismen wie CAPTCHA sind für höhere Nutzungszahlen ratsam.
+- Mit aktivierten Public Signups bei Supabase arbeitet die Academy weiterhin mit dem regulären `auth.signUp()` inklusive Supabase-E-Mail-Bestätigung.
+- Der `tests/registration.cjs` prüft die Umleitung im Browsercode, reguläre Signups und Fehlerbehandlung. Live-Tests mit Zustellung echter E-Mails wurden nicht durchgeführt.

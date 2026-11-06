@@ -92,7 +92,7 @@ Deno.serve(async(req:Request)=>{
       if(pe)throw pe;
       const map=new Map((profiles||[]).map(p=>[p.id,p]));
       const users=members.users.filter(u=>map.has(u.id)).map(u=>({
-        id:u.id,email:u.email||'',username:map.get(u.id)?.username||null,needs_password_change:map.get(u.id)?.needs_password_change||false,role:map.get(u.id)?.role||'student',active:map.get(u.id)?.active??false,access_status:map.get(u.id)?.access_status||'blocked',email_confirmed:!!u.email_confirmed_at,created_at:u.created_at
+        id:u.id,email:u.email||'',username:map.get(u.id)?.username||null,needs_password_change:map.get(u.id)?.needs_password_change||false,role:map.get(u.id)?.role||'student',active:map.get(u.id)?.active??false,access_status:map.get(u.id)?.access_status||'blocked',email_confirmed:!!u.email_confirmed_at&&u.app_metadata?.academy_signup_flow!=='manual_request',email_review_required:u.app_metadata?.academy_signup_flow==='manual_request',created_at:u.created_at
       }));
       users.sort((a,b)=>(a.access_status==='pending'?0:1)-(b.access_status==='pending'?0:1));
       return reply(200,{users,page,hasMore:members.users.length===100,pendingCount:users.filter(u=>u.access_status==='pending').length});
@@ -176,7 +176,10 @@ Deno.serve(async(req:Request)=>{
       if(body.action==='setActive'){
         if(body.active===true){
           const {data:record,error:re}=await admin.auth.admin.getUserById(id);
-          if(re||!record?.user?.email_confirmed_at)return reply(409,{error:'Bitte zuerst die E-Mail-Adresse bestätigen, dann kann der Account freigegeben werden.'});
+          if(re||!record?.user)return reply(409,{error:'Kontodaten konnten nicht geprüft werden.'});
+          const manual=record.user.app_metadata?.academy_signup_flow==='manual_request';
+          if(manual&&target.access_status==='pending'&&body.manualEmailReview!==true)return reply(409,{error:'Kontaktadresse nicht bestätigt. Bitte die manuelle Prüfung ausdrücklich bestätigen.'});
+          if(!manual&&!record.user.email_confirmed_at)return reply(409,{error:'Bitte zuerst die E-Mail-Adresse bestätigen, dann kann der Account freigegeben werden.'});
         }
         if(typeof body.active!=='boolean')return reply(400,{error:'Invalid active state'});
         const {error:ban}=await admin.auth.admin.updateUserById(id,{ban_duration:body.active?'none':'876000h'});

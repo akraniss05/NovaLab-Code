@@ -101,7 +101,7 @@ function login(){
  content.innerHTML='<div class="auth-layout"><section class="auth-card auth-success">'+brand+
  '<span class="auth-check">✓</span><span class="eyebrow">ANFRAGE VERSENDET</span>'+
  '<h1>Registrierung <span class="gradient">eingegangen.</span></h1>'+
- '<p class="lede">Deine Registrierungsanfrage wurde gesendet. Bitte bestätige deine E-Mail-Adresse, falls du eine Bestätigungsnachricht bekommst. Erst nach Freigabe durch NyxAtheris kannst du die Academy benutzen.</p>'+
+ '<p class="lede">'+(s.registrationManual?'Deine Registrierungsanfrage ist eingegangen. NyxAtheris muss deinen Zugang zunächst genehmigen. Deine Kontakt-E-Mail wurde bei dieser Anmeldung nicht automatisch überprüft.':'Deine Registrierungsanfrage wurde gesendet. Bestätige deine E-Mail-Adresse über den Link, den Supabase dir sendet. Erst nach der Freigabe kannst du die Academy benutzen.')+'</p>'+
  '<button class="btn primary block" type="button" data-action="show-login">Zur Anmeldung →</button>'+
  '<a class="btn ghost block" style="margin-top:10px" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord-Support</a></section></div>';return;
  }
@@ -120,20 +120,46 @@ function login(){
 }
 async function registerAccount(fd){
  const email=String(fd.get('email')||'').trim().toLowerCase();
- const username=String(fd.get('username')||'').trim();
+ const username=String(fd.get('username')||'').trim().toLowerCase();
  const password=String(fd.get('password')||'');
  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)||email.length>254)throw Error('Bitte eine gültige E-Mail-Adresse eingeben.');
- if(!/^[A-Za-z][A-Za-z0-9_]{2,23}$/.test(username))throw Error('Benutzername: 3–24 Zeichen, Buchstaben, Zahlen und Unterstrich.');
+ if(!/^[a-z][a-z0-9_]{2,23}$/.test(username))throw Error('Benutzername: 3–24 Zeichen, Buchstaben, Zahlen und Unterstrich.');
  if(password.length<14||password.length>256)throw Error('Das Passwort muss 14–256 Zeichen lang sein.');
  if(password!==String(fd.get('confirm_password')||''))throw Error('Die beiden Passwörter stimmen nicht überein.');
- const res=await api.auth.signUp({email,password,options:{
-  data:{username:username.toLowerCase(),name:username},
+ // Prefer the ordinary Supabase signup, including true email confirmation,
+ // when public signups have been enabled by the project administrator.
+ const normal=await api.auth.signUp({email,password,options:{
+  data:{username,name:username},
   emailRedirectTo:'https://akraniss05.github.io/liverylab-academy/'
  }});
- if(res.error)throw res.error;
- if(res.data?.session)await api.auth.signOut({scope:'local'});
- s.authScreen='sent';login();
+ let manual=false;
+ if(normal.error){
+  const message=String(normal.error.message||'').toLowerCase();
+  const code=String(normal.error.code||'').toLowerCase();
+  if(code!=='signup_disabled'&&!message.includes('signups not allowed for this instance')){
+   throw normal.error;
+  }
+  // If Supabase public signups are disabled, a server-only Edge Function
+  // creates a pending account. NO service-role credential goes to the browser.
+  const fallback=await api.functions.invoke('academy-register',{
+   body:{email,username,password}
+  });
+  if(fallback.error){
+   let detail='';
+   try{detail=(await fallback.error.context?.json())?.error||'';}catch(_){}
+   throw Error(detail||'Registrierung derzeit nicht erreichbar. Versuche es später noch einmal.');
+  }
+  if(!fallback.data?.ok||fallback.data?.requires_approval!==true)
+   throw Error(fallback.data?.error||'Registrierung konnte nicht abgeschlossen werden.');
+  manual=true;
+ }else if(normal.data?.session){
+  await api.auth.signOut({scope:'local'});
+ }
+ s.registrationManual=manual;
+ s.authScreen='sent';
+ login();
 }
+
 function waitingApproval(status){
  s.ready=false;frame();
  const pending=status==='pending';
@@ -795,8 +821,8 @@ function adminPage(){
  (pending.length?'<div class="pending-list">'+pending.map(u=>
  '<article class="approval-card"><span class="approval-avatar">'+esc((u.username||u.email||'U').slice(0,1).toUpperCase())+'</span>'+
  '<div class="approval-info"><strong>'+esc(u.username||'Neuer Developer')+'</strong><small>'+esc(u.email||'')+'</small>'+
- '<span class="chip '+(u.email_confirmed?'free':'plus')+'">'+(u.email_confirmed?'✓ E-Mail bestätigt':'E-Mail noch unbestätigt')+'</span></div>'+
- '<div class="approval-actions"><button class="btn primary small" data-active-user="'+esc(u.id)+'" data-active-value="true" '+(!u.email_confirmed?'disabled title="E-Mail-Bestätigung fehlt"':'')+'>✓ Genehmigen</button>'+
+ '<span class="chip '+(u.email_confirmed?'free':'plus')+'">'+(u.email_confirmed?'✓ E-Mail bestätigt':u.email_review_required?'Kontakt-E-Mail noch nicht geprüft':'E-Mail noch unbestätigt')+'</span></div>'+
+ '<div class="approval-actions"><button class="btn primary small" data-active-user="'+esc(u.id)+'" data-active-value="true" data-email-review="'+(u.email_review_required?'true':'false')+'" '+(!u.email_confirmed&&!u.email_review_required?'disabled title="E-Mail-Bestätigung fehlt"':'')+'>'+(u.email_review_required?'✓ Nach Prüfung freigeben':'✓ Genehmigen')+'</button>'+
  '<button class="btn small danger" data-active-user="'+esc(u.id)+'" data-active-value="false">Ablehnen</button></div></article>').join('')+'</div>':
  '<div class="empty approval-empty"><strong>Keine offenen Anfragen</strong><p>Neue Registrierungen werden hier angezeigt.</p></div>')+'</section>';
  const status=u=>u.access_status==='blocked'?'<span class="chip pro">⛔ Gesperrt</span>':
@@ -863,8 +889,10 @@ async function adminAction(action,node){
     await adminCall({action:'resetUsernamePassword',userId:node.dataset.resetUser,password:pwd});notice('Passwort zurückgesetzt; Nutzer muss es beim Login ändern.');await fetchMembers();render();return;
   }
   if(node.hasAttribute('data-active-user')){
-    var enable=node.dataset.activeValue==='true';if(!confirm(enable?'Zugang freigeben bzw. wieder aktivieren?':'Diesen Account sofort sperren?'))return;
-    await adminCall({action:'setActive',userId:node.dataset.activeUser,active:enable});notice('Kontostatus geändert.');await fetchMembers();render();return;
+    var enable=node.dataset.activeValue==='true';const manualReview=enable&&node.dataset.emailReview==='true';
+    const promptText=manualReview?'Die Kontakt-E-Mail wurde NICHT unabhängig verifiziert. Gib das Konto nur frei, wenn du den Benutzer und seine Kontaktadresse selbst geprüft hast. Wirklich freigeben?':enable?'Zugang freigeben bzw. wieder aktivieren?':'Diesen Account sofort sperren?';
+    if(!confirm(promptText))return;
+    await adminCall({action:'setActive',userId:node.dataset.activeUser,active:enable,manualEmailReview:manualReview});notice('Kontostatus geändert.');await fetchMembers();render();return;
   }
   if(node.hasAttribute('data-delete-user')){
     if(prompt('Account dauerhaft löschen? Tippe SCHÜLER LÖSCHEN:')!=='SCHÜLER LÖSCHEN')return;
