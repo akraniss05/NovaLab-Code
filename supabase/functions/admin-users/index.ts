@@ -86,7 +86,7 @@ Deno.serve(async(req:Request)=>{
     if(body.action==='createEmail'){
       const email=String(body.email||'').trim().toLowerCase();
       const pwd=String(body.password||'');
-      if(email.length>254||!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)||email.endsWith('@accounts.livery-lab.app'))return reply(400,{error:'Bitte eine gültige eigene E-Mail-Adresse eingeben'});
+      if(email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.endsWith('@accounts.livery-lab.app'))return reply(400,{error:'Bitte eine gültige eigene E-Mail-Adresse eingeben'});
       if(pwd.length<14||pwd.length>256)return reply(400,{error:'Startpasswort muss 14-256 Zeichen lang sein'});
       const name=String(body.displayName||email.split('@')[0]).trim().slice(0,40)||'Student';
       const {data:created,error:createError}=await admin.auth.admin.createUser({
