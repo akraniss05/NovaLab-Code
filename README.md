@@ -173,3 +173,12 @@ Unter Repository Settings > Pages muss „GitHub Actions“ aktiviert sein. Push
 - Zur Sicherheit verwendet `academy_streak_status` read-only Daten, während nur `academy_streak_claim` Ansprüche ändert. Die alte Routine `academy_login_streak` wurde kompatibel belassen, löst aber keinen Claim mehr automatisch aus.
 - Im GitHub Pages-Workflow wird das Originalbanner aus versionierten Base64-Teilen rekonstruiert und gegen einen SHA-256-Prüfwert validiert; die Teile werden **vor Veröffentlichung aus dem Site-Ordner entfernt**.
 - Das vorbereitete Banner wurde für die Website auf 600 × 338 Pixel komprimiert. Die volle Originaldatei bleibt in der Nutzerunterhaltung erhalten und ist nicht durch den Build überschrieben.
+
+
+## Browser-Vorschau bei Verzögerungen von GitHub Pages
+
+Die aktuelle Version der Academy (v19) steht auch über den öffentlichen Supabase-Edge-Host bereit:
+
+https://ekgxotvvhkmeuxvuwbei.supabase.co/functions/v1/academy-preview/
+
+Diese Vorschau liefert die gebündelten, identischen v19-Website-Dateien einschließlich Logo, Originalbanner, Layout, Kurslogik und 2FA-Frontend direkt aus Supabase aus. Das reguläre Repository und GitHub-Pages-Deployment bleiben unverändert die primäre Versionsquelle. Der Streak wird per `academy_streak_claim` erst auf ausdrücklichen Klick serverseitig eingelöst; eine bloße Anmeldung zählt nicht als Claim.
