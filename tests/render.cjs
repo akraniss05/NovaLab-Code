@@ -4,7 +4,7 @@
 const assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');
 const source=fs.readFileSync(path.join(__dirname,'../site/academy.js'),'utf8');
 assert.match(source,/\ninit\(\);\n\}\)\(\);\s*$/);
-const expose="\nwindow.__test={s,homePage,coursesPage,trackPage,lessonPage,scriptPage,referencePage,examPage,profilePage,settingsPage,plansPage,examsPage,adminPage,login,waitingApproval,courseCard,updateLessonControls,filteredCourses,frame};\n})();";
+const expose="\nwindow.__test={s,homePage,coursesPage,trackPage,lessonPage,scriptPage,referencePage,examPage,profilePage,settingsPage,plansPage,examsPage,adminPage,login,waitingApproval,submitExamAnswer,courseCard,updateLessonControls,filteredCourses,frame};\n})();";
 const body=source.replace(/\ninit\(\);\n\}\)\(\);\s*$/,expose);
 const mocks=new Map();
 const fakeNode=()=>({innerHTML:'',textContent:'',classList:{add(){},remove(){},toggle(){},contains(){return false}},querySelector(){return null}});
@@ -66,4 +66,18 @@ state.authScreen='register';app.login();
 assert(fakeNodes['#content'].innerHTML.includes('Registrierungsanfrage senden'),'Registration form renders');
 app.waitingApproval('pending');
 assert(fakeNodes['#content'].innerHTML.includes('Freigabe'),'Pending approval screen renders');
-console.log('All v14 registration, admin, reference and exam render tests passed');
+state.profile.role='student';state.ready=true;lesson.required_plan='free';
+state.progress.done=['python-01'];sandbox.location.hash='#exam/python';
+state.exam={items:[
+ {payload:{quiz:'Was speichert eine Variable?',options:['Wert','Bild'],correct:0}},
+ {payload:{quiz:'Welche Sprache?',options:['Python','Musik'],correct:0}}
+],at:0,answers:[],review:[],busy:false};
+(async()=>{
+ await app.submitExamAnswer(1);
+ assert.equal(state.exam.at,1,'First exam answer advances');
+ assert.equal(state.exam.review[0].correct,false,'Wrong answer recorded');
+ await app.submitExamAnswer(0);
+ assert.equal(state.exam.at,2,'Exam completes');
+ assert(fakeNodes['#content'].innerHTML.includes('Deine Auswertung'),'Exam feedback rendered');
+ console.log('All v14 registration, admin, reference and interactive exam tests passed');
+})().catch(e=>{console.error(e);process.exitCode=1;});
