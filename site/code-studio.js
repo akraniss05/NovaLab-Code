@@ -135,6 +135,8 @@ function render(container,{state:source,save,userId}={}){
  container.addEventListener('click',click,{signal:controller.signal});
  container.addEventListener('change',change,{signal:controller.signal});
  container.addEventListener('input',input,{signal:controller.signal});
+ container.addEventListener('keydown',e=>{if(!(e.metaKey||e.ctrlKey))return;if(e.key.toLowerCase()==='s'){e.preventDefault();saveState();msg('✓ Projekt lokal gespeichert (⌘/Strg+S).')}else if(e.key==='Enter'){e.preventDefault();void run()}},{signal:controller.signal});
+ window.LLWorkspace?.enhance(container,'code');
  upgradeEditor(container);
 }
 function input(e){if(e.target.id!=='llideCode')return;const p=ensure();p.files[p.file]=e.target.value;saveState();const lines=e.target.value.split('\n').length;$('#llideLines',root).textContent=Array.from({length:Math.max(5,lines)},(_,i)=>i+1).join('\n')}
@@ -149,6 +151,9 @@ async function click(e){const b=e.target.closest('[data-ide]');if(!b)return;cons
  case 'add-file':{let name=prompt('Dateiname, z.B. client.lua oder style.css');if(!name)return;name=name.trim().replace(/^\/+/,'');if(!/^[a-z0-9_./-]{1,80}$/i.test(name)||name.includes('..'))return msg('Ungültiger Dateiname');if(p.files[name]!==undefined)return msg('Datei existiert bereits');p.files[name]='';p.file=name;saveState();render(root,{state,save:saveState});break}
  case 'rename-file':{let name=prompt('Neuer Dateiname',p.file);if(!name||name===p.file)return;if(!/^[a-z0-9_./-]{1,80}$/i.test(name)||name.includes('..')||p.files[name]!==undefined)return msg('Ungültiger oder belegter Dateiname');p.files[name]=p.files[p.file];delete p.files[p.file];p.file=name;saveState();render(root,{state,save:saveState});break}
  case 'delete-file':if(Object.keys(p.files).length<=1)return msg('Mindestens eine Datei wird benötigt');if(confirm('Datei '+p.file+' wirklich löschen?')){delete p.files[p.file];p.file=Object.keys(p.files)[0];saveState();render(root,{state,save:saveState})}break;
+ case 'find':{const term=prompt('Im aktuellen Code suchen:');if(!term)break;const field=$('#llideCode',root),text=mirror?mirror.getValue():field.value;const start=mirror?mirror.indexFromPos(mirror.getCursor()):field.selectionEnd;let index=text.indexOf(term,Math.max(0,start));if(index<0)index=text.indexOf(term);if(index<0){msg('Nicht gefunden: '+term);break}if(mirror){mirror.setSelection(mirror.posFromIndex(index),mirror.posFromIndex(index+term.length));mirror.scrollIntoView({from:mirror.posFromIndex(index),to:mirror.posFromIndex(index+term.length)},80);mirror.focus()}else{field.focus();field.setSelectionRange(index,index+term.length)}msg('Fundstelle markiert: '+term);break}
+ case 'copy':{const text=mirror?mirror.getValue():$('#llideCode',root).value;try{if(!navigator.clipboard?.writeText)throw Error('Clipboard nicht verfügbar');await navigator.clipboard.writeText(text);msg('✓ Quellcode in die Zwischenablage kopiert.')}catch{const field=$('#llideCode',root);field.focus();field.select();msg('Zwischenablage blockiert. Quellcode ist zum manuellen Kopieren markiert.')}break}
+ case 'rename-project':{const name=prompt('Projekt umbenennen:',p.name);if(!name)return;const clean=name.trim().slice(0,70);if(!clean)return msg('Bitte einen gültigen Namen eingeben.');p.name=clean;saveState();render(root,{state,save:saveState});msg('Projekt umbenannt.');break}
  case 'insert':{let text=b.dataset.text;if(mirror){mirror.replaceSelection(text);mirror.focus();break}const t=$('#llideCode',root),a=t.selectionStart,z=t.selectionEnd;t.setRangeText(text,a,z,'end');t.dispatchEvent(new Event('input',{bubbles:true}));t.focus();break}
  case 'wrap':{
   const enabled=b.getAttribute('aria-pressed')!=='true';

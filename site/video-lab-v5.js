@@ -4,6 +4,7 @@
 const $=(s,r=document)=>r.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let root=null,signal=null,video=null,objectURL=null,recorder=null,isExporting=false,raf=null,outputCanvas=null,renderCtx=null,srcFile=null,abort=null;
 let project={start:0,end:0,text:'',brightness:100,contrast:100,saturation:100,aspect:'original',textSize:48};
+let previewSpeed=1;
 function status(s){const e=root&&$('#llv-status',root);if(e)e.textContent=s}
 function duration(){return Number.isFinite(video?.duration)?video.duration:0}
 function clamp(v,a,b){return Math.max(a,Math.min(b,Number(v)||0))}
@@ -44,7 +45,7 @@ function stop(){
  try{video?.pause()}catch{}
  stopExport('Export abgebrochen');
  if(video?._llAudio)video._llAudio.close().catch(()=>{});
- recorder=null;isExporting=false;
+ recorder=null;isExporting=false;previewSpeed=1;
  if(objectURL)URL.revokeObjectURL(objectURL);objectURL=null;video=null;root=null;outputCanvas=null;renderCtx=null;srcFile=null;
 }
 function render(node){
@@ -53,6 +54,7 @@ function render(node){
  <div class="llv-toolbar"><label class="llv-upload"><input id="llv-import" type="file" accept="video/*">＋ Clip importieren</label><button id="llv-preview" class="btn">▶ Vorschau</button><button id="llv-export" class="btn primary">↓ Video exportieren</button><button id="llv-cancel" class="btn" hidden>■ Export stoppen</button></div>
  <div class="llv-layout"><section class="llv-workspace"><div class="llv-canvas"><canvas id="llv-canvas" width="640" height="360" aria-label="Video-Vorschau"></canvas><video id="llv-video" playsinline preload="metadata" hidden></video><div class="llv-watermark">LIVERYLAB VIDEO</div></div><div class="llv-transport"><button id="llv-play" class="btn">▶</button><span id="llv-pos">0:00</span><input id="llv-seek" type="range" min="0" max="1" step=".1" value="0" aria-label="Video-Position"><span id="llv-dur">0:00</span></div><div class="llv-timeline"><div class="eyebrow">TIMELINE / CLIP 01</div><div class="llv-timeline-track" id="llv-track"><span>VIDEO + AUDIO</span><span id="llv-time">Bitte importieren</span></div><div class="llv-range"><label>Clip-Beginn<input id="llv-start" type="range" min="0" max="1" step=".1" value="0"></label><label>Clip-Ende<input id="llv-end" type="range" min="0" max="1" step=".1" value="0"></label></div></div></section>
  <aside class="llv-inspector"><h3>Clip-Eigenschaften</h3><div class="llv-setup"><label>Text einblenden<input id="llv-text" type="text" maxlength="80" class="input" placeholder="Mein Video ..."></label><label>Format<select id="llv-aspect"><option value="original">Original</option><option value="landscape">16:9</option><option value="square">1:1 · PRO</option><option value="portrait">9:16 · PRO</option></select></label><label>Helligkeit <small id="llv-bright-value">100%</small><input id="llv-bright" type="range" min="50" max="150" value="100"></label><label>Kontrast <small id="llv-contrast-value">100%</small><input id="llv-contrast" type="range" min="50" max="150" value="100"></label><label>Sättigung <small id="llv-sat-value">100%</small><input id="llv-sat" type="range" min="0" max="200" value="100"></label></div><div class="llv-tool-note">Free: Clips schneiden, Text und einfache Vorschau, 2 Exporte pro Tag. Pro: weitere Formate, Farbkorrektur und unbegrenzte Exporte (soweit Browser unterstützt).</div></aside></div><div id="llv-status" class="callout" role="status">Bereit. Wähle ein Video von deinem Gerät (maximal 150 MB).</div>`;
+ window.LLWorkspace?.enhance(root,'video');
  video=$('#llv-video',root);outputCanvas=$('#llv-canvas',root);renderCtx=outputCanvas.getContext('2d');
  if(!renderCtx)return status('Canvas nicht verfügbar');
  root.addEventListener('input',input,{signal});root.addEventListener('change',change,{signal});
@@ -98,7 +100,7 @@ function finish(job,message){
  exportJob=null;isExporting=false;
  job.controller.abort();
  if(job.frame)cancelAnimationFrame(job.frame);
- video?.pause();
+ video?.pause();if(video)video.playbackRate=previewSpeed;
  if(job.recorder?.state==='recording')job.recorder.stop();
  job.stream?.getTracks().forEach(track=>track.stop());
  if(root){
@@ -163,11 +165,33 @@ async function exportVideo(){
    link.href=url;link.download='LiveryLab-Clip.'+(mime.includes('mp4')?'mp4':'webm');
    link.click();setTimeout(()=>URL.revokeObjectURL(url),20000);status('Clip lokal exportiert.');
   };
-  rec.start(250);await video.play();
+  video.playbackRate=1;rec.start(250);await video.play();
   if(exportJob!==job)return;
   const check=()=>{if(exportJob!==job)return;if(video.currentTime>=project.end||video.ended)stopExport();else job.frame=requestAnimationFrame(check)};
   check();if(exportJob===job)status('Export läuft in Echtzeit. Bitte lasse die Seite geöffnet.');
  }catch(err){finish(job,'Export fehlgeschlagen: '+err.message)}
 }
-window.LLVideoLab={render,stop};
+function snapshot(){
+ if(!srcFile||!outputCanvas||!video)return status('Bitte zuerst ein Video importieren.');
+ if(video.readyState<2)return status('Das erste Videobild wird noch geladen.');
+ try{const [w,h]=size();if(outputCanvas.width!==w||outputCanvas.height!==h){outputCanvas.width=w;outputCanvas.height=h}draw(outputCanvas,renderCtx,video,w,h);const url=outputCanvas.toDataURL('image/png');if(url.length<128)throw Error('Leere Bilddatei');const a=document.createElement('a');a.href=url;a.download='LiveryLab-Video-Frame.png';a.click();status('Aktuelles Einzelbild als PNG gespeichert.')}catch(e){status('Einzelbild-Export fehlgeschlagen: '+e.message)}
+}
+function resetLook(){
+ if(!root)return;project.text='';project.brightness=100;project.contrast=100;project.saturation=100;
+ for(const [id,value] of [['llv-text',''],['llv-bright','100'],['llv-contrast','100'],['llv-sat','100']]){const input=$('#'+id,root);if(input)input.value=value}
+ update();status('Text und Farbkorrektur auf Standard gesetzt. Schnitt bleibt erhalten.');
+}
+function trimTo(which){
+ if(!srcFile||!video)return status('Bitte zuerst ein Video importieren.');
+ const current=clamp(video.currentTime,0,duration());
+ if(which==='start')project.start=Math.min(current,Math.max(0,project.end-.2));
+ else project.end=Math.max(project.start+.2,Math.min(duration(),current));
+ update();status(which==='start'?'Schnittbeginn auf Abspielposition gesetzt.':'Schnittende auf Abspielposition gesetzt.');
+}
+function setSpeed(value){
+ previewSpeed=[.5,1,1.5,2].includes(value)?value:1;
+ if(video&&!isExporting)video.playbackRate=previewSpeed;
+ status('Vorschau: '+String(previewSpeed).replace('.',',')+'× · Export erfolgt in Originalgeschwindigkeit.');
+}
+window.LLVideoLab={render,stop,snapshot,resetLook,trimTo,setSpeed};
 })();

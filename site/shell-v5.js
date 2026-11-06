@@ -18,17 +18,17 @@ function read(){try{const x=JSON.parse(localStorage.getItem(key()));if(!x)return
 function apply(){for(const [k,v]of Object.entries(prefs))document.documentElement.dataset['ll'+k[0].toUpperCase()+k.slice(1)]=String(v);document.querySelectorAll('.ll-avatar').forEach(e=>e.textContent=prefs.avatar);document.querySelectorAll('.ll-profile-cover').forEach(e=>e.dataset.cover=prefs.cover)}
 function save(){try{localStorage.setItem(key(),JSON.stringify(prefs))}catch{}apply()}
 function ownerChanged(id){if(owner===(id||'guest'))return;owner=id||'guest';prefs=read();apply()}
-function close(){open=false;$('#app').inert=false;$('#ll-menu-button').setAttribute('aria-expanded','false');$('#ll-menu-button').focus();$('#ll-menu-overlay')?.classList.remove('open');document.body.classList.remove('ll-menu-open')}
+function close(){open=false;$('#app').inert=false;$('#ll-menu-button').setAttribute('aria-expanded','false');$('#ll-menu-button').focus();$('#ll-menu-overlay')?.classList.remove('open');document.body.classList.remove('ll-menu-open');const search=$('#ll-menu-search');if(search){search.value='';search.dispatchEvent(new Event('input',{bubbles:true}))}}
 function makeMenu(){
  if($('#ll-menu-overlay'))return;const el=document.createElement('div');el.id='ll-menu-overlay';el.className='ll-menu-overlay';
- el.innerHTML=`<div class="ll-menu-backdrop" data-ll-close></div><aside class="ll-menu-sheet" role="dialog" aria-label="Hauptnavigation" aria-modal="true"><header><b><span>L</span> LIVERYLAB</b><button data-ll-close aria-label="Schließen">✕</button></header><div class="ll-menu-scroll">${groups.map(([name,items])=>`<section><small>${name}</small>${items.map(([id,ico,label])=>`<button data-go="${id}" ${id==='admin'?'class="ll-admin-nav" hidden':''}><i>${ico}</i><strong>${label}</strong><span>›</span></button>`).join('')}</section>`).join('')}</div><footer>Made with 💙 by NyxAtheris (LiveryLab)</footer></aside>`;
+ el.innerHTML=`<div class="ll-menu-backdrop" data-ll-close></div><aside class="ll-menu-sheet" role="dialog" aria-label="Hauptnavigation" aria-modal="true"><header><b><span>L</span> LIVERYLAB</b><button data-ll-close aria-label="Schließen">✕</button></header><div class="ll-menu-search"><input id="ll-menu-search" type="search" placeholder="Bereich oder Tool suchen …" aria-label="Menü durchsuchen" autocomplete="off"></div><div class="ll-menu-scroll">${groups.map(([name,items])=>`<section><small>${name}</small>${items.map(([id,ico,label])=>`<button data-go="${id}" ${id==='admin'?'class="ll-admin-nav" hidden':''}><i>${ico}</i><strong>${label}</strong><span>›</span></button>`).join('')}</section>`).join('')}</div><footer>Made with 💙 by NyxAtheris (LiveryLab)</footer></aside>`;
  el.addEventListener('click',e=>{if(e.target.closest('[data-ll-close],[data-go]'))close()});document.body.append(el)
 }
 function setRole(r){role=r||'';if($('.ll-admin-nav'))$('.ll-admin-nav').hidden=role!=='admin'}
 function boot(){
  if(started)return;started=true;prefs=read();apply();makeMenu();
  document.addEventListener('click',e=>{
-  if(e.target.closest('#ll-menu-button')){if(open)close();else{open=true;$('#app').inert=true;$('#ll-menu-button').setAttribute('aria-expanded','true');$('#ll-menu-overlay').classList.add('open');document.body.classList.add('ll-menu-open');$('#ll-menu-overlay button[data-ll-close]')?.focus()}return}
+  if(e.target.closest('#ll-menu-button')){if(open)close();else{open=true;$('#app').inert=true;$('#ll-menu-button').setAttribute('aria-expanded','true');$('#ll-menu-overlay').classList.add('open');document.body.classList.add('ll-menu-open');$('#ll-menu-search')?.focus()}return}
   const b=e.target.closest('button:is([data-ll-theme],[data-ll-accent],[data-ll-avatar],[data-ll-cover],[data-ll-tab],[data-ll-reset])');
   if(!b)return;
   if(b.hasAttribute('data-ll-reset')){if(!confirm('Nur das Design zurücksetzen? Lernstand und Projekte bleiben erhalten.'))return;prefs={...defaults};save()}
@@ -37,6 +37,19 @@ function boot(){
   if(last?.node.isConnected)renderSettings(last.node,last.props)
  });
  document.addEventListener('change',e=>{const k=e.target.dataset.llSetting;if(!k||!(k in prefs))return;const v=e.target.type==='checkbox'?e.target.checked:e.target.value;if(typeof defaults[k]==='boolean'||options[k]?.includes(v)){prefs[k]=v;save();if(last?.node.isConnected)renderSettings(last.node,last.props)}});
+ document.addEventListener('input',e=>{
+  if(e.target.id==='ll-menu-search'){
+   const q=e.target.value.trim().toLocaleLowerCase('de');$('#ll-menu-overlay')?.querySelectorAll('.ll-menu-scroll section').forEach(section=>{
+    const inGroup=section.querySelector('small')?.textContent.toLocaleLowerCase('de').includes(q);
+    section.querySelectorAll('button[data-go]').forEach(button=>{button.hidden=(button.dataset.go==='admin'&&role!=='admin')||(!inGroup&&!button.textContent.toLocaleLowerCase('de').includes(q))});
+    section.hidden=[...section.querySelectorAll('button[data-go]')].every(button=>button.hidden);
+   });return;
+  }
+  if(e.target.id==='ll-settings-search'){
+   const q=e.target.value.trim().toLocaleLowerCase('de');
+   document.querySelectorAll('.ll-pref-tabs button[data-ll-tab]').forEach(button=>{button.hidden=!button.textContent.toLocaleLowerCase('de').includes(q)});
+  }
+ });
  document.addEventListener('keydown',e=>{if(open&&e.key==='Escape')close()})
 }
 const box=(heading,body)=>`<section class="ll-pref-group"><h3>${heading}</h3><div>${body}</div></section>`;
@@ -57,9 +70,9 @@ function renderSettings(node,props={}){
  +box('Deine Werkzeuge',`<div class="ll-tool-links">${[['editor','⌘','Code Lab'],['music','♫','Music Lab'],['studio3d','◈','Designer Lab'],['videolab','▣','Video Lab'],['roadmaps','↗','Roadmaps']].map(([id,ico,name])=>`<button data-go="${id}"><span>${ico}</span><b>${name}</b><em>›</em></button>`).join('')}</div>`);
  if(tab==='about')body=box('Academy 5.0','<p>Eine mobile Lernplattform für Coding, FiveM, Musikproduktion, Video und 3D. Die Studios dienen zum Lernen und ersetzen nicht alle Funktionen von Visual Studio, Blender oder einer Desktop-DAW.</p><p>Made with 💙 by NyxAtheris (LiveryLab)</p><a href="https://github.com/akraniss05/liverylab-academy" target="_blank" rel="noopener">GitHub-Projekt ↗</a>');
  const current=tabs.find(x=>x[0]===tab)||tabs[0];
- node.innerHTML=`<div class="ll-settings-head"><span class="eyebrow">ACCOUNT & PERSONALIZATION</span><h1>Einstellungen <span>⚙</span></h1><p>Dein Aussehen, dein Konto, deine Daten – übersichtlich an einem Ort.</p></div><div class="ll-settings-layout"><aside class="ll-pref-tabs">${tabs.map(([id,icon,title,desc])=>`<button data-ll-tab="${id}" aria-current="${id===tab?'page':'false'}" class="${id===tab?'active':''}"><i>${icon}</i><span><b>${title}</b><small>${desc}</small></span><em>›</em></button>`).join('')}</aside><section class="ll-pref-main"><header><span>${current[1]}</span><div><h2>${current[2]}</h2><p>${current[3]}</p></div></header>${body}<div class="ll-pref-footer"><button class="btn" data-ll-reset>↶ Auf Standard zurücksetzen</button><p class="micro">Die Aktion setzt nur das App-Design zurück.</p></div></section></div>`;
+ node.innerHTML=`<div class="ll-settings-head"><span class="eyebrow">ACCOUNT & PERSONALIZATION</span><h1>Einstellungen <span>⚙</span></h1><p>Dein Aussehen, dein Konto, deine Daten – übersichtlich an einem Ort.</p></div><div class="ll-settings-layout"><aside class="ll-pref-tabs"><div class="ll-pref-filter"><label for="ll-settings-search">EINSTELLUNGEN FINDEN</label><input id="ll-settings-search" type="search" placeholder="Einstellungen suchen …" autocomplete="off"></div>${tabs.map(([id,icon,title,desc])=>`<button data-ll-tab="${id}" aria-current="${id===tab?'page':'false'}" class="${id===tab?'active':''}"><i>${icon}</i><span><b>${title}</b><small>${desc}</small></span><em>›</em></button>`).join('')}</aside><section class="ll-pref-main"><header><span>${current[1]}</span><div><h2>${current[2]}</h2><p>${current[3]}</p></div></header>${body}<div class="ll-pref-footer"><button class="btn" data-ll-reset>↶ Auf Standard zurücksetzen</button><p class="micro">Die Aktion setzt nur das App-Design zurück.</p></div></section></div>`;
  apply();if(tab==='account'&&props.client)setTimeout(()=>{if(node.isConnected&&tab==='account')window.LLMFA?.renderSettings($('#ll-mfa-settings',node),props.client)},0);
 }
-function profileBanner(name,role,tier,xp,lessons){return `<div class="ll-profile-cover" data-cover="${prefs.cover}"><span class="ll-avatar">${prefs.avatar}</span><div><span class="eyebrow">LIVERYLAB PROFILE</span><h1>${esc(name)}</h1><div class="ll-profile-tags"><span>${role==='admin'?'♛ ADMIN':'STUDENT'}</span><span>${tier==='pro'?'✦ PRO':'FREE'}</span></div><p>${xp} XP · ${lessons} Lektionen abgeschlossen</p></div><strong class="ll-profile-mark">L</strong></div>`}
+function profileBanner(name,role,tier,xp,lessons){const milestone=[10,50,100,200,432].find(n=>n>Number(lessons))||432;const percent=Math.max(0,Math.min(100,Math.round(Number(lessons)/milestone*100)));return `<div class="ll-profile-cover" data-cover="${prefs.cover}"><span class="ll-avatar">${prefs.avatar}</span><div><span class="eyebrow">LIVERYLAB PROFILE</span><h1>${esc(name)}</h1><div class="ll-profile-tags"><span>${role==='admin'?'♛ ADMIN':'STUDENT'}</span><span>${tier==='pro'?'✦ PRO':'FREE'}</span></div><p>${xp} XP · ${lessons} Lektionen abgeschlossen</p><div class="ll-profile-progress"><small>${lessons} von ${milestone} Lektionen zum nächsten Meilenstein</small><div class="ll-profile-progress-track"><div class="ll-profile-progress-fill" style="width:${percent}%"></div></div></div><div class="ll-profile-shortcuts"><button data-act="customize-profile">✧ Design anpassen</button><button data-act="profile-security">🛡 Passwort & Authenticator</button><button data-go="settings">⚙ Einstellungen</button></div></div><strong class="ll-profile-mark">L</strong></div>`}
 window.LLShell={boot,ownerChanged,setRole,apply,renderSettings,profileBanner,get prefs(){return {...prefs}}};
 })();

@@ -3,7 +3,7 @@
 'use strict';
 const $=(s,r=document)=>r.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const types=['Cube','Sphere','Cylinder','Plane','Cone','Torus','Icosahedron'],basic=['Cube','Sphere','Cylinder','Plane'];
-let root,uid,world,selected,THREE,scene,camera,renderer,controls,models,ro,raf,abort,history=[];
+let root,uid,world,selected,THREE,scene,camera,renderer,controls,models,grid,ro,raf,abort,history=[];
 const key=()=>`liverylab3d:${uid}`;
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,Number.isFinite(+x)?+x:0));
 function clean(x){return{id:String(x.id||Math.random()).slice(0,50),name:String(x.name||x.type||'Objekt').slice(0,50),type:types.includes(x.type)?x.type:'Cube',pos:(Array.isArray(x.pos)&&x.pos.length===3?x.pos:[0,.7,0]).map(v=>clamp(v,-100,100)).slice(0,3),rot:(Array.isArray(x.rot)&&x.rot.length===3?x.rot:[0,0,0]).map(v=>clamp(v,-6.3,6.3)).slice(0,3),scale:(Array.isArray(x.scale)&&x.scale.length===3?x.scale:[1,1,1]).map(v=>clamp(v,.01,40)).slice(0,3),color:/^#[a-f0-9]{6}$/i.test(x.color)?x.color:'#ba74fa',metallic:clamp(x.metallic||0,0,1),roughness:clamp(x.roughness??.6,.05,1)}}
@@ -36,14 +36,15 @@ async function render(node,{userId='guest'}={}){
  <div class="ll3-toolbar"><select id="ll3-primitive">${types.map(t=>`<option>${t}${basic.includes(t)?'':' ✦'}</option>`).join('')}</select><button class="btn primary" data-three="add">＋ Objekt</button><button class="btn" data-three="camera">Ansicht zentrieren</button><button class="btn" data-three="undo">↶ Rückgängig</button><button class="btn" data-three="save">Speichern</button><button class="btn" data-three="export">↓ GLB</button><button class="btn" data-three="json">↓ JSON</button><button class="btn" data-three="import">↑ Import</button></div><input type="file" id="ll3-upload" accept=".json" hidden>
  <div class="ll3-layout"><aside><div class="eyebrow">HIERARCHIE</div><div id="ll3-tree"></div></aside><div class="ll3-view"><div id="ll3-canvas"></div><div class="ll3-overlay">☝ Ziehen: Drehen · Zwei Finger: Zoomen</div></div><aside id="ll3-inspector"></aside></div>
  <div class="callout" id="ll3-status" role="status">Lade 3D Engine …</div><div class="v5-plans-note">FREE: 6 Objekte, Grundformen, 2 GLB-Exporte pro Tag. ✦ PRO: 100 Objekte (Browser-Leistungsgrenze), alle Formen, Materialien und unbegrenzte Exporte.</div>`;
+ window.LLWorkspace?.enhance(node,'design');
  node.addEventListener('click',click,{signal:abort.signal});node.addEventListener('change',change,{signal:abort.signal});
  $('#ll3-upload',node).addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;if(f.size>2000000)return status('Maximal 2 MB JSON');try{const d=JSON.parse(await f.text());if(!Array.isArray(d.objects)||d.objects.length>100)throw Error('Ungültiger Szeneninhalt');snap();world={name:String(d.name||'Szene').slice(0,60),objects:d.objects.map(clean)};selected=world.objects[0]?.id;sync();inspector();save()}catch(err){status('Import: '+err.message)}e.target.value=''},{signal:abort.signal});
  try{
  const T=await import('three'),{OrbitControls}=await import('three/addons/controls/OrbitControls.js');
  if(!abort||abort.signal.aborted||root!==node)return;
  THREE=T;scene=new T.Scene();scene.background=new T.Color('#100d1b');camera=new T.PerspectiveCamera(48,1,.1,500);camera.position.set(4,3.5,6);
- renderer=new T.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));$('#ll3-canvas',root).append(renderer.domElement);
- scene.add(new T.AmbientLight('#c3abff',1));const light=new T.DirectionalLight('#eecaff',2.4);light.position.set(4,8,5);scene.add(light);scene.add(new T.GridHelper(12,12,'#7540ae','#393044'));models=new T.Group();scene.add(models);
+ renderer=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));$('#ll3-canvas',root).append(renderer.domElement);
+ scene.add(new T.AmbientLight('#c3abff',1));const light=new T.DirectionalLight('#eecaff',2.4);light.position.set(4,8,5);scene.add(light);grid=new T.GridHelper(12,12,'#7540ae','#393044');scene.add(grid);models=new T.Group();scene.add(models);
  controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.target.set(0,.5,0);
  const raycaster=new T.Raycaster(),pointer=new T.Vector2();
  renderer.domElement.addEventListener('click',e=>{const a=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-a.left)/a.width*2-1,-(e.clientY-a.top)/a.height*2+1);raycaster.setFromCamera(pointer,camera);const hits=raycaster.intersectObjects(models.children);if(hits.length){selected=hits[0].object.userData.id;sync();inspector()}},{signal:abort.signal});
@@ -64,6 +65,8 @@ async function click(e){
   camera.position.set(target[0]+distance,target[1]+distance*.65,target[2]+distance);
   controls.update();return;
  }
+ if(a==='grid'){if(!grid)return status('3D Engine noch nicht bereit.');grid.visible=!grid.visible;status(grid.visible?'Raster eingeblendet.':'Raster ausgeblendet.');return}
+ if(a==='snapshot'){if(!renderer||!scene||!camera)return status('3D Engine noch nicht bereit.');try{renderer.render(scene,camera);const url=renderer.domElement.toDataURL('image/png');if(url.length<128)throw Error('Leere Bilddatei');const link=document.createElement('a');link.href=url;link.download='LiveryLab-3D-Szene.png';link.click();status('PNG-Screenshot gespeichert.')}catch(err){status('Screenshot fehlgeschlagen: '+err.message)}return}
  if(a==='save'){save();return}
  if(a==='json'){dl(new Blob([JSON.stringify(world,null,2)],{type:'application/json'}),'LiveryLab-Szene.json');return}
  if(a==='import'){$('#ll3-upload',root).click();return}
@@ -78,6 +81,6 @@ async function change(e){
  else return;
  sync();inspector();save();
 }
-function stop(){abort?.abort();abort=null;ro?.disconnect();ro=null;if(raf!==null)cancelAnimationFrame(raf);raf=null;controls?.dispose();controls=null;if(models)for(const m of models.children){m.geometry.dispose();m.material.dispose()}models=null;renderer?.dispose();renderer?.domElement?.remove();renderer=null;scene=null;root=null;}
+function stop(){abort?.abort();abort=null;ro?.disconnect();ro=null;if(raf!==null)cancelAnimationFrame(raf);raf=null;controls?.dispose();controls=null;if(models)for(const m of models.children){m.geometry.dispose();m.material.dispose()}models=null;grid=null;renderer?.dispose();renderer?.domElement?.remove();renderer=null;scene=null;root=null;}
 window.LL3D={render,stop};
 })();

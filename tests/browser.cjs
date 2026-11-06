@@ -60,9 +60,17 @@ async function run(engine,mobile){
       await page.locator('#ll-menu-overlay [data-go="'+id+'"]').click();
     };
     await page.locator('.v5-mainhero').waitFor();
+    await page.locator('#ll-menu-button').click();
+    await page.locator('#ll-menu-search').fill('Designer');
+    assert.ok(await page.locator('#ll-menu-overlay [data-go="studio3d"]').isVisible());
+    assert.equal(await page.locator('#ll-menu-overlay [data-go="editor"]').isVisible(),false);
+    await page.locator('#ll-menu-search').fill('');
+    await page.locator('#ll-menu-overlay button[data-ll-close]').click();
     await go('settings');await page.locator('[data-ll-theme="carbon"]:is(button)').click();
     assert.equal(await page.locator('html').getAttribute('data-ll-theme'),'carbon');
     await page.locator('[data-ll-reset]').click();
+    await page.locator('[data-ll-tab="account"]').click();
+    await page.locator('#ll-mfa-settings').waitFor();
     await go('profile');await page.locator('[data-act="customize-profile"]').click();
     await page.locator('button[data-ll-avatar]').first().click();
     await go('roadmaps');await page.locator('[data-roadmap]').first().click();
@@ -82,7 +90,9 @@ async function run(engine,mobile){
       else await page.keyboard.press('ArrowLeft');
       await page.locator('#llg-back').click();
     }
-    await go('editor');await page.locator('[data-ide="run"]').click();
+    await go('editor');await page.locator('.llws-code .llws-top').waitFor();
+    assert.equal(await page.locator('.llws-code [data-llws-code]').count(),6);
+    await page.locator('[data-ide="run"]').click();
     await page.waitForFunction(()=>document.querySelector('#llideOutput').textContent.includes('Willkommen bei'));
     await page.locator('#llideProject').selectOption('p-js');
     await page.locator('.CodeMirror').waitFor();await page.locator('[data-ide="wrap"]').click();
@@ -92,13 +102,19 @@ async function run(engine,mobile){
     await page.locator('#llm-play').click();await page.locator('#llm-play').click();
     await page.locator('[data-music5="tap"]').click();await page.locator('[data-music5="save"]').click();
     await checkDownload(page,'[data-music5="export"]','RIFF');
-    await go('studio3d');await page.locator('#ll3-canvas canvas').waitFor();
+    await go('studio3d');await page.locator('.llws-design .llws-top').waitFor();
+    await page.locator('#ll3-canvas canvas').waitFor();
+    await page.locator('[data-llws-design="grid"]').click();
     await page.locator('[data-three="add"]').click();await page.locator('[data-three="camera"]').click();
     await checkDownload(page,'[data-three="json"]');await checkDownload(page,'[data-three="export"]','glTF');
-    await go('videolab');await page.locator('#llv-import').setInputFiles(mobile?process.env.QA_CLIP:process.env.QA_CLIP.replace('.mp4','.webm'));
+    await go('videolab');await page.locator('.llws-video .llws-top').waitFor();
+    await page.locator('#llv-import').setInputFiles(mobile?process.env.QA_CLIP:process.env.QA_CLIP.replace('.mp4','.webm'));
     await page.waitForFunction(()=>document.querySelector('#llv-status').textContent.includes('Clip geladen')).catch(async err=>{console.error(await page.locator('#llv-status').textContent());throw err});
     await page.locator('#llv-text').fill('Academy QA');
     await page.locator('#llv-preview').click();await page.locator('#llv-play').click();
+    await page.locator('#llws-speed').selectOption('1.5');
+    assert.equal(await page.locator('#llws-speed').inputValue(),'1.5');
+    await page.locator('#llws-speed').selectOption('1');
     if(await page.evaluate(()=>!!window.MediaRecorder&&!!HTMLCanvasElement.prototype.captureStream)){
       await checkDownload(page,'#llv-export');
     }
