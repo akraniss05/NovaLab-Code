@@ -1,4 +1,4 @@
-name: Deploy LiveryLab Academy 9.0 (Learning Only)
+name: Deploy LiveryLab Academy v10
 on:
   push:
     branches: [main]
@@ -11,58 +11,20 @@ concurrency:
   group: github-pages
   cancel-in-progress: true
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-24.04
     environment:
       name: github-pages
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Validate learning platform and no studios
+      - name: Validate sources
         run: |
-          set -e
-          for f in site/config.js site/shell-v5.js site/auth-mfa-v5.js site/plans-v5.js site/videos-v5.js site/learn-v9.js site/app.js site/service-worker.js; do
-            node --check "$f"
-          done
-          node - <<'NODE'
-          const fs=require('node:fs');
-          const html=fs.readFileSync('site/index.html','utf8');
-          const app=fs.readFileSync('site/app.js','utf8');
-          const config=fs.readFileSync('site/config.js','utf8');
-          for(const f of ['site/index.html','site/learn-v9.js','site/course-only-v9.css','site/styles.css','site/shop-inspired-v8.css','site/shell-v5.css','site/shell-v5.js','site/plans-v5.js','site/auth-mfa-v5.js','site/videos-v5.js','site/app.js','site/config.js','site/privacy.html','site/manifest.webmanifest','site/assets/liverylab-academy-wordmark.svg']) {
-            if(!fs.existsSync(f))throw Error('Missing required '+f)
-          }
-          for(const asset of ['learn-v9.js','course-only-v9.css','auth-mfa-v5.js','videos-v5.js']){
-            if(!html.includes(asset))throw Error('Missing course-only module '+asset)
-          }
-          for(const unwanted of ['code-studio.js','music-v5.js','music-studio.js','studio3d-v5.js','video-lab-v5.js','workspace-v6.js','games-v5.js']) {
-            if(html.includes(unwanted))throw Error('Unwanted editor or studio script '+unwanted)
-          }
-          for(const item of ['username','Passwort','discord.gg/livery-lab','nyxatheris','LL9.learning']){
-            if(!app.toLowerCase().includes(item.toLowerCase()))throw Error('Missing learning/account feature '+item)
-          }
-          if(!fs.readFileSync('site/plans-v5.js','utf8').includes('academy_open_lesson'))throw Error('Server-verified lesson quota missing');
-          if(!config.includes('requireLogin: true'))throw Error('Login must remain required')
-          if(!config.includes('sb_publishable_'))throw Error('Only public Supabase key expected')
-          if(/sb_secret_[A-Za-z0-9]|service_role_key|SUPABASE_SERVICE_ROLE/.test(config))throw Error('Secret key present in published configuration')
-          if(fs.existsSync('site/data.json')||fs.existsSync('site/data.js'))throw Error('Private curriculum cannot be stored on GitHub Pages')
-          console.log('Academy 9 static checks passed');
-          NODE
-      - name: Install browsers and test desktop/iPhone course flows
-        run: |
-          npm install --prefix "$RUNNER_TEMP/academy-qa" --no-audit --no-fund playwright@1.56.1
-          "$RUNNER_TEMP/academy-qa/node_modules/.bin/playwright" install --with-deps chromium webkit
-          python3 -m http.server 8080 --bind 127.0.0.1 --directory site &
-          trap 'kill $!' EXIT
-          NODE_PATH="$RUNNER_TEMP/academy-qa/node_modules" node tests/browser.cjs
-      - name: Setup GitHub Pages
-        uses: actions/configure-pages@v5
-      - name: Upload static website
-        uses: actions/upload-pages-artifact@v4
+          node --check site/academy.js
+          node --check site/auth-mfa-v5.js
+          node --check site/config.js
+          node tests/smoke.cjs
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
         with:
-          path: site
-      - name: Publish
-        id: deployment
-        uses: actions/deploy-pages@v4
+          path: ./site
+      - uses: actions/deploy-pages@v4

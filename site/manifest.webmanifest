@@ -1,14 +1,15 @@
 {
-  "name": "LiveryLab Academy – Coding, FiveM, Music, Video & 3D",
+  "name": "LiveryLab Academy",
   "short_name": "LiveryLab",
-  "start_url": "./",
+  "description": "Lernplattform für Coding und Blender",
+  "start_url": "./#home",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#0a0814",
-  "theme_color": "#0a0814",
+  "background_color": "#0d0a19",
+  "theme_color": "#0d0a19",
   "icons": [
     {
-      "src": "assets/icon.svg",
+      "src": "./icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"

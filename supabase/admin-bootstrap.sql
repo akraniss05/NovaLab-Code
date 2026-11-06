@@ -1,27 +1,18 @@
--- LiveryLab Academy: One-time Admin Bootstrap
--- 1. Apply schema.sql first.
--- 2. Invite yourself through Supabase Dashboard > Authentication > Users.
--- 3. Confirm/activate that account using the invitation link.
--- 4. Replace ADMIN_EMAIL_HIER_EINTRAGEN below with your OWN verified email.
--- 5. Run this one-time script in the Supabase SQL Editor.
--- Never write a password or service role key into SQL or GitHub.
-do $bootstrap$
-declare
-  desired_email text := 'ADMIN_EMAIL_HIER_EINTRAGEN';
-  target_user uuid;
-begin
-  if desired_email = 'ADMIN_EMAIL_HIER_EINTRAGEN' then
-    raise exception 'Ersetze ADMIN_EMAIL_HIER_EINTRAGEN durch deine eigene verifizierte E-Mail.';
-  end if;
-  select id into target_user from auth.users
-    where lower(email) = lower(desired_email)
-      and email_confirmed_at is not null
-    limit 1;
-  if target_user is null then
-    raise exception 'Admin-Account fehlt oder E-Mail ist noch nicht bestätigt.';
-  end if;
-  insert into public.academy_profiles (id,display_name,role,active)
-    values(target_user,'NyxAtheris','admin',true)
-    on conflict(id) do update
-      set display_name='NyxAtheris',role='admin',active=true;
-end $bootstrap$;
+-- LiveryLab Academy Admin Bootstrap (einmalig, nur Supabase SQL Editor)
+-- Nur eine bereits bestätigte eigene Admin-E-Mail verwenden.
+DO $$
+DECLARE
+  admin_email text := 'ADMIN_EMAIL_HIER_EINTRAGEN';
+  admin_id uuid;
+BEGIN
+  IF admin_email = 'ADMIN_EMAIL_HIER_EINTRAGEN' THEN
+    RAISE EXCEPTION 'Bitte die eigene bestätigte Admin-E-Mail eintragen';
+  END IF;
+  SELECT id INTO admin_id FROM auth.users
+    WHERE lower(email) = lower(admin_email) AND email_confirmed_at IS NOT NULL
+    LIMIT 1;
+  IF admin_id IS NULL THEN RAISE EXCEPTION 'Bestätigtes Konto fehlt'; END IF;
+  INSERT INTO public.academy_profiles(id,display_name,role,active)
+    VALUES (admin_id,'NyxAtheris','admin',true)
+    ON CONFLICT (id) DO UPDATE SET role='admin',active=true;
+END $$;
