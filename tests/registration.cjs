@@ -38,7 +38,7 @@ const fd=new Map([
  log=[];
  setApi({auth:{async signUp(){log.push('signup');return {error:{code:'email_address_invalid',message:'Invalid email'}};}},
  functions:{async invoke(){log.push('fallback');throw Error('Fallback used for non-disabled signup error');}}});
- await assert.rejects(()=>registerAccount(fd),/Invalid email/);
+ await assert.rejects(()=>registerAccount(fd),e=>String(e?.message||e)==='Invalid email');
  assert.deepEqual(log,['signup'],'Other errors should remain errors');
  const server=fs.readFileSync(path.join(__dirname,'../supabase/functions/academy-register/index.ts'),'utf8');
  for(const token of ["email_confirm:true","access_status!=='pending'","academy_signup_rate_limit","academy_signup_flow:'manual_request'","allowedOrigins","requires_approval:true"])
