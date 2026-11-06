@@ -1,4 +1,4 @@
-/* LiveryLab Academy v10 — course-first learning platform.
+/* LiveryLab Academy v13 — focused learning, memberships and vouchers.
  * Made with 💙 from NyxAtheris (LiveryLab Studios)
  * The footer attribution remains visible; open-source code itself cannot be made tamper-proof.
  * No browser-side administrator secrets. Supabase Auth + RLS enforce access server-side.
@@ -7,7 +7,7 @@
 'use strict';
 var cfg=window.LL_CONFIG||{}, $=function(q,root){return (root||document).querySelector(q);};
 var content=$('#content'), sidebar=$('#sidebar'), bottom=$('#bottom-nav'), toastNode=$('#toast');
-var api=null, s={user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,videoChecked:false,videoLoaded:false,exam:null,members:[],memberPlans:{},adminPage:1,catalogLimit:9,practiceChecked:false,draft:'',prefs:null,projectTab:0,projectSource:'',projectLoading:false};
+var api=null, s={daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,videoChecked:false,videoLoaded:false,exam:null,members:[],memberPlans:{},adminPage:1,catalogLimit:9,practiceChecked:false,draft:'',prefs:null,projectTab:0,projectSource:'',projectLoading:false};
 var plans={free:'Free',pro:'Plus',ultimate:'Pro'};
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];});}
 function safeLink(url){return /^https:\/\/[^\s<>"]+$/i.test(String(url||''))?esc(url):'#';}
@@ -141,12 +141,17 @@ async function loadData(){
  var all=await Promise.all([
  api.from('ll_courses').select('id,name,category,level,icon,source_url'),
  api.from('ll_lesson_index').select('id,course_id,chapter,position,title,summary,minutes,required_plan').order('position',{ascending:true}),
- api.from('academy_plans').select('tier').eq('user_id',s.user.id).maybeSingle(),
- api.from('academy_progress').select('payload').eq('user_id',s.user.id).eq('key','liverylab-v10').maybeSingle()
+ api.from('academy_plans').select('tier,expires_at').eq('user_id',s.user.id).maybeSingle(),
+ api.from('academy_progress').select('payload').eq('user_id',s.user.id).eq('key','liverylab-v10').maybeSingle(),
+ api.rpc('academy_voucher_status')
  ]);
  if(all[0].error)throw all[0].error;if(all[1].error)throw all[1].error;
  s.courses=all[0].data||[];s.lessons=all[1].data||[];
- s.tier=['free','pro','ultimate'].includes(all[2].data?.tier)?all[2].data.tier:'free';
+ s.tier=['free','pro','ultimate'].includes(all[4].data?.tier)?all[4].data.tier:'free';
+ s.daily=all[4].error?null:all[4].data;
+ s.planExpires=all[2].data?.expires_at||null;
+ s.discount=s.daily?.discount||null;
+ if(all[4].error)notice('Kontingent konnte nicht geladen werden: '+formatError(all[4].error));
  var data=all[3].data?.payload||{};
  s.progress={done:Array.isArray(data.done)?data.done:[],watched:Array.isArray(data.watched)?data.watched:[],exams:data.exams||{},practiced:Array.isArray(data.practiced)?data.practiced:[]};
  s.ready=true;frame();await navigateCurrent();
@@ -162,12 +167,12 @@ async function navigateCurrent(){
  if(!s.ready)return;
  var route=parseRoute();s.route=route.page;
  if(route.page==='lesson'){
-   s.choice=null;s.videoChecked=watchedIds().has(route.id);s.practiceChecked=(s.progress.practiced||[]).includes(route.id);s.draft=readDraft(route.id);s.videoLoaded=false;s.lesson=null;
+   s.choice=null;s.videoChecked=watchedIds().has(route.id);s.practiceChecked=(s.progress.practiced||[]).includes(route.id);s.draft=readDraft(route.id);s.videoLoaded=false;s.lesson=null;s.lessonGate=null;
    frame();content.innerHTML='<div class="center-screen"><div class="spinner"></div><p>Geschützte Lektion wird geladen …</p></div>';
    var meta=s.lessons.find(function(l){return l.id===route.id;});
-   if(meta&&allowed(meta)){var result=await api.from('ll_lesson_content').select('payload,video_id,video_start').eq('lesson_id',route.id).maybeSingle();if(result.error)notice(formatError(result.error));s.lesson=result.data||null;}
+   if(meta&&allowed(meta)){var result=await api.rpc('academy_open_lesson',{p_lesson:route.id});if(result.error){s.lessonGate={reason:'error',error:formatError(result.error)};notice(formatError(result.error));}else if(result.data?.allowed){s.lesson=result.data;if(s.daily){s.daily.used_today=result.data.used;s.daily.remaining_today=result.data.remaining;}}else{s.lessonGate=result.data||{reason:'error'};}}
  }
- if(route.page==='admin'&&s.profile?.role==='admin'){try{await fetchMembers();}catch(e){notice('Adminliste: '+formatError(e));}}
+ if(route.page==='admin'&&s.profile?.role==='admin'){try{await Promise.all([fetchMembers(),fetchVouchers()]);}catch(e){notice('Adminliste: '+formatError(e));}}
  if(route.page==='script'){await loadProjectTab();}
  if(route.page==='exam'&&route.id){await loadExam(route.id);}
  render();window.scrollTo({top:0,behavior:'instant'});
@@ -215,7 +220,7 @@ function homePage(){
  '<p class="lede">Verstehe die Grundlagen, probiere eigene Lösungen aus und werde Schritt für Schritt sicherer in Code, FiveM und Blender.</p>'+
  '<div class="hero-actions"><button class="btn primary" data-go="'+(next?'lesson/'+esc(next.id):'courses')+'">Jetzt starten <span>→</span></button>'+
  '<button class="btn" data-go="courses">Alle Lernpfade</button></div></section>'+
- stats()+
+ stats()+dailyStrip()+
  (next?'<section class="section"><div class="section-heading"><div><span class="eyebrow">WEITERLERNEN</span><h2>Deine nächste Lektion</h2></div></div>'+
  '<div class="next-lesson"><span class="eyebrow">'+esc(nextCourse?.name||'Lernpfad')+'</span><h3>'+esc(next.title)+'</h3>'+
  '<p>'+esc(next.summary)+'</p><button class="btn primary" data-go="lesson/'+esc(next.id)+'">Lektion öffnen →</button></div></section>':'')+
@@ -292,7 +297,7 @@ function lessonPage(id){
  '<p>Diese Lektion ist mit <strong>'+tierLabel(l.required_plan)+'</strong> freigeschaltet.</p>'+
  '<div class="hero-actions" style="justify-content:center"><button class="btn primary" data-go="plans">Stufen vergleichen</button>'+
  '<a class="btn discord" rel="noopener noreferrer" target="_blank" href="https://discord.gg/livery-lab">Freischaltung anfragen</a></div></section>';
- if(!s.lesson)return back+'<div class="empty"><h2>Lektion konnte nicht geladen werden.</h2>Bitte überprüfe deine Internetverbindung und lade die Seite neu.</div>';
+ if(!s.lesson){const daily=s.lessonGate?.reason==='daily_limit';return back+'<section class="lesson-gate"><span class="gate-icon">'+(daily?'◷':'🔒')+'</span><span class="eyebrow">'+(daily?'TAGESLIMIT ERREICHT':'LEKTION NICHT VERFÜGBAR')+'</span><h2>'+(daily?'Für heute geschafft.':'Lektion nicht geladen')+'</h2><p>'+(daily?'Du hast heute alle '+safeNumber(s.daily?.daily_limit)+' neuen Lernstationen geöffnet. Morgen geht es weiter. Bereits geöffnete Stationen bleiben zugänglich.':esc(s.lessonGate?.error||'Prüfe deine Freischaltung und Verbindung.'))+'</p><div class="actions-pair"><button class="btn" data-go="track/'+esc(l.course_id)+'">← Lernpfad</button><button class="btn primary" data-go="plans">Tarife ansehen →</button></div></section>';}
  var p=s.lesson.payload||{},video=s.lesson.video_id,info=videoInfo(video),options=Array.isArray(p.options)?p.options:[],finished=doneIds().has(id),isBlender=c?.category==='3D & Blender';
  var validVideo=video&&/^[a-zA-Z0-9_-]{11}$/.test(video),url=validVideo?'https://www.youtube.com/watch?v='+video+'&t='+Math.max(0,Number(s.lesson.video_start)||0)+'s':null;
  var search='https://www.youtube.com/results?search_query='+encodeURIComponent(c.name+' '+l.title+' Anleitung Tutorial deutsch');
@@ -390,30 +395,59 @@ async function markLesson(){
  catch(e){s.progress.done=s.progress.done.filter(x=>x!==id);notice('Speichern fehlgeschlagen: '+formatError(e));}
 }
 
+
+function euro(cents){return (Number(cents||0)/100).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'}
+async function fetchVouchers(){
+ if(s.profile?.role!=='admin')return;
+ const r=await api.rpc('academy_voucher_list');
+ if(r.error)throw r.error;
+ s.vouchers=Array.isArray(r.data)?r.data:[];
+}
+function dailyStrip(){
+ const cap=Number(s.daily?.daily_limit??(s.tier==='ultimate'?-1:s.tier==='pro'?6:3)),used=Number(s.daily?.used_today)||0;
+ return '<div class="daily-strip"><span class="daily-symbol">◷</span><div><strong>'+
+ (cap<0?'Unbegrenztes Lernen':'Heute: '+Math.max(0,cap-used)+' von '+cap+' Stationen übrig')+'</strong>'+
+ '<small>'+(cap<0?'Alle Lernstationen ohne tägliche Begrenzung.':'Einmal geöffnete Stationen bleiben jederzeit abrufbar.')+'</small></div></div>';
+}
 function plansPage(){
- var counts=planCounts(),current=s.tier;
- function tile(id,name,label,desc,benefits,featured){
-  var n=id==='free'?counts.free:id==='pro'?counts.plus:counts.pro,own=current===id;
-  return '<article class="plan-card '+(featured?'featured':id==='ultimate'?'full':'')+'">'+
-  '<span class="chip '+(id==='free'?'free':id==='pro'?'plus':'pro')+'">'+label+'</span>'+
-  '<h3>'+name+'</h3><div class="price">'+n+' <span style="font-size:14px;font-weight:600;color:#b7a6d0">Lektionen</span></div>'+
-  '<div class="plan-cap '+(own?'current-plan':'')+'">'+(own?'✓ Dein aktueller Tarif':id==='free'?'Der kostenlose Einstieg':id==='pro'?'Doppelt so viel wie Free':'Voller Zugriff auf die Academy')+'</div>'+
-  '<p class="muted">'+desc+'</p><ul>'+benefits.map(x=>'<li>'+x+'</li>').join('')+'</ul>'+
-  (own?'<button class="btn block" disabled>Bereits freigeschaltet</button>':
-  '<a class="btn '+(featured?'primary':'discord')+' block" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">'+name+' beim Team anfragen ↗</a>')+'</article>';
+ const own=s.tier,allCourseCount=52;
+ function tile(tier,name,cap,stations,price,desc,benefits){
+  const current=own===tier,included=(tier==='free'&&own!=='free')||(tier==='pro'&&own==='ultimate');
+  return '<article class="membership-card tier-'+tier+(current?' current':'')+'">'+
+   '<div class="membership-top"><div><span class="eyebrow">'+(tier==='free'?'KOSTENLOS':tier==='pro'?'MEHR LERNEN':'VOLLER ZUGRIFF')+'</span><h2>'+name+'</h2></div>'+
+   '<span class="membership-price">'+price+'<small>/Monat</small></span></div>'+
+   '<div class="membership-limits"><span>▦ '+cap+' Kurse</span><span>◷ '+stations+'</span></div>'+
+   '<p class="membership-desc">'+desc+'</p>'+
+   '<ul class="membership-benefits">'+benefits.map(x=>'<li>'+x+'</li>').join('')+'</ul>'+
+   (current?'<div class="membership-own">✓ Dein aktueller Tarif</div>':
+   included?'<div class="membership-included">✓ In deinem Tarif enthalten</div>':
+   '<a class="btn primary block" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">'+name+' anfragen →</a>')+
+   '</article>';
  }
- return pageHeading('MITGLIEDSCHAFT','Lernen in deinem <span class="gradient">Tempo.</span>',
- 'Drei einfache Stufen. Der Zugriff wird von deinem Academy-Team verwaltet – ohne integrierten Kaufprozess.')+
- '<section class="section plan-grid">'+
- tile('free','Free','EINSTIEG','Alles, was du für deinen ersten Einstieg brauchst.',[
-  'Allgemeine Grundlagenkurse','Passende Lernvideos oder gezielte Tutorialsuchen','Eigene Praxisaufgaben, Quiz und Fortschritt'],false)+
- tile('pro','Plus','WEITERLERNEN','Nach den ersten Schritten lernst du weiter.',[
-  'Alles aus Free','Doppelt so viele freigeschaltete Lektionen wie Free','Mehr Programmierung, Projekte und vertiefende Praxis'],true)+
- tile('ultimate','Pro','VOLLER ZUGRIFF','Für alle Kurse der LiveryLab Academy.',[
-  'Alles aus Plus','Zugang zu sämtlichen verfügbaren Lektionen','Fortgeschrittene Programmierung, FiveM und Blender'],false)+
- '</section><section class="section panel"><h3>Eine Freischaltung anfragen</h3>'+
- '<p class="muted">Schreibe <strong>nyxatheris</strong> auf Discord. Ein Administrator kann deinen Tarif direkt zuweisen.</p>'+
- '<a class="btn discord" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord öffnen ↗</a></section>';
+ const quote=s.discount;
+ return pageHeading('MITGLIEDSCHAFT','Dein <span class="gradient">Lernzugang.</span>',
+ 'Wähle deinen Lernumfang. Gutscheine kannst du direkt hier einlösen.')+
+ dailyStrip()+
+ '<div class="membership-stack">'+
+ tile('free','Free','10','3 pro Tag','0,00 €','Die wichtigsten Grundlagen für deinen Anfang.',[
+  '10 Einsteiger-Lernpfade','3 neue Stationen pro Tag','Praxis, Quiz und Lernfortschritt'])+
+ tile('pro','Plus','25','6 pro Tag','1,99 €','Mehr Themen und mehr Übungszeit.',[
+  '25 Lernpfade','6 neue Stationen pro Tag','Vertiefende Lektionen und Projekte'])+
+ tile('ultimate','Pro','Alle '+allCourseCount,'Unbegrenzt','3,99 €','Der gesamte Kurskatalog.',[
+  'Zugang zu allen Kursen','Kein tägliches Stationslimit','Fortgeschrittene FiveM- und Blender-Kurse'])+
+ '</div>'+
+ '<section class="voucher-panel"><div class="voucher-head"><div><span class="eyebrow">[ % ] GUTSCHEIN</span><h2>Code einlösen</h2></div><span class="voucher-icon">◇</span></div>'+
+ '<p>Rabatt erhalten oder eine kostenlose Plus-/Pro-Mitgliedschaft freischalten.</p>'+
+ '<form data-form="redeem-voucher" class="voucher-form"><label class="form-label" for="voucher-code">Dein Gutscheincode</label>'+
+ '<div class="voucher-input-row"><input class="input" id="voucher-code" name="code" autocapitalize="characters" autocomplete="off" required maxlength="64" placeholder="LL-XXXXXXXXXXXX">'+
+ '<button type="submit" class="btn primary">Einlösen →</button></div></form>'+
+ (quote?'<div class="voucher-quote">✓ Dein reservierter Rabatt: <strong>'+Number(quote.percent)+' % auf '+(quote.tier==='pro'?'Plus':'Pro')+'</strong>'+
+ '<div><s>'+euro(quote.original_cents)+'</s> <strong>'+euro(quote.final_cents)+'</strong> / Monat bei bestätigter Freischaltung</div>'+
+ '<small>Für Zahlung und Aktivierung den LiveryLab-Support kontaktieren.</small></div>':'')+
+ '<small>Rabattcodes sind Angebote, kein automatischer Kauf. Kostenpflichtige Mitgliedschaften werden derzeit vom Team nach Bestätigung aktiviert.</small></section>'+
+ '<section class="section membership-support"><span class="eyebrow">NOCH FRAGEN?</span><h3>Freischaltung über Discord</h3>'+
+ '<p>Schreib <strong>nyxatheris</strong>, wenn du Plus oder Pro nutzen möchtest.</p>'+
+ '<a class="btn discord" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Zum LiveryLab Discord →</a></section>';
 }
 function examsPage(){
  var recommended=['coding-basics','lua','python','javascript','html','blender-fundamentals','fivem','sql']
@@ -488,11 +522,11 @@ async function loadProjectTab(){
  if(!unlocked.length)return;
  s.projectLoading=true;
  try{
-  const r=await api.from('ll_lesson_content').select('lesson_id,payload').in('lesson_id',unlocked.map(l=>l.id));
+  const r=await api.rpc('academy_project_examples',{p_lessons:unlocked.map(l=>l.id)});
   if(r.error)throw r.error;
   s.projectSource=(r.data||[]).map(row=>{
    const lesson=unlocked.find(l=>l.id===row.lesson_id);
-   return '-- '+(lesson?.title||'Lernbeispiel')+'\n'+(row.payload?.example||'-- Kein Codebeispiel vorhanden.');
+   return '-- '+(lesson?.title||'Lernbeispiel')+'\n'+(row.example||'-- Kein Codebeispiel vorhanden.');
   }).join('\n\n');
  }catch(e){notice('Projektansicht: '+formatError(e))}
  finally{s.projectLoading=false}
@@ -613,6 +647,31 @@ function settingsPage(){
  '<p class="micro">Eine Lernplattform für Programmierung, FiveM und Blender. Version 11 · Lerninhalte werden von der Community weiterentwickelt.</p>'+
  '<a href="./privacy.html">Datenschutzhinweise ansehen ↗</a><p class="smallprint" style="margin-top:16px">Made with 💙 from NyxAtheris (LiveryLab Studios)</p></section>';
 }
+
+function voucherAdminSection(){
+ const rows=(s.vouchers||[]).map(v=>'<div class="voucher-admin-row"><div><strong>'+esc(v.code)+'</strong>'+
+ '<small>'+(v.kind==='gift'?'Gratis '+(v.tier==='pro'?'Plus':'Pro')+' · '+Number(v.days)+' Tage':Number(v.percent)+' % Rabatt auf '+(v.tier==='pro'?'Plus':'Pro'))+
+ ' · '+Number(v.uses)+' / '+Number(v.max_uses)+' genutzt'+(!v.active?' · Deaktiviert':'')+'</small></div>'+
+ '<button type="button" class="btn small" data-copy-voucher="'+esc(v.code)+'">Kopieren</button></div>').join('');
+ return '<section class="section admin-voucher"><span class="eyebrow">ADMIN · GUTSCHEINE</span><h2>Gutscheine erstellen</h2>'+
+ '<p class="muted">Rabatte oder kostenlose Mitgliedschaften – die Freigaben werden durch Supabase geprüft.</p>'+
+ '<div class="panel"><form data-form="create-voucher"><div class="form-row">'+
+ '<div class="form-group"><label class="form-label">Gutscheintyp</label><select class="select" name="kind">'+
+ '<option value="gift">Gratis-Mitgliedschaft</option><option value="discount">Rabattcode</option></select></div>'+
+ '<div class="form-group"><label class="form-label">Für welchen Tarif?</label><select class="select" name="tier">'+
+ '<option value="pro">Plus · 1,99 €/Monat</option><option value="ultimate">Pro · 3,99 €/Monat</option></select></div>'+
+ '<div class="form-group"><label class="form-label">Rabatt in % (bei Rabattcodes)</label>'+
+ '<input class="input" type="number" name="percent" min="1" max="90" value="20"></div>'+
+ '<div class="form-group"><label class="form-label">Gratis-Mitgliedschaft für</label><select class="select" name="membership_days">'+
+ '<option value="7">7 Tage</option><option value="30" selected>30 Tage</option><option value="90">90 Tage</option><option value="365">365 Tage</option></select></div>'+
+ '<div class="form-group"><label class="form-label">Maximale Einlösungen</label><input class="input" type="number" name="max_uses" min="1" max="1000" value="1" required></div>'+
+ '<div class="form-group"><label class="form-label">Code gültig für</label><select class="select" name="valid_days">'+
+ '<option value="7">7 Tage</option><option value="30" selected>30 Tage</option><option value="90">90 Tage</option><option value="365">365 Tage</option></select></div></div>'+
+ '<button class="btn primary" type="submit">Neuen Gutschein erstellen →</button></form>'+
+ '<div id="created-voucher" class="voucher-created" hidden></div></div>'+
+ '<div class="voucher-admin-list">'+(rows||'<p class="micro">Noch keine Gutscheine.</p>')+'</div></section>';
+}
+
 function adminPage(){
  if(s.profile?.role!=='admin')return '<section class="locked-panel"><h2>Nur für Administratoren.</h2></section>';
  var rows=(s.members||[]).map(u=>{
@@ -646,7 +705,7 @@ function adminPage(){
  '<div class="tablewrap"><table class="account-table"><thead><tr><th>Konto</th><th>Status</th><th>Tarif</th><th>Aktionen</th></tr></thead><tbody>'+
  (rows||'<tr><td colspan="4">Noch keine Konten geladen. Tippe auf Aktualisieren.</td></tr>')+
  '</tbody></table></div><div class="btn-row" style="margin-top:18px"><button class="btn small" data-action="admin-prev" '+(s.adminPage===1?'disabled':'')+'>← Vorherige</button>'+
- '<span class="micro" style="align-self:center">Seite '+s.adminPage+'</span><button class="btn small" data-action="admin-next" '+(s.members.length<100?'disabled':'')+'>Nächste →</button></div></section>';
+ '<span class="micro" style="align-self:center">Seite '+s.adminPage+'</span><button class="btn small" data-action="admin-next" '+(s.members.length<100?'disabled':'')+'>Nächste →</button></div></section>'+voucherAdminSection();
 }
 async function fetchMembers(){
  if(s.profile?.role!=='admin')return;
@@ -732,6 +791,13 @@ document.addEventListener('click',async function(e){
  var answer=e.target.closest('[data-answer]');if(answer){s.choice=Number(answer.dataset.answer);updateLessonControls();return;}
  var exam=e.target.closest('[data-exam-answer]');if(exam){await submitExamAnswer(Number(exam.dataset.examAnswer));return;}
  var filter=e.target.closest('[data-filter]');if(filter){s.filter=filter.dataset.filter;s.catalogLimit=9;render();return;}
+
+ var couponButton=e.target.closest('[data-copy-voucher]');
+ if(couponButton){
+  try{await navigator.clipboard.writeText(couponButton.dataset.copyVoucher);notice('Gutscheincode kopiert.');}
+  catch(_){notice('Dein Code: '+couponButton.dataset.copyVoucher);}
+  return;
+ }
  if(s.profile?.role==='admin'){
   var admin=e.target.closest('[data-reset-user],[data-active-user],[data-delete-user]');
   if(admin){await adminAction('',admin);return;}
@@ -803,6 +869,36 @@ document.addEventListener('submit',async function(e){
   if(mode==='password'){
    var password=String(fd.get('password')||'');if(password.length<14)throw Error('Bitte mindestens 14 Zeichen verwenden.');
    var p=await api.auth.updateUser({password:password});if(p.error)throw p.error;notice('Passwort aktualisiert.');form.reset();
+  }
+  if(mode==='redeem-voucher'){
+    const code=String(fd.get('code')||'').trim().toUpperCase();
+    if(!/^LL-[A-Z0-9-]{8,60}$/.test(code))throw Error('Bitte einen gültigen LiveryLab-Gutscheincode eingeben.');
+    const r=await api.rpc('academy_voucher_apply',{p_code:code});
+    if(r.error)throw r.error;
+    if(!r.data?.ok)throw Error(r.data?.error||'Gutschein konnte nicht eingelöst werden.');
+    if(r.data.kind==='gift'){
+      notice('Gratis-Mitgliedschaft freigeschaltet!');await loadData();return;
+    }
+    s.discount={code,tier:r.data.tier,percent:r.data.percent,original_cents:r.data.original_cents,final_cents:r.data.final_cents};
+    notice('Rabatt reserviert! Kontaktiere das Team für die Freischaltung.');
+    form.reset();render();
+  }
+  if(mode==='create-voucher'){
+    if(s.profile?.role!=='admin')throw Error('Administratorrechte erforderlich.');
+    const kind=String(fd.get('kind')),tier=String(fd.get('tier'));
+    const r=await api.rpc('academy_voucher_create',{
+      p_kind:kind,p_tier:tier,
+      p_percent:kind==='discount'?Number(fd.get('percent')):null,
+      p_membership_days:kind==='gift'?Number(fd.get('membership_days')):null,
+      p_max_uses:Number(fd.get('max_uses')),p_valid_days:Number(fd.get('valid_days'))
+    });
+    if(r.error)throw r.error;
+    if(!r.data?.ok||!r.data.code)throw Error('Gutschein wurde nicht erstellt.');
+    const code=r.data.code;
+    await fetchVouchers();render();
+    const box=$('#created-voucher');
+    if(box){box.hidden=false;box.innerHTML='<strong>Gutschein erstellt:</strong> <code>'+esc(code)+'</code> <button class="btn small" type="button" data-copy-voucher="'+esc(code)+'">Kopieren</button>';}
+    notice('Gutschein erstellt.');
   }
   if(mode==='create-email'){
    if(s.profile?.role!=='admin')throw Error('Adminzugang erforderlich.');

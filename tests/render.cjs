@@ -37,7 +37,11 @@ for(const value of ['practice-input','complete-practice','load-video','video-che
  assert(lessonHtml.includes(value),'Missing lesson feature '+value);
 assert(app.profilePage().includes('Developer-Profil'),'Profile rendered');
 assert(app.settingsPage().includes('Kompakte Kurskarten'),'Settings rendered');
-assert(app.plansPage().includes('Doppelt so viel'),'Plus tier explained');
+assert(app.plansPage().includes('1,99 €'),'Plus price visible');
+assert(app.plansPage().includes('3,99 €'),'Pro price visible');
+assert(app.plansPage().includes('redeem-voucher'),'Coupon redemption visible');
+assert(app.plansPage().includes('3 pro Tag'),'Free daily limit visible');
+assert(app.plansPage().includes('6 pro Tag'),'Plus daily limit visible');
 assert(app.examsPage().includes('Prüfung'),'Exam landing rendered');
 assert(app.examPage('python').includes('noch nicht vollständig'),'Exam locked until completion');
 state.progress.done=['python-01'];state.progress.practiced=['python-01'];state.progress.watched=['python-01'];

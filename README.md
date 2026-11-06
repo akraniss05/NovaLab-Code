@@ -92,3 +92,15 @@ Unter Repository Settings > Pages muss „GitHub Actions“ aktiviert sein. Push
 - Referenz: FiveM-Natives und Lua-Spickzettel als mobil lesbare Funktionsliste.
 - Lektionen: Theorie, Video, eigener Code-Entwurf, Wissenstest. Entwürfe lokal; Praxis- und Videostatus in Supabase.
 - Login, Admin-Konten, Free / Plus / Pro und Authenticator-Zwei-Faktor-Anmeldung bleiben erhalten.
+
+
+## v13 · Tarife, Tageslimits und Gutscheine
+
+- Free: maximal 10 Grundlagenkurse und 3 neue Stationen pro Tag (0,00 €).
+- Plus: maximal 25 Kurse und 6 neue Stationen pro Tag (1,99 €/Monat).
+- Pro: alle Kurse, unbegrenzte Stationen (3,99 €/Monat).
+- Tageslimits und Kurszugriff werden in Supabase per Rollenprüfung und serverseitigem RPC `academy_open_lesson` durchgesetzt. Direktes Lesen von `ll_lesson_content` ist gesperrt.
+- Bereits vorher eröffnete Lektionen können wiederholt aufgerufen werden, ohne neue Tagesplätze zu beanspruchen.
+- Gutschein-Erstellung nur mit Admin-Konto; Gutscheine werden in `academy_private.academy_vouchers` verwaltet, Einlösungen atomar gezählt.
+- Gratis-Codes aktivieren zeitlich befristet Plus oder Pro; nach Ablauf fällt das Konto zurück. Rabatt-Codes reservieren nur ein Angebot, sie führen keine Zahlung aus.
+- Derzeit KEIN automatischer Zahlungsanbieter, keine automatische Abo-Abrechnung. Preise werden angezeigt, Aktivierung kostenpflichtiger Mitgliedschaften erfolgt nach Bestätigung durch das Team.
