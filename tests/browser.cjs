@@ -11,7 +11,7 @@ const course = {id:'qa',name:'JavaScript',category:'Sprachen',level:'beginner',c
 const fixtures = {
   academy_profiles:{id:user.id,display_name:'QA',active:true,role:'student'},
   academy_plans:{tier:'pro'},
-  academy_curriculum:{payload:{courses:[course]}},
+  academy_curriculum:{payload:{courses:[course],roadmaps:[{id:'coding',name:'Coding',stages:[{title:'Grundlagen',courseIds:['qa']}]}]}},
 };
 function mockSdk() {
   return {auth:{
@@ -28,7 +28,7 @@ async function checkDownload(page,selector,magic){
   console.log('Checking download',selector);
   const pending=page.waitForEvent('download',{timeout:30000});
   await page.locator(selector).click();
-  const file=await pending;
+  const file=await pending.catch(async err=>{console.error(await page.locator('#llv-status,#llm-status,#ll3-status,#llideOutput').allTextContents());throw err});
   const bytes=await fs.readFile(await file.path());
   assert.ok(bytes.length>32,file.suggestedFilename());
   if(magic)assert.equal(bytes.subarray(0,magic.length).toString(),magic);
@@ -107,4 +107,6 @@ async function run(engine,mobile){
     console.log(mobile?'iPhone / WebKit passed':'Desktop / Chromium passed');
   }finally{await browser.close()}
 }
-(async()=>{await run(chromium,false);await run(webkit,true)})().catch(err=>{console.error(err);process.exitCode=1});
+Promise.allSettled([run(chromium,false),run(webkit,true)]).then(results=>{
+  for(const result of results)if(result.status==='rejected'){console.error(result.reason);process.exitCode=1}
+});
