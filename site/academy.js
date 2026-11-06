@@ -519,7 +519,7 @@ function examsPage(){
  var recommended=['coding-basics','lua','python','javascript','html','blender-fundamentals','fivem','sql']
   .map(courseOf).filter(Boolean),ready=s.courses.filter(c=>countDone(c.id)===lessonsOf(c.id).length&&lessonsOf(c.id).length>=3);
  var display=Array.from(new Map([...ready,...recommended].map(c=>[c.id,c])).values()).slice(0,9);
- return pageHeading('PRÜFUNGEN','Zeig, was du <span class="gradient">gelernt hast.</span>',
+ return pageHeading('PRÜFUNGEN','Prüfungen für <span class="gradient">dein Können.</span>',
  'Schließe alle Lektionen eines Kurses ab. Danach startet die Abschlussprüfung mit bis zu 20 Fragen. Du bestehst ab 80 %.')+
  '<section class="section"><div class="course-grid">'+display.map(c=>{
   var n=lessonsOf(c.id).length,done=countDone(c.id),best=(s.progress.exams||{})[c.id];
