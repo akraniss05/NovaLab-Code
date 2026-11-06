@@ -37,7 +37,10 @@ function courseAccent(c){return c.category==='3D & Blender'?'✦':c.category==='
 function videoInfo(id){var sources={
  'e6vPt_e9sRw':{name:'Python · Komplettkurs für Anfänger',author:'Fabian Rappert',language:'Deutsch'},
  'xcmGSRdCXc4':{name:'Lua in 30 Minuten · Grundlagen',author:'Programmieren lernen',language:'Deutsch'},
- 'FtaQSdrl7YA':{name:'JavaScript Crash Course',author:'TechWorld with Nana',language:'Englisch'}
+ 'FtaQSdrl7YA':{name:'JavaScript Crash Course',author:'TechWorld with Nana',language:'Englisch'},
+ '0VDmmgFRP-k':{name:'Responsive Webseite mit HTML und CSS',author:'Programmieren lernen',language:'Deutsch'},
+ 'A2E3FHoB33Q':{name:'CSS in 40 Minuten · Grundlagen',author:'Programmieren lernen',language:'Deutsch'},
+ 'Ci3Has4L5W4':{name:'Blender Tutorial für Anfänger',author:'Kevin Stratvert',language:'Englisch'}
 };return sources[id]||{name:'Video-Tutorial',author:'YouTube',language:'Tutorial'}}
 function navHTML(route){var nav=[['home','⌂','Start'],['courses','◈','Kurse'],['exams','☆','Prüfung'],['reference','▤','Referenz'],['plans','✦','Mitgliedschaft'],['profile','◉','Profil']];
  if(s.profile&&s.profile.role==='admin')nav.push(['admin','⚙','Admin']);
