@@ -18,6 +18,7 @@ const context={
 };
 vm.createContext(context);
 vm.runInContext(fs.readFileSync(path.join(root,'site/reference-data.js'),'utf8'),context,{filename:'reference-data.js'});
+vm.runInContext(fs.readFileSync(path.join(root,'site/academy-curriculum.js'),'utf8'),context,{filename:'academy-curriculum.js'});
 vm.runInContext(rewritten,context,{filename:'academy.js'});
 const app=context.window.__views,s=app.s;
 s.ready=true;s.profile={display_name:'Developer',username:'developer',role:'student',active:true};s.referenceData=context.window.LL_REFERENCE_DATA;s.social={profile:{username:'developer',display_name:'Developer',bio:'Lerne FiveM und Python',avatar_style:'violet',banner_style:'nebula',name_style:'gradient',title:'Developer',lessons:1,awards:0},friends:[],requests:[],titles:['Developer']};
@@ -26,7 +27,7 @@ s.courses=[{id:'fivem',name:'Lua für FiveM – bis zum eigenen Script',category
 const titles=['Variablen, Typen & print','Bedingungen & Schleifen','Funktionen','Tables: Listen & Dictionaries','Event-Grundlagen','fxmanifest und Resource','Client, Server & Events','Threads & Performance','Natives und Blips','Commands & ACE','Server-Logik','Sicherheit','Debugging'];
 s.lessons=Array.from({length:13},(_,i)=>({id:'fivem-'+String(i+1).padStart(2,'0'),course_id:'fivem',chapter:i<5?'01 · Lua-Grundlagen':i<10?'02 · FiveM-Scripting':'03 · Fortgeschritten',position:i+1,title:titles[i],summary:'Jede Lektion erklärt ein Konzept und zeigt einen praktischen Anwendungsfall.',minutes:12,required_plan:'free'}));
 s.progress={done:['fivem-01'],watched:[],practiced:[],exams:{}};
-s.lesson={payload:{title:titles[0],theory:'Mit Variablen speicherst du Werte, die du später wiederverwenden kannst.',example:'local name = "LiveryLab"\nlocal points = 10\nprint(name, points)',task:'Schreibe eine eigene Variable und gib sie mit print aus.',quiz:'Wofür steht local in Lua?',options:['Lokale Variable','Globale Datei','Neuer Server'],correct:0,goal:'Du kannst Variablen erklären und verwenden.'},video_id:'xcmGSRdCXc4',video_start:510};
+s.lesson={payload:{title:titles[0],theory:'Mit Variablen speicherst du Werte, die du später wiederverwenden kannst.',example:'local name = "LiveryLab"\nlocal points = 10\nprint(name, points)',task:'Schreibe eine eigene Variable und gib sie mit print aus.',quiz:'Wofür steht local in Lua?',options:['Lokale Variable','Globale Datei','Neuer Server'],correct:0,goal:'Du kannst Variablen erklären und verwenden.',sections:[{title:'1 · Verstehen & Beispiel',paragraphs:['Variablen enthalten Daten.'],bullets:['Datentypen','Werte'],code:'local score = 10'},{title:'2 · Ausprobieren & festigen',paragraphs:['Verändere einen Wert und prüfe die Ausgabe.'],exercise:'Print die Variable'}]},video_id:'xcmGSRdCXc4',video_start:510};
 const bannerB64=fs.readFileSync(path.join(root,'site/liverylab-banner.webp')).toString('base64');
 function capture(html){
 html=html.replaceAll('src="./liverylab-banner.webp"','src="data:image/webp;base64,'+bannerB64+'"');
@@ -47,7 +48,7 @@ fs.mkdirSync(path.join(root,'test-results'),{recursive:true});
 const scenes=[
  ['home',app.homePage(),['.ll-home-brand-banner img','.ll-home-shortcuts','.ll-home-continue','.ll-streak-shortcut']],
  ['track',app.trackPage('fivem'),['.lesson-card','.lesson-main strong','.lesson-summary','.status-ring']],
- ['lesson',app.lessonPage('fivem-01'),['.lesson-steps','.lesson-step','.step-box','.video-frame','.quiz-choice','.exercise-textarea','.code-editor','#code-lines','[data-action="reset-lesson"]']],
+ ['lesson',app.lessonPage('fivem-01'),['.lesson-steps','.lesson-step','.step-box','.video-frame','.quiz-choice','.exercise-textarea','.code-editor','#code-lines','.ll-part-selector-two','[data-lesson-part="0"]','[data-lesson-part="1"]','[data-action="reset-lesson"]']],
  ['script',app.scriptPage(),['.file-tree','.file-tabs','.file-preview']],
  ['reference',app.referencePage(),['.reference-row','.reference-block']],
  ['plans',app.plansPage(),['.membership-card','.voucher-panel','.voucher-input-row']],
@@ -106,6 +107,7 @@ return {
  cardDisplay:card?getComputedStyle(card).display:null,
  stepsDisplay:steps?getComputedStyle(steps).display:null,
  stepChildren:steps?steps.children.length:0,
+ partCount:document.querySelectorAll('.ll-part-selector-two [data-lesson-part]').length,
  titleBelow:title&&summary?summary.getBoundingClientRect().top>=title.getBoundingClientRect().bottom-2:true,
  navDisplay:getComputedStyle(nav).display,
  videoRatio:video?video.getBoundingClientRect().width/video.getBoundingClientRect().height:null,
@@ -137,7 +139,7 @@ if(name==='focus-timer'){assert.ok(actual.focusBounds.width>220&&actual.focusBou
 if(name==='admin'){assert.ok(actual.planManagementWidth>120&&actual.planManagementWidth<=actual.mainWidth,'Subscription admin panel overflows content');}
 if(width<820){assert.equal(actual.navRows,1,'Five bottom nav tabs must stay on ONE ROW: '+actual.navRows);}
 if(name==='track'){assert.equal(actual.cardDisplay,'grid');assert.ok(actual.titleBelow,'Lesson title/description collision');}
-if(name==='lesson'){assert.equal(actual.stepsDisplay,'grid');assert.equal(actual.stepChildren,4);assert.ok(actual.videoRatio>1.65&&actual.videoRatio<1.9,'Video aspect ratio');}
+if(name==='lesson'){assert.equal(actual.stepsDisplay,'grid');assert.equal(actual.stepChildren,4);assert.equal(actual.partCount,2,'Lesson navigation must have exactly two tabs');assert.ok(actual.videoRatio>1.65&&actual.videoRatio<1.9,'Video aspect ratio');}
 assert.equal(actual.navDisplay,width<820?'grid':'none');
 if(width===390)await page.screenshot({path:path.join(root,'test-results',name+'.png'),fullPage:true});
 console.log('PASS '+name+' @ '+width+'px '+JSON.stringify(actual));
