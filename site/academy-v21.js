@@ -513,9 +513,11 @@ function homePage(){
  '<small>'+(ready?'Dein Claim ist bereit – sichere deine Serie!':s.loginStreak?.next_claim_at?'Nächster Claim in <span data-streak-countdown>'+durationDisplay(streakRemaining())+'</span>':'Melde dich an und starte deine erste Serie.')+'</small></span>'+llIcon('arrow')+'</button>'+
  homeShortcut('friends','Freunde','Vernetze dich und vergleiche Lernfortschritte.','friends',false,false)+
  homeShortcut('settings','Einstellungen','Account, Sicherheit und persönliches Design.','settings',false,true)+
- homeShortcut('profile','Mein Profil','Bilder, Banner, Erfolgstitel und Bio.','profile',false,false)+
+ homeShortcut('profile','Mein Profil','Erfolge ansehen und freigeschalteten Titel wählen.','profile',false,false)+
  homeShortcut('xp','Mitgliedschaften','Free, Plus und Pro vergleichen.','plans',false,false)+
  (s.profile?.role==='admin'?homeShortcut('settings','Administration','Freigaben, Mitglieder und Gutscheine verwalten.','admin',false,true):'')+'</div>'+
+ '<section class="ll-home-focus"><div><span class="eyebrow">[ ◎ ] DEIN FOKUS</span><h2>Was willst du als Nächstes lernen?</h2><p>Wähle einen Bereich für eine direkte Empfehlung. Die Auswahl bleibt auf diesem Gerät.</p></div><div class="ll-focus-actions">'+[['coding-basics','Programmieren'],['fivem','FiveM'],['blender-fundamentals','Blender']].filter(([id])=>!!courseOf(id)).map(([id,label])=>'<button type="button" class="btn small '+(getChoicePreference('focus','coding-basics')===id?'primary':'')+'" data-focus-course="'+id+'">'+label+'</button>').join('')+'</div>'+
+ '<div class="ll-focus-result">'+(function(){const preferred=courseOf(getChoicePreference('focus','coding-basics'))||picks[0];const first=preferred&&lessonsOf(preferred.id).find(l=>allowed(l)&&!completed.has(l.id));return preferred?'<strong>'+esc(preferred.name)+'</strong><span>'+countDone(preferred.id)+' von '+lessonsOf(preferred.id).length+' Lektionen geschafft</span><button type="button" class="btn primary small" data-go="'+(first?'lesson/'+esc(first.id):'track/'+esc(preferred.id))+'">'+(first?'Nächste Lektion':'Kurs öffnen')+' →</button>':''})()+'</div></section>'+
  '<section class="ll-home-more"><div class="section-heading"><div><span class="eyebrow">[ ▦ ] WEITERLERNEN</span><h2>Empfohlene Lernpfade</h2></div><button class="btn small" data-go="courses">Alle Kurse →</button></div>'+
  '<div class="course-grid">'+picks.map(courseCard).join('')+'</div></section>'+
  membershipHelp()+'</div>';
@@ -1133,6 +1135,10 @@ function settingsPage(){
  '<h3>Akzentfarbe</h3>'+appearanceChoices(ACCENT_THEMES,getChoicePreference('accent','lavender'),'accent-choice')+
  '<h3>App-Hintergrund</h3><div class="settings-list">'+
  toggle('backgroundArt','Hintergrund-Effekte','Dezente Lichtverläufe für mehr Atmosphäre anzeigen.')+
+ toggle('compact','Kompakte Kurskarten','Mehr Lerninhalte gleichzeitig auf dem Bildschirm sehen.')+
+ toggle('largeTypography','Größere Schrift','Texte und Bedienelemente besser lesen.')+
+ toggle('contrast','Hoher Kontrast','Konturen und Texte deutlicher hervorheben.')+
+ toggle('motion','Weniger Bewegung','Animationen und Übergänge reduzieren.')+
  '</div><button class="btn ghost settings-reset" data-action="reset-appearance">↺ Standarddarstellung wiederherstellen</button></div></section>'+
  '<section class="setting-section"><span class="eyebrow">02 · DEIN ACCOUNT</span><h2>Anmeldedaten</h2>'+
  '<div class="account-settings-grid"><div class="panel"><h3>Zugangsdaten</h3>'+
@@ -1141,7 +1147,7 @@ function settingsPage(){
  (!username?'<form data-form="set-username"><div class="form-group"><label class="form-label">Benutzernamen festlegen</label>'+
  '<input class="input" name="username" pattern="[A-Za-z][A-Za-z0-9_]{2,23}" minlength="3" maxlength="24" required placeholder="developer123"></div>'+
  '<button class="btn small" type="submit">Benutzernamen aktivieren</button></form>':'<p class="micro">Anmeldung mit deiner E-Mail-Adresse oder deinem Benutzernamen möglich.</p>')+
- '<div class="settings-row"><div><strong>Öffentlicher Anzeigename</strong><p>'+esc(name)+'</p></div><button class="btn small" data-go="profile">Profil ändern</button></div></div>'+
+ '<div class="settings-row"><div><strong>Öffentlicher Anzeigename</strong><p>'+esc(name)+'</p></div><span class="chip free">Aktiv</span></div></div>'+
  '<div class="panel"><h3>Passwort ändern</h3><p class="micro">Verwende mindestens 14 Zeichen und ein einzigartiges Passwort.</p>'+
  '<form data-form="password"><div class="form-group"><label class="form-label">Neues Passwort</label>'+
  '<input class="input" type="password" name="password" minlength="14" maxlength="256" autocomplete="new-password" required placeholder="Neues sicheres Passwort"></div>'+
@@ -1167,7 +1173,7 @@ function settingsPage(){
  '<span><b>Discord-Support</b><p>Schreibe NyxAtheris eine DM oder öffne ein Ticket und erwähne @nyxatheris.</p></span></div>'+
  '<a class="btn small discord" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord ↗</a></div></div></section>'+
  '<section class="section panel"><span class="eyebrow">LIVERYLAB STUDIOS</span><h3>Über die Academy</h3>'+
- '<p class="micro">Developer-Lernplattform mit Kursen, sicheren Accounts, Profilen, Freunden und Erfolgen. Version 18.</p>'+
+ '<p class="micro">Developer-Lernplattform mit Kursen, sicheren Accounts, Profilen, Freunden und Erfolgen. Version 24.</p>'+
  '<a href="./privacy.html">Datenschutzhinweise ansehen ↗</a><p class="smallprint" style="margin-top:16px">Made with 💙 from NyxAtheris (LiveryLab Studios)</p></section>';
 }
 
@@ -1322,6 +1328,8 @@ document.addEventListener('click',async function(e){
  if(socialRemove){if(!confirm('Dieses Profilbild / Banner wirklich entfernen?'))return;try{await removeSocialImage(socialRemove.dataset.socialRemove);render();notice('Bild entfernt.');}catch(err){notice('Bild: '+formatError(err))}return;}
  var friendTab=e.target.closest('[data-friend-tab]');
  if(friendTab){s.friendTab=friendTab.dataset.friendTab;render();return;}
+ var focusBtn=e.target.closest('[data-focus-course]');
+ if(focusBtn){if(courseOf(focusBtn.dataset.focusCourse)){setChoicePreference('focus',focusBtn.dataset.focusCourse);render()}return;}
  var adminFilter=e.target.closest('[data-admin-filter]');
  if(adminFilter){s.adminFilter=adminFilter.dataset.adminFilter||'all';render();return;}
  var friendAction=e.target.closest('[data-friend-action]');
@@ -1466,6 +1474,15 @@ document.addEventListener('input',function(e){
   if(counter)counter.textContent=results.count+' Treffer';
   return;
  }
+ if(e.target.id==='admin-search'){
+  s.adminSearch=e.target.value;
+  const list=$('.member-list');
+  if(list){const query=s.adminSearch.trim().toLocaleLowerCase('de');const matches=(s.members||[]).filter(u=>u.access_status!=='pending').filter(u=>(s.adminFilter==='all'||(s.adminFilter==='active'&&u.active)||(s.adminFilter==='blocked'&&!u.active)||(s.adminFilter==='admin'&&u.role==='admin'))&&(!query||String(u.username||'').toLocaleLowerCase('de').includes(query)||String(u.email||'').toLocaleLowerCase('de').includes(query)));
+   list.querySelectorAll('.member-card').forEach(card=>{const id=card.querySelector('[data-admin-tier],[data-reset-user],[data-active-user]')?.dataset.adminTier||card.querySelector('[data-reset-user]')?.dataset.resetUser||card.querySelector('[data-active-user]')?.dataset.activeUser;card.hidden=!matches.some(u=>u.id===id);});
+   let empty=list.querySelector('.admin-search-empty');if(!empty){empty=document.createElement('div');empty.className='empty admin-search-empty';empty.textContent='Keine passenden Mitglieder gefunden.';list.appendChild(empty)}empty.hidden=matches.length>0;
+  }
+  return;
+ }
  if(e.target.id==='course-search'){
   s.search=e.target.value;s.catalogLimit=9;
   var list=$('#catalog-container'),count=$('#course-count');
@@ -1478,7 +1495,6 @@ document.addEventListener('input',function(e){
  }
 });
 document.addEventListener('change',async function(e){
- if(e.target.id==='admin-search'){s.adminSearch=e.target.value;render();return;}
  if(e.target.hasAttribute('data-social-upload')){
   const kind=e.target.dataset.socialUpload,file=e.target.files?.[0];if(!file)return;
   e.target.disabled=true;
