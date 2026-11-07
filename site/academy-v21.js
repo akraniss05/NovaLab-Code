@@ -707,35 +707,73 @@ function updateLessonControls(){
  if(video)video.checked=s.videoChecked;
  if(practice)practice.classList.toggle('is-complete',s.practiceChecked);
 }
-async function completePractice(){
- var id=parseRoute().id,box=$('#practice-input');if(!box||!s.lesson)return;
- var value=box.value.trim();
- if(value.length<5){notice('Schreibe zuerst deine eigene Lösung.');box.focus();return;}
- const payload=s.lesson.payload||{},lang=String(payload.lang||'').toLowerCase(),isVisual=lang==='blender'||lang==='text',isMarkup=lang==='html'||lang==='css';
- let result=isVisual?{ok:value.length>=60,diagnostic:value.length>=60?'Arbeitsschritte dokumentiert. Vergleiche deine tatsächliche Blender-Szene manuell.':'Beschreibe mindestens 60 Zeichen mit konkreten Arbeitsschritten.',output:[]}:window.LLPractice.evaluate(value,payload);
- const runtime=isVisual?{available:false,ok:false,lines:[],error:'Blender-Szenen können im Browser nicht automatisch ausgeführt werden.'}:isMarkup?{available:false,ok:false,lines:[],error:'HTML/CSS wird als sichere Vorschau gerendert und anhand von Aufgabenregeln geprüft.'}:await window.LLRuntime.run(value,lang);
- if(!isVisual&&runtime.available&&!runtime.ok){result={ok:false,diagnostic:'Laufzeitfehler: '+runtime.error,output:runtime.lines};}
- if(!isVisual&&runtime.ok&&payload.solution&&typeof window.LLPractice?.evaluateRuntime==='function'){
-  const expected=await window.LLRuntime.run(payload.solution,lang);
-  result=window.LLPractice.evaluateRuntime(value,payload,runtime,expected);
+function showPracticeResult(ok,message,kind){
+ const feedback=$('#practice-feedback'),workspace=$('#practice-workspace');
+ if(feedback){
+  feedback.hidden=false;
+  feedback.textContent=message;
+  feedback.classList.remove('error','is-success','is-error','is-tip');
+  feedback.classList.add(kind==='tip'?'is-tip':ok?'is-success':'is-error');
  }
- const consoleNode=$('#practice-output'),feedback=$('#practice-feedback');if(isMarkup){const preview=$('#practice-preview');if(preview){preview.hidden=false;preview.srcdoc=htmlCssPreview(value,lang);}}
- if(consoleNode)consoleNode.textContent=isVisual||isMarkup?runtime.error:
-  runtime.available?(runtime.lines.map(x=>'> '+x).join('\n')+(runtime.error?'\n✕ '+runtime.error:runtime.ok&&runtime.lines.length===0?'(Programm ausgeführt, keine Konsolenausgabe)':'')):
-  runtime.error;
- if(feedback){feedback.textContent=(result.ok?'✓ ':'✕ ')+result.diagnostic+(!isVisual&&!runtime.available?' Hinweis: Nur statische Prüfung; keine bestätigte Programmausführung.':'');feedback.classList.toggle('error',!result.ok)}
- if(!result.ok){s.practiceChecked=false;updateLessonControls();return;}
- saveDraft(id,value);window.LLLearning?.queue?.(id,value,4);s.practiceChecked=true;
- if(!s.progress.practiced)s.progress.practiced=[];
- if(!s.progress.practiced.includes(id))s.progress.practiced.push(id);
- if(!s.progress.verifiedPractice)s.progress.verifiedPractice=[];
- if(!s.progress.verifiedPractice.includes(id))s.progress.verifiedPractice.push(id);
- try{await saveProgress();}catch(e){s.practiceChecked=false;s.progress.practiced=s.progress.practiced.filter(x=>x!==id);s.progress.verifiedPractice=s.progress.verifiedPractice.filter(x=>x!==id);notice('Praxis konnte nicht gespeichert werden: '+formatError(e));return;}
- var workspace=$('#practice-workspace'),status=$('#practice-status'),btn=$('[data-action="complete-practice"]');
- if(workspace)workspace.classList.add('is-complete');
- if(status)status.textContent='✓ Praxis erledigt';
- if(btn){btn.textContent='✓ Praxisschritt gespeichert';btn.disabled=true;}
- updateLessonControls();window.LLLearning?.mark?.(id,4);notice('Praxis geprüft und gespeichert.');
+ if(workspace){
+  workspace.classList.toggle('practice-correct',kind!=='tip'&&ok);
+  workspace.classList.toggle('practice-incorrect',kind!=='tip'&&!ok);
+ }
+}
+async function completePractice(){
+ const id=parseRoute().id,box=$('#practice-input');
+ if(!box||!s.lesson)return;
+ const value=box.value.trim(),button=$('[data-action="complete-practice"]');
+ if(button)button.disabled=true;
+ try{
+  if(value.length<5){showPracticeResult(false,'✕ Schreibe zuerst deine eigene Lösung.');box.focus();return;}
+  const payload=s.lesson.payload||{},lang=String(payload.lang||'').toLowerCase();
+  const visual=lang==='blender'||lang==='text';
+  let result=visual
+   ?{ok:value.length>=60,diagnostic:value.length>=60?'Deine Arbeitsschritte wurden dokumentiert. Prüfe dein Blender-Ergebnis selbst.':'Beschreibe mindestens 60 Zeichen mit konkreten Arbeitsschritten.'}
+   :window.LLPractice.evaluate(value,payload);
+  if(!visual&&window.LLRuntime&&['lua','python','py','javascript','js'].includes(lang)){
+   const runtime=await window.LLRuntime.run(value,lang);
+   if(runtime.available){
+    if(!runtime.ok)result={ok:false,diagnostic:'Laufzeitfehler: '+runtime.error};
+    else if(payload.solution&&typeof window.LLPractice?.evaluateRuntime==='function'){
+     const expected=await window.LLRuntime.run(payload.solution,lang);
+     result=window.LLPractice.evaluateRuntime(value,payload,runtime,expected);
+    }
+   }else{
+    result={ok:false,diagnostic:'Die sichere Codeprüfung ist gerade nicht verfügbar. Bitte versuche es erneut.'};
+   }
+  }
+  if(result.ok){
+   saveDraft(id,value);
+   window.LLLearning?.queue?.(id,value,4);
+   s.practiceChecked=true;
+   if(!Array.isArray(s.progress.practiced))s.progress.practiced=[];
+   if(!s.progress.practiced.includes(id))s.progress.practiced.push(id);
+   if(!Array.isArray(s.progress.verifiedPractice))s.progress.verifiedPractice=[];
+   if(!s.progress.verifiedPractice.includes(id))s.progress.verifiedPractice.push(id);
+   try{await saveProgress();}
+   catch(error){
+    s.practiceChecked=false;
+    s.progress.verifiedPractice=s.progress.verifiedPractice.filter(x=>x!==id);
+    s.progress.practiced=s.progress.practiced.filter(x=>x!==id);
+    showPracticeResult(false,'✕ Das Ergebnis konnte nicht gespeichert werden: '+formatError(error));
+    updateLessonControls();
+    return;
+   }
+   showPracticeResult(true,'✓ Richtig! Deine Lösung wurde gespeichert.');
+   const status=$('#practice-status');if(status)status.textContent='✓ Praxis erledigt';
+   window.LLLearning?.mark?.(id,4);
+  }else{
+   s.practiceChecked=false;
+   showPracticeResult(false,'✕ Noch nicht richtig. '+String(result.diagnostic||'Vergleiche deine Lösung mit dem Tipp.'));
+  }
+  updateLessonControls();
+ }catch(error){
+  s.practiceChecked=false;
+  showPracticeResult(false,'✕ Prüfung fehlgeschlagen: '+formatError(error));
+  updateLessonControls();
+ }finally{if(button&&button.isConnected)button.disabled=false;}
 }
 async function markLesson(){
  var id=parseRoute().id,l=s.lessons.find(x=>x.id===id);
@@ -1479,29 +1517,21 @@ document.addEventListener('click',async function(e){
    try{await saveProgress();if(window.LLLearning)await window.LLLearning.remove(id);localStorage.removeItem('liverylab-draft-'+id);s.draft='';s.lessonStep=1;await navigateCurrent();notice('Diese Lektion wurde neu gestartet.');}
    catch(e){s.progress=previous;notice('Neustart konnte nicht gespeichert werden: '+formatError(e));}return;
   }
-  if(['run-practice','show-hint','show-solution','reset-practice'].includes(name)){
-   const p=s.lesson?.payload||{},box=$('#practice-input'),out=$('#practice-output'),feedback=$('#practice-feedback');if(!box)return;
+  if(name==='show-hint'||name==='show-solution'){
+   const p=s.lesson?.payload||{},box=$('#practice-input');if(!box)return;
    if(name==='show-hint'){
     s.hintStage=(s.hintStage||0)%3+1;
     const points=Array.isArray(p.keyPoints)?p.keyPoints:[],steps=Array.isArray(p.steps)?p.steps.filter(x=>typeof x==='string'):[];
-    const tips=[String(p.hint||points[0]||'Lies noch einmal das Lernziel.'),
-      String(points[0]||steps[0]||p.hint||'Sieh dir das erste Beispiel an und überprüfe die Schreibweise.'),
-      String(p.mistake||steps[1]||points[1]||'Vergleiche jeden geforderten Teilschritt mit deinem Entwurf.')];
-    if(feedback){feedback.textContent='Tipp '+s.hintStage+' / 3: '+tips[s.hintStage-1];feedback.classList.remove('error');}return;
+    const tips=[
+     String(p.hint||points[0]||'Lies noch einmal das Lernziel.'),
+     String(points[0]||steps[0]||p.hint||'Sieh dir das erste Beispiel an.'),
+     String(p.mistake||steps[1]||points[1]||'Vergleiche deine Lösung mit der Erklärung.')
+    ];
+    showPracticeResult(false,'Tipp '+s.hintStage+'/3: '+tips[s.hintStage-1],'tip');return;
    }
-   if(name==='show-solution'){if(feedback){feedback.textContent='Musterlösung:\n'+String(p.solution||p.example||'Für diese Aufgabe ist noch keine Musterlösung hinterlegt.')+'\n\nErklärung: '+String(p.theory||p.goal||'Vergleiche den Aufbau mit der Aufgabe.');feedback.classList.remove('error')}return;}
-   if(name==='reset-practice'){box.value=String(p.starter||'');box.dispatchEvent(new Event('input',{bubbles:true}));if(out)out.textContent='Editor zurückgesetzt.';if(feedback)feedback.textContent='';s.hintStage=0;return;}
-   if(['html','css'].includes(String(p.lang||'').toLowerCase())){
-    const view=$('#practice-preview'),lang=String(p.lang||'').toLowerCase();
-    if(view){view.hidden=false;view.srcdoc=htmlCssPreview(box.value,lang);}
-    if(out)out.textContent='HTML/CSS-Vorschau erstellt. JavaScript in der Vorschau ist aus Sicherheitsgründen deaktiviert.';
-    if(feedback){feedback.textContent='Prüfe das Ergebnis in der Vorschau. Die Abgabe wird anhand der Aufgabenregeln statisch bewertet.';feedback.classList.remove('error');}
-    window.LLLearning?.mark?.(parseRoute().id,3);return;
-   }
-   if(out)out.textContent='Code wird in der Laufzeitumgebung ausgeführt …';
-   const lang=String(p.lang||'').toLowerCase(),runtime=await window.LLRuntime.run(box.value,lang);
-   if(out)out.textContent=runtime.available?(runtime.lines.map(x=>'> '+x).join('\n')+(runtime.error?'\n✕ '+runtime.error:runtime.ok&&runtime.lines.length===0?'(Programm ohne Ausgabe erfolgreich ausgeführt)':'')):runtime.error;
-   if(feedback){feedback.textContent=runtime.ok?'Programm wirklich ausgeführt. Klicke auf „Meinen Code prüfen“, um die Aufgabe zu bewerten.':runtime.available?'Ausführungsfehler: '+runtime.error:'Für diese Sprache ist eine separate Runtime nötig. Die Ausgabe wird nicht simuliert.';feedback.classList.toggle('error',!runtime.ok)}return;
+   showPracticeResult(false,'Musterlösung:\n'+String(p.solution||p.example||'Noch keine Lösung hinterlegt.')+
+    '\n\nErklärung: '+String(p.theory||p.goal||'Vergleiche die Aufgabe und die verwendeten Konzepte.'),'tip');
+   return;
   }
   if(name==='reset-appearance'){
     for(const key of ['compact','motion','largeTypography','contrast','softCorners','backgroundArt'])
@@ -1649,8 +1679,8 @@ document.addEventListener('input',function(e){if(e.target.id==='support-search')
  if(e.target.id==='practice-input'){
   s.draft=e.target.value;saveDraft(parseRoute().id,s.draft);window.LLLearning?.queue?.(parseRoute().id,s.draft,3);
   paintEditorLines();
-  const syntaxError=window.LLPractice?.syntax(s.draft,String(s.lesson?.payload?.lang||'').toLowerCase()),live=$('#practice-feedback');if(live){live.textContent=syntaxError?'Syntaxhinweis: '+syntaxError:'';live.classList.toggle('error',!!syntaxError)}
-  if(s.practiceChecked){s.practiceChecked=false;s.progress.verifiedPractice=(s.progress.verifiedPractice||[]).filter(id=>id!==parseRoute().id);void saveProgress().catch(()=>{});const workspace=$('#practice-workspace');if(workspace)workspace.classList.remove('is-complete');const button=$('[data-action="complete-practice"]');if(button){button.disabled=false;button.textContent='Meinen Code prüfen →'}updateLessonControls()}
+  const live=$('#practice-feedback'),workspace=$('#practice-workspace');if(live){live.textContent='';live.hidden=true;live.classList.remove('error','is-success','is-error','is-tip');}if(workspace)workspace.classList.remove('practice-correct','practice-incorrect');
+  if(s.practiceChecked){s.practiceChecked=false;s.progress.verifiedPractice=(s.progress.verifiedPractice||[]).filter(id=>id!==parseRoute().id);void saveProgress().catch(()=>{});const workspace=$('#practice-workspace');if(workspace)workspace.classList.remove('is-complete');updateLessonControls()}
   var status=$('#practice-status');if(status&&!s.practiceChecked)status.textContent=window.LLLearning?'Entwurf wird mit deinem Konto synchronisiert …':'Entwurf lokal gespeichert';
  }
 });
