@@ -4,7 +4,7 @@
 const assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');
 const source=fs.readFileSync(path.join(__dirname,'../site/academy-v21.js'),'utf8');
 assert.match(source,/\ninit\(\);\n\}\)\(\);\s*$/);
-const expose="\nwindow.__test={s,homePage,coursesPage,trackPage,lessonPage,scriptPage,referencePage,examPage,profilePage,settingsPage,plansPage,examsPage,adminPage,login,waitingApproval,submitExamAnswer,courseCard,friendsPage,setApi(apiValue){api=apiValue},updateLessonControls,filteredCourses,frame};\n})();";
+const expose="\nwindow.__test={s,homePage,coursesPage,trackPage,lessonPage,scriptPage,referencePage,examPage,profilePage,settingsPage,plansPage,examsPage,adminPage,login,waitingApproval,submitExamAnswer,courseCard,friendsPage,supportPage,setApi(apiValue){api=apiValue},updateLessonControls,filteredCourses,frame};\n})();";
 const body=source.replace(/\ninit\(\);\n\}\)\(\);\s*$/,expose);
 const mocks=new Map();
 const fakeNode=()=>({innerHTML:'',textContent:'',classList:{add(){},remove(){},toggle(){},contains(){return false}},querySelector(){return null}});
@@ -46,6 +46,11 @@ assert(!app.profilePage().includes('Profil gestalten'),'Profile configuration wa
 assert(!app.profilePage().includes('Anzeigename ändern'),'Profile name configuration was removed');
 assert(app.friendsPage().includes('Freund hinzufügen'),'Friends page rendered');
 assert(app.friendsPage().includes('friend-navigation'),'Friends tabs rendered');
+assert(app.supportPage().includes('support-ticket'),'In-app support form rendered');
+state.tier='free';state.service={beta_open:false,mine:[],admin:[]};
+assert(!app.supportPage().includes('value="plan"'),'Beta requests hidden after closure');
+assert(app.plansPage().includes('Aktuell keine Anfragen'),'Closed beta prevents plan requests');
+state.service={beta_open:true,mine:[],admin:[]};
 state.friendTab='search';assert(app.friendsPage().includes('friends-search-panel'),'Friend search tab rendered');state.friendTab='friends';
 assert(app.settingsPage().includes('App-Hintergrund'),'Personal app background setting rendered');
 assert(app.settingsPage().includes('Kompakte Kurskarten'),'Compact cards setting available');
@@ -58,7 +63,9 @@ assert(app.profilePage().includes('Erfolge & Titel'),'Achievement gallery on pro
 assert(app.settingsPage().includes('Hintergrund & Oberflächen'),'Background themes rendered');
 assert(app.settingsPage().includes('Standarddarstellung wiederherstellen'),'Appearance reset present');
 assert(app.plansPage().includes('1,99 €'),'Plus price visible');
-assert(app.plansPage().includes('3,99 €'),'Pro price visible');
+assert(app.plansPage().includes('5,99 €'),'Ultimate price visible');
+state.planExpires='2030-01-01T00:00:00Z';state.tier='pro';
+assert(app.profilePage().includes('Freigeschaltet bis'),'Membership expiry visible on profile');state.tier='ultimate';
 assert.equal((app.plansPage().match(/BETA · nur auf Anfrage/g)||[]).length,2,'Plus and Pro are marked as request-only beta plans');
 assert(app.plansPage().includes('redeem-voucher'),'Coupon redemption visible');
 assert(app.plansPage().includes('3 pro Tag'),'Free daily limit visible');
