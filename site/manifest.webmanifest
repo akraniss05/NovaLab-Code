@@ -2,7 +2,7 @@
   "name": "LiveryLab Academy",
   "short_name": "LiveryLab",
   "description": "Lernplattform für Coding und Blender",
-  "start_url": "./v29.html#home",
+  "start_url": "./v30.html#home",
   "scope": "./",
   "display": "standalone",
   "background_color": "#0d0a19",
