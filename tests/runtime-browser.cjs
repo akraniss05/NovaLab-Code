@@ -11,6 +11,7 @@ const chrome=[process.env.CHROME_BIN,'/usr/bin/google-chrome','/opt/google/chrom
 if(!chrome)throw Error('Chrome/Chromium not available for live runtime verification.');
 const server=http.createServer((req,res)=>{
  if(req.url==='/runtime.js'){res.writeHead(200,{'Content-Type':'text/javascript'});res.end(source);return;}
+ if(req.url==='/vendor/fengari-web.bundle.js'){const file=path.join(root,'vendor/fengari-web.bundle.js');if(!fs.existsSync(file)){res.writeHead(404);res.end('missing bundled Lua runtime');return;}res.writeHead(200,{'Content-Type':'text/javascript'});res.end(fs.readFileSync(file));return;}
  res.writeHead(200,{'Content-Type':'text/html;charset=utf-8'});
  res.end('<!doctype html><html><head><title>LL Runtime test</title></head><body><script src="/runtime.js"></script></body></html>');
 });
