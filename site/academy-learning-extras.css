@@ -1,0 +1,29 @@
+/* LiveryLab Academy v35 learning UX · Made with 💙 by NyxAtheris */
+.ll-five-stage{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:19px 0 10px}
+.ll-five-stage button{background:#19142b;border:1px solid #46365f;min-height:70px;border-radius:14px;padding:8px;color:var(--soft);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;font-size:12px;min-width:0;text-align:center;line-height:1.25;transition:border-color .2s,background .2s}
+.ll-five-stage button>span{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#3b2d54;font:700 11px var(--mono);color:#cab6f0}
+.ll-five-stage button>strong{overflow-wrap:anywhere;font-size:12px}
+.ll-five-stage button.is-current{background:#3c2a5b;border-color:#cfadff;box-shadow:0 0 0 1px #b184e130}
+.ll-five-stage button.is-current>span{background:#b28cfb;color:#171027}
+.ll-five-stage button.is-done>span{background:#28634d;color:#ccffdc}
+.ll-five-stage button:focus-visible{outline:3px solid #b7a4ff;outline-offset:2px}
+#learning-resume{display:block;margin:9px 0 16px;color:var(--muted)}
+#lesson-explanation,#lesson-video,#lesson-practice,#quiz-area,#lesson-summary{scroll-margin-top:95px}
+#lesson-summary{border-color:#7660a6;background:linear-gradient(140deg,#241836,#16152e)}
+.studio-challenges{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:24px}
+.studio-challenge{border:1px solid var(--stroke2);border-radius:22px;background:linear-gradient(130deg,#211835,#17152a);display:flex;align-items:start;gap:15px;padding:21px}
+.studio-challenge.complete{border-color:#50937f}
+.studio-challenge-icon{width:46px;height:46px;flex:0 0 46px;display:grid;place-items:center;background:#33264c;border-radius:15px;font-size:24px}
+.studio-challenge>div{min-width:0;flex:1}.studio-challenge h3{font-size:19px;margin:5px 0 6px}.studio-challenge p{color:var(--muted);font-size:13px;line-height:1.6;margin:0}.studio-challenge .studio-meter{margin:10px 0 4px}.studio-challenge .btn{align-self:end;white-space:nowrap}
+.studio-calendar-toolbar{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:23px}
+.studio-calendar-toolbar h2{font-size:clamp(20px,3vw,28px);margin:0;text-align:center;text-transform:capitalize}
+.studio-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:9px;margin:22px 0}
+.studio-weekday{color:var(--muted);font-weight:700;text-align:center;font-size:13px;padding-bottom:8px}
+.studio-calendar-day{min-height:85px;border:1px solid #413250;border-radius:12px;background:#19132b;padding:10px;display:flex;flex-direction:column;justify-content:space-between}
+.studio-calendar-day strong{font-size:15px}.studio-calendar-day span{font-size:12px;color:#aeb0cb}
+.studio-calendar-day.is-active{border-color:#7775cc;background:linear-gradient(135deg,#392e63,#1f304a)}
+.studio-calendar-day.is-active span{color:#bfffe2;font-weight:700}
+.studio-calendar-day.is-today{outline:2px solid #af91ed;outline-offset:1px}
+.studio-calendar-day.is-outside{opacity:.25;min-height:85px}
+@media(max-width:930px){.studio-challenges{grid-template-columns:1fr}}
+@media(max-width:580px){.ll-five-stage{gap:4px}.ll-five-stage button{padding:7px 3px;min-height:66px;border-radius:10px}.ll-five-stage button>strong{font-size:10px}.ll-five-stage button>span{width:21px;height:21px}.studio-challenge{padding:15px;flex-wrap:wrap}.studio-challenge .btn{margin-left:auto}.studio-calendar-grid{gap:4px}.studio-calendar-day,.studio-calendar-day.is-outside{min-height:57px;border-radius:9px;padding:6px 4px}.studio-calendar-day strong{font-size:12px}.studio-calendar-day span{font-size:10px}.studio-weekday{font-size:11px}}
