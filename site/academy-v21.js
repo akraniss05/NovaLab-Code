@@ -712,11 +712,9 @@ async function completePractice(){
  let result=isVisual?{ok:value.length>=60,diagnostic:value.length>=60?'Arbeitsschritte dokumentiert. Vergleiche deine tatsächliche Blender-Szene manuell.':'Beschreibe mindestens 60 Zeichen mit konkreten Arbeitsschritten.',output:[]}:window.LLPractice.evaluate(value,payload);
  const runtime=isVisual?{available:false,ok:false,lines:[],error:'Blender-Szenen können im Browser nicht automatisch ausgeführt werden.'}:await window.LLRuntime.run(value,lang);
  if(!isVisual&&runtime.available&&!runtime.ok){result={ok:false,diagnostic:'Laufzeitfehler: '+runtime.error,output:runtime.lines};}
- if(!isVisual&&runtime.ok&&result.ok&&payload.solution&&!/eigenen Namen|Ändere anschließend mindestens einen Wert/i.test(payload.task||'')){
+ if(!isVisual&&runtime.ok&&payload.solution&&typeof window.LLPractice?.evaluateRuntime==='function'){
   const expected=await window.LLRuntime.run(payload.solution,lang);
-  if(expected.ok&&expected.lines.length&&JSON.stringify(expected.lines)!==JSON.stringify(runtime.lines)){
-   result={ok:false,diagnostic:'Die echte Ausgabe weicht von der Musterlösung ab. Prüfe deine Werte und print-Aufrufe.',output:runtime.lines};
-  }
+  result=window.LLPractice.evaluateRuntime(value,payload,runtime,expected);
  }
  const consoleNode=$('#practice-output'),feedback=$('#practice-feedback');
  if(consoleNode)consoleNode.textContent=isVisual?runtime.error:
