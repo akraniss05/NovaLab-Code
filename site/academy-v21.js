@@ -7,7 +7,7 @@
 'use strict';
 var cfg=window.LL_CONFIG||{}, $=function(q,root){return (root||document).querySelector(q);};
 var content=$('#content'), sidebar=$('#sidebar'), bottom=$('#bottom-nav'), toastNode=$('#toast');
-var api=null, s={shopDiscount:0,service:{beta_open:true,mine:[],admin:[]},streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},adminPage:1,adminFilter:'all',adminSearch:'',catalogLimit:9,practiceChecked:false,draft:'',prefs:null,projectTab:0,projectSource:'',projectLoading:false};
+var api=null, s={shopDiscount:0,service:{beta_open:true,mine:[],admin:[]},streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,quizStep:0,quizPassed:false,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},adminPage:1,adminFilter:'all',adminSearch:'',catalogLimit:9,practiceChecked:false,draft:'',prefs:null,projectTab:0,projectSource:'',projectLoading:false};
 var plans={free:'Free',pro:'Plus',ultimate:'Ultimate'};
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];});}
 function safeLink(url){return /^https:\/\/[^\s<>"]+$/i.test(String(url||''))?esc(url):'#';}
@@ -324,7 +324,7 @@ async function navigateCurrent(){
  if(!s.ready)return;
  var route=parseRoute();s.route=route.page;
  if(route.page==='lesson'){
-   s.choice=null;s.videoChecked=watchedIds().has(route.id);s.practiceChecked=(s.progress.practiced||[]).includes(route.id);s.draft=readDraft(route.id);s.videoLoaded=false;s.lesson=null;s.lessonGate=null;
+   s.choice=null;s.quizStep=0;s.quizPassed=false;s.videoChecked=watchedIds().has(route.id);s.practiceChecked=(s.progress.verifiedPractice||[]).includes(route.id);s.draft=readDraft(route.id);s.videoLoaded=false;s.lesson=null;s.lessonGate=null;
    frame();content.innerHTML='<div class="center-screen"><div class="spinner"></div><p>Geschützte Lektion wird geladen …</p></div>';
    var meta=s.lessons.find(function(l){return l.id===route.id;});
    if(meta&&allowed(meta)){var result=await api.rpc('academy_open_lesson',{p_lesson:route.id});if(result.error){s.lessonGate={reason:'error',error:formatError(result.error)};notice(formatError(result.error));}else if(result.data?.allowed){s.lesson=result.data;if(s.daily){s.daily.used_today=result.data.used;s.daily.remaining_today=result.data.remaining;}}else{s.lessonGate=result.data||{reason:'error'};}}
@@ -489,6 +489,12 @@ function homeShortcut(icon,label,description,route,locked,wide){
 }
 function homePage(){
  const completed=doneIds(),available=s.lessons.filter(allowed);
+ const events=Object.values(s.progress.completedAt||{}).map(x=>new Date(x)).filter(x=>!isNaN(x));
+ const now=new Date(),today=events.filter(x=>x.toDateString()===now.toDateString()).length;
+ const weekStart=new Date(now);weekStart.setHours(0,0,0,0);weekStart.setDate(now.getDate()-(now.getDay()+6)%7);
+ const week=events.filter(x=>x>=weekStart).length;
+ const dailyGoal=Math.max(1,Math.min(20,Number(getChoicePreference('goal-'+(s.user?.id||'guest'),'2'))||2));
+ const weeklyGoal=Math.max(1,Math.min(100,Number(getChoicePreference('weekly-goal-'+(s.user?.id||'guest'),'10'))||10));
  const next=available.find(l=>!completed.has(l.id)&&['coding-basics','lua','python','fivem'].includes(l.course_id))||
  available.find(l=>!completed.has(l.id));
  const nextCourse=next?courseOf(next.course_id):null;
@@ -510,7 +516,7 @@ function homePage(){
  '<p>'+esc(next?.title||'Wähle deinen ersten Kurs und starte mit dem Programmieren.')+'</p>'+
  '<div class="ll-continue-progress"><div class="ll-level-bar"><span style="width:'+progress+'%"></span></div><strong>'+progress+' %</strong></div></div>'+
  '<button type="button" class="btn primary ll-continue-button" data-go="'+(next?'lesson/'+esc(next.id):'courses')+'">Jetzt fortsetzen '+llIcon('arrow')+'</button></section>'+
- '<section class="ll-home-tools"><div class="ll-tool-card"><span class="eyebrow">DEIN TAGESZIEL</span><h3>'+esc(getChoicePreference('goal-'+(s.user?.id||'guest'),'2'))+' Lektionen pro Tag</h3><p>Lege dein persönliches Lernziel fest.</p><select class="select" id="study-goal" aria-label="Tagesziel">'+[1,2,3,4,5,6,7,8,9,10].map(n=>'<option value="'+n+'" '+(getChoicePreference('goal-'+(s.user?.id||'guest'),'2')===String(n)?'selected':'')+'>'+n+' Lektionen</option>').join('')+'</select></div><div class="ll-tool-card"><span class="eyebrow">ANGEHEFTETER KURS</span><h3>'+esc(courseOf(getChoicePreference(pinKey(),''))?.name||'Wähle deinen Kurs')+'</h3><p>Hefte einen Lernpfad auf seiner Kursseite an.</p><button class="btn small" data-go="'+(courseOf(getChoicePreference(pinKey(),''))?'track/'+esc(getChoicePreference(pinKey(),'')):'courses')+'">Kurs öffnen →</button></div><div class="ll-tool-card"><span class="eyebrow">FOKUSZEIT</span><h3 id="focus-clock">25:00</h3><p>Lerne in einer konzentrierten Einheit.</p><button class="btn small" data-timer-toggle>Timer starten</button></div></section>'+
+ '<section class="ll-home-tools"><div class="ll-tool-card"><span class="eyebrow">DEIN TAGESZIEL</span><h3>'+today+' / '+dailyGoal+' Lektionen heute</h3><div class="progress"><span style="width:'+Math.min(100,Math.round(today/dailyGoal*100))+'%"></span></div><p>Abgeschlossene Lektionen seit Mitternacht auf diesem Konto.</p><select class="select" id="study-goal" aria-label="Tagesziel">'+[1,2,3,4,5,6,7,8,9,10,15,20].map(n=>'<option value="'+n+'" '+(dailyGoal===n?'selected':'')+'>'+n+' Lektionen</option>').join('')+'</select></div><div class="ll-tool-card"><span class="eyebrow">DEIN WOCHENZIEL</span><h3>'+week+' / '+weeklyGoal+' Lektionen</h3><div class="progress"><span style="width:'+Math.min(100,Math.round(week/weeklyGoal*100))+'%"></span></div><p>Montag bis Sonntag · neu abgeschlossene Lektionen.</p><select class="select" id="weekly-goal" aria-label="Wochenziel">'+[3,5,10,15,20,30,50,100].map(n=>'<option value="'+n+'" '+(weeklyGoal===n?'selected':'')+'>'+n+' Lektionen</option>').join('')+'</select></div><div class="ll-tool-card"><span class="eyebrow">FOKUSZEIT</span><h3 id="focus-clock">'+timerLabel()+'</h3><p>Stelle deine eigene Lernzeit ein.</p><button class="btn small" data-timer-open>Timer einstellen</button></div></section>'+
  '<div class="ll-home-heading"><span class="eyebrow">[ ✦ ] DEINE ACADEMY</span><h2>Was möchtest du heute machen?</h2><p>Alle wichtigen Bereiche auf einen Blick.</p></div>'+
  '<div class="ll-home-shortcuts">'+
  homeShortcut('learn','Lernen','Kurse, Tutorials und praxisnahe Projekte.','courses',false,false)+
@@ -590,6 +596,19 @@ function trackPage(id){
 }
 
 function notFound(){return '<div class="empty"><h2>Inhalt nicht gefunden</h2><p>Dieser Lernpfad ist nicht verfügbar.</p><button class="btn" data-go="courses">Zur Kursbibliothek</button></div>';}
+function quizQuestions(p){
+ const options=Array.isArray(p.options)?p.options:[],correct=Number(p.correct)||0;
+ const base={question:p.quiz||'Was hast du gelernt?',options,correct};
+ const points=(Array.isArray(p.keyPoints)?p.keyPoints:[]).filter(x=>typeof x==='string'&&x.length>20).slice(0,2);
+ const wrong=options.filter((_,i)=>i!==correct).slice(0,2);
+ return [base,...points.map((point,i)=>({question:'Welche Aussage aus der Lektion ist richtig? ('+(i+2)+'/'+(points.length+1)+')',options:[point,...wrong],correct:0}))];
+}
+function paintQuiz(){const p=s.lesson?.payload||{},qs=quizQuestions(p),q=qs[Math.min(s.quizStep,qs.length-1)];if(!q)return;
+ const title=$('#quiz-question'),choices=$('#quiz-choices'),progress=$('#quiz-progress');
+ if(title)title.textContent=q.question;if(progress)progress.textContent='Frage '+Math.min(s.quizStep+1,qs.length)+' von '+qs.length;
+ if(choices)choices.innerHTML=q.options.map((answer,i)=>'<button type="button" class="quiz-choice" data-answer="'+i+'"><span>'+String.fromCharCode(65+i)+'</span>'+esc(answer)+'</button>').join('');
+ updateLessonControls();
+}
 function lessonPage(id){
  var l=s.lessons.find(x=>x.id===id);if(!l)return notFound();
  var c=courseOf(l.course_id),all=lessonsOf(l.course_id),index=all.findIndex(x=>x.id===id);
@@ -639,12 +658,14 @@ function lessonPage(id){
  '<span class="practice-status" id="practice-status">'+(isPracticeDone?'✓ Praxis erledigt':'Noch nicht abgeschlossen')+'</span></div>'+
  '<label class="micro" for="practice-input">'+(isBlender?'Beschreibe, was du in Blender umgesetzt hast:':'Schreibe hier deinen eigenen Lösungsansatz:')+'</label>'+
  '<textarea class="exercise-textarea" id="practice-input" spellcheck="false" rows="7" maxlength="10000" placeholder="'+(isBlender?'Welche Schritte hast du ausgeführt und was ist dabei entstanden?':'// Deine eigene Lösung – erst überlegen, dann schreiben')+'">'+d+'</textarea>'+
- '<p class="practice-tip">Dein Entwurf wird nur auf diesem Gerät gespeichert. Die Academy führt ihn nicht automatisch aus. Teste '+(isBlender?'deine Szene in Blender.':'deinen Code in deiner eigenen Entwicklungsumgebung.')+'</p>'+
- (p.hint?'<details style="margin:15px 0 0"><summary class="micro" style="cursor:pointer;color:#c6a7ff">Hinweis zur Aufgabe ansehen</summary><p class="micro">'+esc(p.hint)+'</p></details>':'')+
- '<button class="btn '+(isPracticeDone?'':'primary')+'" type="button" data-action="complete-practice" '+(isPracticeDone?'disabled':'')+'>'+(isPracticeDone?'✓ Praxisschritt gespeichert':'Praxis als erledigt markieren ✓')+'</button>'+
+ '<p class="practice-tip">'+(isBlender?'Beschreibe deine Umsetzung und vergleiche sie mit den Schritten.':'Schreibe den Code selbst. Die Prüfung zeigt nachvollziehbare Fehler und unterstützt einfache Ausgaben. Komplexere Programme werden nur bei verifizierter Musterlösung freigegeben.')+'</p>'+
+ '<div class="practice-console"><strong>KONSOLE · '+esc(p.lang||'Code')+'</strong><pre id="practice-output" aria-live="polite">Noch nicht geprüft.</pre></div>'+
+ '<div class="practice-actions"><button class="btn" type="button" data-action="run-practice">Ausgabe anzeigen</button><button class="btn" type="button" data-action="show-hint">Tipp</button><button class="btn" type="button" data-action="show-solution">Lösung zeigen</button><button class="btn" type="button" data-action="reset-practice">Zurücksetzen</button></div>'+
+ '<p class="practice-feedback" id="practice-feedback" aria-live="polite"></p>'+
+ '<button class="btn '+(isPracticeDone?'':'primary')+'" type="button" data-action="complete-practice" '+(isPracticeDone?'disabled':'')+'>'+(isPracticeDone?'✓ Praxis geprüft':'Meinen Code prüfen →')+'</button>'+
  '</div></section>'+
- '<section class="step-box" id="quiz-area"><span class="eyebrow">SCHRITT 04 · WISSENSTEST</span><h2>Wissen anwenden.</h2><p>'+esc(p.quiz||'Hast du das Thema verstanden?')+'</p>'+
- options.map((answer,i)=>'<button type="button" class="quiz-choice'+(s.choice===i?' selected':'')+'" data-answer="'+i+'"><span>'+String.fromCharCode(65+i)+'</span>'+esc(answer)+'</button>').join('')+
+ '<section class="step-box" id="quiz-area"><span class="eyebrow">SCHRITT 04 · WISSENSTEST</span><h2>Wissen anwenden.</h2><span id="quiz-progress">Frage 1 von '+quizQuestions(p).length+'</span><p id="quiz-question">'+esc(p.quiz||'Hast du das Thema verstanden?')+'</p><div id="quiz-choices">'+
+ options.map((answer,i)=>'<button type="button" class="quiz-choice" data-answer="'+i+'"><span>'+String.fromCharCode(65+i)+'</span>'+esc(answer)+'</button>').join('')+'</div>'+
  '<p class="quiz-feedback micro" id="answer-result" aria-live="polite">'+(finished?'✓ Bereits abgeschlossen.':'Wähle die richtige Antwort. Danach kannst du die Lektion abschließen.')+'</p>'+
  '<button class="btn primary" id="mark-lesson" data-action="finish-lesson" type="button" disabled>'+(finished?'✓ Lektion abgeschlossen':'Lektion abschließen →')+'</button></section>'+
  '<div class="btn-row"><button class="btn" data-go="track/'+esc(l.course_id)+'">← Kursübersicht</button>'+
@@ -652,8 +673,8 @@ function lessonPage(id){
 }
 function updateLessonControls(){
  var id=parseRoute().id,l=s.lessons.find(x=>x.id===id);if(!l||!s.lesson)return;
- var correct=Number(s.lesson.payload?.correct)||0,finished=doneIds().has(id);
- var ready=s.videoChecked&&s.practiceChecked&&s.choice===correct;
+ var questions=quizQuestions(s.lesson.payload||{}),correct=questions[Math.min(s.quizStep,questions.length-1)]?.correct||0,finished=doneIds().has(id);
+ var ready=s.videoChecked&&s.practiceChecked&&s.quizPassed;
  document.querySelectorAll('[data-answer]').forEach(b=>{
   var selected=Number(b.dataset.answer)===s.choice;
   b.classList.toggle('selected',selected);b.classList.toggle('good',selected&&s.choice===correct);
@@ -662,11 +683,12 @@ function updateLessonControls(){
  var btn=$('#mark-lesson');if(btn)btn.disabled=finished||!ready;
  var status=$('#answer-result');
  if(status&&!finished)status.textContent=
+  s.quizPassed?'✓ Alle '+questions.length+' Fragen richtig beantwortet.':
   s.choice==null?'Wähle eine Antwort und löse die Schritte darüber.':
   s.choice!==correct?'Das ist noch nicht die richtige Antwort. Sieh dir die Erklärung erneut an.':
   !s.videoChecked?'Richtige Antwort ✓ · Sieh noch das Tutorial an und bestätige es.':
   !s.practiceChecked?'Richtige Antwort ✓ · Schließe noch deinen eigenen Praxisschritt ab.':
-  '✓ Alle Schritte bearbeitet. Du kannst die Lektion abschließen.';
+  '✓ Richtig. Weiter zur nächsten Frage.';
  var video=$('#video-check'),practice=$('#practice-workspace');
  if(video)video.checked=s.videoChecked;
  if(practice)practice.classList.toggle('is-complete',s.practiceChecked);
@@ -674,24 +696,32 @@ function updateLessonControls(){
 async function completePractice(){
  var id=parseRoute().id,box=$('#practice-input');if(!box||!s.lesson)return;
  var value=box.value.trim();
- if(value.length<15){notice('Schreibe zuerst eine eigene Lösung oder mindestens einen kurzen Bericht (15 Zeichen).');box.focus();return;}
+ if(value.length<5){notice('Schreibe zuerst deine eigene Lösung.');box.focus();return;}
+ const payload=s.lesson.payload||{},lang=String(payload.lang||'').toLowerCase(),isVisual=lang==='blender'||lang==='text';
+ const result=isVisual?{ok:value.length>=60,diagnostic:value.length>=60?'Deine Arbeitsschritte sind dokumentiert. Prüfe deine Szene selbst in Blender.':'Beschreibe mindestens 60 Zeichen mit konkreten Arbeitsschritten.',output:[]}:window.LLPractice.evaluate(value,payload);
+ const consoleNode=$('#practice-output'),feedback=$('#practice-feedback');if(consoleNode)consoleNode.textContent=result.output.length?result.output.map(x=>'> '+x).join('\n'):'Keine unterstützte Ausgabe. '+(result.ok?'':'Prüfe deinen Code.');
+ if(feedback){feedback.textContent=(result.ok?'✓ ':'✕ ')+result.diagnostic;feedback.classList.toggle('error',!result.ok)}
+ if(!result.ok){s.practiceChecked=false;updateLessonControls();return;}
  saveDraft(id,value);s.practiceChecked=true;
  if(!s.progress.practiced)s.progress.practiced=[];
  if(!s.progress.practiced.includes(id))s.progress.practiced.push(id);
- try{await saveProgress();}catch(e){s.practiceChecked=false;s.progress.practiced=s.progress.practiced.filter(x=>x!==id);notice('Praxis konnte nicht gespeichert werden: '+formatError(e));return;}
+ if(!s.progress.verifiedPractice)s.progress.verifiedPractice=[];
+ if(!s.progress.verifiedPractice.includes(id))s.progress.verifiedPractice.push(id);
+ try{await saveProgress();}catch(e){s.practiceChecked=false;s.progress.practiced=s.progress.practiced.filter(x=>x!==id);s.progress.verifiedPractice=s.progress.verifiedPractice.filter(x=>x!==id);notice('Praxis konnte nicht gespeichert werden: '+formatError(e));return;}
  var workspace=$('#practice-workspace'),status=$('#practice-status'),btn=$('[data-action="complete-practice"]');
  if(workspace)workspace.classList.add('is-complete');
  if(status)status.textContent='✓ Praxis erledigt';
  if(btn){btn.textContent='✓ Praxisschritt gespeichert';btn.disabled=true;}
- updateLessonControls();notice('Dein Praxisfortschritt wurde gespeichert.');
+ updateLessonControls();notice('Praxis geprüft und gespeichert.');
 }
 async function markLesson(){
  var id=parseRoute().id,l=s.lessons.find(x=>x.id===id);
  if(!l||!s.lesson||!allowed(l))return;
- if(!s.videoChecked||!s.practiceChecked||s.choice!==Number(s.lesson.payload.correct||0)){
+ if(!s.videoChecked||!s.practiceChecked||!s.quizPassed){
   notice('Bitte Video, praktische Übung und Quiz abschließen.');return;
  }
  if(!s.progress.done.includes(id))s.progress.done.push(id);
+ if(!s.progress.completedAt)s.progress.completedAt={};if(!s.progress.completedAt[id])s.progress.completedAt[id]=new Date().toISOString();
  if(!s.progress.watched.includes(id))s.progress.watched.push(id);
  try{await saveProgress();notice('Lektion abgeschlossen! +30 XP ✓');render();}
  catch(e){s.progress.done=s.progress.done.filter(x=>x!==id);notice('Speichern fehlgeschlagen: '+formatError(e));}
@@ -726,7 +756,7 @@ async function fetchVouchers(){
  s.vouchers=Array.isArray(r.data)?r.data:[];
 }
 function dailyStrip(){
- const cap=Number(s.daily?.daily_limit??(s.tier==='ultimate'?-1:s.tier==='pro'?6:3)),used=Number(s.daily?.used_today)||0;
+ const cap=Number(s.daily?.daily_limit??(s.tier==='ultimate'?-1:s.tier==='pro'?10:5)),used=Number(s.daily?.used_today)||0;
  return '<div class="daily-strip"><span class="daily-symbol">◷</span><div><strong>'+
  (cap<0?'Unbegrenztes Lernen':'Heute: '+Math.max(0,cap-used)+' von '+cap+' Stationen übrig')+'</strong>'+
  '<small>'+(cap<0?'Alle Lernstationen ohne tägliche Begrenzung.':'Einmal geöffnete Stationen bleiben jederzeit abrufbar.')+'</small></div></div>';
@@ -761,10 +791,10 @@ function plansPage(){
  dailyStrip()+
  (s.shopDiscount>0?'<div class="shop-sale-banner">✦ '+s.shopDiscount+' % Shoprabatt auf Plus und Ultimate · Der reduzierte Preis steht direkt beim Tarif.</div>':'')+
  '<div class="membership-stack">'+
- tile('free','Free','10','3 pro Tag','0,00 €','Die wichtigsten Grundlagen für deinen Anfang.',[
-  '10 Grundlagenkurse und 3 neue Lektionen pro Tag','2 Kursprüfungen pro Tag','Script-Werkstatt und Referenzen gesperrt'])+
- tile('pro','Plus','25','6 pro Tag','1,99 €','Mehr Themen und mehr Übungszeit.',[
-  '25 Lernpfade, 6 Lektionen pro Tag','4 Prüfungen pro Tag','Script-Werkstatt freigeschaltet · Referenzen gesperrt'])+
+ tile('free','Free','10','5 pro Tag','0,00 €','Die wichtigsten Grundlagen für deinen Anfang.',[
+  '10 Grundlagenkurse und 5 neue Lektionen pro Tag','2 Kursprüfungen pro Tag','Script-Werkstatt und Referenzen gesperrt'])+
+ tile('pro','Plus','25','10 pro Tag','1,99 €','Mehr Themen und mehr Übungszeit.',[
+  '25 Lernpfade, 10 Lektionen pro Tag','4 Prüfungen pro Tag','Script-Werkstatt freigeschaltet · Referenzen gesperrt'])+
  tile('ultimate','Ultimate','Alle '+allCourseCount,'Unbegrenzt','5,99 €','Der gesamte Kurskatalog.',[
   'Alle Kurse, Lektionen und Prüfungen unbegrenzt','Script-Werkstatt + vollständige Code-Referenzen','Sämtliche Lernfunktionen ohne Tageslimit'])+
  '</div>'+
@@ -1353,10 +1383,18 @@ async function adminAction(action,node){
   }
  }catch(e){notice('Admin-Fehler: '+formatError(e));}
 }
-var focusEnd=0,focusInterval=null;
-function toggleFocusTimer(){if(focusInterval){clearInterval(focusInterval);focusInterval=null;focusEnd=0;const clock=$('#focus-clock');if(clock)clock.textContent='25:00';const button=$('[data-timer-toggle]');if(button)button.textContent='Timer starten';return;}focusEnd=Date.now()+25*60*1000;focusInterval=setInterval(function(){const remaining=Math.max(0,Math.ceil((focusEnd-Date.now())/1000)),clock=$('#focus-clock');if(clock)clock.textContent=String(Math.floor(remaining/60)).padStart(2,'0')+':'+String(remaining%60).padStart(2,'0');if(!remaining){clearInterval(focusInterval);focusInterval=null;focusEnd=0;notice('Fokuszeit geschafft!')}},1000);const button=$('[data-timer-toggle]');if(button)button.textContent='Timer stoppen';}
+var focusEnd=0,focusInterval=null,focusSeconds=1500,focusRunning=false;
+function timerLabel(){return String(Math.floor(focusSeconds/60)).padStart(2,'0')+':'+String(focusSeconds%60).padStart(2,'0')}
+function paintTimer(){const clock=$('#focus-clock'),header=$('#focus-header');if(clock)clock.textContent=timerLabel();if(header){header.hidden=!focusRunning&&!$('#timer-portal')?.hasChildNodes();header.textContent='◷ '+timerLabel()}const btn=$('[data-timer-toggle]');if(btn)btn.textContent=focusRunning?'Pause':'Timer starten';const dialog=$('#timer-portal .timer-dialog');if(dialog){const time=dialog.querySelector('[data-timer-time]');if(time)time.textContent=timerLabel();const toggle=dialog.querySelector('[data-timer-toggle]');if(toggle)toggle.textContent=focusRunning?'Pause':'Starten';}}
+function tickTimer(){if(!focusRunning)return;focusSeconds=Math.max(0,Math.ceil((focusEnd-Date.now())/1000));if(!focusSeconds){focusRunning=false;clearInterval(focusInterval);focusInterval=null;notice('Fokuszeit geschafft!')}paintTimer()}
+function toggleFocusTimer(){if(focusRunning){focusSeconds=Math.max(0,Math.ceil((focusEnd-Date.now())/1000));focusRunning=false;clearInterval(focusInterval);focusInterval=null}else{if(!focusSeconds)focusSeconds=1500;focusEnd=Date.now()+focusSeconds*1000;focusRunning=true;focusInterval=setInterval(tickTimer,1000)}paintTimer()}
+function openTimer(){const portal=$('#timer-portal');if(!portal)return;portal.innerHTML='<div class="timer-backdrop" data-timer-close></div><section class="timer-dialog" role="dialog" aria-modal="true" aria-label="Fokus-Timer"><button class="btn small" type="button" data-timer-close>Schließen</button><span class="eyebrow">DEINE FOKUSZEIT</span><h2 data-timer-time>'+timerLabel()+'</h2><label>Minuten <input class="input" id="timer-minutes" type="number" min="1" max="240" value="'+Math.max(1,Math.ceil(focusSeconds/60))+'"></label><div class="timer-actions"><button class="btn primary" type="button" data-timer-toggle>'+(focusRunning?'Pause':'Starten')+'</button><button class="btn" type="button" data-timer-set>Zeit einstellen</button><button class="btn" type="button" data-timer-reset>Zurücksetzen</button></div></section>';paintTimer()}
 function filterSupportTickets(){const query=String($('#support-search')?.value||'').toLocaleLowerCase('de'),status=$('#support-filter')?.value||'all';document.querySelectorAll('.support-history .support-ticket').forEach(el=>{el.hidden=!!query&&!el.textContent.toLocaleLowerCase('de').includes(query)||status!=='all'&&el.dataset.ticketStatus!==status;});}
 document.addEventListener('click',async function(e){
+ if(e.target.closest('[data-timer-open]')){openTimer();return;}
+ if(e.target.closest('[data-timer-close]')){const portal=$('#timer-portal');if(portal)portal.replaceChildren();paintTimer();return;}
+ if(e.target.closest('[data-timer-set]')){const minutes=Number($('#timer-minutes')?.value);if(!Number.isInteger(minutes)||minutes<1||minutes>240){notice('Bitte 1 bis 240 Minuten wählen.');return;}focusSeconds=minutes*60;if(focusRunning)focusEnd=Date.now()+focusSeconds*1000;paintTimer();return;}
+ if(e.target.closest('[data-timer-reset]')){focusRunning=false;clearInterval(focusInterval);focusInterval=null;focusSeconds=1500;paintTimer();return;}
  var streakRetry=e.target.closest('[data-streak-retry]');
  if(streakRetry){try{await refreshStreakStatus();}catch(_e){}paintStreakModal();return;}
  var streakOpen=e.target.closest('[data-streak-open]');
@@ -1407,6 +1445,14 @@ document.addEventListener('click',async function(e){
    var wrap=$('#catalog-container');if(wrap)wrap.innerHTML=catalogItems();return;
   }
   if(name==='complete-practice'){await completePractice();return;}
+  if(['run-practice','show-hint','show-solution','reset-practice'].includes(name)){
+   const p=s.lesson?.payload||{},box=$('#practice-input'),out=$('#practice-output'),feedback=$('#practice-feedback');if(!box)return;
+   if(name==='show-hint'){if(feedback)feedback.textContent='Tipp: '+String(p.hint||'Lies die Erklärung und prüfe die Beispiele.');return;}
+   if(name==='show-solution'){if(feedback)feedback.textContent='Musterlösung:\n'+String(p.solution||p.example||'Noch keine Musterlösung verfügbar.');return;}
+   if(name==='reset-practice'){box.value=String(p.starter||'');s.draft=box.value;saveDraft(parseRoute().id,box.value);if(out)out.textContent='Zurückgesetzt.';if(feedback)feedback.textContent='';return;}
+   const result=window.LLPractice.evaluate(box.value,p);if(out)out.textContent=result.output.length?result.output.map(x=>'> '+x).join('\n'):result.diagnostic;
+   if(feedback){feedback.textContent=result.diagnostic;feedback.classList.toggle('error',!result.ok)}return;
+  }
   if(name==='reset-appearance'){
     for(const key of ['compact','motion','largeTypography','contrast','softCorners','backgroundArt'])
      try{localStorage.removeItem('liverylab-pref-'+key);}catch(_){}
@@ -1456,7 +1502,7 @@ document.addEventListener('click',async function(e){
   if(Number.isInteger(index)&&index>=0&&index<PROJECT_FILES.length){s.projectTab=index;await loadProjectTab();render();}
   return;
  }
- var answer=e.target.closest('[data-answer]');if(answer){s.choice=Number(answer.dataset.answer);updateLessonControls();return;}
+ var answer=e.target.closest('[data-answer]');if(answer){const qs=quizQuestions(s.lesson?.payload||{}),q=qs[s.quizStep];s.choice=Number(answer.dataset.answer);if(q&&s.choice===q.correct){if(s.quizStep<qs.length-1){s.quizStep++;s.choice=null;paintQuiz();notice('Richtig! Nächste Frage.')}else{s.quizPassed=true;updateLessonControls();notice('Alle Quizfragen richtig!')}}else{updateLessonControls()}return;}
  var exam=e.target.closest('[data-exam-answer]');if(exam){await submitExamAnswer(Number(exam.dataset.examAnswer));return;}
  var filter=e.target.closest('[data-filter]');if(filter){s.filter=filter.dataset.filter;s.catalogLimit=9;render();return;}
  var examFilter=e.target.closest('[data-exam-filter]');if(examFilter){s.examFilter=examFilter.dataset.examFilter;render();return;}
@@ -1552,6 +1598,8 @@ document.addEventListener('input',function(e){if(e.target.id==='support-search')
  }
  if(e.target.id==='practice-input'){
   s.draft=e.target.value;saveDraft(parseRoute().id,s.draft);
+  const syntaxError=window.LLPractice?.syntax(s.draft,String(s.lesson?.payload?.lang||'').toLowerCase()),live=$('#practice-feedback');if(live){live.textContent=syntaxError?'Syntaxhinweis: '+syntaxError:'';live.classList.toggle('error',!!syntaxError)}
+  if(s.practiceChecked){s.practiceChecked=false;s.progress.verifiedPractice=(s.progress.verifiedPractice||[]).filter(id=>id!==parseRoute().id);void saveProgress().catch(()=>{});const workspace=$('#practice-workspace');if(workspace)workspace.classList.remove('is-complete');const button=$('[data-action="complete-practice"]');if(button){button.disabled=false;button.textContent='Meinen Code prüfen →'}updateLessonControls()}
   var status=$('#practice-status');if(status&&!s.practiceChecked)status.textContent='Entwurf lokal gespeichert';
  }
 });
@@ -1588,6 +1636,7 @@ document.addEventListener('change',async function(e){
  if(e.target.id==='support-category'){const field=e.target.closest('form')?.querySelector('.support-plan-field');if(field)field.hidden=e.target.value!=='plan';return;}
  if(e.target.id==='support-filter'){filterSupportTickets();return;}
  if(e.target.id==='study-goal'){setChoicePreference('goal-'+(s.user?.id||'guest'),e.target.value);notice('Tagesziel gespeichert.');return;}
+ if(e.target.id==='weekly-goal'){setChoicePreference('weekly-goal-'+(s.user?.id||'guest'),e.target.value);render();notice('Wochenziel gespeichert.');return;}
  if(e.target.id==='beta-enabled'){
   const box=e.target;try{const r=await api.rpc('academy_service',{p_action:'set_beta',p_payload:{enabled:box.checked}});if(r.error)throw r.error;await refreshService();render();notice('Beta-Anfragen '+(box.checked?'aktiviert.':'geschlossen.'));}catch(err){box.checked=!box.checked;notice(formatError(err))}return;
  }
