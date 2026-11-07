@@ -5,7 +5,7 @@ const read=file=>fs.readFileSync(path.join(__dirname,'..',file),'utf8');
 const html=read('site/index.html'),js=read('site/academy-v21.js'),css=read('site/app-v21.css');
 for(const file of ['site/reference-data.js','site/app-v21.css','site/app-v12.css','site/config.js','site/auth-mfa-v15.js','site/academy-v21.js','site/privacy.html','site/manifest.webmanifest','site/icon.svg','supabase/functions/academy-signin/index.ts','supabase/functions/admin-users/index.ts'])
  assert(fs.existsSync(path.join(__dirname,'..',file)),file+' missing');
-for(const token of ['app-v21.css?build=20261107v31','academy-v21.js?build=20261107v40','auth-mfa-v15.js?build=20261107v31','config.js?build=20261107v31','LiveryLab Academy'])
+for(const token of ['app-v21.css?build=20261107v31','academy-v21.js?build=20261107v42','auth-mfa-v15.js?build=20261107v31','config.js?build=20261107v31','LiveryLab Academy'])
  assert(html.includes(token),'Versioned asset missing: '+token);
 for(const obsolete of ['styles.css','refined.css','music-studio.js','studio3d-v5.js'])
  assert(!html.includes(obsolete),'Old asset still linked: '+obsolete);
@@ -42,7 +42,7 @@ assert.equal(banner.subarray(8,12).toString(),'WEBP','LiveryLab banner invalid')
 for(const selector of ['.ll-home-shortcuts','.ll-home-brand-banner','.ll-streak-modal','.ll-streak-claim','.ll-streak-backdrop'])assert(css.includes(selector),'Missing v19 interface style: '+selector);
 assert(fs.existsSync(path.join(__dirname,'../site/v21.html')),'Physical uncached v20 entry missing');
 assert(read('site/v21.html').includes('academy-v21.js?build='),'Unique iOS entry must load new code');
-assert(read('site/v31.html').includes('academy-v21.js?build=20261107v40'),'Fresh v28 entry must load current code');
+assert(read('site/v31.html').includes('academy-v21.js?build=20261107v42'),'Fresh v28 entry must load current code');
 assert(read('site/manifest.webmanifest').includes('v31.html#home'),'Installed app must open fresh entry');
 assert(js.includes("root=document.createElement('div')"),'Old HTML popup fallback missing');
 assert(js.includes("s.streakModalOpen=true;"),'Daily popup must appear after every login');
@@ -78,6 +78,15 @@ assert(!js.includes('data-action="run-practice"'),'Run button must not render');
 assert(html.includes('class="focus-center"')&&html.includes('data-timer-open'),'Center timer missing');
 assert(js.includes('localStorage.setItem(timerStorageKey'),'Timer must persist beyond tab reload');
 const layoutRestore=read('site/academy-v31-layout.css');
-assert(html.includes('academy-v31-layout.css?build=20261107v40'),'v31 simplified CSS missing');
-assert(read('site/v31.html').includes('academy-v31-layout.css?build=20261107v40'),'PWA simple CSS missing');
+assert(html.includes('academy-v31-layout.css?build=20261107v42'),'v31 simplified CSS missing');
+assert(read('site/v31.html').includes('academy-v31-layout.css?build=20261107v42'),'PWA simple CSS missing');
 for(const selector of ['.ll-home-brand-banner','.topbar','.bottom-nav','.focus-center','.practice-actions-simple'])assert(layoutRestore.includes(selector),'Visual recovery missing '+selector);
+
+const curriculum=read('site/academy-curriculum.js');
+for(const file of ['site/index.html','site/v21.html','site/v31.html'])assert(read(file).includes('academy-curriculum.js?build=20261107v42'),file+' must include curriculum');
+for(const token of ['sections','quiz_items','LLCurriculum','data-lesson-part','quizProgress','quiz-meter-fill'])assert(js.includes(token)||curriculum.includes(token),'Missing expanded curriculum '+token);
+for(const token of ['data-plan-action="extend"','data-plan-action="reduce"','data-plan-action="end"','membershipRemainingText','memberExpiry'])assert(js.includes(token),'Missing subscription admin '+token);
+const adminEdge=read('supabase/functions/admin-users/index.ts');
+for(const token of ["body.action==='adjustPlan'","ownerIds.has(id)","expires_at:expiresAt","remaining_seconds","plan_expires_at"])assert(adminEdge.includes(token),'Missing authenticated plan duration handler '+token);
+for(const token of ['ll-focus-modal','ll-focus-ring','data-timer-preset','focusTotalSeconds'])assert(js.includes(token),'Missing streak-inspired focus timer '+token);
+assert(read('site/academy-v31-layout.css').includes('.ll-plan-manager'),'Missing responsive subscriptions');
