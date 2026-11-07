@@ -1444,19 +1444,81 @@ async function adminAction(action,node){
   }
  }catch(e){notice('Admin-Fehler: '+formatError(e));}
 }
-var focusEnd=0,focusInterval=null,focusSeconds=1500,focusRunning=false,focusUsed=false;
-try{const stored=JSON.parse(sessionStorage.getItem('liverylab-focus-v30')||'{}');if(Number.isFinite(stored.seconds)&&stored.seconds>=0&&stored.seconds<=14400){focusSeconds=stored.seconds;focusUsed=!!stored.used}if(Number.isFinite(stored.end)&&stored.end>Date.now()){focusEnd=stored.end;focusSeconds=Math.ceil((focusEnd-Date.now())/1000);focusRunning=true;focusUsed=true;focusInterval=setInterval(tickTimer,1000)}}catch(_){}
-function saveTimer(){try{sessionStorage.setItem('liverylab-focus-v30',JSON.stringify({seconds:focusSeconds,end:focusRunning?focusEnd:0,used:focusUsed}))}catch(_){}}
-function timerLabel(){return String(Math.floor(focusSeconds/60)).padStart(2,'0')+':'+String(focusSeconds%60).padStart(2,'0')}
-function paintTimer(){const clock=$('#focus-clock'),header=$('#focus-header');if(clock)clock.textContent=timerLabel();if(header){header.hidden=!focusUsed;header.textContent='◷ '+timerLabel()}const btn=$('[data-timer-toggle]');if(btn)btn.textContent=focusRunning?'Pause':'Timer starten';const dialog=$('#timer-portal .timer-dialog');if(dialog&&typeof dialog.querySelector==='function'){const time=dialog.querySelector('[data-timer-time]');if(time)time.textContent=timerLabel();const toggle=dialog.querySelector('[data-timer-toggle]');if(toggle)toggle.textContent=focusRunning?'Pause':'Starten';}}
-function tickTimer(){if(!focusRunning)return;focusSeconds=Math.max(0,Math.ceil((focusEnd-Date.now())/1000));if(!focusSeconds){focusRunning=false;clearInterval(focusInterval);focusInterval=null;notice('Fokuszeit geschafft!')}saveTimer();paintTimer()}
-function toggleFocusTimer(){focusUsed=true;if(focusRunning){focusSeconds=Math.max(0,Math.ceil((focusEnd-Date.now())/1000));focusRunning=false;clearInterval(focusInterval);focusInterval=null}else{if(!focusSeconds)focusSeconds=1500;focusEnd=Date.now()+focusSeconds*1000;focusRunning=true;focusInterval=setInterval(tickTimer,1000)}saveTimer();paintTimer()}
-function openTimer(){const portal=$('#timer-portal');if(!portal)return;focusUsed=true;saveTimer();portal.innerHTML='<div class="timer-backdrop" data-timer-close></div><section class="timer-dialog" role="dialog" aria-modal="true" aria-label="Fokus-Timer"><button class="btn small" type="button" data-timer-close>Schließen</button><span class="eyebrow">DEINE FOKUSZEIT</span><h2 data-timer-time>'+timerLabel()+'</h2><label>Minuten <input class="input" id="timer-minutes" type="number" min="1" max="240" value="'+Math.max(1,Math.ceil(focusSeconds/60))+'"></label><div class="timer-actions"><button class="btn primary" type="button" data-timer-toggle>'+(focusRunning?'Pause':'Starten')+'</button><button class="btn" type="button" data-timer-set>Zeit einstellen</button><button class="btn" type="button" data-timer-reset>Zurücksetzen</button></div></section>';paintTimer()}
+var focusEnd=0,focusInterval=null,focusSeconds=1500,focusRunning=false,focusUsed=true;
+const timerStorageKey='liverylab-focus-v40';
+try{
+ const stored=JSON.parse(localStorage.getItem(timerStorageKey)||sessionStorage.getItem('liverylab-focus-v30')||'{}');
+ if(Number.isFinite(stored.seconds)&&stored.seconds>=0&&stored.seconds<=14400)focusSeconds=Math.ceil(stored.seconds);
+ if(Number.isFinite(stored.end)&&stored.end>0){
+  focusEnd=stored.end;
+  focusSeconds=Math.max(0,Math.ceil((focusEnd-Date.now())/1000));
+  if(focusSeconds>0)focusRunning=true;
+ }
+ if(focusRunning)focusInterval=setInterval(tickTimer,1000);
+}catch(_){}
+function saveTimer(){
+ try{localStorage.setItem(timerStorageKey,JSON.stringify({seconds:focusSeconds,end:focusRunning?focusEnd:0,used:true}));}catch(_){}
+}
+function timerLabel(){
+ const seconds=Math.max(0,Math.floor(Number(focusSeconds)||0));
+ return String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');
+}
+function paintTimer(){
+ if(focusRunning){
+  focusSeconds=Math.max(0,Math.ceil((focusEnd-Date.now())/1000));
+  if(focusSeconds===0){focusRunning=false;clearInterval(focusInterval);focusInterval=null;saveTimer();}
+ }
+ const label=timerLabel(),clock=$('#focus-clock'),header=$('#focus-header');
+ if(clock)clock.textContent=label;
+ if(header){
+  header.hidden=false;
+  header.textContent=(focusRunning?'◷ ':'◷ ')+label;
+  header.setAttribute('aria-label','Fokus-Timer: '+label+' verbleibend, '+(focusRunning?'läuft':'pausiert')+'. Zum Einstellen öffnen.');
+  header.title='Fokus-Timer öffnen · '+label;
+  header.classList.toggle('is-running',focusRunning);
+ }
+ const btn=$('[data-timer-toggle]');if(btn)btn.textContent=focusRunning?'Pause':'Starten';
+ const dialog=$('#timer-portal .timer-dialog');
+ if(dialog&&typeof dialog.querySelector==='function'){
+  const time=dialog.querySelector('[data-timer-time]');if(time)time.textContent=label;
+  const toggle=dialog.querySelector('[data-timer-toggle]');if(toggle)toggle.textContent=focusRunning?'Pause':'Starten';
+  const info=dialog.querySelector('[data-timer-state]');if(info)info.textContent=focusRunning?'Der Timer läuft auch beim Seitenwechsel.':'Timer bereit oder pausiert.';
+ }
+}
+function tickTimer(){
+ if(!focusRunning)return;
+ const before=focusSeconds;
+ focusSeconds=Math.max(0,Math.ceil((focusEnd-Date.now())/1000));
+ if(focusSeconds===0){focusRunning=false;clearInterval(focusInterval);focusInterval=null;saveTimer();if(before>0)notice('Fokuszeit geschafft!');}
+ paintTimer();
+}
+function toggleFocusTimer(){
+ focusUsed=true;
+ if(focusRunning){focusSeconds=Math.max(0,Math.ceil((focusEnd-Date.now())/1000));focusRunning=false;clearInterval(focusInterval);focusInterval=null;}
+ else{if(!focusSeconds)focusSeconds=1500;focusEnd=Date.now()+focusSeconds*1000;focusRunning=true;clearInterval(focusInterval);focusInterval=setInterval(tickTimer,1000);}
+ saveTimer();paintTimer();
+}
+function openTimer(){
+ const portal=$('#timer-portal');if(!portal)return;
+ paintTimer();
+ portal.innerHTML='<div class="timer-backdrop" data-timer-close></div><section class="timer-dialog" role="dialog" aria-modal="true" aria-label="Fokus-Timer">'+
+ '<button class="btn small" type="button" data-timer-close>Schließen</button>'+
+ '<span class="eyebrow">DEINE FOKUSZEIT</span><h2 data-timer-time>'+timerLabel()+'</h2>'+
+ '<p class="micro" data-timer-state>'+(focusRunning?'Der Timer läuft auch beim Seitenwechsel.':'Timer bereit oder pausiert.')+'</p>'+
+ '<label for="timer-minutes">Minuten <input class="input" id="timer-minutes" type="number" inputmode="numeric" min="1" max="240" value="'+Math.max(1,Math.ceil(focusSeconds/60))+'"></label>'+
+ '<div class="timer-actions"><button class="btn primary" type="button" data-timer-toggle>'+(focusRunning?'Pause':'Starten')+'</button>'+
+ '<button class="btn" type="button" data-timer-set>Zeit einstellen</button>'+
+ '<button class="btn" type="button" data-timer-reset>Zurücksetzen</button></div></section>';
+ paintTimer();
+ const input=$('#timer-minutes');if(input)input.focus({preventScroll:true});
+}
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')tickTimer();});
+window.addEventListener('focus',function(){tickTimer();});
 function filterSupportTickets(){const query=String($('#support-search')?.value||'').toLocaleLowerCase('de'),status=$('#support-filter')?.value||'all';document.querySelectorAll('.support-history .support-ticket').forEach(el=>{el.hidden=!!query&&!el.textContent.toLocaleLowerCase('de').includes(query)||status!=='all'&&el.dataset.ticketStatus!==status;});}
 document.addEventListener('click',async function(e){
  if(e.target.closest('[data-timer-open]')){openTimer();return;}
  if(e.target.closest('[data-timer-close]')){const portal=$('#timer-portal');if(portal)portal.replaceChildren();paintTimer();return;}
- if(e.target.closest('[data-timer-set]')){const minutes=Number($('#timer-minutes')?.value);if(!Number.isInteger(minutes)||minutes<1||minutes>240){notice('Bitte 1 bis 240 Minuten wählen.');return;}focusSeconds=minutes*60;if(focusRunning)focusEnd=Date.now()+focusSeconds*1000;saveTimer();paintTimer();return;}
+ if(e.target.closest('[data-timer-set]')){const minutes=Number($('#timer-minutes')?.value);if(!Number.isInteger(minutes)||minutes<1||minutes>240){notice('Bitte 1 bis 240 Minuten wählen.');return;}focusSeconds=minutes*60;if(focusRunning)focusEnd=Date.now()+focusSeconds*1000;saveTimer();paintTimer();notice('Fokuszeit auf '+minutes+' Minuten eingestellt.');return;}
  if(e.target.closest('[data-timer-reset]')){focusRunning=false;clearInterval(focusInterval);focusInterval=null;focusSeconds=1500;saveTimer();paintTimer();return;}
  var streakRetry=e.target.closest('[data-streak-retry]');
  if(streakRetry){try{await refreshStreakStatus();}catch(_e){}paintStreakModal();return;}
