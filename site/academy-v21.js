@@ -110,11 +110,12 @@ function frame(){
 
 function login(){
  s.ready=false;frame();
- const brand='<img class="ll-login-banner" src="./liverylab-banner.webp" alt="Livery-Lab Premium FiveM Systems Banner"><div class="brandmark"><img class="ll-brand-symbol" src="./liverylab-symbol.svg" alt=""><span>LiveryLab <span class="gradient">Academy</span></span></div><div class="ll-auth-release">PRIVATE BETA <span>NEUE ACADEMY · V26</span></div>';
+ const betaLabel=s.service?.beta_open===false?'LIVERYLAB · ACADEMY':'LIVERYLAB · PRIVATE BETA';
+ const brand='<img class="ll-login-banner" src="./liverylab-banner.webp" alt="Livery-Lab Premium FiveM Systems Banner"><div class="brandmark"><img class="ll-brand-symbol" src="./liverylab-symbol.svg" alt=""><span>LiveryLab <span class="gradient">Academy</span></span></div><div class="ll-auth-release">'+(s.service?.beta_open===false?'ACADEMY':'PRIVATE BETA')+' <span>NEUE ACADEMY · V27</span></div>';
  if(s.authScreen==='register'){
- content.innerHTML='<div class="auth-layout auth-login-layout"><aside class="auth-showcase"><span class="eyebrow">LIVERYLAB · PRIVATE BETA</span><h2>Baue echte Skills.<br><em>Schritt für Schritt.</em></h2><p>Programmierung, FiveM und Blender in klaren Lernpfaden – mit Videos, Praxis, Quizzen und Abschlussprüfungen.</p><div class="auth-feature-grid"><span>▶ Video-Lektionen</span><span>✓ Praxisaufgaben</span><span>✦ XP & Titel</span><span>★ Kursprüfungen</span></div><small>Made with 💙 from NyxAtheris (LiveryLab Studios)</small></aside><section class="auth-card">'+brand+
+ content.innerHTML='<div class="auth-layout auth-login-layout"><aside class="auth-showcase"><span class="eyebrow">'+betaLabel+'</span><h2>Baue echte Skills.<br><em>Schritt für Schritt.</em></h2><p>Programmierung, FiveM und Blender in klaren Lernpfaden – mit Videos, Praxis, Quizzen und Abschlussprüfungen.</p><div class="auth-feature-grid"><span>▶ Video-Lektionen</span><span>✓ Praxisaufgaben</span><span>✦ XP & Titel</span><span>★ Kursprüfungen</span></div><small>Made with 💙 from NyxAtheris (LiveryLab Studios)</small></aside><section class="auth-card">'+brand+
  '<span class="eyebrow">[ + ] BEWERBUNG</span><h1>Dein Weg in die <span class="gradient">Academy.</span></h1>'+
- '<p class="lede">Erstelle dein Konto. Die Academy ist noch in der Testphase: Erst nach Freigabe durch NyxAtheris erhältst du Zugang. Plus/Ultimate gibt es derzeit auf Anfrage über Discord.</p>'+
+ '<p class="lede">Erstelle dein Konto. Nach der Freigabe durch NyxAtheris erhältst du Zugang. Mitgliedschaften kannst du nach der Anmeldung direkt in der App anfragen.</p>'+
  '<form data-form="register"><div class="form-group"><label class="form-label" for="reg-email">E-Mail-Adresse</label>'+
  '<input class="input" type="email" id="reg-email" name="email" autocomplete="email" required maxlength="254" placeholder="du@beispiel.de"></div>'+
  '<div class="form-group"><label class="form-label" for="reg-user">Benutzername</label>'+
@@ -136,7 +137,7 @@ function login(){
  '<button class="btn primary block" type="button" data-action="show-login">Zur Anmeldung →</button>'+
  '<a class="btn ghost block" style="margin-top:10px" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord-Support</a></section></div>';return;
  }
- content.innerHTML='<div class="auth-layout auth-login-layout"><aside class="auth-showcase"><span class="eyebrow">LIVERYLAB · PRIVATE BETA</span><h2>Baue echte Skills.<br><em>Schritt für Schritt.</em></h2><p>Programmierung, FiveM und Blender in klaren Lernpfaden – mit Videos, Praxis, Quizzen und Abschlussprüfungen.</p><div class="auth-feature-grid"><span>▶ Video-Lektionen</span><span>✓ Praxisaufgaben</span><span>✦ XP & Titel</span><span>★ Kursprüfungen</span></div><small>Made with 💙 from NyxAtheris (LiveryLab Studios)</small></aside><section class="auth-card">'+brand+
+ content.innerHTML='<div class="auth-layout auth-login-layout"><aside class="auth-showcase"><span class="eyebrow">'+betaLabel+'</span><h2>Baue echte Skills.<br><em>Schritt für Schritt.</em></h2><p>Programmierung, FiveM und Blender in klaren Lernpfaden – mit Videos, Praxis, Quizzen und Abschlussprüfungen.</p><div class="auth-feature-grid"><span>▶ Video-Lektionen</span><span>✓ Praxisaufgaben</span><span>✦ XP & Titel</span><span>★ Kursprüfungen</span></div><small>Made with 💙 from NyxAtheris (LiveryLab Studios)</small></aside><section class="auth-card">'+brand+
  '<span class="eyebrow">[ 01 ] DEVELOPER ACADEMY</span><h1>Lernen. Entwickeln.<br><span class="gradient">Weiterkommen.</span></h1>'+
  '<p class="lede">Melde dich mit deinem Benutzernamen oder deiner E-Mail-Adresse an.</p>'+
  '<form data-form="login"><div class="form-group"><label class="form-label" for="username">Benutzername oder E-Mail</label>'+
@@ -145,7 +146,7 @@ function login(){
  '<input class="input" type="password" id="password" name="password" autocomplete="current-password" required placeholder="Dein Passwort"></div>'+
  '<button class="btn primary block" type="submit">Anmelden →</button></form>'+
  '<div class="auth-secondary"><span>Noch kein Konto?</span><button type="button" class="btn" data-action="show-register">Jetzt registrieren →</button></div>'+
- '<p class="micro">LiveryLab ist aktuell eine betreute Test-Academy. Dein Konto muss freigegeben werden. Für Plus/Ultimate: Schreib NyxAtheris per Discord-DM oder eröffne ein Ticket mit dem Grund und erwähne @nyxatheris.</p>'+
+ '<p class="micro">Dein Konto muss vom Team freigegeben werden. Nach der Anmeldung kannst du Supportanfragen direkt in der Academy stellen.</p>'+
  '<a class="btn discord block discord-block" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord beitreten</a>'+
  '<p class="smallprint" style="text-align:center;margin-top:19px">Sicherer Zugang über LiveryLab Academy</p></section></div>';
 }
@@ -1199,7 +1200,7 @@ function settingsPage(){
  '<span><b>Discord-Support</b><p>Schreibe NyxAtheris eine DM oder öffne ein Ticket und erwähne @nyxatheris.</p></span></div>'+
  '<a class="btn small discord" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord ↗</a></div></div></section>'+
  '<section class="section panel"><span class="eyebrow">LIVERYLAB STUDIOS</span><h3>Über die Academy</h3>'+
- '<p class="micro">Developer-Lernplattform mit Kursen, sicheren Accounts, Profilen, Freunden und Erfolgen. Version 26.</p>'+
+ '<p class="micro">Developer-Lernplattform mit Kursen, sicheren Accounts, Profilen, Freunden und Erfolgen. Version 27.</p>'+
  '<a href="./privacy.html">Datenschutzhinweise ansehen ↗</a><p class="smallprint" style="margin-top:16px">Made with 💙 from NyxAtheris (LiveryLab Studios)</p></section>';
 }
 
@@ -1697,7 +1698,9 @@ async function init(){
  if(typeof window.setInterval==='function')window.setInterval(updateStreakClocks,1000);
  document.head.insertAdjacentHTML('beforeend','<style>.is-auth .sidebar,.is-auth .bottom-nav{display:none}.is-auth .topbar{background:#0d0a19}.is-auth .content{max-width:1100px}.is-auth .app-column{width:100%}</style>');
  if(!window.supabase||!cfg.supabaseUrl||!cfg.supabasePublishableKey){content.innerHTML='<div class="auth-layout panel"><h2>Verbindung nicht verfügbar</h2><p>Supabase konnte nicht geladen werden. Bitte lade die Seite erneut oder überprüfe deine Verbindung.</p></div>';return;}
- try{api=window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});await boot();}
+ try{api=window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+  void api.rpc('academy_beta_status').then(beta=>{if(!beta.error){s.service.beta_open=beta.data===true;if(!s.ready)login();}}).catch(()=>{});
+  await boot();}
  catch(err){content.innerHTML='<div class="auth-layout panel"><h2>Academy nicht erreichbar</h2><p class="muted">'+esc(formatError(err))+'</p><button class="btn" onclick="location.reload()">Erneut versuchen</button></div>';}
 }
 init();
