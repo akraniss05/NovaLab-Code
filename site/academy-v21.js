@@ -1384,7 +1384,7 @@ function updateMembershipClocks(){
   el.classList.toggle('is-expired',remaining==='Abgelaufen');
  });
 }
-setInterval(updateMembershipClocks,30000);
+if(typeof setInterval==='function')setInterval(updateMembershipClocks,30000);
 function adminPage(){
  if(s.profile?.role!=='admin')return '<section class="locked-panel"><h2>Nur für Administratoren.</h2></section>';
  const people=s.members||[],pending=people.filter(u=>u.access_status==='pending'),query=String(s.adminSearch||'').toLowerCase(),rest=people.filter(u=>u.access_status!=='pending').filter(u=>(s.adminFilter==='all'||(s.adminFilter==='active'&&u.active)||(s.adminFilter==='blocked'&&!u.active)||(s.adminFilter==='admin'&&u.role==='admin'))&&(!query||String(u.username||'').toLowerCase().includes(query)||String(u.email||'').toLowerCase().includes(query))),active=people.filter(u=>u.active).length,blocked=people.filter(u=>!u.active&&u.access_status!=='pending').length;
