@@ -48,7 +48,9 @@ assert(app.friendsPage().includes('Freund hinzufügen'),'Friends page rendered')
 assert(app.friendsPage().includes('friend-navigation'),'Friends tabs rendered');
 state.friendTab='search';assert(app.friendsPage().includes('friends-search-panel'),'Friend search tab rendered');state.friendTab='friends';
 assert(app.settingsPage().includes('App-Hintergrund'),'Personal app background setting rendered');
-assert(!app.settingsPage().includes('Kompakte Kurskarten'),'Unneeded profile/layout configuration removed');
+assert(app.settingsPage().includes('Kompakte Kurskarten'),'Compact cards setting available');
+assert(app.settingsPage().includes('Hoher Kontrast'),'Accessibility settings available');
+assert(app.homePage().includes('ll-home-focus'),'Learning focus section rendered');
 assert(app.settingsPage().includes('Authenticator & 2FA'),'Two-factor settings moved to settings');
 assert(!app.profilePage().includes('mfa-settings'),'Profile must not display account security');
 assert(app.profilePage().includes('Login-Streak'),'Login streak stats on profile');
