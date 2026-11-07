@@ -27,3 +27,6 @@
 .studio-calendar-day.is-outside{opacity:.25;min-height:85px}
 @media(max-width:930px){.studio-challenges{grid-template-columns:1fr}}
 @media(max-width:580px){.ll-five-stage{gap:4px}.ll-five-stage button{padding:7px 3px;min-height:66px;border-radius:10px}.ll-five-stage button>strong{font-size:10px}.ll-five-stage button>span{width:21px;height:21px}.studio-challenge{padding:15px;flex-wrap:wrap}.studio-challenge .btn{margin-left:auto}.studio-calendar-grid{gap:4px}.studio-calendar-day,.studio-calendar-day.is-outside{min-height:57px;border-radius:9px;padding:6px 4px}.studio-calendar-day strong{font-size:12px}.studio-calendar-day span{font-size:10px}.studio-weekday{font-size:11px}}
+
+.ll-practice-preview{display:block;width:100%;height:315px;min-height:210px;max-height:60vh;margin:12px 0 18px;border:1px solid #8b74b5;border-radius:16px;background:#fff}
+.ll-practice-preview[hidden]{display:none!important}
