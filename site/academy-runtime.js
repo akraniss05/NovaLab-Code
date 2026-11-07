@@ -36,6 +36,8 @@ scope.onmessage=async function(event){
    if(out)lines.push(...out.split('\n').slice(0,maximum));
   }else if(lang==='python'||lang==='py'){
    if(!input.pythonBundleUrl||!input.pythonBaseUrl)throw Error('Python-Laufzeit nicht eingerichtet.');
+   // Support both browser-global and CommonJS-distributed Pyodide bootstrap bundles.
+   scope.module={exports:{}};scope.exports=scope.module.exports;
    importScripts(input.pythonBundleUrl);
    const init=scope.loadPyodide||scope.module?.exports?.loadPyodide;
    if(typeof init!=='function')throw Error('Pyodide konnte nicht initialisiert werden.');
