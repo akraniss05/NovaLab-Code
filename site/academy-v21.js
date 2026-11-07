@@ -1486,11 +1486,13 @@ async function adminAction(action,node){
   }
  }catch(e){notice('Admin-Fehler: '+formatError(e));}
 }
-var focusEnd=0,focusInterval=null,focusSeconds=1500,focusRunning=false,focusUsed=true;
+var focusEnd=0,focusInterval=null,focusSeconds=1500,focusTotalSeconds=1500,focusRunning=false,focusUsed=true;
 const timerStorageKey='liverylab-focus-v40';
 try{
  const stored=JSON.parse(localStorage.getItem(timerStorageKey)||sessionStorage.getItem('liverylab-focus-v30')||'{}');
  if(Number.isFinite(stored.seconds)&&stored.seconds>=0&&stored.seconds<=14400)focusSeconds=Math.ceil(stored.seconds);
+ if(Number.isFinite(stored.total)&&stored.total>=60&&stored.total<=14400)focusTotalSeconds=Math.ceil(stored.total);
+ else focusTotalSeconds=Math.max(60,focusSeconds);
  if(Number.isFinite(stored.end)&&stored.end>0){
   focusEnd=stored.end;
   focusSeconds=Math.max(0,Math.ceil((focusEnd-Date.now())/1000));
@@ -1499,7 +1501,7 @@ try{
  if(focusRunning)focusInterval=setInterval(tickTimer,1000);
 }catch(_){}
 function saveTimer(){
- try{localStorage.setItem(timerStorageKey,JSON.stringify({seconds:focusSeconds,end:focusRunning?focusEnd:0,used:true}));}catch(_){}
+ try{localStorage.setItem(timerStorageKey,JSON.stringify({seconds:focusSeconds,total:focusTotalSeconds,end:focusRunning?focusEnd:0,used:true}));}catch(_){}
 }
 function timerLabel(){
  const seconds=Math.max(0,Math.floor(Number(focusSeconds)||0));
@@ -1519,12 +1521,13 @@ function paintTimer(){
   header.title='Fokus-Timer öffnen · '+label;
   header.classList.toggle('is-running',focusRunning);
  }
- const btn=$('[data-timer-toggle]');if(btn)btn.textContent=focusRunning?'Pause':'Starten';
+ const btn=$('[data-timer-toggle]');if(btn)btn.textContent=focusRunning?'⏸ Pausieren':'▶ Starten';
  const dialog=$('#timer-portal .timer-dialog');
  if(dialog&&typeof dialog.querySelector==='function'){
   const time=dialog.querySelector('[data-timer-time]');if(time)time.textContent=label;
   const toggle=dialog.querySelector('[data-timer-toggle]');if(toggle)toggle.textContent=focusRunning?'Pause':'Starten';
-  const info=dialog.querySelector('[data-timer-state]');if(info)info.textContent=focusRunning?'Der Timer läuft auch beim Seitenwechsel.':'Timer bereit oder pausiert.';
+  const info=dialog.querySelector('[data-timer-state]');if(info)info.textContent=focusRunning?'Deine Lernzeit läuft. Der Countdown bleibt beim Seitenwechsel aktiv.':'Timer bereit. Wähle eine Zeit und starte deine Lernsession.';
+  const ring=dialog.querySelector('[data-timer-ring]');if(ring&&ring.style?.setProperty)ring.style.setProperty('--focus-progress',Math.min(100,Math.max(0,Math.round((1-focusSeconds/Math.max(1,focusTotalSeconds))*100)))+'%');
  }
 }
 function tickTimer(){
@@ -1540,28 +1543,47 @@ function toggleFocusTimer(){
  else{if(!focusSeconds)focusSeconds=1500;focusEnd=Date.now()+focusSeconds*1000;focusRunning=true;clearInterval(focusInterval);focusInterval=setInterval(tickTimer,1000);}
  saveTimer();paintTimer();
 }
+function closeTimer(){
+ const portal=$('#timer-portal');
+ if(portal)portal.replaceChildren();
+ if(document.body?.classList)document.body.classList.remove('focus-modal-visible');
+ paintTimer();
+}
 function openTimer(){
  const portal=$('#timer-portal');if(!portal)return;
  paintTimer();
- portal.innerHTML='<div class="timer-backdrop" data-timer-close></div><section class="timer-dialog" role="dialog" aria-modal="true" aria-label="Fokus-Timer">'+
- '<button class="btn small" type="button" data-timer-close>Schließen</button>'+
- '<span class="eyebrow">DEINE FOKUSZEIT</span><h2 data-timer-time>'+timerLabel()+'</h2>'+
- '<p class="micro" data-timer-state>'+(focusRunning?'Der Timer läuft auch beim Seitenwechsel.':'Timer bereit oder pausiert.')+'</p>'+
- '<label for="timer-minutes">Minuten <input class="input" id="timer-minutes" type="number" inputmode="numeric" min="1" max="240" value="'+Math.max(1,Math.ceil(focusSeconds/60))+'"></label>'+
- '<div class="timer-actions"><button class="btn primary" type="button" data-timer-toggle>'+(focusRunning?'Pause':'Starten')+'</button>'+
- '<button class="btn" type="button" data-timer-set>Zeit einstellen</button>'+
- '<button class="btn" type="button" data-timer-reset>Zurücksetzen</button></div></section>';
+ const elapsed=Math.min(100,Math.max(0,Math.round((1-focusSeconds/Math.max(1,focusTotalSeconds))*100)));
+ portal.innerHTML='<div class="timer-backdrop ll-focus-backdrop" data-timer-close></div>'+
+ '<section class="timer-dialog ll-focus-modal" role="dialog" aria-modal="true" aria-labelledby="focus-modal-title">'+
+ '<button type="button" class="ll-focus-close" data-timer-close aria-label="Fokus-Timer schließen">×</button>'+
+ '<div class="ll-focus-emblem" aria-hidden="true">◷</div>'+
+ '<span class="eyebrow ll-focus-kicker">LIVERYLAB · DEIN LERNMODUS</span>'+
+ '<h2 class="ll-focus-title" id="focus-modal-title">Deine <span class="gradient">Fokuszeit.</span></h2>'+
+ '<p class="ll-focus-lede">Konzentriert lernen, Schritt für Schritt. Deine Zeit bleibt auch beim Seitenwechsel erhalten.</p>'+
+ '<div class="ll-focus-ring" data-timer-ring style="--focus-progress:'+elapsed+'%">'+
+ '<div class="ll-focus-ring-inner"><span aria-hidden="true">✦</span><strong data-timer-time>'+timerLabel()+'</strong><small>VERBLEIBENDE ZEIT</small></div></div>'+
+ '<div class="ll-focus-presets" role="group" aria-label="Schnelle Zeitwahl">'+
+ [15,25,45,60].map(minutes=>'<button type="button" data-timer-preset="'+minutes+'" aria-label="Fokuszeit '+minutes+' Minuten einstellen">'+minutes+' Min</button>').join('')+'</div>'+
+ '<label class="ll-focus-duration" for="timer-minutes"><span>Eigene Dauer</span><span class="ll-focus-input-row">'+
+ '<input class="input" id="timer-minutes" type="number" inputmode="numeric" min="1" max="240" step="1" value="'+Math.max(1,Math.ceil(focusSeconds/60))+'"><span>Minuten</span></span></label>'+
+ '<div class="timer-actions ll-focus-actions">'+
+ '<button class="btn primary" type="button" data-timer-toggle>'+(focusRunning?'⏸ Pausieren':'▶ Starten')+'</button>'+
+ '<button class="btn" type="button" data-timer-set>Zeit einstellen</button></div>'+
+ '<div class="ll-focus-state" data-timer-state>'+(focusRunning?'Deine Lernzeit läuft. Der Countdown bleibt beim Seitenwechsel aktiv.':'Timer bereit. Wähle eine Zeit und starte deine Lernsession.')+'</div>'+
+ '<button class="ll-focus-reset" type="button" data-timer-reset>↻ Zurücksetzen auf 25 Minuten</button></section>';
+ if(document.body?.classList)document.body.classList.add('focus-modal-visible');
  paintTimer();
- const input=$('#timer-minutes');if(input)input.focus({preventScroll:true});
+ const input=$('#timer-minutes');if(input&&typeof input.focus==='function')input.focus({preventScroll:true});
 }
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')tickTimer();});
 window.addEventListener('focus',function(){tickTimer();});
 function filterSupportTickets(){const query=String($('#support-search')?.value||'').toLocaleLowerCase('de'),status=$('#support-filter')?.value||'all';document.querySelectorAll('.support-history .support-ticket').forEach(el=>{el.hidden=!!query&&!el.textContent.toLocaleLowerCase('de').includes(query)||status!=='all'&&el.dataset.ticketStatus!==status;});}
 document.addEventListener('click',async function(e){
  if(e.target.closest('[data-timer-open]')){openTimer();return;}
- if(e.target.closest('[data-timer-close]')){const portal=$('#timer-portal');if(portal)portal.replaceChildren();paintTimer();return;}
- if(e.target.closest('[data-timer-set]')){const minutes=Number($('#timer-minutes')?.value);if(!Number.isInteger(minutes)||minutes<1||minutes>240){notice('Bitte 1 bis 240 Minuten wählen.');return;}focusSeconds=minutes*60;if(focusRunning)focusEnd=Date.now()+focusSeconds*1000;saveTimer();paintTimer();notice('Fokuszeit auf '+minutes+' Minuten eingestellt.');return;}
- if(e.target.closest('[data-timer-reset]')){focusRunning=false;clearInterval(focusInterval);focusInterval=null;focusSeconds=1500;saveTimer();paintTimer();return;}
+ if(e.target.closest('[data-timer-close]')){closeTimer();return;}
+ if(e.target.closest('[data-timer-set]')){const minutes=Number($('#timer-minutes')?.value);if(!Number.isInteger(minutes)||minutes<1||minutes>240){notice('Bitte 1 bis 240 Minuten wählen.');return;}focusSeconds=minutes*60;focusTotalSeconds=focusSeconds;if(focusRunning)focusEnd=Date.now()+focusSeconds*1000;saveTimer();paintTimer();notice('Fokuszeit auf '+minutes+' Minuten eingestellt.');return;}
+ if(e.target.closest('[data-timer-preset]')){const value=Number(e.target.closest('[data-timer-preset]').dataset.timerPreset);if(![15,25,45,60].includes(value))return;focusSeconds=value*60;focusTotalSeconds=focusSeconds;if(focusRunning)focusEnd=Date.now()+focusSeconds*1000;saveTimer();paintTimer();const input=$('#timer-minutes');if(input)input.value=String(value);notice('Fokuszeit: '+value+' Minuten.');return;}
+ if(e.target.closest('[data-timer-reset]')){focusRunning=false;clearInterval(focusInterval);focusInterval=null;focusSeconds=1500;focusTotalSeconds=1500;saveTimer();paintTimer();const field=$('#timer-minutes');if(field)field.value='25';return;}
  var streakRetry=e.target.closest('[data-streak-retry]');
  if(streakRetry){try{await refreshStreakStatus();}catch(_e){}paintStreakModal();return;}
  var streakOpen=e.target.closest('[data-streak-open]');
@@ -1791,7 +1813,7 @@ document.addEventListener('keydown',function(e){
    }
   }
  }
- if(e.key==='Escape'){if(s.streakModalOpen){s.streakModalOpen=false;paintStreakModal();}sidebar.classList.remove('open');syncBackdrop();}
+ if(e.key==='Escape'){if($('#timer-portal .timer-dialog'))closeTimer();if(s.streakModalOpen){s.streakModalOpen=false;paintStreakModal();}sidebar.classList.remove('open');syncBackdrop();}
 });
 document.addEventListener('input',function(e){if(e.target.id==='support-search'){filterSupportTickets();return;}
  if(e.target.id==='reference-search'){
