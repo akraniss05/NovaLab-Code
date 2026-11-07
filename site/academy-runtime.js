@@ -23,7 +23,7 @@ scope.onmessage=async function(event){
    const result=fn(consoleProxy,undefined,undefined,undefined,undefined,undefined);
    if(result&&typeof result.then==='function')await result;
   }else if(lang==='lua'){
-   importScripts('https://cdn.jsdelivr.net/npm/fengari-web@0.1.4/dist/fengari-web.bundle.js');
+   importScripts(input.luaBundleUrl);
    if(!scope.fengari?.load)throw Error('Lua-Interpreter konnte nicht geladen werden.');
    const evalLua=scope.fengari.load;
    evalLua("___ll_output = {}\nprint = function(...) local a={} for i=1, select('#', ...) do a[#a+1]=tostring(select(i,...)) end ___ll_output[#__ll_output+1]=table.concat(a, '\\t') end")();
@@ -55,7 +55,9 @@ function run(code,lang){
    worker.onmessage=event=>settle(event.data||{ok:false,lines:[],error:'Keine Antwort vom Interpreter.',available:false});
    worker.onerror=()=>settle({ok:false,lines:[],error:'Die Ausführungsumgebung konnte nicht starten. Prüfe Browser und Verbindung.',available:false});
    timeout=setTimeout(()=>settle({ok:false,lines:[],error:'Ausführung nach 4 Sekunden abgebrochen. Prüfe deinen Code auf Endlosschleifen.',available:true}),4000);
-   worker.postMessage({code:String(code||''),lang});
+   const base=(typeof document!=='undefined'&&document.baseURI)||(typeof location!=='undefined'?location.href:'');
+   const luaBundleUrl=base?new URL('vendor/fengari-web.bundle.js',base).href:'';
+   worker.postMessage({code:String(code||''),lang,luaBundleUrl});
   }catch(error){settle({ok:false,lines:[],error:'Laufzeit nicht verfügbar: '+error.message,available:false});}
  });
 }
