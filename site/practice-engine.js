@@ -65,5 +65,38 @@ function evaluate(source,payload){const code=clean(source),lang=String(payload.l
  if(candidate===solution&&solution)return {ok:true,diagnostic:'Dein Code entspricht der Musterlösung.',output:out.lines};
  const expectedTokens=tokens(solution),actualTokens=tokens(candidate),omitted=[...expectedTokens].filter(t=>!actualTokens.has(t));
  return {ok:false,diagnostic:!solution?'Für diese Aufgabe ist noch keine automatische Prüfung hinterlegt.':omitted.length?'Prüfe deinen Lösungsweg und vergleiche ihn mit dem Tipp.':'Diese Variante kann der Browser noch nicht sicher prüfen. Vergleiche sie mit der Lösung oder melde sie dem Support.',output:out.lines}}
-root.LLPractice={evaluate,syntax,output};
+/**
+ * Check a real runtime result against a real solution run.
+ * Runtime execution is performed by LLRuntime's disposable worker.
+ * This checks task structure and output without claiming a full automated semantic proof.
+ */
+function evaluateRuntime(code,payload,actual,expected){
+ const lang=String(payload.lang||'').toLowerCase(),source=significant(code,lang),solution=significant(payload.solution||'',lang);
+ if(!actual?.available||!actual.ok)return {ok:false,diagnostic:'Der Code konnte nicht erfolgreich ausgeführt werden.',output:actual?.lines||[]};
+ if(!source)return {ok:false,diagnostic:'Schreibe zuerst deinen eigenen Code.',output:actual.lines||[]};
+ if(!expected?.ok)return {ok:false,diagnostic:'Die Musterlösung konnte nicht zuverlässig geprüft werden. Bitte melde die Aufgabe.',output:actual.lines||[]};
+ const required=(Array.isArray(payload.checks)?payload.checks:[]).filter(x=>typeof x==='string'&&x.trim());
+ const missing=required.filter(rule=>!matches(source,rule));
+ if(missing.length)return {ok:false,diagnostic:'Es fehlt noch: '+missing.slice(0,3).map(describe).join(', ')+'.',output:actual.lines||[]};
+ // Requiring the learning concept prevents passing advanced tasks with a bare print.
+ const concepts=[];
+ const structure={
+  lua:[[/\blocal\b/,'local'],[/\bif\b/,'if'],[/\bfor\b/,'for'],[/\bwhile\b/,'while'],[/\bfunction\b/,'function'],[/\btonumber\s*\(/,'tonumber'],[/\btype\s*\(/,'type']],
+  python:[[/^\s*if\b/m,'if'],[/^\s*else\s*:/m,'else'],[/^\s*for\b/m,'for'],[/^\s*while\b/m,'while'],[/^\s*def\b/m,'def'],[/^\s*class\b/m,'class']],
+  javascript:[[/\blet\b/,'let'],[/\bconst\b/,'const'],[/\bif\s*\(/,'if'],[/\bfor\s*\(/,'for'],[/\.map\s*\(/,'.map'],[/\bfunction\b/,'function']]
+ };
+ for(const [pattern,name] of structure[lang]||[])if(pattern.test(solution)&&!pattern.test(source))concepts.push(name);
+ if(concepts.length)return {ok:false,diagnostic:'In dieser Aufgabe musst du noch '+concepts.join(', ')+' verwenden.',output:actual.lines||[]};
+ const lines=actual.lines||[],expectedLines=expected.lines||[];
+ const personal=/eigenen Namen/i.test(payload.task||''),customize=/Ändere anschließend mindestens einen Wert/i.test(payload.task||'');
+ let accepted;
+ if(personal){
+  accepted=lines.length===expectedLines.length&&String(lines[0]||'').trim()!==''&&lines.slice(1).every((line,i)=>line===expectedLines[i+1]);
+ }else if(customize){
+  accepted=lines.length===expectedLines.length&&(lines.length===0||lines.every(x=>String(x).trim().length>0));
+ }else accepted=JSON.stringify(lines)===JSON.stringify(expectedLines);
+ if(!accepted)return {ok:false,diagnostic:'Die echte Ausgabe passt noch nicht zur Aufgabe.'+(customize?' Prüfe, ob alle erwarteten Ergebnisse ausgegeben werden.':' Vergleiche Werte, Reihenfolge und Datentypen mit der Erklärung.'),output:lines};
+ return {ok:true,diagnostic:'✓ Der echte Programmlauf stimmt mit den Anforderungen überein. Alle geforderten Konzepte sind vorhanden.',output:lines};
+}
+root.LLPractice={evaluate,syntax,output,evaluateRuntime};
 })(typeof module!=='undefined'&&module.exports?module.exports:window);
