@@ -7,6 +7,7 @@
  */
 import { createClient } from 'npm:@supabase/supabase-js@2';
 const origin = Deno.env.get('ACADEMY_ORIGIN') || 'https://akraniss05.github.io';
+const allowedOrigins = new Set([origin,'https://akraniss05.github.io','https://liverylab-academy.dev']);
 const headers: Record<string,string> = {
   'Access-Control-Allow-Origin': origin,
   'Vary': 'Origin',
@@ -15,13 +16,15 @@ const headers: Record<string,string> = {
   'Content-Type': 'application/json',
   'Cache-Control': 'no-store',
 };
-const reply=(status:number,data:unknown)=>new Response(JSON.stringify(data),{status,headers});
 const env=(n:string)=>Deno.env.get(n)||'';
 const isUUID=(v:unknown)=>typeof v==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 Deno.serve(async(req:Request)=>{
-  if(req.method==='OPTIONS')return new Response('ok',{headers});
+  const requestOrigin=req.headers.get('Origin')||origin;
+  const responseHeaders={...headers,'Access-Control-Allow-Origin':allowedOrigins.has(requestOrigin)?requestOrigin:origin};
+  const reply=(status:number,data:unknown)=>new Response(JSON.stringify(data),{status,headers:responseHeaders});
+  if(req.method==='OPTIONS')return new Response('ok',{status:allowedOrigins.has(requestOrigin)?200:403,headers:responseHeaders});
   if(req.method!=='POST')return reply(405,{error:'Method not allowed'});
-  if(req.headers.get('Origin')&&req.headers.get('Origin')!==origin)return reply(403,{error:'Origin not allowed'});
+  if(!allowedOrigins.has(requestOrigin))return reply(403,{error:'Origin not allowed'});
   if(Number(req.headers.get('content-length')||'0')>8192)return reply(413,{error:'Request too large'});
   const token=req.headers.get('authorization')?.replace(/^Bearer\s+/i,'').trim();
   if(!token)return reply(401,{error:'Authentication required'});
