@@ -12,6 +12,7 @@ on:
       - 'tests/practice.cjs'
       - 'tests/studio.cjs'
       - 'tests/runtime-browser.cjs'
+      - 'tests/runtime-grading.cjs'
       - 'tests/learning-sync.cjs'
       - '.github/workflows/studio-tests.yml'
   pull_request:
@@ -25,6 +26,7 @@ on:
       - 'tests/practice.cjs'
       - 'tests/studio.cjs'
       - 'tests/runtime-browser.cjs'
+      - 'tests/runtime-grading.cjs'
       - 'tests/learning-sync.cjs'
       - '.github/workflows/studio-tests.yml'
 permissions:
@@ -48,6 +50,8 @@ jobs:
         run: node tests/practice.cjs
       - name: New studio regression tests
         run: node tests/studio.cjs
+      - name: Real runtime grading tests
+        run: node tests/runtime-grading.cjs
       - name: Account draft autosave tests
         run: node tests/learning-sync.cjs
       - name: Install browser test dependency
