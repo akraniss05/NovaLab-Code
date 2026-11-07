@@ -110,7 +110,7 @@ function frame(){
 
 function login(){
  s.ready=false;frame();
- const brand='<img class="ll-login-banner" src="./liverylab-banner.webp" alt="Livery-Lab Premium FiveM Systems Banner"><div class="brandmark"><img class="ll-brand-symbol" src="./liverylab-symbol.svg" alt=""><span>LiveryLab <span class="gradient">Academy</span></span></div>';
+ const brand='<img class="ll-login-banner" src="./liverylab-banner.webp" alt="Livery-Lab Premium FiveM Systems Banner"><div class="brandmark"><img class="ll-brand-symbol" src="./liverylab-symbol.svg" alt=""><span>LiveryLab <span class="gradient">Academy</span></span></div><div class="ll-auth-release">PRIVATE BETA <span>NEUE ACADEMY · V25</span></div>';
  if(s.authScreen==='register'){
  content.innerHTML='<div class="auth-layout auth-login-layout"><aside class="auth-showcase"><span class="eyebrow">LIVERYLAB · PRIVATE BETA</span><h2>Baue echte Skills.<br><em>Schritt für Schritt.</em></h2><p>Programmierung, FiveM und Blender in klaren Lernpfaden – mit Videos, Praxis, Quizzen und Abschlussprüfungen.</p><div class="auth-feature-grid"><span>▶ Video-Lektionen</span><span>✓ Praxisaufgaben</span><span>✦ XP & Titel</span><span>★ Kursprüfungen</span></div><small>Made with 💙 from NyxAtheris (LiveryLab Studios)</small></aside><section class="auth-card">'+brand+
  '<span class="eyebrow">[ + ] BEWERBUNG</span><h1>Dein Weg in die <span class="gradient">Academy.</span></h1>'+
@@ -496,6 +496,7 @@ function homePage(){
  '<h1>Deine <span class="gradient">Developer Academy.</span></h1><p>Lerne programmieren, entwickle Projekte und erreiche deine nächsten Ziele.</p></div>'+
  '<div class="ll-home-level"><div class="ll-level-top">'+llIcon('xp')+'<span>Level '+level+'</span></div>'+
  '<small>'+levelXp+' / 500 XP bis Level '+(level+1)+'</small><div class="ll-level-bar"><span style="width:'+(levelXp/5)+'%"></span></div></div></div>'+
+ '<div class="ll-home-metrics"><div><span>✦</span><strong>'+xp+' XP</strong><small>Gesammelt</small></div><div><span>✓</span><strong>'+completed.size+'</strong><small>Lektionen geschafft</small></div><div><span>↗</span><strong>'+s.courses.length+'</strong><small>Lernpfade entdecken</small></div><div><span>🔥</span><strong>'+streak+' Tage</strong><small>Deine Streak</small></div></div>'+
  '<section class="ll-home-continue"><div class="ll-continue-icon">'+llIcon('code')+'</div>'+
  '<div class="ll-continue-copy"><span class="eyebrow">WEITERLERNEN</span>'+
  '<h2>'+esc(nextCourse?.name||'Deine Lernreise beginnt hier')+'</h2>'+
@@ -537,6 +538,7 @@ function coursesPage(){
  var cats=['Alle','Programmieren','Sprachen','FiveM','Frameworks','Webentwicklung','3D & Blender','Backend','Tools','Profi-Wissen'].filter(c=>c==='Alle'||s.courses.some(x=>x.category===c));
  return pageHeading('KURSBIBLIOTHEK','Dein Weg zum <span class="gradient">Developer.</span>',
  'Finde deinen Schwerpunkt. Wir zeigen zunächst die wichtigsten Lernpfade statt einer endlosen Liste.')+
+ '<section class="ll-catalog-intro"><div class="ll-catalog-spotlight"><span class="eyebrow">✦ NEU IM LERNSTUDIO</span><h2>Blender lernen mit <em>Video & Quiz.</em></h2><p>Schau dir die Grundlagen direkt in den Lektionen an, prüfe dein Wissen und baue deine Fähigkeiten Schritt für Schritt auf.</p><button class="btn primary" type="button" data-go="track/blender-fundamentals">Blender-Lernpfad öffnen →</button></div><div class="ll-catalog-steps"><span>01 <strong>Lektion ansehen</strong></span><span>02 <strong>Praxis ausprobieren</strong></span><span>03 <strong>Quiz bestehen</strong></span><span>04 <strong>Prüfung starten</strong></span></div></section>'+
  '<section class="section"><div class="catalog-toolbar"><input class="input searchbar" id="course-search" type="search" placeholder="Kurse durchsuchen …" value="'+esc(s.search)+'" aria-label="Kurse durchsuchen"><span class="chip">'+s.courses.length+' Lernpfade</span></div>'+
  '<div class="catalog-tags">'+cats.map(c=>'<button class="pill'+(s.filter===c?' active':'')+'" data-filter="'+esc(c)+'">'+esc(c)+'</button>').join('')+'</div>'+
  '<div class="section-heading" style="margin-top:22px"><div><h2>Passende Kurse</h2><p id="course-count">'+filteredCourses().length+' Ergebnisse · Schritt für Schritt</p></div></div>'+
@@ -1173,7 +1175,7 @@ function settingsPage(){
  '<span><b>Discord-Support</b><p>Schreibe NyxAtheris eine DM oder öffne ein Ticket und erwähne @nyxatheris.</p></span></div>'+
  '<a class="btn small discord" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord ↗</a></div></div></section>'+
  '<section class="section panel"><span class="eyebrow">LIVERYLAB STUDIOS</span><h3>Über die Academy</h3>'+
- '<p class="micro">Developer-Lernplattform mit Kursen, sicheren Accounts, Profilen, Freunden und Erfolgen. Version 24.</p>'+
+ '<p class="micro">Developer-Lernplattform mit Kursen, sicheren Accounts, Profilen, Freunden und Erfolgen. Version 25.</p>'+
  '<a href="./privacy.html">Datenschutzhinweise ansehen ↗</a><p class="smallprint" style="margin-top:16px">Made with 💙 from NyxAtheris (LiveryLab Studios)</p></section>';
 }
 
