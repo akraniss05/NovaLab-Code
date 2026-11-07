@@ -1,0 +1,99 @@
+/* LiveryLab Academy – v31 layout recovery, 2026-11-07
+   Functional Studio pages stay available; the main Academy layout remains original.
+   Made with 💙 by NyxAtheris (LiveryLab Studios). */
+html,body,.app-shell,.app-column{max-width:100%;min-width:0}
+.app-shell,.app-column,.content{min-width:0}
+.content,.ll-home-dashboard{max-width:100%;min-width:0}
+.ll-home-dashboard,.ll-home-dashboard > *{min-width:0;box-sizing:border-box}
+.ll-home-dashboard .ll-home-brand-banner{
+  display:block!important;
+  position:relative!important;
+  width:100%!important;
+  max-width:100%!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:280px!important;
+  aspect-ratio:2.63 / 1!important;
+  overflow:hidden!important;
+  margin-inline:0!important;
+  border-radius:18px;
+}
+.ll-home-dashboard .ll-home-brand-banner > img{
+  position:absolute!important;
+  inset:0!important;
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  max-width:100%!important;
+  object-fit:contain!important;
+  object-position:center!important;
+}
+.ll-home-greeting .ll-home-level{
+  color:var(--text);
+  font:inherit;
+  text-align:left;
+  cursor:pointer;
+  width:100%;
+  max-width:100%;
+  display:block;
+}
+.ll-home-level:focus-visible{outline:2px solid #c9a9ff;outline-offset:3px}
+.ll-home-greeting,.ll-home-metrics,.ll-home-continue,.ll-home-tools,.ll-home-shortcuts{max-width:100%;min-width:0}
+@media(max-width:820px){
+  body:not(.is-auth) .topbar{
+    display:flex;
+    flex-wrap:nowrap;
+    align-items:center;
+    justify-content:space-between;
+    height:69px;
+    min-height:69px;
+    max-height:69px;
+    gap:7px;
+    padding-inline:12px;
+  }
+  .topbar .brandbox{min-width:0;flex:1 1 auto;gap:7px;overflow:hidden}
+  .topbar .brand{min-width:0;overflow:hidden;display:flex;flex-wrap:nowrap;gap:6px;white-space:nowrap;line-height:1.2}
+  .topbar .brand>span:last-child{white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .topbar .top-right{display:flex;align-items:center;flex:0 0 auto;flex-wrap:nowrap;gap:5px;min-width:0}
+  .topbar .brand-mark,.topbar .brand-mark img{width:31px;height:31px;min-width:31px}
+  .topbar .icon-btn,.topbar .avatar-btn{flex:0 0 auto}
+  .topbar .xp-header{display:none}
+  .topbar .focus-header:not([hidden]){display:none}
+  .topbar .header-streak-chip{white-space:nowrap;flex:0 0 auto;max-width:95px;min-height:33px;padding:5px 7px}
+  .topbar .header-streak-chip .ll-icon{width:14px!important;height:14px!important}
+  .topbar .icon-btn[data-go="settings"]{display:none}
+  .ll-home-dashboard .ll-home-brand-banner{max-height:190px!important;border-radius:15px}
+  .ll-home-dashboard .ll-home-brand-banner > img{object-fit:contain!important}
+  body:not(.is-auth) .bottom-nav{
+    display:grid!important;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:0;
+    width:100%;
+    height:calc(74px + env(safe-area-inset-bottom));
+    padding-bottom:env(safe-area-inset-bottom);
+    overflow:hidden;
+  }
+  .bottom-nav .bottom-item{
+    min-width:0;
+    max-width:100%;
+    border:0;
+    border-radius:0;
+    box-shadow:none;
+    padding:6px 2px;
+    background:transparent;
+    font-size:10px;
+  }
+  .bottom-nav .bottom-item.active{background:#30214780}
+  .content{overflow-x:clip}
+}
+@media(max-width:430px){
+  .topbar .brand{font-size:13px}
+  .topbar .header-streak-chip{font-size:10px}
+  .topbar .avatar-btn{width:30px;height:30px}
+  .topbar .brand-mark,.topbar .brand-mark img{width:28px;height:28px;min-width:28px}
+  .ll-home-dashboard .ll-home-brand-banner{max-height:165px!important}
+}
+@media(max-width:360px){
+  .topbar .brand{font-size:12px}
+  .topbar .brand-mark{display:none}
+}
