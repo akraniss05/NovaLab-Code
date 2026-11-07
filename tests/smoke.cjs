@@ -5,7 +5,7 @@ const read=file=>fs.readFileSync(path.join(__dirname,'..',file),'utf8');
 const html=read('site/index.html'),js=read('site/academy-v21.js'),css=read('site/app-v21.css');
 for(const file of ['site/reference-data.js','site/app-v21.css','site/app-v12.css','site/config.js','site/auth-mfa-v15.js','site/academy-v21.js','site/privacy.html','site/manifest.webmanifest','site/icon.svg','supabase/functions/academy-signin/index.ts','supabase/functions/admin-users/index.ts'])
  assert(fs.existsSync(path.join(__dirname,'..',file)),file+' missing');
-for(const token of ['app-v21.css?build=20261107v31','academy-v21.js?build=20261107v34','auth-mfa-v15.js?build=20261107v31','config.js?build=20261107v31','LiveryLab v31'])
+for(const token of ['app-v21.css?build=20261107v31','academy-v21.js?build=20261107v35','auth-mfa-v15.js?build=20261107v31','config.js?build=20261107v31','LiveryLab v31'])
  assert(html.includes(token),'Versioned asset missing: '+token);
 for(const obsolete of ['styles.css','refined.css','music-studio.js','studio3d-v5.js'])
  assert(!html.includes(obsolete),'Old asset still linked: '+obsolete);
@@ -42,7 +42,7 @@ assert.equal(banner.subarray(8,12).toString(),'WEBP','LiveryLab banner invalid')
 for(const selector of ['.ll-home-shortcuts','.ll-home-brand-banner','.ll-streak-modal','.ll-streak-claim','.ll-streak-backdrop'])assert(css.includes(selector),'Missing v19 interface style: '+selector);
 assert(fs.existsSync(path.join(__dirname,'../site/v21.html')),'Physical uncached v20 entry missing');
 assert(read('site/v21.html').includes('academy-v21.js?build='),'Unique iOS entry must load new code');
-assert(read('site/v31.html').includes('academy-v21.js?build=20261107v34'),'Fresh v28 entry must load current code');
+assert(read('site/v31.html').includes('academy-v21.js?build=20261107v35'),'Fresh v28 entry must load current code');
 assert(read('site/manifest.webmanifest').includes('v31.html#home'),'Installed app must open fresh entry');
 assert(js.includes("root=document.createElement('div')"),'Old HTML popup fallback missing');
 assert(js.includes("s.streakModalOpen=true;"),'Daily popup must appear after every login');
@@ -67,3 +67,7 @@ assert(read('supabase/migrations/20261107_v29_shop_discount.sql').includes('acad
 
 for(const token of ['practice-engine.js?build=20261107v31','timer-portal','focus-header'])assert(html.includes(token),'Missing v31 entry: '+token);
 for(const token of ['LLPractice.evaluate','quizQuestions','practice-console','weekly-goal','timer-minutes'])assert(js.includes(token),'Missing v31 learning lab: '+token);
+
+for(const entry of ['site/academy-learning-sync.js','site/academy-learning-extras.css'])assert(fs.existsSync(path.join(__dirname,'..',entry)),entry+' missing');
+for(const token of ['academy-learning-sync.js?build=20261107v35','academy-learning-extras.css?build=20261107v35'])assert(html.includes(token)&&read('site/v31.html').includes(token),'v35 website/PWA asset missing: '+token);
+for(const token of ['data-studio-from-lesson','LLLearning?.load','lesson-summary','challengesPage','calendarPage'])assert(js.includes(token)||read('site/academy-studio.js').includes(token),'v35 feature missing: '+token);
