@@ -34,7 +34,7 @@ function fallback(id){
  return owner&&owner===uid()?(read('liverylab-draft-'+id)||''):'';
 }
 function attach(b){bridge=b;userKey=uid();}
-function clear(){records.clear();bridge=null;userKey='';}
+function clear(){records.clear();userKey='';}
 async function load(id){
  if(!hasId(id)||!uid())return {content:'',step:1};
  if(userKey!==uid()){records.clear();userKey=uid();}
