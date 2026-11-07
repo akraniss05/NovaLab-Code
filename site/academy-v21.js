@@ -357,6 +357,7 @@ function render(){
  content.innerHTML=(pages[r.page]||homePage)();
  if(r.page==='settings')renderMFA();
  paintStreakModal();
+ paintTimer();
 }
 
 
