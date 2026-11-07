@@ -10,4 +10,12 @@ assert.equal(p.evaluate('print(hello)',task).ok,false,'Undefined variable must f
 assert.equal(p.evaluate('console.log("ok")',{lang:'javascript',solution:'console.log("ok")',checks:['console']}).ok,true);
 assert.equal(p.evaluate('console.log("ok"',{lang:'javascript',solution:'console.log("ok")'}).ok,false);
 assert.equal(p.evaluate('nothing',{lang:'python',solution:'print("ok")'}).ok,false);
+const types={lang:'lua',task:'Erstelle preis (number), aktiv (boolean) und titel (string). Gib alle drei Datentypen mit type() aus.',checks:['local\\s+preis','local\\s+aktiv','local\\s+titel','type\\s*\\('],solution:'local preis = 500\nlocal aktiv = true\nlocal titel = "LiveryLab"\nprint(type(preis), type(aktiv), type(titel))'};
+assert.match(p.evaluate('number = 10\nboolean = true\nstring = "text"',types).diagnostic,/lokale Variable „preis“/);
+assert.equal(p.evaluate('local preis = 10\nlocal aktiv = true\nlocal titel = "text"\nprint(type(preis),type(aktiv),type(titel))',types).ok,true,'Equivalent values and correct types must pass');
+assert.equal(p.evaluate('local preis = "10"\nlocal aktiv = true\nlocal titel = "text"\nprint(type(preis),type(aktiv),type(titel))',types).ok,false,'Wrong variable type must fail');
+assert.equal(p.evaluate('local preis = 10\nlocal aktiv = true\nlocal titel = "text"\nprint(type(preis),type(aktiv),type(unknown))',types).ok,false,'Undefined variable must fail');
+const twoPrints={lang:'lua',task:'Gib deinen eigenen Namen und danach „Ich lerne FiveM“ mit zwei print()-Aufrufen aus.',checks:['print\\s*\\(','print\\s*\\([^)]*\\)[\\s\\S]*print\\s*\\('],solution:'print("NyxAtheris")\nprint("Ich lerne FiveM")'};
+assert.equal(p.evaluate('print("Luca")\nprint("Ich lerne FiveM")',twoPrints).ok,true,'Own name is valid');
+assert.equal(p.evaluate('print("Luca")\nprint("Ich lerne etwas anderes")',twoPrints).ok,false);
 console.log('Practice evaluator rejects wrong answers and accepts equivalent simple output.');
