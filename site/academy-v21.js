@@ -7,7 +7,7 @@
 'use strict';
 var cfg=window.LL_CONFIG||{}, $=function(q,root){return (root||document).querySelector(q);};
 var content=$('#content'), sidebar=$('#sidebar'), bottom=$('#bottom-nav'), toastNode=$('#toast');
-var api=null, s={service:{beta_open:true,mine:[],admin:[]},streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},adminPage:1,adminFilter:'all',adminSearch:'',catalogLimit:9,practiceChecked:false,draft:'',prefs:null,projectTab:0,projectSource:'',projectLoading:false};
+var api=null, s={shopDiscount:0,service:{beta_open:true,mine:[],admin:[]},streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},adminPage:1,adminFilter:'all',adminSearch:'',catalogLimit:9,practiceChecked:false,draft:'',prefs:null,projectTab:0,projectSource:'',projectLoading:false};
 var plans={free:'Free',pro:'Plus',ultimate:'Ultimate'};
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];});}
 function safeLink(url){return /^https:\/\/[^\s<>"]+$/i.test(String(url||''))?esc(url):'#';}
@@ -40,6 +40,9 @@ function setChoicePreference(key,value){
  try{localStorage.setItem('liverylab-choice-'+key,value);}catch(_){}
  applyPreferences();
 }
+function bookmarks(){try{return JSON.parse(localStorage.getItem('liverylab-bookmarks-'+(s.user?.id||'guest'))||'[]')}catch(_){return []}}
+function toggleBookmark(id){const ids=new Set(bookmarks());ids.has(id)?ids.delete(id):ids.add(id);try{localStorage.setItem('liverylab-bookmarks-'+(s.user?.id||'guest'),JSON.stringify([...ids]))}catch(_){}}
+function pinKey(){return 'pin-'+(s.user?.id||'guest')}
 function applyPreferences(){
  document.body.classList.toggle('compact-cards',getPreference('compact'));
  document.body.classList.toggle('less-motion',getPreference('motion'));
@@ -507,6 +510,7 @@ function homePage(){
  '<p>'+esc(next?.title||'Wähle deinen ersten Kurs und starte mit dem Programmieren.')+'</p>'+
  '<div class="ll-continue-progress"><div class="ll-level-bar"><span style="width:'+progress+'%"></span></div><strong>'+progress+' %</strong></div></div>'+
  '<button type="button" class="btn primary ll-continue-button" data-go="'+(next?'lesson/'+esc(next.id):'courses')+'">Jetzt fortsetzen '+llIcon('arrow')+'</button></section>'+
+ '<section class="ll-home-tools"><div class="ll-tool-card"><span class="eyebrow">DEIN TAGESZIEL</span><h3>'+esc(getChoicePreference('goal-'+(s.user?.id||'guest'),'2'))+' Lektionen pro Tag</h3><p>Lege dein persönliches Lernziel fest.</p><select class="select" id="study-goal" aria-label="Tagesziel">'+[1,2,3,4,5,6,7,8,9,10].map(n=>'<option value="'+n+'" '+(getChoicePreference('goal-'+(s.user?.id||'guest'),'2')===String(n)?'selected':'')+'>'+n+' Lektionen</option>').join('')+'</select></div><div class="ll-tool-card"><span class="eyebrow">ANGEHEFTETER KURS</span><h3>'+esc(courseOf(getChoicePreference(pinKey(),''))?.name||'Wähle deinen Kurs')+'</h3><p>Hefte einen Lernpfad auf seiner Kursseite an.</p><button class="btn small" data-go="'+(courseOf(getChoicePreference(pinKey(),''))?'track/'+esc(getChoicePreference(pinKey(),'')):'courses')+'">Kurs öffnen →</button></div><div class="ll-tool-card"><span class="eyebrow">FOKUSZEIT</span><h3 id="focus-clock">25:00</h3><p>Lerne in einer konzentrierten Einheit.</p><button class="btn small" data-timer-toggle>Timer starten</button></div></section>'+
  '<div class="ll-home-heading"><span class="eyebrow">[ ✦ ] DEINE ACADEMY</span><h2>Was möchtest du heute machen?</h2><p>Alle wichtigen Bereiche auf einen Blick.</p></div>'+
  '<div class="ll-home-shortcuts">'+
  homeShortcut('learn','Lernen','Kurse, Tutorials und praxisnahe Projekte.','courses',false,false)+
@@ -530,7 +534,7 @@ function homePage(){
 }
 
 function filteredCourses(){
- return s.courses.filter(function(c){return (s.filter==='Alle'||c.category===s.filter)&&(!s.search||(c.name+' '+c.category).toLowerCase().includes(s.search.toLowerCase()));}).sort(function(a,b){var aP=['coding-basics','lua','python','javascript','html','css','blender-fundamentals','fivem'].indexOf(a.id),bP=['coding-basics','lua','python','javascript','html','css','blender-fundamentals','fivem'].indexOf(b.id);if(aP>=0||bP>=0)return (aP<0?99:aP)-(bP<0?99:bP);return a.name.localeCompare(b.name,'de');});
+ return s.courses.filter(function(c){return (s.filter==='Alle'||(s.filter==='Merkliste'?bookmarks().includes(c.id):c.category===s.filter))&&(!s.search||(c.name+' '+c.category).toLowerCase().includes(s.search.toLowerCase()));}).sort(function(a,b){var aP=['coding-basics','lua','python','javascript','html','css','blender-fundamentals','fivem'].indexOf(a.id),bP=['coding-basics','lua','python','javascript','html','css','blender-fundamentals','fivem'].indexOf(b.id);if(aP>=0||bP>=0)return (aP<0?99:aP)-(bP<0?99:bP);return a.name.localeCompare(b.name,'de');});
 }
 function catalogItems(){
  var all=filteredCourses();
@@ -540,7 +544,7 @@ function catalogItems(){
  '<button class="btn" type="button" data-action="more-courses">Weitere '+Math.min(9,all.length-s.catalogLimit)+' Kurse anzeigen ↓</button><p class="micro">'+s.catalogLimit+' von '+all.length+' Kursen angezeigt</p>':'<p class="micro">'+all.length+' Kurse angezeigt</p>')+'</div>';
 }
 function coursesPage(){
- var cats=['Alle','Programmieren','Sprachen','FiveM','Frameworks','Webentwicklung','3D & Blender','Backend','Tools','Profi-Wissen'].filter(c=>c==='Alle'||s.courses.some(x=>x.category===c));
+ var cats=['Alle','Merkliste','Programmieren','Sprachen','FiveM','Frameworks','Webentwicklung','3D & Blender','Backend','Tools','Profi-Wissen'].filter(c=>c==='Alle'||c==='Merkliste'||s.courses.some(x=>x.category===c));
  return pageHeading('KURSBIBLIOTHEK','Dein Weg zum <span class="gradient">Developer.</span>',
  'Finde deinen Schwerpunkt. Wir zeigen zunächst die wichtigsten Lernpfade statt einer endlosen Liste.')+
  '<section class="ll-catalog-intro"><div class="ll-catalog-spotlight"><span class="eyebrow">✦ NEU IM LERNSTUDIO</span><h2>Blender lernen mit <em>Video & Quiz.</em></h2><p>Schau dir die Grundlagen direkt in den Lektionen an, prüfe dein Wissen und baue deine Fähigkeiten Schritt für Schritt auf.</p><button class="btn primary" type="button" data-go="track/blender-fundamentals">Blender-Lernpfad öffnen →</button></div><div class="ll-catalog-steps"><span>01 <strong>Lektion ansehen</strong></span><span>02 <strong>Praxis ausprobieren</strong></span><span>03 <strong>Quiz bestehen</strong></span><span>04 <strong>Prüfung starten</strong></span></div></section>'+
@@ -556,7 +560,7 @@ function trackPage(id){
  const chapters=[];
  for(const l of all){const last=chapters.at(-1);if(last?.title===l.chapter)last.items.push(l);else chapters.push({title:l.chapter,items:[l]});}
  let out='<a class="back" href="#courses">← Alle Kurse</a>'+
- '<section class="track-top"><span class="eyebrow">[ 00 ] LERNPFAD · '+all.length+' LEKTIONEN</span>'+
+ '<section class="track-top"><div class="track-actions"><button class="btn small" type="button" data-pin-course="'+esc(id)+'">'+(getChoicePreference(pinKey(),'')===id?'✓ Angeheftet':'⌁ Auf Startseite anheften')+'</button><button class="btn small" type="button" data-bookmark-course="'+esc(id)+'">'+(bookmarks().includes(id)?'★ Gemerkt':'☆ Kurs merken')+'</button></div><span class="eyebrow">[ 00 ] LERNPFAD · '+all.length+' LEKTIONEN</span>'+
  '<h1>'+esc(course.name)+' <em>lernen.</em></h1>'+
  '<p class="lede">Jede Lektion erklärt ein Konzept. Danach schaust du ein passendes Tutorial an, löst eine Praxisaufgabe und überprüfst dein Wissen.</p></section>'+
  '<div class="stats-grid track-stats"><div class="stat-card"><strong>'+done+'/'+all.length+'</strong><small>LEKTIONEN</small></div>'+
@@ -694,6 +698,7 @@ async function markLesson(){
 }
 
 
+function salePrice(cents){return Math.round(cents*(100-Math.max(0,Math.min(90,Number(s.shopDiscount)||0)))/100)}
 function euro(cents){return (Number(cents||0)/100).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'}
 async function refreshService(){
  const r=await api.rpc('academy_service',{p_action:'list',p_payload:{}});
@@ -710,8 +715,8 @@ function supportPage(){
  (data.beta_open?'<option value="beta">Beta-Feedback</option><option value="plan">Plus / Ultimate anfragen</option>':'')+'</select></div>'+
  (data.beta_open?'<div class="form-group support-plan-field" hidden><label class="form-label">Gewünschter Tarif</label><select class="select" name="tier"><option value="pro">Plus · 1,99 €</option><option value="ultimate">Ultimate · 5,99 €</option></select><small>Freigabe erfolgt manuell durch das Team. Keine automatische Zahlung.</small></div>':'')+
  '<div class="form-group"><label class="form-label" for="support-message">Deine Nachricht</label><textarea class="input" id="support-message" name="message" minlength="10" maxlength="2000" rows="6" required placeholder="Beschreibe dein Anliegen möglichst genau …"></textarea></div><button class="btn primary block" type="submit">Anfrage senden →</button></form><p class="micro">Bis zu fünf Anfragen innerhalb von 24 Stunden. Bitte sende keine Passwörter.</p></section>'+
- '<section class="panel support-history"><span class="eyebrow">[ ◷ ] DEIN POSTEINGANG</span><h2>Deine Anfragen</h2>'+
- (mine.length?mine.map(t=>'<article class="support-ticket"><div><strong>'+esc(names[t.category]||'Anfrage')+'</strong><span class="chip '+(t.status==='approved'?'free':'plus')+'">'+esc(t.status||'open')+'</span></div><small>'+new Date(t.created_at).toLocaleString('de-DE')+'</small><p>'+esc(t.message)+'</p>'+(t.reply?'<blockquote>'+esc(t.reply)+'</blockquote>':'')+'</article>').join(''):'<p class="muted">Noch keine Anfragen. Deine Antwort erscheint später hier.</p>')+
+ '<section class="panel support-history"><div class="support-faq"><strong>Schnelle Hilfe</strong><details><summary>Wie erhalte ich Plus oder Ultimate?</summary><p>Eröffne während der Beta eine Tarif-Anfrage. Das Team gibt sie manuell frei.</p></details><details><summary>Wo sehe ich die Antwort?</summary><p>Hier in deinem Posteingang. Lade die App bei Bedarf neu.</p></details><details><summary>Wie melde ich einen Fehler?</summary><p>Wähle Fehler melden und beschreibe Gerät und Schritte.</p></details></div><span class="eyebrow">[ ◷ ] DEIN POSTEINGANG</span><h2>Deine Anfragen</h2><div class="support-controls"><input class="input" type="search" id="support-search" placeholder="Anfragen suchen …" aria-label="Anfragen suchen"><select class="select" id="support-filter"><option value="all">Alle Status</option><option value="open">Offen</option><option value="answered">Beantwortet</option><option value="approved">Genehmigt</option><option value="closed">Geschlossen</option></select></div>'+
+ (mine.length?mine.map(t=>'<article class="support-ticket" data-ticket-status="'+esc(t.status||'open')+'"><div><strong>'+esc(names[t.category]||'Anfrage')+'</strong><span class="chip '+(t.status==='approved'?'free':'plus')+'">'+esc(t.status||'open')+'</span></div><small>'+new Date(t.created_at).toLocaleString('de-DE')+'</small><p>'+esc(t.message)+'</p>'+(t.reply?'<blockquote>'+esc(t.reply)+'</blockquote>':'')+'</article>').join(''):'<p class="muted">Noch keine Anfragen. Deine Antwort erscheint später hier.</p>')+
  '</section></div>';
 }
 async function fetchVouchers(){
@@ -741,7 +746,7 @@ function plansPage(){
   const current=own===tier,included=(tier==='free'&&own!=='free')||(tier==='pro'&&own==='ultimate');
   return '<article class="membership-card tier-'+tier+(current?' current':'')+'">'+
    '<div class="membership-top"><div><span class="eyebrow">'+(tier==='free'?'KOSTENLOS':tier==='pro'?'MEHR LERNEN':'VOLLER ZUGRIFF')+'</span><h2>'+name+'</h2></div>'+
-   '<span class="membership-price">'+price+'<small>/Monat</small>'+(tier==='free'||s.service?.beta_open===false?'':'<em class="membership-beta">BETA · nur auf Anfrage</em>')+'</span></div>'+
+   '<span class="membership-price">'+(tier!=='free'&&s.shopDiscount>0?'<s class="sale-old">'+price+'</s><strong class="sale-new">'+euro(salePrice(tier==='pro'?199:599))+'</strong><b class="sale-badge">−'+s.shopDiscount+' % Rabatt</b>':price)+'<small>/Monat</small>'+(tier==='free'||s.service?.beta_open===false?'':'<em class="membership-beta">BETA · nur auf Anfrage</em>')+'</span></div>'+
    '<div class="membership-limits"><span>▦ '+cap+' Kurse</span><span>◷ '+stations+'</span></div>'+
    '<p class="membership-desc">'+desc+'</p>'+
    '<ul class="membership-benefits">'+benefits.map(x=>'<li>'+x+'</li>').join('')+'</ul>'+
@@ -754,6 +759,7 @@ function plansPage(){
  return pageHeading('MITGLIEDSCHAFT','Dein <span class="gradient">Lernzugang.</span>',
  'Wähle deinen Lernumfang. Free: 2 Prüfungen pro Tag, Plus: 4 Prüfungen und Script, Ultimate: alles unbegrenzt.')+
  dailyStrip()+
+ (s.shopDiscount>0?'<div class="shop-sale-banner">✦ '+s.shopDiscount+' % Shoprabatt auf Plus und Ultimate · Der reduzierte Preis steht direkt beim Tarif.</div>':'')+
  '<div class="membership-stack">'+
  tile('free','Free','10','3 pro Tag','0,00 €','Die wichtigsten Grundlagen für deinen Anfang.',[
   '10 Grundlagenkurse und 3 neue Lektionen pro Tag','2 Kursprüfungen pro Tag','Script-Werkstatt und Referenzen gesperrt'])+
@@ -1249,9 +1255,11 @@ function voucherAdminSection(){
 function supportAdminSection(){
  const entries=Array.isArray(s.service?.admin)?s.service.admin:[];
  return '<section class="section panel support-admin"><div class="section-heading"><div><span class="eyebrow">ADMIN · SUPPORT & BETA</span><h2>Support-Posteingang</h2><p>Beantworte Meldungen und genehmige angefragte Testzugänge.</p></div><button class="btn small" data-action="refresh-support">↻ Aktualisieren</button></div>'+
+ '<form data-form="shop-sale" class="shop-sale-admin"><div><strong>Allgemeiner Shoprabatt</strong><small>Für alle Besucher auf Plus und Ultimate sichtbar. 0 % beendet die Aktion.</small></div><label><input class="input" type="number" name="percent" min="0" max="90" value="'+Number(s.shopDiscount||0)+'" required> %</label><button class="btn primary small" type="submit">Rabatt speichern</button></form>'+
+ '<div class="support-admin-stats">'+[['Offen','open'],['Beantwortet','answered'],['Genehmigt','approved']].map(([label,status])=>'<span><strong>'+entries.filter(x=>x.status===status).length+'</strong><small>'+label+'</small></span>').join('')+'</div>'+
  '<label class="beta-switch"><span><strong>Beta-Anfragen sichtbar</strong><small>Wenn ausgeschaltet, verschwinden Beta- und Tarif-Anfragen aus der App. Bestehende Anfragen bleiben im Posteingang.</small></span><input type="checkbox" id="beta-enabled" '+(s.service?.beta_open?'checked':'')+'></label>'+
  (entries.length?entries.map(t=>'<article class="support-ticket admin-ticket"><div><strong>'+esc(t.username||'Mitglied')+' · '+esc(t.category)+(t.tier?' · '+esc(plans[t.tier]||t.tier):'')+'</strong><span class="chip plus">'+esc(t.status)+'</span></div><small>'+new Date(t.created_at).toLocaleString('de-DE')+'</small><p>'+esc(t.message)+'</p>'+(t.reply?'<blockquote>'+esc(t.reply)+'</blockquote>':'')+
- '<form data-form="support-reply" data-ticket-id="'+esc(t.id)+'"><textarea class="input" name="reply" maxlength="2000" rows="2" placeholder="Antwort an das Mitglied …">'+esc(t.reply||'')+'</textarea><div class="support-reply-actions"><select class="select" name="status"><option value="answered">Beantworten</option><option value="closed">Schließen</option><option value="rejected">Ablehnen</option>'+(t.category==='plan'&&t.status!=='approved'?'<option value="approved">Mitgliedschaft freigeben</option>':'')+'</select>'+(t.category==='plan'&&t.status!=='approved'?'<label>Freigabe in Tagen <input class="input" type="number" name="days" min="1" max="3650" value="30"></label>':'')+'<button class="btn primary small" type="submit">Speichern</button></div></form></article>').join(''):'<div class="empty">Noch keine Supportanfragen.</div>')+'</section>';
+ '<div class="reply-templates"><button type="button" class="btn small" data-reply-template="Danke für deine Meldung. Wir prüfen das und melden uns hier zurück.">Eingang bestätigen</button><button type="button" class="btn small" data-reply-template="Bitte beschreibe die Schritte und dein Gerät genauer, damit wir den Fehler nachstellen können.">Details anfragen</button></div><form data-form="support-reply" data-ticket-id="'+esc(t.id)+'"><textarea class="input" name="reply" maxlength="2000" rows="2" placeholder="Antwort an das Mitglied …">'+esc(t.reply||'')+'</textarea><div class="support-reply-actions"><select class="select" name="status"><option value="answered">Beantworten</option><option value="closed">Schließen</option><option value="rejected">Ablehnen</option>'+(t.category==='plan'&&t.status!=='approved'?'<option value="approved">Mitgliedschaft freigeben</option>':'')+'</select>'+(t.category==='plan'&&t.status!=='approved'?'<label>Freigabe in Tagen <input class="input" type="number" name="days" min="1" max="3650" value="30"></label>':'')+'<button class="btn primary small" type="submit">Speichern</button></div></form></article>').join(''):'<div class="empty">Noch keine Supportanfragen.</div>')+'</section>';
 }
 
 function adminPage(){
@@ -1345,6 +1353,9 @@ async function adminAction(action,node){
   }
  }catch(e){notice('Admin-Fehler: '+formatError(e));}
 }
+var focusEnd=0,focusInterval=null;
+function toggleFocusTimer(){if(focusInterval){clearInterval(focusInterval);focusInterval=null;focusEnd=0;const clock=$('#focus-clock');if(clock)clock.textContent='25:00';const button=$('[data-timer-toggle]');if(button)button.textContent='Timer starten';return;}focusEnd=Date.now()+25*60*1000;focusInterval=setInterval(function(){const remaining=Math.max(0,Math.ceil((focusEnd-Date.now())/1000)),clock=$('#focus-clock');if(clock)clock.textContent=String(Math.floor(remaining/60)).padStart(2,'0')+':'+String(remaining%60).padStart(2,'0');if(!remaining){clearInterval(focusInterval);focusInterval=null;focusEnd=0;notice('Fokuszeit geschafft!')}},1000);const button=$('[data-timer-toggle]');if(button)button.textContent='Timer stoppen';}
+function filterSupportTickets(){const query=String($('#support-search')?.value||'').toLocaleLowerCase('de'),status=$('#support-filter')?.value||'all';document.querySelectorAll('.support-history .support-ticket').forEach(el=>{el.hidden=!!query&&!el.textContent.toLocaleLowerCase('de').includes(query)||status!=='all'&&el.dataset.ticketStatus!==status;});}
 document.addEventListener('click',async function(e){
  var streakRetry=e.target.closest('[data-streak-retry]');
  if(streakRetry){try{await refreshStreakStatus();}catch(_e){}paintStreakModal();return;}
@@ -1356,6 +1367,10 @@ document.addEventListener('click',async function(e){
  if(streakClaim){await claimDailyStreak();return;}
  var goTarget=e.target.closest('[data-go]');
  if(goTarget){e.preventDefault();go(goTarget.dataset.go);return;}
+ var mark=e.target.closest('[data-bookmark-course]');if(mark){toggleBookmark(mark.dataset.bookmarkCourse);render();return;}
+ var pin=e.target.closest('[data-pin-course]');if(pin){setChoicePreference(pinKey(),getChoicePreference(pinKey(),'')===pin.dataset.pinCourse?'':pin.dataset.pinCourse);render();return;}
+ var template=e.target.closest('[data-reply-template]');if(template){const area=template.closest('.admin-ticket')?.querySelector('textarea[name="reply"]');if(area){area.value=template.dataset.replyTemplate;area.focus()}return;}
+ if(e.target.closest('[data-timer-toggle]')){toggleFocusTimer();return;}
  if(e.target.id==='nav-backdrop'||e.target.closest('[data-nav-close]')){sidebar.classList.remove('open');syncBackdrop();return;}
  if(e.target.id==='menu-toggle'){sidebar.classList.toggle('open');syncBackdrop();return;}
  var socialRemove=e.target.closest('[data-social-remove]');
@@ -1507,7 +1522,7 @@ document.addEventListener('keydown',function(e){
  }
  if(e.key==='Escape'){if(s.streakModalOpen){s.streakModalOpen=false;paintStreakModal();}sidebar.classList.remove('open');syncBackdrop();}
 });
-document.addEventListener('input',function(e){
+document.addEventListener('input',function(e){if(e.target.id==='support-search'){filterSupportTickets();return;}
  if(e.target.id==='reference-search'){
   s.refSearch=e.target.value;const results=referenceResults();
   const container=$('#reference-results'),counter=$('#reference-count');
@@ -1571,6 +1586,8 @@ document.addEventListener('change',async function(e){
   return;
  }
  if(e.target.id==='support-category'){const field=e.target.closest('form')?.querySelector('.support-plan-field');if(field)field.hidden=e.target.value!=='plan';return;}
+ if(e.target.id==='support-filter'){filterSupportTickets();return;}
+ if(e.target.id==='study-goal'){setChoicePreference('goal-'+(s.user?.id||'guest'),e.target.value);notice('Tagesziel gespeichert.');return;}
  if(e.target.id==='beta-enabled'){
   const box=e.target;try{const r=await api.rpc('academy_service',{p_action:'set_beta',p_payload:{enabled:box.checked}});if(r.error)throw r.error;await refreshService();render();notice('Beta-Anfragen '+(box.checked?'aktiviert.':'geschlossen.'));}catch(err){box.checked=!box.checked;notice(formatError(err))}return;
  }
@@ -1609,6 +1626,12 @@ document.addEventListener('submit',async function(e){
   if(mode==='login'){await signIn(fd,button);return;}
   if(mode==='register'){await registerAccount(fd);return;}
   if(mode==='first-password'){await finishPassword(fd,button);return;}
+  if(mode==='shop-sale'){
+   if(s.profile?.role!=='admin')throw Error('Nur Administratoren');const percent=Number(fd.get('percent'));
+   if(!Number.isInteger(percent)||percent<0||percent>90)throw Error('Rabatt: 0 bis 90 Prozent.');
+   const r=await api.rpc('academy_shop_discount',{p_percent:percent});if(r.error)throw r.error;
+   s.shopDiscount=Number(r.data)||0;render();notice('Shoprabatt gespeichert.');return;
+  }
   if(mode==='support-ticket'){
    const category=String(fd.get('category')),message=String(fd.get('message')||'').trim(),tier=category==='plan'?String(fd.get('tier')):null;
    if(message.length<10||message.length>2000)throw Error('Bitte 10 bis 2000 Zeichen schreiben.');
@@ -1711,6 +1734,7 @@ async function init(){
  document.head.insertAdjacentHTML('beforeend','<style>.is-auth .sidebar,.is-auth .bottom-nav{display:none}.is-auth .topbar{background:#0d0a19}.is-auth .content{max-width:1100px}.is-auth .app-column{width:100%}</style>');
  if(!window.supabase||!cfg.supabaseUrl||!cfg.supabasePublishableKey){content.innerHTML='<div class="auth-layout panel"><h2>Verbindung nicht verfügbar</h2><p>Supabase konnte nicht geladen werden. Bitte lade die Seite erneut oder überprüfe deine Verbindung.</p></div>';return;}
  try{api=window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+  void api.rpc('academy_shop_discount').then(res=>{if(!res.error){s.shopDiscount=Number(res.data)||0;if(s.ready&&['plans','admin'].includes(parseRoute().page))render();}}).catch(()=>{});
   void api.rpc('academy_beta_status').then(beta=>{if(!beta.error){s.service.beta_open=beta.data===true;if(!s.ready)login();}}).catch(()=>{});
   await boot();}
  catch(err){content.innerHTML='<div class="auth-layout panel"><h2>Academy nicht erreichbar</h2><p class="muted">'+esc(formatError(err))+'</p><button class="btn" onclick="location.reload()">Erneut versuchen</button></div>';}
