@@ -106,7 +106,7 @@ return {
  bannerHeight:get('.ll-home-brand-banner')?.getBoundingClientRect().height||null,
  headerHeight:get('.topbar')?.getBoundingClientRect().height||null,
  timerVisible:get('.focus-center .focus-header')?getComputedStyle(get('.focus-center .focus-header')).display!=='none':false,
- timerCenterOffset:get('.focus-center .focus-header')?Math.abs((get('.focus-center .focus-header').getBoundingClientRect().left+get('.focus-center .focus-header').getBoundingClientRect().width/2)-window.innerWidth/2):null,
+ timerCenterOffset:get('.focus-center .focus-header')?Math.abs((get('.focus-center .focus-header').getBoundingClientRect().left+get('.focus-center .focus-header').getBoundingClientRect().width/2)-(get('.topbar').getBoundingClientRect().left+get('.topbar').getBoundingClientRect().width/2)):null,
  bannerDebug:get('.ll-home-brand-banner')?{width:get('.ll-home-brand-banner').getBoundingClientRect().width,height:get('.ll-home-brand-banner').getBoundingClientRect().height,aspect:getComputedStyle(get('.ll-home-brand-banner')).aspectRatio,display:getComputedStyle(get('.ll-home-brand-banner')).display,imagePosition:getComputedStyle(get('.ll-home-brand-banner img')).position,rules:Array.from(document.styleSheets).map(x=>x.cssRules?.length||0)}:null
 };
 },selectors);
