@@ -30,9 +30,9 @@ scope.onmessage=async function(event){
    const fengari=scope.fengari||scope.module.exports?.fengari||scope.module.exports?.default||scope.module.exports;
    if(!fengari||typeof fengari.load!=='function')throw Error('Lua-Interpreter konnte nicht initialisiert werden.');
    const evalLua=fengari.load;
-   evalLua("___ll_output = {}\nprint = function(...) local a={} for i=1, select('#', ...) do a[#a+1]=tostring(select(i,...)) end ___ll_output[#__ll_output+1]=table.concat(a, '\\t') end")();
+   evalLua("LL_OUTPUT = {}\nprint = function(...) local a={} for i=1, select('#', ...) do a[#a+1]=tostring(select(i,...)) end LL_OUTPUT[#LL_OUTPUT+1]=table.concat(a, '\\t') end")();
    evalLua(code,'lesson.lua')();
-   const out=String(evalLua("return table.concat(___ll_output, '\\n')")()||'');
+   const out=String(evalLua("return table.concat(LL_OUTPUT, '\\n')")()||'');
    if(out)lines.push(...out.split('\n').slice(0,maximum));
   }else throw Error('Für diese Sprache ist noch keine echte Browser-Laufzeit eingerichtet.');
   scope.postMessage({ok:true,lines:lines.slice(0,maximum),error:'',available:true});
