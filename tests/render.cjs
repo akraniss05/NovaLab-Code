@@ -39,8 +39,14 @@ state.tier='ultimate';assert(app.referencePage().includes('Spickzettel'),'Refere
 assert(app.referencePage().includes('reference-language'),'Language picker rendered');
 assert(app.referencePage().includes('485 Referenzeinträge'),'Full reference library available');
 const lessonHtml=app.lessonPage('python-01');
-for(const value of ['practice-input','complete-practice','load-video','video-check','Wissen anwenden'])
+for(const value of ['practice-input','complete-practice','load-video','video-check','Wissen anwenden','code-editor','reset-lesson'])
  assert(lessonHtml.includes(value),'Missing lesson feature '+value);
+const anotherCourse={id:'lua',name:'Lua',category:'Sprachen',level:'beginner'};
+state.courses.unshift(anotherCourse);
+state.lessons.unshift({id:'lua-01',course_id:'lua',chapter:'Start',position:1,title:'Lua Start',summary:'',minutes:10,required_plan:'free'});
+state.progress.lastLesson={id:'python-01',at:new Date().toISOString()};
+assert.match(app.homePage(),/WEITERLERNEN[\s\S]*?data-go="lesson\/python-01"/,'Continue opens last active lesson, not first catalog course');
+state.courses.shift();state.lessons.shift();
 assert(app.profilePage().includes('Dein Lern-'),'Read-only learning profile renders');
 assert(!app.profilePage().includes('Profil gestalten'),'Profile configuration was removed');
 assert(!app.profilePage().includes('Anzeigename ändern'),'Profile name configuration was removed');
