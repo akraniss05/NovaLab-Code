@@ -11,6 +11,7 @@ import {createClient} from 'npm:@supabase/supabase-js@2.81.1';
 
 const allowedOrigins = new Set([
   'https://akraniss05.github.io',
+  'https://liverylab-academy.dev',
   'https://github.liverylabacademy.app'
 ]);
 const headersFor=(origin:string)=>({
