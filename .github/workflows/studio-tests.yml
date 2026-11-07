@@ -1,0 +1,41 @@
+name: Studio smoke tests
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/academy-v21.js'
+      - 'site/academy-studio.js'
+      - 'site/academy-runtime.js'
+      - 'site/practice-engine.js'
+      - 'tests/practice.cjs'
+      - 'tests/studio.cjs'
+      - '.github/workflows/studio-tests.yml'
+  pull_request:
+    paths:
+      - 'site/academy-v21.js'
+      - 'site/academy-studio.js'
+      - 'site/academy-runtime.js'
+      - 'site/practice-engine.js'
+      - 'tests/practice.cjs'
+      - 'tests/studio.cjs'
+      - '.github/workflows/studio-tests.yml'
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate JavaScript
+        run: |
+          node --check site/academy-v21.js
+          node --check site/academy-studio.js
+          node --check site/academy-runtime.js
+          node --check site/practice-engine.js
+      - name: Existing practice tests
+        run: node tests/practice.cjs
+      - name: New studio regression tests
+        run: node tests/studio.cjs
