@@ -7,7 +7,7 @@
 'use strict';
 var cfg=window.LL_CONFIG||{}, $=function(q,root){return (root||document).querySelector(q);};
 var content=$('#content'), sidebar=$('#sidebar'), bottom=$('#bottom-nav'), toastNode=$('#toast');
-var api=null, s={shopDiscount:0,service:{beta_open:true,mine:[],admin:[]},streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,quizStep:0,quizPassed:false,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},adminPage:1,adminFilter:'all',adminSearch:'',catalogLimit:9,practiceChecked:false,draft:'',hintStage:0,prefs:null,projectTab:0,projectSource:'',projectLoading:false};
+var api=null, s={shopDiscount:0,service:{beta_open:true,mine:[],admin:[]},streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,quizStep:0,quizPassed:false,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},adminPage:1,adminFilter:'all',adminSearch:'',catalogLimit:9,practiceChecked:false,draft:'',lessonStep:1,hintStage:0,prefs:null,projectTab:0,projectSource:'',projectLoading:false};
 var plans={free:'Free',pro:'Plus',ultimate:'Ultimate'};
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];});}
 function safeLink(url){return /^https:\/\/[^\s<>"]+$/i.test(String(url||''))?esc(url):'#';}
@@ -314,7 +314,7 @@ async function loadData(){
  }).catch(()=>{});
  await navigateCurrent();
 }
-async function logout(){window.LLStudio?.clear?.();try{await api.auth.signOut();}catch(e){}s.authScreen='login';s.ready=false;s.streakModalOpen=false;s.streakError='';s.loginStreak=null;paintStreakModal();s.user=null;s.profile=null;s.lesson=null;s.courses=[];s.lessons=[];location.hash='#home';login();}
+async function logout(){window.LLLearning?.clear?.();window.LLStudio?.clear?.();try{await api.auth.signOut();}catch(e){}s.authScreen='login';s.ready=false;s.streakModalOpen=false;s.streakError='';s.loginStreak=null;paintStreakModal();s.user=null;s.profile=null;s.lesson=null;s.courses=[];s.lessons=[];location.hash='#home';login();}
 async function saveProgress(){
  var res=await api.from('academy_progress').upsert({user_id:s.user.id,key:'liverylab-v10',payload:s.progress,updated_at:new Date().toISOString()},{onConflict:'user_id,key'});
  if(res.error)throw res.error;frame();
@@ -325,10 +325,12 @@ async function navigateCurrent(){
  if(!s.ready)return;
  var route=parseRoute();s.route=route.page;
  if(route.page==='lesson'){
-   s.choice=null;s.quizStep=0;s.quizPassed=false;s.hintStage=0;s.videoChecked=watchedIds().has(route.id);s.practiceChecked=(s.progress.verifiedPractice||[]).includes(route.id);s.draft=readDraft(route.id);s.videoLoaded=false;s.lesson=null;s.lessonGate=null;
+   s.choice=null;s.quizStep=0;s.quizPassed=false;s.hintStage=0;s.lessonStep=1;s.videoChecked=watchedIds().has(route.id);s.practiceChecked=(s.progress.verifiedPractice||[]).includes(route.id);s.draft=readDraft(route.id);s.videoLoaded=false;s.lesson=null;s.lessonGate=null;
    frame();content.innerHTML='<div class="center-screen"><div class="spinner"></div><p>Geschützte Lektion wird geladen …</p></div>';
    var meta=s.lessons.find(function(l){return l.id===route.id;});
-   if(meta&&allowed(meta)){var result=await api.rpc('academy_open_lesson',{p_lesson:route.id});if(result.error){s.lessonGate={reason:'error',error:formatError(result.error)};notice(formatError(result.error));}else if(result.data?.allowed){s.lesson=result.data;s.progress.lastLesson={id:route.id,at:new Date().toISOString()};void saveProgress().catch(()=>{});if(s.daily){s.daily.used_today=result.data.used;s.daily.remaining_today=result.data.remaining;}}else{s.lessonGate=result.data||{reason:'error'};}}
+   if(meta&&allowed(meta)){var result=await api.rpc('academy_open_lesson',{p_lesson:route.id});if(result.error){s.lessonGate={reason:'error',error:formatError(result.error)};notice(formatError(result.error));}else if(result.data?.allowed){s.lesson=result.data;
+      if(window.LLLearning){const cloud=await window.LLLearning.load(route.id);if(parseRoute().id!==route.id)return;s.draft=cloud.content;s.lessonStep=cloud.step;}
+      s.progress.lastLesson={id:route.id,step:s.lessonStep,at:new Date().toISOString()};void saveProgress().catch(()=>{});if(s.daily){s.daily.used_today=result.data.used;s.daily.remaining_today=result.data.remaining;}}else{s.lessonGate=result.data||{reason:'error'};}}
  }
  if(route.page==='admin'&&s.profile?.role==='admin'){try{await Promise.all([fetchMembers(),fetchVouchers()]);}catch(e){notice('Adminliste: '+formatError(e));}}
  if(route.page==='support'||route.page==='admin'||route.page==='plans'){try{await refreshService();}catch(e){notice('Support: '+formatError(e));}}
@@ -337,6 +339,7 @@ async function navigateCurrent(){
  if(route.page==='friends'||route.page==='profile'){try{const r=await api.rpc('academy_social_list');if(!r.error)s.social=r.data;}catch(_){}}
  if(route.page==='exam'&&route.id){await loadExam(route.id);}
  render();window.scrollTo({top:0,behavior:'instant'});
+ if(route.page==='lesson'&&s.lesson)window.LLLearning?.restore?.(route.id,s.lessonStep);
 }
 
 function renderMFA(){
@@ -501,8 +504,7 @@ function homePage(){
  const weeklyGoal=Math.max(1,Math.min(100,Number(getChoicePreference('weekly-goal-'+(s.user?.id||'guest'),'10'))||10));
  const last=available.find(l=>l.id===s.progress.lastLesson?.id);
  const inLastCourse=last?lessonsOf(last.course_id).filter(allowed):[];
- const next=last?(completed.has(last.id)?inLastCourse.find(l=>l.position>last.position&&!completed.has(l.id))||inLastCourse.find(l=>!completed.has(l.id))||last:last):
- available.find(l=>!completed.has(l.id)&&['coding-basics','lua','python','fivem'].includes(l.course_id))||available.find(l=>!completed.has(l.id));
+ const next=last||available.find(l=>!completed.has(l.id)&&['coding-basics','lua','python','fivem'].includes(l.course_id))||available.find(l=>!completed.has(l.id));
  const nextCourse=next?courseOf(next.course_id):null;
  const currentDone=nextCourse?countDone(nextCourse.id):0,total=nextCourse?lessonsOf(nextCourse.id).length:0,progress=pct(currentDone,total);
  const xp=(s.progress.done||[]).length*30,level=Math.floor(xp/500)+1,levelXp=xp%500;
@@ -519,7 +521,7 @@ function homePage(){
  '<section class="ll-home-continue"><div class="ll-continue-icon">'+llIcon('code')+'</div>'+
  '<div class="ll-continue-copy"><span class="eyebrow">WEITERLERNEN</span>'+
  '<h2>'+esc(nextCourse?.name||'Deine Lernreise beginnt hier')+'</h2>'+
- '<p>'+esc(next?.title||'Wähle deinen ersten Kurs und starte mit dem Programmieren.')+'</p>'+
+ '<p>'+esc(next?.title||'Wähle deinen ersten Kurs und starte mit dem Programmieren.')+(last?' · Zuletzt Schritt '+Math.max(1,Math.min(5,Number(s.progress.lastLesson?.step)||1))+' / 5':'')+'</p>'+
  '<div class="ll-continue-progress"><div class="ll-level-bar"><span style="width:'+progress+'%"></span></div><strong>'+progress+' %</strong></div></div>'+
  '<button type="button" class="btn primary ll-continue-button" data-go="'+(next?'lesson/'+esc(next.id):'courses')+'">Jetzt fortsetzen '+llIcon('arrow')+'</button></section>'+
  '<section class="ll-home-tools"><div class="ll-tool-card"><span class="eyebrow">DEIN TAGESZIEL</span><h3>'+today+' / '+dailyGoal+' Lektionen heute</h3><div class="progress"><span style="width:'+Math.min(100,Math.round(today/dailyGoal*100))+'%"></span></div><p>Abgeschlossene Lektionen seit Mitternacht auf diesem Konto.</p><select class="select" id="study-goal" aria-label="Tagesziel">'+[1,2,3,4,5,6,7,8,9,10,15,20].map(n=>'<option value="'+n+'" '+(dailyGoal===n?'selected':'')+'>'+n+' Lektionen</option>').join('')+'</select></div><div class="ll-tool-card"><span class="eyebrow">DEIN WOCHENZIEL</span><h3>'+week+' / '+weeklyGoal+' Lektionen</h3><div class="progress"><span style="width:'+Math.min(100,Math.round(week/weeklyGoal*100))+'%"></span></div><p>Montag bis Sonntag · neu abgeschlossene Lektionen.</p><select class="select" id="weekly-goal" aria-label="Wochenziel">'+[3,5,10,15,20,30,50,100].map(n=>'<option value="'+n+'" '+(weeklyGoal===n?'selected':'')+'>'+n+' Lektionen</option>').join('')+'</select></div><div class="ll-tool-card"><span class="eyebrow">FOKUSZEIT</span><h3 id="focus-clock">'+timerLabel()+'</h3><p>Stelle deine eigene Lernzeit ein.</p><button class="btn small" data-timer-open>Timer einstellen</button></div></section>'+
@@ -633,19 +635,21 @@ function lessonPage(id){
  '<header><span class="eyebrow">'+esc(c.name)+' · '+esc(l.chapter)+'</span><h1>'+esc(l.title)+'</h1>'+
  '<p>'+esc(p.goal||l.summary)+'</p><div class="chips"><span class="chip">'+(index+1)+' von '+all.length+'</span><span class="chip">'+l.minutes+' Minuten</span>'+
  '<span class="chip '+(finished?'free':'')+'">'+(finished?'✓ Abgeschlossen':'30 XP möglich')+'</span></div>'+
+ (window.LLLearning?.stepBar?.(s.lessonStep,s.videoChecked,isPracticeDone,s.quizPassed,finished)||'')+
+ '<p id="learning-resume" class="micro" aria-live="polite">Zuletzt bearbeitet: Schritt '+s.lessonStep+' von 5</p>'+ 
  '<div class="lesson-steps"><div class="lesson-step done"><span class="step-index">01</span>Verstehen</div>'+
  '<div class="lesson-step '+(s.videoChecked?'done':'')+'"><span class="step-index">02</span>Video</div>'+
  '<div class="lesson-step '+(isPracticeDone?'done':'')+'"><span class="step-index">03</span>Praxis</div>'+
  '<div class="lesson-step '+(finished?'done':'')+'"><span class="step-index">04</span>Quiz</div></div></header>'+
  (finished?'<div class="done-banner" style="margin:15px 0"><strong>✓ Lektion abgeschlossen</strong><p>Du hast diese Lektion bereits bearbeitet und 30 XP gesammelt.</p></div>':'')+
- '<section class="step-box"><span class="eyebrow">SCHRITT 01 · VERSTEHEN</span><h2>Die Idee dahinter.</h2>'+
+ '<section class="step-box" id="lesson-explanation"><span class="eyebrow">SCHRITT 01 · VERSTEHEN</span><h2>Die Idee dahinter.</h2>'+
  '<p>'+esc(p.theory||l.summary)+'</p>'+
  (Array.isArray(p.keyPoints)?'<ul>'+p.keyPoints.slice(0,4).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+
  (p.mistake?'<div class="note"><strong>Typischer Fehler:</strong> '+esc(p.mistake)+'</div>':'')+
  (p.example?'<div class="codebox"><pre><code>'+esc(p.example)+'</code></pre></div>':'')+
  (p.resource?'<a href="'+safeLink(p.resource)+'" target="_blank" rel="noopener noreferrer">Offizielle Dokumentation ↗</a>':'')+
  '</section>'+
- (window.LLStudio?.lessonAddon?.(l,c,p)||'')+'<section class="step-box '+(isBlender?'blender-video-step':'')+'"><span class="eyebrow">SCHRITT 02 · '+(isBlender?'BLENDER VIDEO-TRAINING':'VIDEO-TUTORIAL')+'</span><h2>'+(isBlender?'Im Interface mitmachen.':'Erklärung ansehen.')+'</h2>'+
+ (window.LLStudio?.lessonAddon?.(l,c,p)||'')+'<section id="lesson-video" class="step-box '+(isBlender?'blender-video-step':'')+'"><span class="eyebrow">SCHRITT 02 · '+(isBlender?'BLENDER VIDEO-TRAINING':'VIDEO-TUTORIAL')+'</span><h2>'+(isBlender?'Im Interface mitmachen.':'Erklärung ansehen.')+'</h2>'+
  (validVideo?
  '<p class="muted">Passender Videoguide: <strong>'+esc(info.name)+'</strong>. Wenn das Video länger ist, konzentriere dich auf das Kapitel zu dieser Lektion.</p>'+
  '<div class="video-frame" id="video-frame"><div class="video-placeholder"><div class="play">▶</div><strong>'+esc(info.name)+'</strong>'+
@@ -658,10 +662,10 @@ function lessonPage(id){
  '<small>'+esc(c.name)+' · '+esc(l.title)+'</small><a href="'+search+'" class="btn primary" target="_blank" rel="noopener noreferrer">Passendes Lernvideo suchen ↗</a></div></div>')+
  '<label class="video-check"><input type="checkbox" id="video-check" '+(s.videoChecked?'checked':'')+'><span>Ich habe die passende Erklärung angesehen und verstanden.'+
  '<small class="micro" style="display:block">Deine eigene Bestätigung – die Videowiedergabe lässt sich nicht verlässlich messen.</small></span></label></section>'+
- '<section class="step-box"><span class="eyebrow">SCHRITT 03 · SELBST AUSPROBIEREN</span><h2>'+(isBlender?'Dein Arbeitsschritt.':'Löse diese Aufgabe im Editor.')+'</h2>'+
+ '<section class="step-box" id="lesson-practice"><span class="eyebrow">SCHRITT 03 · SELBST AUSPROBIEREN</span><h2>'+(isBlender?'Dein Arbeitsschritt.':'Löse diese Aufgabe im Editor.')+'</h2>'+
  '<p>'+esc(p.task||'Setze die Erklärung eigenständig in einem Beispiel um.')+'</p>'+
  '<div class="practice-workspace'+(isPracticeDone?' is-complete':'')+'" id="practice-workspace"><div class="practice-title"><strong>'+(isBlender?'Deine Umsetzung':'Dein Code-Entwurf')+'</strong>'+
- '<span class="practice-status" id="practice-status">'+(isPracticeDone?'✓ Praxis erledigt':'Noch nicht abgeschlossen')+'</span></div>'+
+ '<span class="practice-status" id="practice-status">'+(isPracticeDone?'✓ Praxis erledigt':'Cloud-Speicherung aktiv')+'</span></div>'+
  '<label class="micro" for="practice-input">'+(isBlender?'Beschreibe, was du in Blender umgesetzt hast:':'Datei: '+esc(p.filename||({lua:'client.lua',python:'main.py',javascript:'main.js'}[String(p.lang||'').toLowerCase()]||'lösung.txt')))+'</label>'+
  '<div class="code-editor"><div class="code-lines" id="code-lines" aria-hidden="true">1</div><textarea class="exercise-textarea" id="practice-input" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" wrap="off" rows="7" maxlength="10000" placeholder="'+(isBlender?'Welche Schritte hast du ausgeführt und was ist dabei entstanden?':'Schreibe hier deine Lösung …')+'">'+d+'</textarea></div>'+
  '<p class="practice-tip">'+(isBlender?'Beschreibe deine Umsetzung und vergleiche sie mit den Schritten.':'Prüfe deine Ausgabe und die geforderten Schritte. Die Konsole nennt den konkreten Fehler, soweit diese Aufgabe im Browser geprüft werden kann.')+'</p>'+
@@ -673,7 +677,8 @@ function lessonPage(id){
  '<section class="step-box" id="quiz-area"><span class="eyebrow">SCHRITT 04 · WISSENSTEST</span><h2>Wissen anwenden.</h2><span id="quiz-progress">Frage 1 von '+quizQuestions(p).length+'</span><p id="quiz-question">'+esc(p.quiz||'Hast du das Thema verstanden?')+'</p><div id="quiz-choices">'+
  options.map((answer,i)=>'<button type="button" class="quiz-choice" data-answer="'+i+'"><span>'+String.fromCharCode(65+i)+'</span>'+esc(answer)+'</button>').join('')+'</div>'+
  '<p class="quiz-feedback micro" id="answer-result" aria-live="polite">'+(finished?'✓ Bereits abgeschlossen.':'Wähle die richtige Antwort. Danach kannst du die Lektion abschließen.')+'</p>'+
- '<button class="btn primary" id="mark-lesson" data-action="finish-lesson" type="button" disabled>'+(finished?'✓ Lektion abgeschlossen':'Lektion abschließen →')+'</button></section>'+
+ '<button class="btn primary" id="mark-lesson" data-action="finish-lesson" type="button" disabled>'+(finished?'✓ Lektion abgeschlossen':'Lektion abschließen →')+'</button></section>'+ 
+ '<section class="step-box" id="lesson-summary"><span class="eyebrow">SCHRITT 05 · ERGEBNIS</span><h2>Wissen sichern und weiterbauen.</h2><p>Schließe die Lernaufgabe ab, sichere deinen Entwurf und dokumentiere eigene Projekte in deinem Portfolio.</p><div class="studio-inline-actions"><button type="button" class="btn primary" data-studio-from-lesson="'+esc(id)+'">Aus dieser Übung ein Projekt erstellen →</button><button type="button" class="btn" data-action="reset-practice">Nur Code-Editor zurücksetzen</button></div></section>'+
  '<div class="btn-row"><button class="btn" data-go="track/'+esc(l.course_id)+'">← Kursübersicht</button><button class="btn" data-action="reset-lesson">Lektion neu beginnen ↺</button>'+
  (next?'<button class="btn" data-go="lesson/'+esc(next.id)+'">Nächste Lektion →</button>':'<button class="btn" data-go="exam/'+esc(l.course_id)+'">Abschlussprüfung →</button>')+'</div></article>';
 }
@@ -719,7 +724,7 @@ async function completePractice(){
   runtime.error;
  if(feedback){feedback.textContent=(result.ok?'✓ ':'✕ ')+result.diagnostic+(!isVisual&&!runtime.available?' Hinweis: Nur statische Prüfung; keine bestätigte Programmausführung.':'');feedback.classList.toggle('error',!result.ok)}
  if(!result.ok){s.practiceChecked=false;updateLessonControls();return;}
- saveDraft(id,value);s.practiceChecked=true;
+ saveDraft(id,value);window.LLLearning?.queue?.(id,value,4);s.practiceChecked=true;
  if(!s.progress.practiced)s.progress.practiced=[];
  if(!s.progress.practiced.includes(id))s.progress.practiced.push(id);
  if(!s.progress.verifiedPractice)s.progress.verifiedPractice=[];
@@ -729,7 +734,7 @@ async function completePractice(){
  if(workspace)workspace.classList.add('is-complete');
  if(status)status.textContent='✓ Praxis erledigt';
  if(btn){btn.textContent='✓ Praxisschritt gespeichert';btn.disabled=true;}
- updateLessonControls();notice('Praxis geprüft und gespeichert.');
+ updateLessonControls();window.LLLearning?.mark?.(id,4);notice('Praxis geprüft und gespeichert.');
 }
 async function markLesson(){
  var id=parseRoute().id,l=s.lessons.find(x=>x.id===id);
@@ -740,7 +745,7 @@ async function markLesson(){
  if(!s.progress.done.includes(id))s.progress.done.push(id);
  if(!s.progress.completedAt)s.progress.completedAt={};if(!s.progress.completedAt[id])s.progress.completedAt[id]=new Date().toISOString();
  if(!s.progress.watched.includes(id))s.progress.watched.push(id);
- try{await saveProgress();notice('Lektion abgeschlossen! +30 XP ✓');render();}
+ try{await saveProgress();window.LLLearning?.mark?.(id,5);s.lessonStep=5;notice('Lektion abgeschlossen! +30 XP ✓');render();}
  catch(e){s.progress.done=s.progress.done.filter(x=>x!==id);notice('Speichern fehlgeschlagen: '+formatError(e));}
 }
 
@@ -1470,7 +1475,7 @@ document.addEventListener('click',async function(e){
    const previous=JSON.parse(JSON.stringify(s.progress));
    for(const key of ['done','watched','practiced','verifiedPractice'])s.progress[key]=(s.progress[key]||[]).filter(x=>x!==id);
    if(s.progress.completedAt)delete s.progress.completedAt[id];
-   try{await saveProgress();localStorage.removeItem('liverylab-draft-'+id);s.draft='';await navigateCurrent();notice('Diese Lektion wurde neu gestartet.');}
+   try{await saveProgress();if(window.LLLearning)await window.LLLearning.remove(id);localStorage.removeItem('liverylab-draft-'+id);s.draft='';s.lessonStep=1;await navigateCurrent();notice('Diese Lektion wurde neu gestartet.');}
    catch(e){s.progress=previous;notice('Neustart konnte nicht gespeichert werden: '+formatError(e));}return;
   }
   if(['run-practice','show-hint','show-solution','reset-practice'].includes(name)){
@@ -1634,11 +1639,11 @@ document.addEventListener('input',function(e){if(e.target.id==='support-search')
   if(count)count.textContent=filteredCourses().length+' Ergebnisse · Schritt für Schritt';
  }
  if(e.target.id==='practice-input'){
-  s.draft=e.target.value;saveDraft(parseRoute().id,s.draft);
+  s.draft=e.target.value;saveDraft(parseRoute().id,s.draft);window.LLLearning?.queue?.(parseRoute().id,s.draft,3);
   paintEditorLines();
   const syntaxError=window.LLPractice?.syntax(s.draft,String(s.lesson?.payload?.lang||'').toLowerCase()),live=$('#practice-feedback');if(live){live.textContent=syntaxError?'Syntaxhinweis: '+syntaxError:'';live.classList.toggle('error',!!syntaxError)}
   if(s.practiceChecked){s.practiceChecked=false;s.progress.verifiedPractice=(s.progress.verifiedPractice||[]).filter(id=>id!==parseRoute().id);void saveProgress().catch(()=>{});const workspace=$('#practice-workspace');if(workspace)workspace.classList.remove('is-complete');const button=$('[data-action="complete-practice"]');if(button){button.disabled=false;button.textContent='Meinen Code prüfen →'}updateLessonControls()}
-  var status=$('#practice-status');if(status&&!s.practiceChecked)status.textContent='Entwurf lokal gespeichert';
+  var status=$('#practice-status');if(status&&!s.practiceChecked)status.textContent=window.LLLearning?'Entwurf wird mit deinem Konto synchronisiert …':'Entwurf lokal gespeichert';
  }
 });
 document.addEventListener('scroll',function(e){if(e.target.id==='practice-input'){const gutter=$('#code-lines');if(gutter)gutter.scrollTop=e.target.scrollTop;}},true);
@@ -1824,7 +1829,7 @@ async function init(){
  try{api=window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
   void api.rpc('academy_shop_discount').then(res=>{if(!res.error){s.shopDiscount=Number(res.data)||0;if(s.ready&&['plans','admin'].includes(parseRoute().page))render();}}).catch(()=>{});
   void api.rpc('academy_beta_status').then(beta=>{if(!beta.error){s.service.beta_open=beta.data===true;if(!s.ready)login();}}).catch(()=>{});
-  window.LLStudio?.connect?.({state:()=>s,client:()=>api,notice,go,render});await boot();}
+  window.LLStudio?.connect?.({state:()=>s,client:()=>api,notice,go,render});window.LLLearning?.attach?.({state:()=>s,client:()=>api,notice,onStep:(id,step)=>{if(s.progress.lastLesson?.id===id)s.progress.lastLesson.step=step;}});await boot();}
  catch(err){content.innerHTML='<div class="auth-layout panel"><h2>Academy nicht erreichbar</h2><p class="muted">'+esc(formatError(err))+'</p><button class="btn" onclick="location.reload()">Erneut versuchen</button></div>';}
 }
 init();
