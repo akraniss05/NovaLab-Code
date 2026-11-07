@@ -175,7 +175,7 @@ async function registerAccount(fd){
  // when public signups have been enabled by the project administrator.
  const normal=await api.auth.signUp({email,password,options:{
   data:{username,name:username},
-  emailRedirectTo:'https://akraniss05.github.io/liverylab-academy/'
+  emailRedirectTo:new URL('./',window.location.href).href
  }});
  let manual=false;
  if(normal.error){
