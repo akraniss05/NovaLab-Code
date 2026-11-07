@@ -1,4 +1,4 @@
-name: Deploy LiveryLab Academy v23 • Blender video learning and premium UI
+name: Deploy LiveryLab Academy v24 • learning focus and personalization
 on:
   push:
     branches: [main]
