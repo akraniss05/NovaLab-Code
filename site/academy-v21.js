@@ -7,13 +7,16 @@
 'use strict';
 var cfg=window.LL_CONFIG||{}, $=function(q,root){return (root||document).querySelector(q);};
 var content=$('#content'), sidebar=$('#sidebar'), bottom=$('#bottom-nav'), toastNode=$('#toast');
-var api=null, s={shopDiscount:0,service:{beta_open:true,mine:[],admin:[]},streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,quizStep:0,quizPassed:false,sectionIndex:0,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},memberExpiry:{},adminPage:1,adminFilter:'all',adminSearch:'',catalogLimit:9,practiceChecked:false,draft:'',lessonStep:1,hintStage:0,prefs:null,projectTab:0,projectSource:'',projectLoading:false};
+var api=null, s={shopDiscount:0,service:{beta_open:true,mine:[],admin:[]},streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],xpAwards:[],xpClaimBusy:false,progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,quizStep:0,quizPassed:false,sectionIndex:0,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},memberExpiry:{},adminPage:1,adminFilter:'all',adminSearch:'',catalogLimit:9,practiceChecked:false,draft:'',lessonStep:1,hintStage:0,prefs:null,projectTab:0,projectSource:'',projectLoading:false};
 var plans={free:'Free',pro:'Plus',ultimate:'Ultimate'};
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];});}
 function safeLink(url){return /^https:\/\/[^\s<>"]+$/i.test(String(url||''))?esc(url):'#';}
 function notice(message){toastNode.textContent=message;toastNode.classList.add('show');clearTimeout(notice.timer);notice.timer=setTimeout(function(){toastNode.classList.remove('show');},5000);}
 function formatError(e){return (e&&e.message)||'Unbekannter Fehler';}
 function safeNumber(n){return Number.isFinite(Number(n))?Number(n):0;}
+function xpEarned(){return (s.xpAwards||[]).reduce((sum,entry)=>sum+Math.max(0,Number(entry.xp)||0),0);}
+function xpAwarded(id){return (s.xpAwards||[]).some(entry=>entry.lesson_id===id);}
+function xpFromCourse(id){const awarded=new Set((s.xpAwards||[]).map(entry=>entry.lesson_id));return s.lessons.filter(l=>l.course_id===id&&awarded.has(l.id)).length*30;}
 function doneIds(){return new Set(s.progress.done||[]);}
 function watchedIds(){return new Set(s.progress.watched||[]);}
 function countDone(courseId){var d=doneIds();return s.lessons.filter(function(l){return l.course_id===courseId&&d.has(l.id);}).length;}
@@ -99,14 +102,14 @@ function frame(){
   '<div class="side-label">Navigation</div>'+navHTML(route)+
   '<div class="side-bottom"><span class="eyebrow">DEIN PROFIL</span><strong>'+
   esc(s.profile.display_name||s.profile.username||'Developer')+'</strong>'+
-  '<small>'+esc(plans[s.tier]||'Free')+' · '+((s.progress.done||[]).length*30)+' XP</small>'+
+  '<small>'+esc(plans[s.tier]||'Free')+' · '+xpEarned()+' XP</small>'+
   '<a class="discord-small" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord Community</a></div>';
  const nav=[['home','home','Home'],['courses','learn','Lernen'],['script','code','Script'],['exams','exam','Prüfung'],['reference','book','Referenz']];
   bottom.innerHTML=nav.map(([id,icon,label])=>'<button type="button" data-go="'+id+'" class="bottom-item'+
    ((route===id||(id==='courses'&&['track','lesson'].includes(route))||(id==='exams'&&route==='exam'))?' active':'')+
    '" aria-label="'+label+'"><span class="side-icon" aria-hidden="true">'+llIcon(icon)+'</span><span>'+label+'</span></button>').join('');
  }
- const head=$('#xp-head');if(head)head.textContent='✦ '+((s.progress.done||[]).length*30).toLocaleString('de-DE')+' XP';
+ const head=$('#xp-head');if(head)head.textContent='✦ '+xpEarned().toLocaleString('de-DE')+' XP';
  let st=$('#streak-head');
  if(!st){
   const top=document.querySelector('.top-right');
@@ -277,7 +280,8 @@ async function loadData(){
  api.from('ll_lesson_index').select('id,course_id,chapter,position,title,summary,minutes,required_plan').order('position',{ascending:true}),
  api.from('academy_plans').select('tier,expires_at').eq('user_id',s.user.id).maybeSingle(),
  api.from('academy_progress').select('payload').eq('user_id',s.user.id).eq('key','liverylab-v10').maybeSingle(),
- api.rpc('academy_voucher_status')
+ api.rpc('academy_voucher_status'),
+ api.from('academy_lesson_xp_awards').select('lesson_id,xp,awarded_at').order('awarded_at',{ascending:false})
  ]);
  if(all[0].error)throw all[0].error;if(all[1].error)throw all[1].error;
  s.courses=all[0].data||[];s.lessons=all[1].data||[];
@@ -286,6 +290,8 @@ async function loadData(){
  s.planExpires=all[2].data?.expires_at||null;
  s.discount=s.daily?.discount||null;
  if(all[4].error)notice('Kontingent konnte nicht geladen werden: '+formatError(all[4].error));
+ if(all[5]?.error)throw all[5].error;
+ s.xpAwards=(all[5]?.data||[]).filter(row=>row&&typeof row.lesson_id==='string');
  var data=all[3].data?.payload||{};
  s.progress={...data,done:Array.isArray(data.done)?data.done:[],watched:Array.isArray(data.watched)?data.watched:[],exams:data.exams||{},practiced:Array.isArray(data.practiced)?data.practiced:[],verifiedPractice:Array.isArray(data.verifiedPractice)?data.verifiedPractice:[],completedAt:data.completedAt&&typeof data.completedAt==='object'?data.completedAt:{}};
  
@@ -396,7 +402,7 @@ function stats(){
  const done=(s.progress.done||[]).length,available=s.lessons.filter(allowed).length,started=s.courses.filter(c=>countDone(c.id)>0).length;
  return '<div class="stats-grid">'+
   '<div class="stat-card"><strong>'+done+'<span class="stat-total">/'+available+'</span></strong><small>LEKTIONEN</small></div>'+
-  '<div class="stat-card"><strong>'+done*30+'</strong><small>XP</small></div>'+
+  '<div class="stat-card"><strong>'+xpEarned()+'</strong><small>XP</small></div>'+
   '<div class="stat-card"><strong>'+started+'</strong><small>LERNPFADE</small></div>'+
   '<div class="stat-card"><strong>'+pct(done,available)+'%</strong><small>FORTSCHRITT</small></div>'+
   '</div>';
@@ -532,7 +538,7 @@ function homePage(){
  const next=last||available.find(l=>!completed.has(l.id)&&['coding-basics','lua','python','fivem'].includes(l.course_id))||available.find(l=>!completed.has(l.id));
  const nextCourse=next?courseOf(next.course_id):null;
  const currentDone=nextCourse?countDone(nextCourse.id):0,total=nextCourse?lessonsOf(nextCourse.id).length:0,progress=pct(currentDone,total);
- const xp=(s.progress.done||[]).length*30,level=Math.floor(xp/500)+1,levelXp=xp%500;
+ const xp=xpEarned(),level=Math.floor(xp/500)+1,levelXp=xp%500;
  const nickname=s.profile?.display_name||s.profile?.username||'Developer';
  const streak=Number(s.loginStreak?.current||0),ready=!!s.loginStreak?.claimable;
  const picks=['coding-basics','lua','python','javascript'].map(courseOf).filter(Boolean);
@@ -603,7 +609,7 @@ function trackPage(id){
  '<h1>'+esc(course.name)+' <em>lernen.</em></h1>'+
  '<p class="lede">Jede Lektion erklärt ein Konzept. Danach schaust du ein passendes Tutorial an, löst eine Praxisaufgabe und überprüfst dein Wissen.</p></section>'+
  '<div class="stats-grid track-stats"><div class="stat-card"><strong>'+done+'/'+all.length+'</strong><small>LEKTIONEN</small></div>'+
- '<div class="stat-card"><strong>'+done*30+'</strong><small>XP</small></div>'+
+ '<div class="stat-card"><strong>'+xpFromCourse(id)+'</strong><small>XP</small></div>'+
  '<div class="stat-card"><strong>'+pct(done,all.length)+'%</strong><small>FORTSCHRITT</small></div>'+
  '<div class="stat-card"><strong>'+((s.progress.exams||{})[id]?'✓':'–')+'</strong><small>PRÜFUNG</small></div></div>';
  if(next)out+='<div class="next-lesson"><span class="eyebrow">NÄCHSTE LEKTION</span><h3>'+esc(next.title)+'</h3>'+
@@ -653,19 +659,19 @@ function lessonPage(id){
  '<div class="hero-actions" style="justify-content:center"><button class="btn primary" data-go="plans">Stufen vergleichen</button>'+
  '<a class="btn discord" rel="noopener noreferrer" target="_blank" href="https://discord.gg/livery-lab">Freischaltung anfragen</a></div></section>';
  if(!s.lesson){const daily=s.lessonGate?.reason==='daily_limit';return back+'<section class="lesson-gate"><span class="gate-icon">'+(daily?'◷':'🔒')+'</span><span class="eyebrow">'+(daily?'TAGESLIMIT ERREICHT':'LEKTION NICHT VERFÜGBAR')+'</span><h2>'+(daily?'Für heute geschafft.':'Lektion nicht geladen')+'</h2><p>'+(daily?'Du hast heute alle '+safeNumber(s.daily?.daily_limit)+' neuen Lernstationen geöffnet. Morgen geht es weiter. Bereits geöffnete Stationen bleiben zugänglich.':esc(s.lessonGate?.error||'Prüfe deine Freischaltung und Verbindung.'))+'</p><div class="actions-pair"><button class="btn" data-go="track/'+esc(l.course_id)+'">← Lernpfad</button><button class="btn primary" data-go="plans">Tarife ansehen →</button></div></section>';}
- var p=s.lesson.payload||{},video=s.lesson.video_id||p.videoId,info=videoInfo(video),qs=quizQuestions(p),activeQuiz=qs[Math.min(s.quizStep,qs.length-1)],options=activeQuiz?.options||[],finished=doneIds().has(id),isBlender=c?.category==='3D & Blender';
+ var p=s.lesson.payload||{},video=s.lesson.video_id||p.videoId,info=videoInfo(video),qs=quizQuestions(p),activeQuiz=qs[Math.min(s.quizStep,qs.length-1)],options=activeQuiz?.options||[],finished=doneIds().has(id),rewarded=xpAwarded(id),isBlender=c?.category==='3D & Blender';
  var videoStart=Math.max(0,Number(s.lesson.video_start||p.videoStart)||0),validVideo=video&&/^[a-zA-Z0-9_-]{11}$/.test(video),url=validVideo?'https://www.youtube.com/watch?v='+video+'&t='+videoStart+'s':null;
  var search='https://www.youtube.com/results?search_query='+encodeURIComponent(c.name+' '+l.title+' Anleitung Tutorial deutsch');
  var next=all[index+1],d=esc(s.draft),isPracticeDone=s.practiceChecked||finished;
  return '<article class="lesson-article">'+back+
  '<header><span class="eyebrow">'+esc(c.name)+' · '+esc(l.chapter)+'</span><h1>'+esc(l.title)+'</h1>'+
  '<p>'+esc(p.goal||l.summary)+'</p><div class="chips"><span class="chip">'+(index+1)+' von '+all.length+'</span><span class="chip">'+l.minutes+' Minuten</span>'+
- '<span class="chip '+(finished?'free':'')+'">'+(finished?'✓ Abgeschlossen':'30 XP möglich')+'</span></div>'+
+ '<span class="chip '+(finished?'free':'')+'">'+(finished?'✓ Abgeschlossen':rewarded?'✓ 30 XP bereits erhalten':'30 XP möglich')+'</span></div>'+
  '<div class="lesson-steps"><div class="lesson-step done"><span class="step-index">01</span>Verstehen</div>'+
  '<div class="lesson-step '+(s.videoChecked?'done':'')+'"><span class="step-index">02</span>Video</div>'+
  '<div class="lesson-step '+(isPracticeDone?'done':'')+'"><span class="step-index">03</span>Praxis</div>'+
  '<div class="lesson-step '+(finished?'done':'')+'"><span class="step-index">04</span>Quiz</div></div></header>'+
- (finished?'<div class="done-banner" style="margin:15px 0"><strong>✓ Lektion abgeschlossen</strong><p>Du hast diese Lektion bereits bearbeitet und 30 XP gesammelt.</p></div>':'')+
+ (finished?'<div class="done-banner" style="margin:15px 0"><strong>✓ Lektion abgeschlossen</strong><p>'+(rewarded?'Die 30 XP für diese Lektion hast du bereits erhalten.':'Deine Lektion ist abgeschlossen. Bitte bestätige die XP-Gutschrift.')+'</p>'+(rewarded?'':'<button class="btn small" type="button" data-action="retry-lesson-xp">XP-Gutschrift überprüfen</button>')+'</div>':'')+
  '<section class="step-box" id="lesson-explanation"><span class="eyebrow">SCHRITT 01 · VERSTEHEN</span>'+
  (window.LLCurriculum?.render(p,s.sectionIndex,esc,safeLink)||'<p>'+esc(p.theory||l.summary)+'</p>')+
  '</section>'+
@@ -793,17 +799,44 @@ async function completePractice(){
   updateLessonControls();
  }finally{if(button&&button.isConnected){button.disabled=false;button.textContent='✓ Prüfen';button.setAttribute('aria-busy','false');}}
 }
+async function grantLessonXP(id){
+ const response=await api.rpc('academy_claim_lesson_xp',{p_lesson:id});
+ if(response.error)throw response.error;
+ const result=response.data;
+ if(!result||typeof result.awarded!=='boolean')throw Error('Die XP-Gutschrift wurde nicht bestätigt.');
+ const existing=s.xpAwards.find(x=>x.lesson_id===id);
+ if(!existing){
+  s.xpAwards.push({lesson_id:id,xp:30,awarded_at:result.awarded_at||new Date().toISOString()});
+  s.xpAwards.sort((a,b)=>Date.parse(b.awarded_at||0)-Date.parse(a.awarded_at||0));
+ }
+ return result;
+}
 async function markLesson(){
- var id=parseRoute().id,l=s.lessons.find(x=>x.id===id);
- if(!l||!s.lesson||!allowed(l))return;
+ const id=parseRoute().id,l=s.lessons.find(x=>x.id===id);
+ if(!l||!s.lesson||!allowed(l)||s.xpClaimBusy)return;
  if(!s.videoChecked||!s.practiceChecked||!s.quizPassed){
   notice('Bitte Video, praktische Übung und Quiz abschließen.');return;
  }
- if(!s.progress.done.includes(id))s.progress.done.push(id);
- if(!s.progress.completedAt)s.progress.completedAt={};if(!s.progress.completedAt[id])s.progress.completedAt[id]=new Date().toISOString();
- if(!s.progress.watched.includes(id))s.progress.watched.push(id);
- try{await saveProgress();window.LLLearning?.mark?.(id,5);s.lessonStep=5;notice('Lektion abgeschlossen! +30 XP ✓');render();}
- catch(e){s.progress.done=s.progress.done.filter(x=>x!==id);notice('Speichern fehlgeschlagen: '+formatError(e));}
+ const originalDone=[...(s.progress.done||[])],oldCompleted={...(s.progress.completedAt||{})};
+ const alreadyComplete=originalDone.includes(id);
+ s.xpClaimBusy=true;
+ try{
+  if(!alreadyComplete)s.progress.done.push(id);
+  if(!s.progress.completedAt)s.progress.completedAt={};
+  if(!s.progress.completedAt[id])s.progress.completedAt[id]=new Date().toISOString();
+  if(!s.progress.watched.includes(id))s.progress.watched.push(id);
+  await saveProgress();
+ }catch(error){
+  s.progress.done=originalDone;s.progress.completedAt=oldCompleted;
+  notice('Lektion konnte nicht gespeichert werden: '+formatError(error));s.xpClaimBusy=false;return;
+ }
+ try{
+  const award=await grantLessonXP(id);
+  window.LLLearning?.mark?.(id,5);s.lessonStep=5;
+  notice(award.awarded?'Lektion abgeschlossen! +30 XP ✓':'Lektion abgeschlossen! 30 XP wurden bereits früher vergeben.');
+ }catch(error){
+  notice('Lektion gespeichert. XP bitte erneut bestätigen: '+formatError(error));
+ }finally{s.xpClaimBusy=false;render();}
 }
 
 
@@ -1245,7 +1278,7 @@ function profilePage(){
  '<section class="profile-title-picker"><div><span class="eyebrow">[ ✦ ] DEIN PROFILTITEL</span><h3>Zeig, was du erreicht hast.</h3><p>Du kannst nur Titel auswählen, die du durch Lektionen, Prüfungen, Freunde oder Streaks freigeschaltet hast.</p></div><form data-form="profile-title"><label class="form-label" for="profile-title">Freigeschalteten Titel auswählen</label><div class="profile-title-row"><select class="select" id="profile-title" name="title">'+titles.map(t=>'<option value="'+esc(t)+'" '+(t===selected?'selected':'')+'>'+esc(t)+'</option>').join('')+'</select><button class="btn primary" type="submit">Titel verwenden</button></div></form></section>'+
  '<section class="profile-quick-stats"><div class="profile-quick-tile"><span>🔥</span><strong>'+streak+'</strong><small>Login-Streak in Tagen</small></div>'+
  '<div class="profile-quick-tile"><span>🏅</span><strong>'+best+'</strong><small>Bisheriger Rekord</small></div>'+
- '<div class="profile-quick-tile"><span>✦</span><strong>'+((s.progress.done||[]).length*30)+'</strong><small>Erlernte XP</small></div></section>'+
+ '<div class="profile-quick-tile"><span>✦</span><strong>'+xpEarned()+'</strong><small>Erlernte XP</small></div></section>'+
  '<p class="micro streak-explanation">Deine Streak zählt nur, wenn du täglich den Claim bestätigst. Nach dem Einlösen wartest du mindestens 24 Stunden. Der Kalendertag richtet sich nach Europe/Berlin.</p>'+
  achievementGallery()+
  '<section class="profile-friends-link"><div><span class="eyebrow">[ ♡ ] NETZWERK</span><h3>Freunde & gemeinsame Fortschritte</h3>'+
@@ -1645,6 +1678,15 @@ document.addEventListener('click',async function(e){
    var wrap=$('#catalog-container');if(wrap)wrap.innerHTML=catalogItems();return;
   }
   if(name==='complete-practice'){await completePractice();return;}
+  if(name==='retry-lesson-xp'){
+   const id=parseRoute().id;
+   if(!doneIds().has(id)||s.xpClaimBusy)return;
+   s.xpClaimBusy=true;
+   try{const award=await grantLessonXP(id);notice(award.awarded?'30 XP für diese Lektion gutgeschrieben.':'30 XP für diese Lektion waren bereits gespeichert.');render();}
+   catch(error){notice('XP-Prüfung fehlgeschlagen: '+formatError(error));}
+   finally{s.xpClaimBusy=false;}
+   return;
+  }
   if(name==='reset-lesson'){
    const id=parseRoute().id;if(!id||!s.lessons.some(l=>l.id===id))return;
    if(!confirm('Nur diese Lektion neu beginnen? Ihr Abschluss und die Übung werden zurückgesetzt.'))return;
@@ -1680,13 +1722,13 @@ document.addEventListener('click',async function(e){
     applyPreferences();render();notice('Standarddesign wiederhergestellt.');return;
   }
   if(name==='reset-progress'){
-   if(!confirm('Wirklich alle Lernabschlüsse, XP und Prüfungsergebnisse dieses Kontos zurücksetzen? Diese Aktion kann nicht rückgängig gemacht werden.'))return;
+   if(!confirm('Lernabschlüsse und Prüfungsergebnisse zurücksetzen? Bereits verdiente XP bleiben dauerhaft erhalten und können nicht erneut verdient werden.'))return;
    var before=s.progress;
    s.progress={done:[],watched:[],practiced:[],exams:{}};
    try{
     await saveProgress();
     for(var l of s.lessons){try{localStorage.removeItem('liverylab-draft-'+l.id)}catch(_){}}
-    notice('Dein Kursfortschritt wurde zurückgesetzt.');render();
+    notice('Dein Kursfortschritt wurde zurückgesetzt. Bereits verdiente XP bleiben erhalten.');render();
    }catch(err){s.progress=before;notice('Zurücksetzen fehlgeschlagen: '+formatError(err))}
    return;
   }
