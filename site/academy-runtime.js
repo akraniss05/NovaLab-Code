@@ -4,7 +4,7 @@
    Made with 💙 by NyxAtheris (LiveryLab Studios). */
 (function(root){
 'use strict';
-const supported=new Set(['javascript','js','lua']);
+const supported=new Set(['javascript','js','lua','python','py']);
 function workerEnvironment(scope){
 'use strict';
 const maximum=100;
@@ -34,6 +34,15 @@ scope.onmessage=async function(event){
    evalLua(code,'lesson.lua')();
    const out=String(evalLua("return table.concat(LL_OUTPUT, '\\n')")()||'');
    if(out)lines.push(...out.split('\n').slice(0,maximum));
+  }else if(lang==='python'||lang==='py'){
+   if(!input.pythonBundleUrl||!input.pythonBaseUrl)throw Error('Python-Laufzeit nicht eingerichtet.');
+   importScripts(input.pythonBundleUrl);
+   const init=scope.loadPyodide||scope.module?.exports?.loadPyodide;
+   if(typeof init!=='function')throw Error('Pyodide konnte nicht initialisiert werden.');
+   const py=await init({indexURL:input.pythonBaseUrl});
+   py.setStdout({batched:line=>push(line)});
+   py.setStderr({batched:line=>push('STDERR:',line)});
+   await py.runPythonAsync(code);
   }else throw Error('Für diese Sprache ist noch keine echte Browser-Laufzeit eingerichtet.');
   scope.postMessage({ok:true,lines:lines.slice(0,maximum),error:'',available:true});
  }catch(error){
@@ -58,11 +67,13 @@ function run(code,lang){
    worker=new Worker(url);
    worker.onmessage=event=>settle(event.data||{ok:false,lines:[],error:'Keine Antwort vom Interpreter.',available:false});
    worker.onerror=()=>settle({ok:false,lines:[],error:'Die Ausführungsumgebung konnte nicht starten. Prüfe Browser und Verbindung.',available:false});
-   const maxTime=lang==='lua'?10000:4000;
+   const maxTime=lang==='python'||lang==='py'?45000:lang==='lua'?10000:4000;
    timeout=setTimeout(()=>settle({ok:false,lines:[],error:'Ausführung nach '+(maxTime/1000)+' Sekunden abgebrochen. Prüfe deinen Code auf Endlosschleifen.',available:true}),maxTime);
    const base=(typeof document!=='undefined'&&document.baseURI)||(typeof location!=='undefined'?location.href:'');
    const luaBundleUrl=base?new URL('vendor/fengari-web.bundle.js',base).href:'';
-   worker.postMessage({code:String(code||''),lang,luaBundleUrl});
+   const pythonBaseUrl=base?new URL('vendor/pyodide/',base).href:'';
+   const pythonBundleUrl=base?new URL('vendor/pyodide/pyodide.js',base).href:'';
+   worker.postMessage({code:String(code||''),lang,luaBundleUrl,pythonBaseUrl,pythonBundleUrl});
   }catch(error){settle({ok:false,lines:[],error:'Laufzeit nicht verfügbar: '+error.message,available:false});}
  });
 }
