@@ -364,6 +364,14 @@ function render(){
  paintTimer();
  paintEditorLines();
 }
+function htmlCssPreview(code,lang){
+ const csp='<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; style-src &#39;unsafe-inline&#39;; img-src data: blob:; font-src data:;">';
+ const reset='<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">';
+ const source=String(code||'').slice(0,10000);
+ if(lang==='html')return '<!doctype html>'+reset+csp+source;
+ const css=source.replace(/<\/style/ig,'<\\/style');
+ return '<!doctype html><html><head>'+reset+csp+'<style>body{font:16px system-ui;padding:20px;color:#17131f;background:#fff} .demo{border:1px dashed #c9bddb;padding:24px;border-radius:12px}'+css+'</style></head><body><div class="demo"><h1>CSS-Vorschau</h1><p>Diese Elemente zeigen deine Farben, Schriften und Abstände.</p><button>Beispielbutton</button><ul><li>Erster Eintrag</li><li>Zweiter Eintrag</li></ul></div></body></html>';
+}
 function paintEditorLines(){const input=$('#practice-input'),lines=$('#code-lines');if(input&&lines&&typeof input.value==='string')lines.textContent=Array.from({length:Math.max(1,input.value.split('\n').length)},(_,i)=>i+1).join('\n')}
 
 
@@ -669,7 +677,8 @@ function lessonPage(id){
  '<label class="micro" for="practice-input">'+(isBlender?'Beschreibe, was du in Blender umgesetzt hast:':'Datei: '+esc(p.filename||({lua:'client.lua',python:'main.py',javascript:'main.js'}[String(p.lang||'').toLowerCase()]||'lösung.txt')))+'</label>'+
  '<div class="code-editor"><div class="code-lines" id="code-lines" aria-hidden="true">1</div><textarea class="exercise-textarea" id="practice-input" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" wrap="off" rows="7" maxlength="10000" placeholder="'+(isBlender?'Welche Schritte hast du ausgeführt und was ist dabei entstanden?':'Schreibe hier deine Lösung …')+'">'+d+'</textarea></div>'+
  '<p class="practice-tip">'+(isBlender?'Beschreibe deine Umsetzung und vergleiche sie mit den Schritten.':'Prüfe deine Ausgabe und die geforderten Schritte. Die Konsole nennt den konkreten Fehler, soweit diese Aufgabe im Browser geprüft werden kann.')+'</p>'+
- '<div class="practice-console"><strong>KONSOLE · '+esc(p.lang||'Code')+'</strong><pre id="practice-output" aria-live="polite">Noch nicht geprüft.</pre></div>'+
+ '<div class="practice-console"><strong>KONSOLE · '+esc(p.lang||'Code')+'</strong><pre id="practice-output" aria-live="polite">Noch nicht geprüft.</pre></div>'+ 
+ '<iframe id="practice-preview" class="ll-practice-preview" sandbox="" referrerpolicy="no-referrer" title="Isolierte HTML/CSS-Vorschau" hidden></iframe>'+
  '<div class="practice-actions"><button class="btn" type="button" data-action="run-practice">Ausgabe anzeigen</button><button class="btn" type="button" data-action="show-hint">Tipp</button><button class="btn" type="button" data-action="show-solution">Lösung zeigen</button><button class="btn" type="button" data-action="reset-practice">Zurücksetzen</button></div>'+
  '<p class="practice-feedback" id="practice-feedback" aria-live="polite"></p>'+
  '<button class="btn '+(isPracticeDone?'':'primary')+'" type="button" data-action="complete-practice" '+(isPracticeDone?'disabled':'')+'>'+(isPracticeDone?'✓ Praxis geprüft':'Meinen Code prüfen →')+'</button>'+
@@ -1488,6 +1497,13 @@ document.addEventListener('click',async function(e){
    }
    if(name==='show-solution'){if(feedback){feedback.textContent='Musterlösung:\n'+String(p.solution||p.example||'Für diese Aufgabe ist noch keine Musterlösung hinterlegt.')+'\n\nErklärung: '+String(p.theory||p.goal||'Vergleiche den Aufbau mit der Aufgabe.');feedback.classList.remove('error')}return;}
    if(name==='reset-practice'){box.value=String(p.starter||'');box.dispatchEvent(new Event('input',{bubbles:true}));if(out)out.textContent='Editor zurückgesetzt.';if(feedback)feedback.textContent='';s.hintStage=0;return;}
+   if(['html','css'].includes(String(p.lang||'').toLowerCase())){
+    const view=$('#practice-preview'),lang=String(p.lang||'').toLowerCase();
+    if(view){view.hidden=false;view.srcdoc=htmlCssPreview(box.value,lang);}
+    if(out)out.textContent='HTML/CSS-Vorschau erstellt. JavaScript in der Vorschau ist aus Sicherheitsgründen deaktiviert.';
+    if(feedback){feedback.textContent='Prüfe das Ergebnis in der Vorschau. Die Abgabe wird anhand der Aufgabenregeln statisch bewertet.';feedback.classList.remove('error');}
+    window.LLLearning?.mark?.(parseRoute().id,3);return;
+   }
    if(out)out.textContent='Code wird in der Laufzeitumgebung ausgeführt …';
    const lang=String(p.lang||'').toLowerCase(),runtime=await window.LLRuntime.run(box.value,lang);
    if(out)out.textContent=runtime.available?(runtime.lines.map(x=>'> '+x).join('\n')+(runtime.error?'\n✕ '+runtime.error:runtime.ok&&runtime.lines.length===0?'(Programm ohne Ausgabe erfolgreich ausgeführt)':'')):runtime.error;
