@@ -7,7 +7,7 @@
 'use strict';
 var cfg=window.LL_CONFIG||{}, $=function(q,root){return (root||document).querySelector(q);};
 var content=$('#content'), sidebar=$('#sidebar'), bottom=$('#bottom-nav'), toastNode=$('#toast');
-var api=null, s={shopDiscount:0,service:{beta_open:true,mine:[],admin:[]},streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,quizStep:0,quizPassed:false,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},adminPage:1,adminFilter:'all',adminSearch:'',catalogLimit:9,practiceChecked:false,draft:'',lessonStep:1,hintStage:0,prefs:null,projectTab:0,projectSource:'',projectLoading:false};
+var api=null, s={shopDiscount:0,service:{beta_open:true,mine:[],admin:[]},streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,quizStep:0,quizPassed:false,sectionIndex:0,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},adminPage:1,adminFilter:'all',adminSearch:'',catalogLimit:9,practiceChecked:false,draft:'',lessonStep:1,hintStage:0,prefs:null,projectTab:0,projectSource:'',projectLoading:false};
 var plans={free:'Free',pro:'Plus',ultimate:'Ultimate'};
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];});}
 function safeLink(url){return /^https:\/\/[^\s<>"]+$/i.test(String(url||''))?esc(url):'#';}
@@ -325,11 +325,17 @@ async function navigateCurrent(){
  if(!s.ready)return;
  var route=parseRoute();s.route=route.page;
  if(route.page==='lesson'){
-   s.choice=null;s.quizStep=0;s.quizPassed=false;s.hintStage=0;s.lessonStep=1;s.videoChecked=watchedIds().has(route.id);s.practiceChecked=(s.progress.verifiedPractice||[]).includes(route.id);s.draft=readDraft(route.id);s.videoLoaded=false;s.lesson=null;s.lessonGate=null;
+   s.choice=null;s.quizStep=0;s.quizPassed=false;s.sectionIndex=0;s.hintStage=0;s.lessonStep=1;s.videoChecked=watchedIds().has(route.id);s.practiceChecked=(s.progress.verifiedPractice||[]).includes(route.id);s.draft=readDraft(route.id);s.videoLoaded=false;s.lesson=null;s.lessonGate=null;
    frame();content.innerHTML='<div class="center-screen"><div class="spinner"></div><p>Geschützte Lektion wird geladen …</p></div>';
    var meta=s.lessons.find(function(l){return l.id===route.id;});
    if(meta&&allowed(meta)){var result=await api.rpc('academy_open_lesson',{p_lesson:route.id});if(result.error){s.lessonGate={reason:'error',error:formatError(result.error)};notice(formatError(result.error));}else if(result.data?.allowed){s.lesson=result.data;
       if(window.LLLearning){const cloud=await window.LLLearning.load(route.id);if(parseRoute().id!==route.id)return;s.draft=cloud.content;s.lessonStep=cloud.step;}
+      const quiz=s.lesson.payload||{},bank=quizQuestions(quiz),old=s.progress.quizProgress?.[route.id];
+      if(doneIds().has(route.id)){s.quizPassed=true;s.quizStep=Math.max(0,bank.length-1);}
+      else if(old&&old.total===bank.length&&old.version===Number(quiz.quiz_version||1)){
+        s.quizStep=Math.max(0,Math.min(bank.length-1,Number(old.step)||0));s.quizPassed=!!old.passed;
+      }
+      try{s.sectionIndex=Math.max(0,Number(localStorage.getItem('liverylab-part-'+(s.user?.id||'guest')+'-'+route.id))||0);}catch(_){}
       s.progress.lastLesson={id:route.id,step:s.lessonStep,at:new Date().toISOString()};void saveProgress().catch(()=>{});if(s.daily){s.daily.used_today=result.data.used;s.daily.remaining_today=result.data.remaining;}}else{s.lessonGate=result.data||{reason:'error'};}}
  }
  if(route.page==='admin'&&s.profile?.role==='admin'){try{await Promise.all([fetchMembers(),fetchVouchers()]);}catch(e){notice('Adminliste: '+formatError(e));}}
@@ -613,14 +619,13 @@ function trackPage(id){
 
 function notFound(){return '<div class="empty"><h2>Inhalt nicht gefunden</h2><p>Dieser Lernpfad ist nicht verfügbar.</p><button class="btn" data-go="courses">Zur Kursbibliothek</button></div>';}
 function quizQuestions(p){
- const options=Array.isArray(p.options)?p.options.map(x=>String(x)):[];
- const correct=Number(p.correct);
- if(options.length<2||!Number.isInteger(correct)||correct<0||correct>=options.length)return [];
- return [{question:String(p.quiz||'Welche Antwort ist richtig?'),options,correct}];
+ return window.LLCurriculum?.questions(p)||[];
 }
 function paintQuiz(){const p=s.lesson?.payload||{},qs=quizQuestions(p),q=qs[Math.min(s.quizStep,qs.length-1)];if(!q)return;
  const title=$('#quiz-question'),choices=$('#quiz-choices'),progress=$('#quiz-progress');
  if(title)title.textContent=q.question;if(progress)progress.textContent='Frage '+Math.min(s.quizStep+1,qs.length)+' von '+qs.length;
+ const meter=$('#quiz-meter-fill');if(meter)meter.style.width=Math.round((s.quizStep+(s.quizPassed?1:0))/Math.max(1,qs.length)*100)+'%';
+ const feedback=$('#answer-result');if(feedback){feedback.classList.remove('quiz-correct','quiz-incorrect');feedback.textContent=s.quizPassed?'✓ Alle Fragen richtig beantwortet!':'Wähle eine Antwort. Bei richtiger Lösung folgt sofort die nächste Frage.';}
  if(choices)choices.innerHTML=q.options.map((answer,i)=>'<button type="button" class="quiz-choice" data-answer="'+i+'"><span>'+String.fromCharCode(65+i)+'</span>'+esc(answer)+'</button>').join('');
  updateLessonControls();
 }
@@ -634,7 +639,7 @@ function lessonPage(id){
  '<div class="hero-actions" style="justify-content:center"><button class="btn primary" data-go="plans">Stufen vergleichen</button>'+
  '<a class="btn discord" rel="noopener noreferrer" target="_blank" href="https://discord.gg/livery-lab">Freischaltung anfragen</a></div></section>';
  if(!s.lesson){const daily=s.lessonGate?.reason==='daily_limit';return back+'<section class="lesson-gate"><span class="gate-icon">'+(daily?'◷':'🔒')+'</span><span class="eyebrow">'+(daily?'TAGESLIMIT ERREICHT':'LEKTION NICHT VERFÜGBAR')+'</span><h2>'+(daily?'Für heute geschafft.':'Lektion nicht geladen')+'</h2><p>'+(daily?'Du hast heute alle '+safeNumber(s.daily?.daily_limit)+' neuen Lernstationen geöffnet. Morgen geht es weiter. Bereits geöffnete Stationen bleiben zugänglich.':esc(s.lessonGate?.error||'Prüfe deine Freischaltung und Verbindung.'))+'</p><div class="actions-pair"><button class="btn" data-go="track/'+esc(l.course_id)+'">← Lernpfad</button><button class="btn primary" data-go="plans">Tarife ansehen →</button></div></section>';}
- var p=s.lesson.payload||{},video=s.lesson.video_id||p.videoId,info=videoInfo(video),options=quizQuestions(p)[0]?.options||[],finished=doneIds().has(id),isBlender=c?.category==='3D & Blender';
+ var p=s.lesson.payload||{},video=s.lesson.video_id||p.videoId,info=videoInfo(video),qs=quizQuestions(p),activeQuiz=qs[Math.min(s.quizStep,qs.length-1)],options=activeQuiz?.options||[],finished=doneIds().has(id),isBlender=c?.category==='3D & Blender';
  var videoStart=Math.max(0,Number(s.lesson.video_start||p.videoStart)||0),validVideo=video&&/^[a-zA-Z0-9_-]{11}$/.test(video),url=validVideo?'https://www.youtube.com/watch?v='+video+'&t='+videoStart+'s':null;
  var search='https://www.youtube.com/results?search_query='+encodeURIComponent(c.name+' '+l.title+' Anleitung Tutorial deutsch');
  var next=all[index+1],d=esc(s.draft),isPracticeDone=s.practiceChecked||finished;
@@ -647,12 +652,8 @@ function lessonPage(id){
  '<div class="lesson-step '+(isPracticeDone?'done':'')+'"><span class="step-index">03</span>Praxis</div>'+
  '<div class="lesson-step '+(finished?'done':'')+'"><span class="step-index">04</span>Quiz</div></div></header>'+
  (finished?'<div class="done-banner" style="margin:15px 0"><strong>✓ Lektion abgeschlossen</strong><p>Du hast diese Lektion bereits bearbeitet und 30 XP gesammelt.</p></div>':'')+
- '<section class="step-box" id="lesson-explanation"><span class="eyebrow">SCHRITT 01 · VERSTEHEN</span><h2>Die Idee dahinter.</h2>'+
- '<p>'+esc(p.theory||l.summary)+'</p>'+
- (Array.isArray(p.keyPoints)?'<ul>'+p.keyPoints.slice(0,4).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+
- (p.mistake?'<div class="note"><strong>Typischer Fehler:</strong> '+esc(p.mistake)+'</div>':'')+
- (p.example?'<div class="codebox"><pre><code>'+esc(p.example)+'</code></pre></div>':'')+
- (p.resource?'<a href="'+safeLink(p.resource)+'" target="_blank" rel="noopener noreferrer">Offizielle Dokumentation ↗</a>':'')+
+ '<section class="step-box" id="lesson-explanation"><span class="eyebrow">SCHRITT 01 · VERSTEHEN</span>'+
+ (window.LLCurriculum?.render(p,s.sectionIndex,esc,safeLink)||'<p>'+esc(p.theory||l.summary)+'</p>')+
  '</section>'+
  '<section id="lesson-video" class="step-box '+(isBlender?'blender-video-step':'')+'"><span class="eyebrow">SCHRITT 02 · '+(isBlender?'BLENDER VIDEO-TRAINING':'VIDEO-TUTORIAL')+'</span><h2>'+(isBlender?'Im Interface mitmachen.':'Erklärung ansehen.')+'</h2>'+
  (validVideo?
@@ -677,7 +678,7 @@ function lessonPage(id){
  '<div class="practice-feedback" id="practice-feedback" role="status" aria-live="polite" hidden></div>'+
  '<div class="practice-actions practice-actions-simple"><button class="btn primary" type="button" data-action="complete-practice">✓ Prüfen</button><button class="btn" type="button" data-action="show-hint">Tipp</button><button class="btn" type="button" data-action="show-solution">Lösung anzeigen</button></div>'+
  '</div></section>'+
- '<section class="step-box" id="quiz-area"><span class="eyebrow">SCHRITT 04 · WISSENSTEST</span><h2>Wissen anwenden.</h2><span id="quiz-progress">Frage 1 von '+quizQuestions(p).length+'</span><p id="quiz-question">'+esc(p.quiz||'Hast du das Thema verstanden?')+'</p><div id="quiz-choices">'+
+ '<section class="step-box" id="quiz-area"><span class="eyebrow">SCHRITT 04 · WISSENSTEST</span><h2>Wissen anwenden.</h2><span id="quiz-progress">Frage '+Math.min(s.quizStep+1,qs.length)+' von '+qs.length+'</span><div class="ll-quiz-progress"><span id="quiz-meter-fill" style="width:'+Math.round((s.quizStep+(s.quizPassed?1:0))/Math.max(1,qs.length)*100)+'%"></span></div><p id="quiz-question">'+esc(activeQuiz?.question||'Hast du das Thema verstanden?')+'</p><div id="quiz-choices">'+
  options.map((answer,i)=>'<button type="button" class="quiz-choice" data-answer="'+i+'"><span>'+String.fromCharCode(65+i)+'</span>'+esc(answer)+'</button>').join('')+'</div>'+
  '<p class="quiz-feedback micro" id="answer-result" role="status" aria-live="polite">'+(finished?'✓ Bereits abgeschlossen.':'Wähle die richtige Antwort. Danach kannst du die Lektion abschließen.')+'</p>'+
  '<button class="btn primary" id="mark-lesson" data-action="finish-lesson" type="button" disabled>'+(finished?'✓ Lektion abgeschlossen':'Lektion abschließen →')+'</button></section>'+ 
@@ -699,13 +700,14 @@ function updateLessonControls(){
   !questions.length?'Quizdaten fehlen. Bitte melde diese Lektion.':
   s.quizPassed&&!s.videoChecked?'✓ Quiz bestanden! Bestätige noch das Video.':
   s.quizPassed&&!s.practiceChecked?'✓ Quiz bestanden! Prüfe noch deinen Code.':
-  s.quizPassed?'✓ Quiz bestanden! Du kannst die Lektion abschließen.':
+  s.quizPassed?'✓ Alle '+questions.length+' Fragen richtig! Du kannst die Lektion abschließen.':
   s.choice==null?'Wähle eine Antwort und löse die Schritte darüber.':
-  s.choice!==correct?'Das ist noch nicht die richtige Antwort. Sieh dir die Erklärung erneut an.':
+  s.choice!==correct?'Noch nicht richtig. '+String(questions[Math.min(s.quizStep,questions.length-1)]?.explanation||'Lies den passenden Lernteil noch einmal.'):
   !s.videoChecked?'Richtige Antwort ✓ · Sieh noch das Tutorial an und bestätige es.':
   !s.practiceChecked?'Richtige Antwort ✓ · Schließe noch deinen eigenen Praxisschritt ab.':
   '✓ Richtig! Du kannst die Lektion abschließen.';}
  var video=$('#video-check'),practice=$('#practice-workspace');
+ const meter=$('#quiz-meter-fill');if(meter)meter.style.width=Math.round((s.quizStep+(s.quizPassed?1:0))/Math.max(1,questions.length)*100)+'%';
  if(video)video.checked=s.videoChecked;
  if(practice)practice.classList.toggle('is-complete',s.practiceChecked);
 }
@@ -1578,6 +1580,8 @@ document.addEventListener('click',async function(e){
    const previous=JSON.parse(JSON.stringify(s.progress));
    for(const key of ['done','watched','practiced','verifiedPractice'])s.progress[key]=(s.progress[key]||[]).filter(x=>x!==id);
    if(s.progress.completedAt)delete s.progress.completedAt[id];
+   if(s.progress.quizProgress)delete s.progress.quizProgress[id];
+   try{localStorage.removeItem('liverylab-part-'+(s.user?.id||'guest')+'-'+id);}catch(_){}
    try{await saveProgress();if(window.LLLearning)await window.LLLearning.remove(id);localStorage.removeItem('liverylab-draft-'+id);s.draft='';s.lessonStep=1;await navigateCurrent();notice('Diese Lektion wurde neu gestartet.');}
    catch(e){s.progress=previous;notice('Neustart konnte nicht gespeichert werden: '+formatError(e));}return;
   }
@@ -1646,7 +1650,25 @@ document.addEventListener('click',async function(e){
   if(Number.isInteger(index)&&index>=0&&index<PROJECT_FILES.length){s.projectTab=index;await loadProjectTab();render();}
   return;
  }
- var answer=e.target.closest('[data-answer]');if(answer){const qs=quizQuestions(s.lesson?.payload||{}),q=qs[s.quizStep];if(!q||s.quizPassed)return;s.choice=Number(answer.dataset.answer);if(s.choice===q.correct){s.quizPassed=true;window.LLLearning?.mark?.(parseRoute().id,4);notice('Richtig! Quiz bestanden.')}else{s.quizPassed=false;}updateLessonControls();return;}
+ var part=e.target.closest('[data-lesson-part]');if(part&&parseRoute().page==='lesson'&&s.lesson){
+  const index=Number(part.dataset.lessonPart),parts=window.LLCurriculum?.parts(s.lesson.payload||{})||[];
+  if(Number.isInteger(index)&&index>=0&&index<parts.length){
+   s.sectionIndex=index;
+   const node=$('#lesson-explanation');if(node)node.innerHTML='<span class="eyebrow">SCHRITT 01 · VERSTEHEN</span>'+window.LLCurriculum.render(s.lesson.payload,index,esc,safeLink);
+   try{localStorage.setItem('liverylab-part-'+(s.user?.id||'guest')+'-'+parseRoute().id,String(index));}catch(_){}
+   if(node?.scrollIntoView)node.scrollIntoView({block:'start',behavior:'smooth'});
+  }
+  return;
+ }
+ var answer=e.target.closest('[data-answer]');if(answer){const qs=quizQuestions(s.lesson?.payload||{}),q=qs[s.quizStep];if(!q||s.quizPassed)return;s.choice=Number(answer.dataset.answer);
+ if(s.choice===q.correct){
+  if(s.quizStep===qs.length-1){s.quizPassed=true;window.LLLearning?.mark?.(parseRoute().id,4);notice('Alle '+qs.length+' Fragen richtig beantwortet!');updateLessonControls();}
+  else{s.quizStep++;s.choice=null;paintQuiz();notice('Richtig! Jetzt Frage '+(s.quizStep+1)+' von '+qs.length+'.');}
+  if(!s.progress.quizProgress)s.progress.quizProgress={};
+  s.progress.quizProgress[parseRoute().id]={step:s.quizStep,total:qs.length,version:Number(s.lesson?.payload?.quiz_version||1),passed:s.quizPassed};
+  void saveProgress().catch(()=>{});
+ }else{updateLessonControls();}
+ return;}
  var exam=e.target.closest('[data-exam-answer]');if(exam){await submitExamAnswer(Number(exam.dataset.examAnswer));return;}
  var filter=e.target.closest('[data-filter]');if(filter){s.filter=filter.dataset.filter;s.catalogLimit=9;render();return;}
  var examFilter=e.target.closest('[data-exam-filter]');if(examFilter){s.examFilter=examFilter.dataset.examFilter;render();return;}
