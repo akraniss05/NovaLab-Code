@@ -98,6 +98,16 @@ state.profile.role='admin';
 assert(app.adminPage().includes('Registrierungsanfragen'),'Pending approval cards render');
 assert(app.adminPage().includes('Genehmigen'),'Admin approval action renders');
 assert(app.adminPage().includes('data-admin-tier')===false,'Pending accounts do not have tier controls yet');
+state.members.push({id:'paid-user',username:'PlusTester',email:'plus@example.com',access_status:'approved',email_confirmed:true,active:true,role:'student'});
+state.memberPlans['paid-user']='pro';state.memberExpiry['paid-user']='2030-01-01T12:00:00.000Z';
+const adminHtml=app.adminPage();
+for(const value of ['data-plan-clock="paid-user"','data-plan-action="extend"','data-plan-action="reduce"','data-plan-action="end"','Laufzeit in Tagen','Endet am'])
+ assert(adminHtml.includes(value),'Missing admin subscription duration feature '+value);
+assert(adminHtml.includes('data-plan-user="paid-user"'),'Subscription actions are scoped to the target account');
+state.memberExpiry['paid-user']=null;
+assert(app.adminPage().includes('Laufzeit festlegen'),'Permanent subscriptions can be converted to a fixed duration');
+state.members.pop();
+
 state.authScreen='register';app.login();
 assert(fakeNodes['#content'].innerHTML.includes('Registrierungsanfrage senden'),'Registration form renders');
 app.waitingApproval('pending');
