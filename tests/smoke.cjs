@@ -5,7 +5,7 @@ const read=file=>fs.readFileSync(path.join(__dirname,'..',file),'utf8');
 const html=read('site/index.html'),js=read('site/academy-v21.js'),css=read('site/app-v21.css');
 for(const file of ['site/reference-data.js','site/app-v21.css','site/app-v12.css','site/config.js','site/auth-mfa-v15.js','site/academy-v21.js','site/privacy.html','site/manifest.webmanifest','site/icon.svg','supabase/functions/academy-signin/index.ts','supabase/functions/admin-users/index.ts'])
  assert(fs.existsSync(path.join(__dirname,'..',file)),file+' missing');
-for(const token of ['app-v21.css?build=20261107v31','academy-v21.js?build=20261107v43','auth-mfa-v15.js?build=20261107v31','config.js?build=20261107v31','LiveryLab Academy'])
+for(const token of ['app-v21.css?build=20261107v31','academy-v21.js?build=20261107v44','auth-mfa-v15.js?build=20261107v31','config.js?build=20261107v31','LiveryLab Academy'])
  assert(html.includes(token),'Versioned asset missing: '+token);
 for(const obsolete of ['styles.css','refined.css','music-studio.js','studio3d-v5.js'])
  assert(!html.includes(obsolete),'Old asset still linked: '+obsolete);
@@ -42,7 +42,7 @@ assert.equal(banner.subarray(8,12).toString(),'WEBP','LiveryLab banner invalid')
 for(const selector of ['.ll-home-shortcuts','.ll-home-brand-banner','.ll-streak-modal','.ll-streak-claim','.ll-streak-backdrop'])assert(css.includes(selector),'Missing v19 interface style: '+selector);
 assert(fs.existsSync(path.join(__dirname,'../site/v21.html')),'Physical uncached v20 entry missing');
 assert(read('site/v21.html').includes('academy-v21.js?build='),'Unique iOS entry must load new code');
-assert(read('site/v31.html').includes('academy-v21.js?build=20261107v43'),'Fresh v28 entry must load current code');
+assert(read('site/v31.html').includes('academy-v21.js?build=20261107v44'),'Fresh v28 entry must load current code');
 assert(read('site/manifest.webmanifest').includes('v31.html#home'),'Installed app must open fresh entry');
 assert(js.includes("root=document.createElement('div')"),'Old HTML popup fallback missing');
 assert(js.includes("s.streakModalOpen=true;"),'Daily popup must appear after every login');
@@ -78,8 +78,8 @@ assert(!js.includes('data-action="run-practice"'),'Run button must not render');
 assert(html.includes('class="focus-center"')&&html.includes('data-timer-open'),'Center timer missing');
 assert(js.includes('localStorage.setItem(timerStorageKey'),'Timer must persist beyond tab reload');
 const layoutRestore=read('site/academy-v31-layout.css');
-assert(html.includes('academy-v31-layout.css?build=20261107v43'),'v31 simplified CSS missing');
-assert(read('site/v31.html').includes('academy-v31-layout.css?build=20261107v43'),'PWA simple CSS missing');
+assert(html.includes('academy-v31-layout.css?build=20261107v44'),'v31 simplified CSS missing');
+assert(read('site/v31.html').includes('academy-v31-layout.css?build=20261107v44'),'PWA simple CSS missing');
 for(const selector of ['.ll-home-brand-banner','.topbar','.bottom-nav','.focus-center','.practice-actions-simple'])assert(layoutRestore.includes(selector),'Visual recovery missing '+selector);
 
 const curriculum=read('site/academy-curriculum.js');
@@ -99,3 +99,12 @@ assert(js.includes('lessonLocalKey'),'Local progress must be scoped to the logge
 assert(!localSync.includes('.upsert('),'Draft changes must not be uploaded to Supabase');
 assert(localSync.includes('localStorage.setItem(key,String(value))'),'Local draft saving must be available');
 assert(js.includes('Nur auf diesem Gerät gespeichert'),'Tell the user drafts are device-local');
+
+assert(js.includes('academy_claim_lesson_xp'),'Client must use the server-side one-time award');
+assert(js.includes('academy_lesson_xp_awards'),'Client must load immutable XP history');
+assert(js.includes('xpHistoryHtml'),'User profile must list which lessons gave XP');
+assert(js.includes('xpEarned()'),'XP must be calculated from permanent reward ledger');
+assert(js.includes('xpAwarded(id)'),'Repeated lessons must display an already-rewarded state');
+assert(js.includes('Bereits verdiente XP bleiben'),'Reset must warn that XP persist');
+const ledgerSql=read('supabase/migrations/20261107_v44_one_time_xp_ledger.sql');
+for(const item of ['PRIMARY KEY (user_id, lesson_id)','ON CONFLICT (user_id,lesson_id) DO NOTHING','CREATE POLICY academy_lesson_xp_awards_own_select','GRANT SELECT ON TABLE public.academy_lesson_xp_awards TO authenticated','academy_private.claim_lesson_xp'])assert(ledgerSql.includes(item),'XP ledger lacks guard '+item);
