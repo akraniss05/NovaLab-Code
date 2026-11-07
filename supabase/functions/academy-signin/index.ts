@@ -9,6 +9,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.81.1';
 
 const allowedOrigin = Deno.env.get('ACADEMY_ORIGIN') || 'https://akraniss05.github.io';
+const allowedOrigins = new Set([allowedOrigin,'https://akraniss05.github.io','https://liverylab-academy.dev']);
 const headers: Record<string, string> = {
   'Access-Control-Allow-Origin': allowedOrigin,
   'Access-Control-Allow-Headers': 'authorization, apikey, content-type, x-client-info',
@@ -18,15 +19,15 @@ const headers: Record<string, string> = {
   'Vary': 'Origin',
   'X-Content-Type-Options': 'nosniff'
 };
-const reply = (status: number, body: Record<string, unknown>) =>
-  new Response(JSON.stringify(body), {status, headers});
-const denied = () => reply(401, { error: 'Benutzername oder Passwort ist falsch.' });
-
 Deno.serve(async (request: Request) => {
-  if (request.method === 'OPTIONS') return new Response('ok', {headers});
+  const origin = request.headers.get('origin')||allowedOrigin;
+  const corsHeaders = {...headers, 'Access-Control-Allow-Origin':allowedOrigins.has(origin)?origin:allowedOrigin};
+  const reply = (status: number, body: Record<string, unknown>) =>
+    new Response(JSON.stringify(body), {status, headers:corsHeaders});
+  const denied = () => reply(401, { error: 'Benutzername oder Passwort ist falsch.' });
+  if (request.method === 'OPTIONS') return new Response('ok', {status:allowedOrigins.has(origin)?200:403,headers:corsHeaders});
   if (request.method !== 'POST') return reply(405, {error: 'Method not allowed'});
-  const origin = request.headers.get('origin');
-  if (origin && origin !== allowedOrigin) return reply(403, {error: 'Origin not allowed'});
+  if (!allowedOrigins.has(origin)) return reply(403, {error: 'Origin not allowed'});
   if (Number(request.headers.get('content-length') || '0') > 3072) return reply(413, {error: 'Request too large'});
   let body: Record<string, unknown>;
   try { body = await request.json(); }
