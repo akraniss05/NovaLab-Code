@@ -7,7 +7,7 @@
 'use strict';
 var cfg=window.LL_CONFIG||{}, $=function(q,root){return (root||document).querySelector(q);};
 var content=$('#content'), sidebar=$('#sidebar'), bottom=$('#bottom-nav'), toastNode=$('#toast');
-var api=null, s={shopDiscount:0,service:{beta_open:true,mine:[],admin:[]},streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,quizStep:0,quizPassed:false,sectionIndex:0,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},adminPage:1,adminFilter:'all',adminSearch:'',catalogLimit:9,practiceChecked:false,draft:'',lessonStep:1,hintStage:0,prefs:null,projectTab:0,projectSource:'',projectLoading:false};
+var api=null, s={shopDiscount:0,service:{beta_open:true,mine:[],admin:[]},streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,quizStep:0,quizPassed:false,sectionIndex:0,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},memberExpiry:{},adminPage:1,adminFilter:'all',adminSearch:'',catalogLimit:9,practiceChecked:false,draft:'',lessonStep:1,hintStage:0,prefs:null,projectTab:0,projectSource:'',projectLoading:false};
 var plans={free:'Free',pro:'Plus',ultimate:'Ultimate'};
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];});}
 function safeLink(url){return /^https:\/\/[^\s<>"]+$/i.test(String(url||''))?esc(url):'#';}
@@ -1360,6 +1360,31 @@ function supportAdminSection(){
  '<div class="reply-templates"><button type="button" class="btn small" data-reply-template="Danke für deine Meldung. Wir prüfen das und melden uns hier zurück.">Eingang bestätigen</button><button type="button" class="btn small" data-reply-template="Bitte beschreibe die Schritte und dein Gerät genauer, damit wir den Fehler nachstellen können.">Details anfragen</button></div><form data-form="support-reply" data-ticket-id="'+esc(t.id)+'"><textarea class="input" name="reply" maxlength="2000" rows="2" placeholder="Antwort an das Mitglied …">'+esc(t.reply||'')+'</textarea><div class="support-reply-actions"><select class="select" name="status"><option value="answered">Beantworten</option><option value="closed">Schließen</option><option value="rejected">Ablehnen</option>'+(t.category==='plan'&&t.status!=='approved'?'<option value="approved">Mitgliedschaft freigeben</option>':'')+'</select>'+(t.category==='plan'&&t.status!=='approved'?'<label>Freigabe in Tagen <input class="input" type="number" name="days" min="1" max="3650" value="30"></label>':'')+'<button class="btn primary small" type="submit">Speichern</button></div></form></article>').join(''):'<div class="empty">Noch keine Supportanfragen.</div>')+'</section>';
 }
 
+function membershipRemainingText(tier,expiry){
+ if(!tier||tier==='free')return 'Kein aktives Abo';
+ if(expiry===null||expiry===undefined||expiry==='')return 'Unbefristet';
+ const remaining=Date.parse(expiry)-Date.now();
+ if(!Number.isFinite(remaining))return 'Ablaufdatum nicht verfügbar';
+ if(remaining<=0)return 'Abgelaufen';
+ const mins=Math.ceil(remaining/60000);
+ const days=Math.floor(mins/1440),hours=Math.floor(mins%1440/60),minutes=mins%60;
+ return days>0?days+' Tage · '+hours+' Std.':hours>0?hours+' Std. · '+minutes+' Min.':minutes+' Minuten';
+}
+function membershipExpiryText(tier,expiry){
+ if(!tier||tier==='free')return 'Free · keine Laufzeit';
+ if(!expiry)return 'Ohne Ablaufdatum';
+ const value=new Date(expiry);
+ return Number.isNaN(value.getTime())?'Ungültiges Ablaufdatum':'Endet am '+new Intl.DateTimeFormat('de-DE',{dateStyle:'medium',timeStyle:'short',timeZone:'Europe/Berlin'}).format(value);
+}
+function updateMembershipClocks(){
+ if(!s.ready||parseRoute().page!=='admin')return;
+ document.querySelectorAll('[data-plan-clock]').forEach(el=>{
+  const id=el.dataset.planClock,remaining=membershipRemainingText(s.memberPlans[id],s.memberExpiry[id]);
+  if(el.textContent!==remaining)el.textContent=remaining;
+  el.classList.toggle('is-expired',remaining==='Abgelaufen');
+ });
+}
+setInterval(updateMembershipClocks,30000);
 function adminPage(){
  if(s.profile?.role!=='admin')return '<section class="locked-panel"><h2>Nur für Administratoren.</h2></section>';
  const people=s.members||[],pending=people.filter(u=>u.access_status==='pending'),query=String(s.adminSearch||'').toLowerCase(),rest=people.filter(u=>u.access_status!=='pending').filter(u=>(s.adminFilter==='all'||(s.adminFilter==='active'&&u.active)||(s.adminFilter==='blocked'&&!u.active)||(s.adminFilter==='admin'&&u.role==='admin'))&&(!query||String(u.username||'').toLowerCase().includes(query)||String(u.email||'').toLowerCase().includes(query))),active=people.filter(u=>u.active).length,blocked=people.filter(u=>!u.active&&u.access_status!=='pending').length;
@@ -1377,7 +1402,8 @@ function adminPage(){
  const status=u=>u.access_status==='blocked'?'<span class="chip pro">⛔ Gesperrt</span>':
  u.access_status==='pending'?'<span class="chip plus">Wartet</span>':'<span class="chip free">✓ Aktiv</span>';
  const cards=rest.map(u=>{
-  const owner=u.role==='admin',tier=s.memberPlans[u.id]||'free';
+  const owner=u.role==='admin',tier=s.memberPlans[u.id]||'free',expiry=s.memberExpiry[u.id]||null;
+  const subscription=tier==='free'?'free':!expiry?'unlimited':Date.parse(expiry)<=Date.now()?'expired':'active';
   return '<article class="member-card"><div class="member-header">'+
   '<div class="member-avatar">'+esc((u.username||u.email||'?').slice(0,1).toUpperCase())+'</div>'+
   '<div class="member-identity"><strong>'+esc(u.username||u.email||'Mitglied')+'</strong>'+
@@ -1388,7 +1414,15 @@ function adminPage(){
    '<option value="free" '+(tier==='free'?'selected':'')+'>Free · 3/Tag</option>'+
    '<option value="pro" '+(tier==='pro'?'selected':'')+'>Plus · 6/Tag</option>'+
    '<option value="ultimate" '+(tier==='ultimate'?'selected':'')+'>Ultimate · Unbegrenzt</option></select>')+
-   '</div><div class="member-actions">'+
+   '</div>'+(!owner?
+    '<section class="ll-plan-manager" aria-label="Abo-Laufzeit von '+esc(u.username||'Mitglied')+'">'+
+    '<div class="ll-plan-status"><span class="ll-plan-dot '+subscription+'"></span><div><strong data-plan-clock="'+esc(u.id)+'">'+esc(membershipRemainingText(tier,expiry))+'</strong><small>'+esc(membershipExpiryText(tier,expiry))+'</small></div></div>'+
+    (tier!=='free'?'<div class="ll-plan-form"><label for="plan-days-'+esc(u.id)+'">Laufzeit in Tagen <input id="plan-days-'+esc(u.id)+'" class="input" data-plan-days type="number" inputmode="numeric" min="1" max="3650" step="1" value="30"></label>'+
+    '<div class="ll-plan-actions">'+
+    (expiry?'<button type="button" class="btn small" data-plan-action="extend" data-plan-user="'+esc(u.id)+'">+ Tage</button><button type="button" class="btn small" data-plan-action="reduce" data-plan-user="'+esc(u.id)+'">− Tage</button>':'<button type="button" class="btn small" data-plan-action="set" data-plan-user="'+esc(u.id)+'">Laufzeit festlegen</button>')+
+    '<button type="button" class="btn small danger" data-plan-action="end" data-plan-user="'+esc(u.id)+'">Abo beenden</button></div></div>':'<p class="micro">Wähle Plus oder Ultimate, um eine 30-tägige Mitgliedschaft zu vergeben.</p>')+
+    '</section>':'')+
+   '<div class="member-actions">'+
    '<button class="btn small" data-reset-user="'+esc(u.id)+'" '+(owner?'disabled':'')+'>Passwort zurücksetzen</button>'+
    '<button class="btn small '+(u.active?'danger':'primary')+'" data-active-user="'+esc(u.id)+'" data-active-value="'+(!u.active)+'" '+(owner?'disabled':'')+'>'+
    (u.active?'Zugriff sperren':'Zugriff erlauben')+'</button>'+
@@ -1422,14 +1456,15 @@ function adminPage(){
 async function fetchMembers(){
  if(s.profile?.role!=='admin')return;
  var data=await adminCall({action:'list',page:s.adminPage});s.members=data.users||[];s.isOwner=!!data.isOwner;
- var tier=await api.from('academy_plans').select('user_id,tier');
- if(tier.error)throw tier.error;s.memberPlans={};(tier.data||[]).forEach(function(r){s.memberPlans[r.user_id]=r.tier;});
+ s.memberPlans={};s.memberExpiry={};
+ for(const member of s.members){s.memberPlans[member.id]=member.plan_tier||'free';s.memberExpiry[member.id]=member.plan_expires_at||null;}
+ updateMembershipClocks();
 }
 async function updateTier(uid,tier){
  if(s.profile?.role!=='admin'||!['free','pro','ultimate'].includes(tier))throw Error('Tarifwechsel nicht erlaubt.');
  const result=await adminCall({action:'setTier',userId:uid,tier});
  if(!result.ok)throw Error(result.error||'Tarif konnte nicht geändert werden.');
- s.memberPlans[uid]=tier;notice('Mitgliedschaft auf '+(plans[tier]||tier)+' geändert.');
+ s.memberPlans[uid]=tier;await fetchMembers();render();notice('Mitgliedschaft auf '+(plans[tier]||tier)+' geändert.');
 }
 async function adminAction(action,node){
  try{
@@ -1710,6 +1745,27 @@ document.addEventListener('click',async function(e){
   try{await navigator.clipboard.writeText(couponButton.dataset.copyVoucher);notice('Gutscheincode kopiert.');}
   catch(_){notice('Dein Code: '+couponButton.dataset.copyVoucher);}
   return;
+ }
+ if(s.profile?.role==='admin'){
+  const control=e.target.closest('[data-plan-action]');
+  if(control){
+   const userId=control.dataset.planUser,mode=control.dataset.planAction;
+   const member=s.members.find(u=>u.id===userId);
+   if(!member||member.role!=='student'||!['extend','reduce','set','end'].includes(mode))return;
+   const form=control.closest('.ll-plan-manager'),field=form?.querySelector('[data-plan-days]');
+   const days=Number(field?.value);
+   if(mode!=='end'&&(!Number.isInteger(days)||days<1||days>3650)){notice('Bitte eine ganze Zahl zwischen 1 und 3650 Tagen eingeben.');return;}
+   const person=member.username||member.email||'Mitglied';
+   const label={extend:'um '+days+' Tage verlängern',reduce:'um '+days+' Tage verkürzen',set:'auf '+days+' Tage festlegen',end:'sofort beenden'}[mode];
+   if(!confirm('Abo von '+person+' wirklich '+label+'?'))return;
+   control.disabled=true;
+   try{
+    const result=await adminCall({action:'adjustPlan',userId,operation:mode,...(mode==='end'?{}:{days})});
+    if(!result.ok)throw Error(result.error||'Abo-Aktion wurde nicht bestätigt');
+    await fetchMembers();render();notice('Laufzeit aktualisiert: '+person);
+   }catch(err){notice('Abo-Verwaltung: '+formatError(err));if(control.isConnected)control.disabled=false;}
+   return;
+  }
  }
  if(s.profile?.role==='admin'){
   var admin=e.target.closest('[data-reset-user],[data-active-user],[data-delete-user]');
