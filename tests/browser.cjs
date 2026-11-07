@@ -5,7 +5,7 @@ const {chromium}=require('playwright-core');
 const root=path.join(__dirname,'..');
 const source=fs.readFileSync(path.join(root,'site/academy-v21.js'),'utf8');
 const css=fs.readFileSync(path.join(root,'site/app-v21.css'),'utf8');
-const expose='\nwindow.__views={s,trackPage,lessonPage,scriptPage,examPage,referencePage,plansPage,adminPage,login,profilePage,friendsPage,supportPage,settingsPage,homePage,streakModalHtml,llIcon,paywall};\n})();';
+const expose='\nwindow.__views={s,trackPage,lessonPage,scriptPage,examPage,examsPage,referencePage,plansPage,adminPage,login,profilePage,friendsPage,supportPage,settingsPage,homePage,streakModalHtml,llIcon,paywall};\n})();';
 assert.match(source,/\ninit\(\);\n\}\)\(\);\s*$/);
 const rewritten=source.replace(/\ninit\(\);\n\}\)\(\);\s*$/,expose);
 const fake=()=>({innerHTML:'',classList:{toggle(){},add(){},remove(){},contains(){return false}}});
@@ -54,6 +54,7 @@ const scenes=[
  ['profile',app.profilePage(),['.profile-overview-card','.profile-overview-avatar','.achievement-grid']],
  ['friends',app.friendsPage(),['.friends-overview','.friend-navigation','.friend-empty']],
  ['support',app.supportPage(),['.support-grid','.support-compose','.support-history','form[data-form="support-ticket"]']],
+ ['exams',app.examsPage(),['.exam-filters','[data-exam-filter="ready"]']],
  ['settings',app.settingsPage(),['.settings-appearance-card','.appearance-picker','.account-settings-grid','#mfa-settings']],
  ['paywall-script',app.paywall('Script','Plus','Gesperrt für Free'),['.feature-gate','.feature-gate-actions']],
  ['paywall-reference',app.paywall('Referenzen','Pro / Ultimate','Gesperrt für Plus'),['.feature-gate','.feature-gate-actions']]
