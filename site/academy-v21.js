@@ -280,7 +280,7 @@ async function loadData(){
  s.discount=s.daily?.discount||null;
  if(all[4].error)notice('Kontingent konnte nicht geladen werden: '+formatError(all[4].error));
  var data=all[3].data?.payload||{};
- s.progress={done:Array.isArray(data.done)?data.done:[],watched:Array.isArray(data.watched)?data.watched:[],exams:data.exams||{},practiced:Array.isArray(data.practiced)?data.practiced:[]};
+ s.progress={...data,done:Array.isArray(data.done)?data.done:[],watched:Array.isArray(data.watched)?data.watched:[],exams:data.exams||{},practiced:Array.isArray(data.practiced)?data.practiced:[],verifiedPractice:Array.isArray(data.verifiedPractice)?data.verifiedPractice:[],completedAt:data.completedAt&&typeof data.completedAt==='object'?data.completedAt:{}};
  // Show the daily reward as soon as the profile and course index are ready.
  // Optional social/exam queries must NEVER postpone or hide the popup.
  s.ready=true;
@@ -327,7 +327,7 @@ async function navigateCurrent(){
    s.choice=null;s.quizStep=0;s.quizPassed=false;s.videoChecked=watchedIds().has(route.id);s.practiceChecked=(s.progress.verifiedPractice||[]).includes(route.id);s.draft=readDraft(route.id);s.videoLoaded=false;s.lesson=null;s.lessonGate=null;
    frame();content.innerHTML='<div class="center-screen"><div class="spinner"></div><p>Geschützte Lektion wird geladen …</p></div>';
    var meta=s.lessons.find(function(l){return l.id===route.id;});
-   if(meta&&allowed(meta)){var result=await api.rpc('academy_open_lesson',{p_lesson:route.id});if(result.error){s.lessonGate={reason:'error',error:formatError(result.error)};notice(formatError(result.error));}else if(result.data?.allowed){s.lesson=result.data;if(s.daily){s.daily.used_today=result.data.used;s.daily.remaining_today=result.data.remaining;}}else{s.lessonGate=result.data||{reason:'error'};}}
+   if(meta&&allowed(meta)){var result=await api.rpc('academy_open_lesson',{p_lesson:route.id});if(result.error){s.lessonGate={reason:'error',error:formatError(result.error)};notice(formatError(result.error));}else if(result.data?.allowed){s.lesson=result.data;s.progress.lastLesson={id:route.id,at:new Date().toISOString()};void saveProgress().catch(()=>{});if(s.daily){s.daily.used_today=result.data.used;s.daily.remaining_today=result.data.remaining;}}else{s.lessonGate=result.data||{reason:'error'};}}
  }
  if(route.page==='admin'&&s.profile?.role==='admin'){try{await Promise.all([fetchMembers(),fetchVouchers()]);}catch(e){notice('Adminliste: '+formatError(e));}}
  if(route.page==='support'||route.page==='admin'||route.page==='plans'){try{await refreshService();}catch(e){notice('Support: '+formatError(e));}}
@@ -358,7 +358,9 @@ function render(){
  if(r.page==='settings')renderMFA();
  paintStreakModal();
  paintTimer();
+ paintEditorLines();
 }
+function paintEditorLines(){const input=$('#practice-input'),lines=$('#code-lines');if(input&&lines&&typeof input.value==='string')lines.textContent=Array.from({length:Math.max(1,input.value.split('\n').length)},(_,i)=>i+1).join('\n')}
 
 
 function stats(){
@@ -496,8 +498,10 @@ function homePage(){
  const week=events.filter(x=>x>=weekStart).length;
  const dailyGoal=Math.max(1,Math.min(20,Number(getChoicePreference('goal-'+(s.user?.id||'guest'),'2'))||2));
  const weeklyGoal=Math.max(1,Math.min(100,Number(getChoicePreference('weekly-goal-'+(s.user?.id||'guest'),'10'))||10));
- const next=available.find(l=>!completed.has(l.id)&&['coding-basics','lua','python','fivem'].includes(l.course_id))||
- available.find(l=>!completed.has(l.id));
+ const last=available.find(l=>l.id===s.progress.lastLesson?.id);
+ const inLastCourse=last?lessonsOf(last.course_id).filter(allowed):[];
+ const next=last?(completed.has(last.id)?inLastCourse.find(l=>l.position>last.position&&!completed.has(l.id))||inLastCourse.find(l=>!completed.has(l.id))||last:last):
+ available.find(l=>!completed.has(l.id)&&['coding-basics','lua','python','fivem'].includes(l.course_id))||available.find(l=>!completed.has(l.id));
  const nextCourse=next?courseOf(next.course_id):null;
  const currentDone=nextCourse?countDone(nextCourse.id):0,total=nextCourse?lessonsOf(nextCourse.id).length:0,progress=pct(currentDone,total);
  const xp=(s.progress.done||[]).length*30,level=Math.floor(xp/500)+1,levelXp=xp%500;
@@ -653,13 +657,13 @@ function lessonPage(id){
  '<small>'+esc(c.name)+' · '+esc(l.title)+'</small><a href="'+search+'" class="btn primary" target="_blank" rel="noopener noreferrer">Passendes Lernvideo suchen ↗</a></div></div>')+
  '<label class="video-check"><input type="checkbox" id="video-check" '+(s.videoChecked?'checked':'')+'><span>Ich habe die passende Erklärung angesehen und verstanden.'+
  '<small class="micro" style="display:block">Deine eigene Bestätigung – die Videowiedergabe lässt sich nicht verlässlich messen.</small></span></label></section>'+
- '<section class="step-box"><span class="eyebrow">SCHRITT 03 · SELBST AUSPROBIEREN</span><h2>'+(isBlender?'Dein Arbeitsschritt.':'Schreib selbst etwas Code.')+'</h2>'+
+ '<section class="step-box"><span class="eyebrow">SCHRITT 03 · SELBST AUSPROBIEREN</span><h2>'+(isBlender?'Dein Arbeitsschritt.':'Löse diese Aufgabe im Editor.')+'</h2>'+
  '<p>'+esc(p.task||'Setze die Erklärung eigenständig in einem Beispiel um.')+'</p>'+
  '<div class="practice-workspace'+(isPracticeDone?' is-complete':'')+'" id="practice-workspace"><div class="practice-title"><strong>'+(isBlender?'Deine Umsetzung':'Dein Code-Entwurf')+'</strong>'+
  '<span class="practice-status" id="practice-status">'+(isPracticeDone?'✓ Praxis erledigt':'Noch nicht abgeschlossen')+'</span></div>'+
- '<label class="micro" for="practice-input">'+(isBlender?'Beschreibe, was du in Blender umgesetzt hast:':'Schreibe hier deinen eigenen Lösungsansatz:')+'</label>'+
- '<textarea class="exercise-textarea" id="practice-input" spellcheck="false" rows="7" maxlength="10000" placeholder="'+(isBlender?'Welche Schritte hast du ausgeführt und was ist dabei entstanden?':'// Deine eigene Lösung – erst überlegen, dann schreiben')+'">'+d+'</textarea>'+
- '<p class="practice-tip">'+(isBlender?'Beschreibe deine Umsetzung und vergleiche sie mit den Schritten.':'Schreibe den Code selbst. Die Prüfung zeigt nachvollziehbare Fehler und unterstützt einfache Ausgaben. Komplexere Programme werden nur bei verifizierter Musterlösung freigegeben.')+'</p>'+
+ '<label class="micro" for="practice-input">'+(isBlender?'Beschreibe, was du in Blender umgesetzt hast:':'Datei: '+esc(p.filename||({lua:'client.lua',python:'main.py',javascript:'main.js'}[String(p.lang||'').toLowerCase()]||'lösung.txt')))+'</label>'+
+ '<div class="code-editor"><div class="code-lines" id="code-lines" aria-hidden="true">1</div><textarea class="exercise-textarea" id="practice-input" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" wrap="off" rows="7" maxlength="10000" placeholder="'+(isBlender?'Welche Schritte hast du ausgeführt und was ist dabei entstanden?':'Schreibe hier deine Lösung …')+'">'+d+'</textarea></div>'+
+ '<p class="practice-tip">'+(isBlender?'Beschreibe deine Umsetzung und vergleiche sie mit den Schritten.':'Prüfe deine Ausgabe und die geforderten Schritte. Die Konsole nennt den konkreten Fehler, soweit diese Aufgabe im Browser geprüft werden kann.')+'</p>'+
  '<div class="practice-console"><strong>KONSOLE · '+esc(p.lang||'Code')+'</strong><pre id="practice-output" aria-live="polite">Noch nicht geprüft.</pre></div>'+
  '<div class="practice-actions"><button class="btn" type="button" data-action="run-practice">Ausgabe anzeigen</button><button class="btn" type="button" data-action="show-hint">Tipp</button><button class="btn" type="button" data-action="show-solution">Lösung zeigen</button><button class="btn" type="button" data-action="reset-practice">Zurücksetzen</button></div>'+
  '<p class="practice-feedback" id="practice-feedback" aria-live="polite"></p>'+
@@ -669,7 +673,7 @@ function lessonPage(id){
  options.map((answer,i)=>'<button type="button" class="quiz-choice" data-answer="'+i+'"><span>'+String.fromCharCode(65+i)+'</span>'+esc(answer)+'</button>').join('')+'</div>'+
  '<p class="quiz-feedback micro" id="answer-result" aria-live="polite">'+(finished?'✓ Bereits abgeschlossen.':'Wähle die richtige Antwort. Danach kannst du die Lektion abschließen.')+'</p>'+
  '<button class="btn primary" id="mark-lesson" data-action="finish-lesson" type="button" disabled>'+(finished?'✓ Lektion abgeschlossen':'Lektion abschließen →')+'</button></section>'+
- '<div class="btn-row"><button class="btn" data-go="track/'+esc(l.course_id)+'">← Kursübersicht</button>'+
+ '<div class="btn-row"><button class="btn" data-go="track/'+esc(l.course_id)+'">← Kursübersicht</button><button class="btn" data-action="reset-lesson">Lektion neu beginnen ↺</button>'+
  (next?'<button class="btn" data-go="lesson/'+esc(next.id)+'">Nächste Lektion →</button>':'<button class="btn" data-go="exam/'+esc(l.course_id)+'">Abschlussprüfung →</button>')+'</div></article>';
 }
 function updateLessonControls(){
@@ -700,7 +704,8 @@ async function completePractice(){
  if(value.length<5){notice('Schreibe zuerst deine eigene Lösung.');box.focus();return;}
  const payload=s.lesson.payload||{},lang=String(payload.lang||'').toLowerCase(),isVisual=lang==='blender'||lang==='text';
  const result=isVisual?{ok:value.length>=60,diagnostic:value.length>=60?'Deine Arbeitsschritte sind dokumentiert. Prüfe deine Szene selbst in Blender.':'Beschreibe mindestens 60 Zeichen mit konkreten Arbeitsschritten.',output:[]}:window.LLPractice.evaluate(value,payload);
- const consoleNode=$('#practice-output'),feedback=$('#practice-feedback');if(consoleNode)consoleNode.textContent=result.output.length?result.output.map(x=>'> '+x).join('\n'):'Keine unterstützte Ausgabe. '+(result.ok?'':'Prüfe deinen Code.');
+ const runtime=isVisual?{lines:[],error:'Vergleiche deine Arbeit in Blender.'}:window.LLPractice.output(value,lang);
+ const consoleNode=$('#practice-output'),feedback=$('#practice-feedback');if(consoleNode)consoleNode.textContent=runtime.lines.length?runtime.lines.map(x=>'> '+x).join('\n'):runtime.error||'Noch keine Ausgabe. Prüfe deine print-Aufrufe.';
  if(feedback){feedback.textContent=(result.ok?'✓ ':'✕ ')+result.diagnostic;feedback.classList.toggle('error',!result.ok)}
  if(!result.ok){s.practiceChecked=false;updateLessonControls();return;}
  saveDraft(id,value);s.practiceChecked=true;
@@ -1448,12 +1453,21 @@ document.addEventListener('click',async function(e){
    var wrap=$('#catalog-container');if(wrap)wrap.innerHTML=catalogItems();return;
   }
   if(name==='complete-practice'){await completePractice();return;}
+  if(name==='reset-lesson'){
+   const id=parseRoute().id;if(!id||!s.lessons.some(l=>l.id===id))return;
+   if(!confirm('Nur diese Lektion neu beginnen? Ihr Abschluss und die Übung werden zurückgesetzt.'))return;
+   const previous=JSON.parse(JSON.stringify(s.progress));
+   for(const key of ['done','watched','practiced','verifiedPractice'])s.progress[key]=(s.progress[key]||[]).filter(x=>x!==id);
+   if(s.progress.completedAt)delete s.progress.completedAt[id];
+   try{await saveProgress();localStorage.removeItem('liverylab-draft-'+id);s.draft='';await navigateCurrent();notice('Diese Lektion wurde neu gestartet.');}
+   catch(e){s.progress=previous;notice('Neustart konnte nicht gespeichert werden: '+formatError(e));}return;
+  }
   if(['run-practice','show-hint','show-solution','reset-practice'].includes(name)){
    const p=s.lesson?.payload||{},box=$('#practice-input'),out=$('#practice-output'),feedback=$('#practice-feedback');if(!box)return;
    if(name==='show-hint'){if(feedback)feedback.textContent='Tipp: '+String(p.hint||'Lies die Erklärung und prüfe die Beispiele.');return;}
    if(name==='show-solution'){if(feedback)feedback.textContent='Musterlösung:\n'+String(p.solution||p.example||'Noch keine Musterlösung verfügbar.');return;}
-   if(name==='reset-practice'){box.value=String(p.starter||'');box.dispatchEvent(new Event('input',{bubbles:true}));if(out)out.textContent='Zurückgesetzt.';if(feedback)feedback.textContent='';return;}
-   const result=window.LLPractice.evaluate(box.value,p);if(out)out.textContent=result.output.length?result.output.map(x=>'> '+x).join('\n'):result.diagnostic;
+   if(name==='reset-practice'){box.value=String(p.starter||'');box.dispatchEvent(new Event('input',{bubbles:true}));if(out)out.textContent='Editor zurückgesetzt.';if(feedback)feedback.textContent='';return;}
+   const result=window.LLPractice.evaluate(box.value,p),runtime=window.LLPractice.output(box.value,String(p.lang||'').toLowerCase());if(out)out.textContent=runtime.lines.length?runtime.lines.map(x=>'> '+x).join('\n'):runtime.error||'Noch keine Ausgabe. Prüfe deine print-Aufrufe.';
    if(feedback){feedback.textContent=result.diagnostic;feedback.classList.toggle('error',!result.ok)}return;
   }
   if(name==='reset-appearance'){
@@ -1556,7 +1570,7 @@ document.addEventListener('keydown',function(e){
  if(e.key==='Tab'&&e.target.id==='practice-input'){
   e.preventDefault();const el=e.target,a=el.selectionStart,b=el.selectionEnd;
   el.value=el.value.slice(0,a)+'\t'+el.value.slice(b);el.selectionStart=el.selectionEnd=a+1;
-  s.draft=el.value;saveDraft(parseRoute().id,el.value);return;
+  el.dispatchEvent(new Event('input',{bubbles:true}));return;
  }
  if(e.key==='Tab'&&s.streakModalOpen){
   const modal=document.querySelector('.ll-streak-modal');
@@ -1601,11 +1615,13 @@ document.addEventListener('input',function(e){if(e.target.id==='support-search')
  }
  if(e.target.id==='practice-input'){
   s.draft=e.target.value;saveDraft(parseRoute().id,s.draft);
+  paintEditorLines();
   const syntaxError=window.LLPractice?.syntax(s.draft,String(s.lesson?.payload?.lang||'').toLowerCase()),live=$('#practice-feedback');if(live){live.textContent=syntaxError?'Syntaxhinweis: '+syntaxError:'';live.classList.toggle('error',!!syntaxError)}
   if(s.practiceChecked){s.practiceChecked=false;s.progress.verifiedPractice=(s.progress.verifiedPractice||[]).filter(id=>id!==parseRoute().id);void saveProgress().catch(()=>{});const workspace=$('#practice-workspace');if(workspace)workspace.classList.remove('is-complete');const button=$('[data-action="complete-practice"]');if(button){button.disabled=false;button.textContent='Meinen Code prüfen →'}updateLessonControls()}
   var status=$('#practice-status');if(status&&!s.practiceChecked)status.textContent='Entwurf lokal gespeichert';
  }
 });
+document.addEventListener('scroll',function(e){if(e.target.id==='practice-input'){const gutter=$('#code-lines');if(gutter)gutter.scrollTop=e.target.scrollTop;}},true);
 document.addEventListener('change',async function(e){
  if(e.target.hasAttribute('data-social-upload')){
   const kind=e.target.dataset.socialUpload,file=e.target.files?.[0];if(!file)return;
