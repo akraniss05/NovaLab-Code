@@ -619,7 +619,10 @@ function trackPage(id){
 
 function notFound(){return '<div class="empty"><h2>Inhalt nicht gefunden</h2><p>Dieser Lernpfad ist nicht verfügbar.</p><button class="btn" data-go="courses">Zur Kursbibliothek</button></div>';}
 function quizQuestions(p){
- return window.LLCurriculum?.questions(p)||[];
+ if(window.LLCurriculum?.questions)return window.LLCurriculum.questions(p);
+ const options=Array.isArray(p.options)?p.options.map(String):[],correct=Number(p.correct);
+ if(options.length<2||!Number.isInteger(correct)||correct<0||correct>=options.length)return [];
+ return [{question:String(p.quiz||'Welche Antwort ist richtig?'),options,correct,explanation:''}];
 }
 function paintQuiz(){const p=s.lesson?.payload||{},qs=quizQuestions(p),q=qs[Math.min(s.quizStep,qs.length-1)];if(!q)return;
  const title=$('#quiz-question'),choices=$('#quiz-choices'),progress=$('#quiz-progress');
