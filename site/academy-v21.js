@@ -717,16 +717,16 @@ async function completePractice(){
  var id=parseRoute().id,box=$('#practice-input');if(!box||!s.lesson)return;
  var value=box.value.trim();
  if(value.length<5){notice('Schreibe zuerst deine eigene Lösung.');box.focus();return;}
- const payload=s.lesson.payload||{},lang=String(payload.lang||'').toLowerCase(),isVisual=lang==='blender'||lang==='text';
+ const payload=s.lesson.payload||{},lang=String(payload.lang||'').toLowerCase(),isVisual=lang==='blender'||lang==='text',isMarkup=lang==='html'||lang==='css';
  let result=isVisual?{ok:value.length>=60,diagnostic:value.length>=60?'Arbeitsschritte dokumentiert. Vergleiche deine tatsächliche Blender-Szene manuell.':'Beschreibe mindestens 60 Zeichen mit konkreten Arbeitsschritten.',output:[]}:window.LLPractice.evaluate(value,payload);
- const runtime=isVisual?{available:false,ok:false,lines:[],error:'Blender-Szenen können im Browser nicht automatisch ausgeführt werden.'}:await window.LLRuntime.run(value,lang);
+ const runtime=isVisual?{available:false,ok:false,lines:[],error:'Blender-Szenen können im Browser nicht automatisch ausgeführt werden.'}:isMarkup?{available:false,ok:false,lines:[],error:'HTML/CSS wird als sichere Vorschau gerendert und anhand von Aufgabenregeln geprüft.'}:await window.LLRuntime.run(value,lang);
  if(!isVisual&&runtime.available&&!runtime.ok){result={ok:false,diagnostic:'Laufzeitfehler: '+runtime.error,output:runtime.lines};}
  if(!isVisual&&runtime.ok&&payload.solution&&typeof window.LLPractice?.evaluateRuntime==='function'){
   const expected=await window.LLRuntime.run(payload.solution,lang);
   result=window.LLPractice.evaluateRuntime(value,payload,runtime,expected);
  }
- const consoleNode=$('#practice-output'),feedback=$('#practice-feedback');
- if(consoleNode)consoleNode.textContent=isVisual?runtime.error:
+ const consoleNode=$('#practice-output'),feedback=$('#practice-feedback');if(isMarkup){const preview=$('#practice-preview');if(preview){preview.hidden=false;preview.srcdoc=htmlCssPreview(value,lang);}}
+ if(consoleNode)consoleNode.textContent=isVisual||isMarkup?runtime.error:
   runtime.available?(runtime.lines.map(x=>'> '+x).join('\n')+(runtime.error?'\n✕ '+runtime.error:runtime.ok&&runtime.lines.length===0?'(Programm ausgeführt, keine Konsolenausgabe)':'')):
   runtime.error;
  if(feedback){feedback.textContent=(result.ok?'✓ ':'✕ ')+result.diagnostic+(!isVisual&&!runtime.available?' Hinweis: Nur statische Prüfung; keine bestätigte Programmausführung.':'');feedback.classList.toggle('error',!result.ok)}
