@@ -8,7 +8,7 @@
 function parts(p){
  return (Array.isArray(p?.sections)?p.sections:[]).filter(x=>
   x&&typeof x.title==='string'&&x.title.trim()&&
-  Array.isArray(x.paragraphs)&&x.paragraphs.some(t=>typeof t==='string'&&t.trim()));
+  Array.isArray(x.paragraphs)&&x.paragraphs.some(t=>typeof t==='string'&&t.trim())).slice(0,2);
 }
 function questions(p){
  const source=Array.isArray(p?.quiz_items)?p.quiz_items:[];
@@ -38,17 +38,21 @@ function render(p,index,escapeHtml,safeLink){
    (p.resource?'<p><a href="'+safeLink(p.resource)+'" rel="noopener noreferrer" target="_blank">Offizielle Dokumentation ↗</a></p>':'');
  }
  const at=Math.max(0,Math.min(a.length-1,Number(index)||0));
- const t=a[at],percentage=Math.round((at+1)/a.length*100);
- return '<div class="ll-part-heading"><div><span class="eyebrow">LERNTEIL '+(at+1)+' VON '+a.length+'</span><h2>'+esc(t.title)+'</h2></div><span class="ll-part-count">'+percentage+' %</span></div>'+
-  '<div class="ll-part-progress"><span style="width:'+percentage+'%"></span></div>'+
-  '<nav class="ll-part-selector" aria-label="Lernteile">'+a.map((v,i)=>'<button type="button" data-lesson-part="'+i+'" class="'+(i===at?'active':'')+'" aria-current="'+(i===at?'step':'false')+'" aria-label="Teil '+(i+1)+': '+esc(v.title)+'">'+(i+1)+'</button>').join('')+'</nav>'+
+ const t=a[at];
+ return '<div class="ll-part-heading"><div><span class="eyebrow">LERNTEIL '+(at+1)+' VON '+a.length+'</span><h2>'+esc(t.title)+'</h2></div></div>'+
+  '<nav class="ll-part-selector ll-part-selector-two" aria-label="Lernteile">'+a.map((v,i)=>{
+   const short=i===0?'Verstehen':'Üben';
+   return '<button type="button" data-lesson-part="'+i+'" class="'+(i===at?'active':'')+'" aria-current="'+(i===at?'step':'false')+'" aria-label="Lernteil '+(i+1)+': '+esc(v.title)+'"><span class="ll-part-number">'+(i+1)+'</span><span>'+short+'</span></button>';
+  }).join('')+'</nav>'+
   '<div class="ll-part-body">'+
   t.paragraphs.filter(x=>typeof x==='string'&&x.trim()).map(x=>'<p>'+esc(x)+'</p>').join('')+
   (Array.isArray(t.bullets)&&t.bullets.length?'<ul>'+t.bullets.filter(x=>typeof x==='string'&&x.trim()).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+
   (typeof t.code==='string'&&t.code.trim()?'<div class="codebox"><pre><code>'+esc(t.code)+'</code></pre></div>':'')+
   (typeof t.exercise==='string'&&t.exercise.trim()?'<div class="note"><strong>Jetzt selbst ausprobieren:</strong> '+esc(t.exercise)+'</div>':'')+
-  '</div><div class="ll-part-controls"><button type="button" class="btn" data-lesson-part="'+(at-1)+'" '+(at===0?'disabled':'')+'>← Zurück</button>'+
-  '<button type="button" class="btn primary" data-lesson-part="'+(at+1)+'" '+(at===a.length-1?'disabled':'')+'>'+(at===a.length-1?'Alle Lernteile gelesen ✓':'Weiter →')+'</button></div>'+
+  '</div><div class="ll-part-controls">'+
+  (at===0?'<button type="button" class="btn primary" data-lesson-part="1">Zum Übungsteil →</button>':
+  '<button type="button" class="btn" data-lesson-part="0">← Zur Erklärung</button>')+
+  '</div>'+
   (p.resource?'<p><a href="'+safeLink(p.resource)+'" rel="noopener noreferrer" target="_blank">Offizielle Dokumentation ↗</a></p>':'');
 }
 root.LLCurriculum={parts,questions,render};
