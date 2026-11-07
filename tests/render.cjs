@@ -46,6 +46,8 @@ assert(!app.profilePage().includes('Profil gestalten'),'Profile configuration wa
 assert(!app.profilePage().includes('Anzeigename ändern'),'Profile name configuration was removed');
 assert(app.friendsPage().includes('Freund hinzufügen'),'Friends page rendered');
 assert(app.friendsPage().includes('friend-navigation'),'Friends tabs rendered');
+state.social={friends:[{id:'friend-1',username:'testfreund',display_name:'Testfreund'}],requests:[],titles:['Developer']};
+assert(app.friendsPage().includes('friend-list-search'),'Friend list search rendered');
 assert(app.supportPage().includes('support-ticket'),'In-app support form rendered');
 state.tier='free';state.service={beta_open:false,mine:[],admin:[]};
 assert(!app.supportPage().includes('value="plan"'),'Beta requests hidden after closure');
@@ -71,6 +73,7 @@ assert(app.plansPage().includes('redeem-voucher'),'Coupon redemption visible');
 assert(app.plansPage().includes('3 pro Tag'),'Free daily limit visible');
 assert(app.plansPage().includes('6 pro Tag'),'Plus daily limit visible');
 assert(app.examsPage().includes('Prüfung'),'Exam landing rendered');
+assert(app.examsPage().includes('data-exam-filter="ready"'),'Exam status filters rendered');
 assert(app.examPage('python').includes('noch nicht vollständig'),'Exam locked until completion');
 state.progress.done=['python-01'];state.progress.practiced=['python-01'];state.progress.watched=['python-01'];
 assert(app.trackPage('python').includes('is-complete'),'Full lesson card should be green after completion');
