@@ -27,6 +27,8 @@ jobs:
           node --check site/reference-data.js
           node --check site/academy.js
           node --check site/academy-v21.js
+          node --check site/academy-studio.js
+          node --check site/academy-runtime.js
           node --check site/auth-mfa-v15.js
           node --check site/config.js
           node tests/smoke.cjs
@@ -35,7 +37,12 @@ jobs:
           node tests/registration.cjs
           node tests/streak.cjs
       - name: Install browser test dependency
-        run: npm install --no-save --ignore-scripts --no-package-lock playwright-core@1.56.1
+        run: npm install --no-save --ignore-scripts --no-package-lock playwright-core@1.56.1 fengari-web@0.1.4
+      - name: Prepare local Lua runtime
+        run: |
+          mkdir -p site/vendor
+          cp node_modules/fengari-web/dist/fengari-web.bundle.js site/vendor/fengari-web.bundle.js
+          test -s site/vendor/fengari-web.bundle.js
       - name: Validate mobile layouts in Chrome
         run: node tests/browser.cjs
       - name: Test real logged-in Daily Streak popup and claim
