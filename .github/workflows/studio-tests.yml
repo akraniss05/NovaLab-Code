@@ -13,6 +13,7 @@ on:
       - 'tests/studio.cjs'
       - 'tests/runtime-browser.cjs'
       - 'tests/runtime-grading.cjs'
+      - 'tests/simple-academy.cjs'
       - 'tests/learning-sync.cjs'
       - '.github/workflows/studio-tests.yml'
   pull_request:
@@ -27,6 +28,7 @@ on:
       - 'tests/studio.cjs'
       - 'tests/runtime-browser.cjs'
       - 'tests/runtime-grading.cjs'
+      - 'tests/simple-academy.cjs'
       - 'tests/learning-sync.cjs'
       - '.github/workflows/studio-tests.yml'
 permissions:
@@ -46,6 +48,8 @@ jobs:
           node --check site/academy-runtime.js
           node --check site/academy-learning-sync.js
           node --check site/practice-engine.js
+      - name: Simple Academy and timer regression tests
+        run: node tests/simple-academy.cjs
       - name: Existing practice tests
         run: node tests/practice.cjs
       - name: New studio regression tests
