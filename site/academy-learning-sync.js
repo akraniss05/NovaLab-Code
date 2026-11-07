@@ -7,8 +7,18 @@
 let bridge=null, userKey='', session=0;
 const records=new Map(),timers=new Map(),flights=new Map();
 const debounceMs=1000;
-function localKey(id){return 'liverylab-draft-'+id;}
-function fallback(id){try{return localStorage.getItem(localKey(id))||'';}catch(_){return '';}}
+function localKey(id){return 'liverylab-draft-'+(uid()||'guest')+'-'+id;}
+function fallback(id){
+ try{
+  const scoped=localStorage.getItem(localKey(id));
+  if(scoped!==null)return scoped;
+  // Import old device-only drafts once for the first signed-in account,
+  // never expose them to another user of the same browser.
+  const key='liverylab-legacy-draft-owner',owner=localStorage.getItem(key);
+  if(!owner&&uid())localStorage.setItem(key,uid());
+  return (owner||uid())===uid()?localStorage.getItem('liverylab-draft-'+id)||'':'';
+ }catch(_){return '';}
+}
 function writeLocal(id,content){try{localStorage.setItem(localKey(id),content);}catch(_){/* Storage unavailable */}}
 function removeLocal(id){try{localStorage.removeItem(localKey(id));}catch(_){}}
 function state(){return bridge&&bridge.state();}
