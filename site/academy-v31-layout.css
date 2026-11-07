@@ -234,3 +234,71 @@ body:not(.is-auth) .topbar > .top-right{
 #answer-result{line-height:1.6;margin:13px 0}
 @media(max-width:580px){.ll-part-heading h2{font-size:21px}.ll-part-selector{gap:6px}.ll-part-selector button{flex-basis:34px;height:34px}.ll-part-body p{font-size:14px;line-height:1.8}.ll-part-controls .btn{flex:1;min-width:0;font-size:12px;padding:9px 8px}#quiz-choices .quiz-choice{font-size:14px}}
 @media(prefers-reduced-motion:reduce){.ll-part-progress>span,.ll-quiz-progress>span{transition:none}}
+
+
+/* v42: isolated subscription management inside the original Admin cards. */
+.member-management:has(.ll-plan-manager){flex-wrap:wrap;align-items:stretch}
+.ll-plan-manager{flex:1 0 100%;width:100%;min-width:0;padding:14px 15px;border:1px solid #6d4e91;border-radius:15px;background:linear-gradient(130deg,#271c3c,#161128);color:#f4e9ff}
+.ll-plan-status{display:flex;align-items:center;gap:12px;min-width:0}
+.ll-plan-status>div{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.ll-plan-status strong{font-size:clamp(15px,2vw,19px);font-weight:800;line-height:1.3;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.ll-plan-status small{font-size:12px;line-height:1.5;color:#c7b6d6;overflow-wrap:anywhere}
+.ll-plan-status strong.is-expired{color:#ff9aa5}
+.ll-plan-dot{display:inline-block;flex:0 0 10px;height:10px;border-radius:50%;background:#7d708e;box-shadow:0 0 0 4px #69547a33}
+.ll-plan-dot.active{background:#58daa9;box-shadow:0 0 0 4px #58daa933}
+.ll-plan-dot.expired{background:#ff8b99;box-shadow:0 0 0 4px #ff8b9933}
+.ll-plan-dot.unlimited{background:#c79cff;box-shadow:0 0 0 4px #c79cff33}
+.ll-plan-form{margin-top:13px;display:flex;gap:13px;align-items:end;flex-wrap:wrap;border-top:1px solid #544064;padding-top:13px}
+.ll-plan-form>label{display:flex;flex-direction:column;gap:5px;min-width:140px;max-width:180px;font-size:12px;color:#d8c6e8}
+.ll-plan-form input{min-width:0;width:100%;height:39px}
+.ll-plan-actions{display:flex;flex:1;flex-wrap:wrap;gap:7px}
+.ll-plan-actions .btn{font-size:12px;min-height:39px;padding:8px 12px;white-space:normal}
+.ll-plan-actions .danger{border-color:#ad5571}
+.ll-plan-manager .micro{font-size:12px;line-height:1.55;margin:11px 0 0;color:#c7b6da}
+@media(max-width:580px){.ll-plan-manager{padding:13px}.ll-plan-form>label{max-width:none;flex:1 1 100%}.ll-plan-actions{width:100%}.ll-plan-actions .btn{flex:1;min-width:0;padding:9px 7px;font-size:11px}}
+/* v42: Daily-Streak inspired focus timer. The header pill stays compact. */
+body.focus-modal-visible{overflow:hidden}
+#timer-portal .ll-focus-backdrop{z-index:3500;background:#080310c8;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+#timer-portal .ll-focus-modal{
+ z-index:3501;isolation:isolate;width:min(465px,calc(100vw - 26px));max-width:465px;max-height:calc(100dvh - 30px);overflow-y:auto;
+ padding:31px 27px 23px;border:2px solid #bb69ec;border-radius:27px;
+ background:radial-gradient(ellipse at 50% 0%,#58317b,#1c102f 58%,#140d23);
+ box-shadow:0 0 16px #bc4cff8c,0 0 64px #842ed85c,0 22px 95px #07020edb;
+ text-align:center;color:#f5eaff;
+}
+#timer-portal .ll-focus-modal::before{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;box-shadow:inset 0 0 22px #9e5bda38}
+#timer-portal .ll-focus-kicker{display:block;color:#d9b4ff;letter-spacing:.16em;font-size:10px;margin:12px auto 3px}
+#timer-portal .ll-focus-close{position:absolute;top:13px;right:14px;z-index:2;display:grid;place-items:center;width:35px;height:35px;border:1px solid #a77acf;border-radius:50%;background:#422353;color:#f5e8ff;font-size:24px;line-height:1;cursor:pointer}
+#timer-portal .ll-focus-close:focus-visible,#timer-portal .ll-focus-actions button:focus-visible,#timer-portal .ll-focus-presets button:focus-visible{outline:3px solid #f0c2ff;outline-offset:2px}
+#timer-portal .ll-focus-emblem{display:grid;place-items:center;margin:0 auto 12px;width:58px;height:58px;border:1px solid #c17bfc;border-radius:18px;background:linear-gradient(135deg,#7838af,#3d2067);box-shadow:0 0 22px #ab50f36a;color:#f5d7ff;font-size:36px}
+#timer-portal .ll-focus-title{font-family:inherit;font-size:clamp(27px,6vw,38px);font-weight:850;line-height:1.18;margin:10px 0 8px;letter-spacing:-.035em}
+#timer-portal .ll-focus-lede{font-size:13px;line-height:1.6;color:#e0cde9;margin:0 auto 17px;max-width:365px}
+#timer-portal .ll-focus-ring{
+ width:184px;height:184px;margin:0 auto 18px;padding:9px;border-radius:50%;
+ background:conic-gradient(from -90deg,#d68bfa 0 var(--focus-progress,0%),#3d2353 var(--focus-progress,0%) 100%);
+ box-shadow:0 0 0 1px #a875d5,0 0 20px #9443d558;
+}
+#timer-portal .ll-focus-ring-inner{height:100%;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-radius:50%;background:radial-gradient(circle at 40% 24%,#462659,#20152e 70%);border:1px solid #664375}
+#timer-portal .ll-focus-ring-inner>span{font-size:22px;color:#e2aaff}
+#timer-portal .ll-focus-ring-inner strong{font:800 34px/1.12 ui-monospace,monospace;color:#fff;letter-spacing:-.055em;font-variant-numeric:tabular-nums}
+#timer-portal .ll-focus-ring-inner small{font-size:9px;letter-spacing:.16em;color:#c8aadc}
+#timer-portal .ll-focus-presets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:9px 0 14px}
+#timer-portal .ll-focus-presets button{border:1px solid #8257a4;border-radius:12px;background:#342044;color:#e5cefd;padding:11px 4px;cursor:pointer;font-size:12px;font-weight:750}
+#timer-portal .ll-focus-presets button:hover{background:#603083;color:#fff;border-color:#b980ec}
+#timer-portal .ll-focus-duration{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px;padding:12px 13px;border:1px solid #674b81;border-radius:13px;background:#2c1d40;font-size:12px;color:#e5d4f7}
+#timer-portal .ll-focus-input-row{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex:0 0 auto}
+#timer-portal .ll-focus-duration .input{width:83px;min-width:0;max-width:83px;margin:0;padding:8px;text-align:center;font-variant-numeric:tabular-nums}
+#timer-portal .ll-focus-actions{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:9px;margin:0}
+#timer-portal .ll-focus-actions button{min-height:49px;width:100%;min-width:0;font-size:13px;font-weight:750;padding:9px 7px;white-space:normal}
+#timer-portal .ll-focus-actions .primary{border-color:#d9a2fa;background:linear-gradient(130deg,#ad4bf3,#7730c8);box-shadow:0 5px 17px #8122c63e}
+#timer-portal .ll-focus-state{min-height:24px;margin-top:13px;font-size:11px;line-height:1.5;color:#d5bfe3}
+#timer-portal .ll-focus-reset{display:inline-block;margin:10px 0 0;padding:8px 10px;border:0;background:transparent;color:#e3c4fa;font-size:12px;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+@media(max-width:430px){
+ #timer-portal .ll-focus-modal{padding:25px 18px 19px}
+ #timer-portal .ll-focus-ring{height:158px;width:158px;margin-bottom:13px}
+ #timer-portal .ll-focus-ring-inner strong{font-size:30px}
+ #timer-portal .ll-focus-lede{font-size:12px;margin-bottom:12px}
+ #timer-portal .ll-focus-presets{gap:5px}
+ #timer-portal .ll-focus-presets button{padding:10px 2px;font-size:11px}
+}
+@media(prefers-reduced-motion:reduce){#timer-portal .ll-focus-ring{transition:none}}
