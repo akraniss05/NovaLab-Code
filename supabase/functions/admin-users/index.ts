@@ -157,7 +157,7 @@ Deno.serve(async(req:Request)=>{
       if(pe)throw pe;
       const map=new Map((profiles||[]).map(p=>[p.id,p]));
       const users=members.users.filter(u=>map.has(u.id)).map(u=>({
-        id:u.id,email:u.email||'',username:map.get(u.id)?.username||null,needs_password_change:map.get(u.id)?.needs_password_change||false,role:map.get(u.id)?.role||'student',is_owner:ownerIds.has(u.id),active:map.get(u.id)?.active??false,access_status:map.get(u.id)?.access_status||'blocked',email_confirmed:!!u.email_confirmed_at&&u.app_metadata?.academy_signup_flow!=='manual_request',email_review_required:u.app_metadata?.academy_signup_flow==='manual_request',created_at:u.created_at
+        id:u.id,email:u.email||'',username:map.get(u.id)?.username||null,needs_password_change:map.get(u.id)?.needs_password_change||false,role:map.get(u.id)?.role||'student',is_owner:ownerIds.has(u.id),active:map.get(u.id)?.active??false,access_status:map.get(u.id)?.access_status||'blocked',plan_tier:'free',plan_expires_at:null as string|null,email_confirmed:!!u.email_confirmed_at&&u.app_metadata?.academy_signup_flow!=='manual_request',email_review_required:u.app_metadata?.academy_signup_flow==='manual_request',created_at:u.created_at
       }));
       // Include the real, server-read expiry for each visible member.
       // Never expose subscription details outside the authenticated admin action.
