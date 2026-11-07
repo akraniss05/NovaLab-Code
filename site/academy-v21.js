@@ -73,7 +73,7 @@ function navHTML(route){
  const items=[
   ['home','⌂','Startseite'],['courses','▦','Lernen'],['script','⌘',hasScript()?'Script':'Script 🔒'],
   ['exams','☆','Prüfung'],['reference','▤',fullAccess()?'Referenz':'Referenz 🔒'],['plans','✦','Free / Plus / Ultimate'],
-  ['profile','◉','Mein Profil'],['friends','♡','Freunde'],['support','?','Support'],['settings','⚙','Einstellungen']
+  ['level','✦','Level & Belohnungen'],['skilltree','⬡','Skilltree'],['portfolio','▣','Portfolio'],['notes','▤','Notizen'],['profile','◉','Mein Profil'],['friends','♡','Freunde'],['support','?','Support'],['settings','⚙','Einstellungen']
  ];
  if(s.profile?.role==='admin')items.push(['admin','♢','Administration']);
  return items.map(([id,icon,label])=>{
@@ -281,6 +281,7 @@ async function loadData(){
  if(all[4].error)notice('Kontingent konnte nicht geladen werden: '+formatError(all[4].error));
  var data=all[3].data?.payload||{};
  s.progress={...data,done:Array.isArray(data.done)?data.done:[],watched:Array.isArray(data.watched)?data.watched:[],exams:data.exams||{},practiced:Array.isArray(data.practiced)?data.practiced:[],verifiedPractice:Array.isArray(data.verifiedPractice)?data.verifiedPractice:[],completedAt:data.completedAt&&typeof data.completedAt==='object'?data.completedAt:{}};
+ try{await window.LLStudio.load();}catch(error){notice('Lernstudio: '+formatError(error));}
  // Show the daily reward as soon as the profile and course index are ready.
  // Optional social/exam queries must NEVER postpone or hide the popup.
  s.ready=true;
@@ -313,7 +314,7 @@ async function loadData(){
  }).catch(()=>{});
  await navigateCurrent();
 }
-async function logout(){try{await api.auth.signOut();}catch(e){}s.authScreen='login';s.ready=false;s.streakModalOpen=false;s.streakError='';s.loginStreak=null;paintStreakModal();s.user=null;s.profile=null;s.lesson=null;s.courses=[];s.lessons=[];location.hash='#home';login();}
+async function logout(){window.LLStudio.clear();try{await api.auth.signOut();}catch(e){}s.authScreen='login';s.ready=false;s.streakModalOpen=false;s.streakError='';s.loginStreak=null;paintStreakModal();s.user=null;s.profile=null;s.lesson=null;s.courses=[];s.lessons=[];location.hash='#home';login();}
 async function saveProgress(){
  var res=await api.from('academy_progress').upsert({user_id:s.user.id,key:'liverylab-v10',payload:s.progress,updated_at:new Date().toISOString()},{onConflict:'user_id,key'});
  if(res.error)throw res.error;frame();
@@ -350,10 +351,10 @@ function renderMFA(){
 }
 function render(){
  if(!s.ready){login();return;}
- frame();const r=parseRoute();
+ frame();window.LLStudio.apply();const r=parseRoute();
  const pages={home:homePage,courses:coursesPage,track:()=>trackPage(r.id),lesson:()=>lessonPage(r.id),
   script:()=>hasScript()?scriptPage():paywall('Script-Werkstatt','Plus','Codebeispiele sind ab Plus verfügbar.'),plans:plansPage,exams:examsPage,exam:()=>examPage(r.id),
-  reference:()=>fullAccess()?referencePage():paywall('Code-Referenzen','Pro / Ultimate','Die vollständige Sprachbibliothek gehört zum höchsten Tarif.'),profile:profilePage,friends:friendsPage,support:supportPage,settings:settingsPage,admin:adminPage};
+  reference:()=>fullAccess()?referencePage():paywall('Code-Referenzen','Pro / Ultimate','Die vollständige Sprachbibliothek gehört zum höchsten Tarif.'),level:()=>window.LLStudio.levelPage(),skilltree:()=>window.LLStudio.skilltreePage(),portfolio:()=>window.LLStudio.portfolioPage(),notes:()=>window.LLStudio.notesPage(),profile:profilePage,friends:friendsPage,support:supportPage,settings:settingsPage,admin:adminPage};
  content.innerHTML=(pages[r.page]||homePage)();
  if(r.page==='settings')renderMFA();
  paintStreakModal();
@@ -512,8 +513,8 @@ function homePage(){
  '<section class="ll-home-brand-banner"><img src="./liverylab-banner.webp" alt="Livery-Lab – Premium FiveM Systems, violette Skyline" loading="eager" fetchpriority="high"></section>'+
  '<div class="ll-home-greeting"><div><span class="eyebrow">WILLKOMMEN ZURÜCK, '+esc(nickname.toUpperCase())+'</span>'+
  '<h1>Deine <span class="gradient">Developer Academy.</span></h1><p>Lerne programmieren, entwickle Projekte und erreiche deine nächsten Ziele.</p></div>'+
- '<div class="ll-home-level"><div class="ll-level-top">'+llIcon('xp')+'<span>Level '+level+'</span></div>'+
- '<small>'+levelXp+' / 500 XP bis Level '+(level+1)+'</small><div class="ll-level-bar"><span style="width:'+(levelXp/5)+'%"></span></div></div></div>'+
+ '<button type="button" class="ll-home-level" data-go="level" aria-label="Level und Belohnungen anzeigen"><div class="ll-level-top">'+llIcon('xp')+'<span>Level '+level+'</span></div>'+
+ '<small>'+levelXp+' / 500 XP bis Level '+(level+1)+'</small><div class="ll-level-bar"><span style="width:'+(levelXp/5)+'%"></span></div></button></div>'+
  '<div class="ll-home-metrics"><div><span>✦</span><strong>'+xp+' XP</strong><small>Gesammelt</small></div><div><span>✓</span><strong>'+completed.size+'</strong><small>Lektionen geschafft</small></div><div><span>↗</span><strong>'+s.courses.length+'</strong><small>Lernpfade entdecken</small></div><div><span>🔥</span><strong>'+streak+' Tage</strong><small>Deine Streak</small></div></div>'+
  '<section class="ll-home-continue"><div class="ll-continue-icon">'+llIcon('code')+'</div>'+
  '<div class="ll-continue-copy"><span class="eyebrow">WEITERLERNEN</span>'+
@@ -522,7 +523,7 @@ function homePage(){
  '<div class="ll-continue-progress"><div class="ll-level-bar"><span style="width:'+progress+'%"></span></div><strong>'+progress+' %</strong></div></div>'+
  '<button type="button" class="btn primary ll-continue-button" data-go="'+(next?'lesson/'+esc(next.id):'courses')+'">Jetzt fortsetzen '+llIcon('arrow')+'</button></section>'+
  '<section class="ll-home-tools"><div class="ll-tool-card"><span class="eyebrow">DEIN TAGESZIEL</span><h3>'+today+' / '+dailyGoal+' Lektionen heute</h3><div class="progress"><span style="width:'+Math.min(100,Math.round(today/dailyGoal*100))+'%"></span></div><p>Abgeschlossene Lektionen seit Mitternacht auf diesem Konto.</p><select class="select" id="study-goal" aria-label="Tagesziel">'+[1,2,3,4,5,6,7,8,9,10,15,20].map(n=>'<option value="'+n+'" '+(dailyGoal===n?'selected':'')+'>'+n+' Lektionen</option>').join('')+'</select></div><div class="ll-tool-card"><span class="eyebrow">DEIN WOCHENZIEL</span><h3>'+week+' / '+weeklyGoal+' Lektionen</h3><div class="progress"><span style="width:'+Math.min(100,Math.round(week/weeklyGoal*100))+'%"></span></div><p>Montag bis Sonntag · neu abgeschlossene Lektionen.</p><select class="select" id="weekly-goal" aria-label="Wochenziel">'+[3,5,10,15,20,30,50,100].map(n=>'<option value="'+n+'" '+(weeklyGoal===n?'selected':'')+'>'+n+' Lektionen</option>').join('')+'</select></div><div class="ll-tool-card"><span class="eyebrow">FOKUSZEIT</span><h3 id="focus-clock">'+timerLabel()+'</h3><p>Stelle deine eigene Lernzeit ein.</p><button class="btn small" data-timer-open>Timer einstellen</button></div></section>'+
- '<div class="ll-home-heading"><span class="eyebrow">[ ✦ ] DEINE ACADEMY</span><h2>Was möchtest du heute machen?</h2><p>Alle wichtigen Bereiche auf einen Blick.</p></div>'+
+ window.LLStudio.homeSection()+'<div class="ll-home-heading"><span class="eyebrow">[ ✦ ] DEINE ACADEMY</span><h2>Was möchtest du heute machen?</h2><p>Alle wichtigen Bereiche auf einen Blick.</p></div>'+
  '<div class="ll-home-shortcuts">'+
  homeShortcut('learn','Lernen','Kurse, Tutorials und praxisnahe Projekte.','courses',false,false)+
  homeShortcut('code','Script','Fertige FiveM-Skripte Schritt für Schritt.','script',!hasScript(),false)+
@@ -644,7 +645,7 @@ function lessonPage(id){
  (p.example?'<div class="codebox"><pre><code>'+esc(p.example)+'</code></pre></div>':'')+
  (p.resource?'<a href="'+safeLink(p.resource)+'" target="_blank" rel="noopener noreferrer">Offizielle Dokumentation ↗</a>':'')+
  '</section>'+
- '<section class="step-box '+(isBlender?'blender-video-step':'')+'"><span class="eyebrow">SCHRITT 02 · '+(isBlender?'BLENDER VIDEO-TRAINING':'VIDEO-TUTORIAL')+'</span><h2>'+(isBlender?'Im Interface mitmachen.':'Erklärung ansehen.')+'</h2>'+
+ window.LLStudio.lessonAddon(l,c,p)+'<section class="step-box '+(isBlender?'blender-video-step':'')+'"><span class="eyebrow">SCHRITT 02 · '+(isBlender?'BLENDER VIDEO-TRAINING':'VIDEO-TUTORIAL')+'</span><h2>'+(isBlender?'Im Interface mitmachen.':'Erklärung ansehen.')+'</h2>'+
  (validVideo?
  '<p class="muted">Passender Videoguide: <strong>'+esc(info.name)+'</strong>. Wenn das Video länger ist, konzentriere dich auf das Kapitel zu dieser Lektion.</p>'+
  '<div class="video-frame" id="video-frame"><div class="video-placeholder"><div class="play">▶</div><strong>'+esc(info.name)+'</strong>'+
@@ -1210,7 +1211,7 @@ function settingsPage(){
  toggle('contrast','Hoher Kontrast','Konturen und Texte deutlicher hervorheben.')+
  toggle('motion','Weniger Bewegung','Animationen und Übergänge reduzieren.')+
  '</div><button class="btn ghost settings-reset" data-action="reset-appearance">↺ Standarddarstellung wiederherstellen</button></div></section>'+
- '<section class="setting-section"><span class="eyebrow">02 · DEIN ACCOUNT</span><h2>Anmeldedaten</h2>'+
+ window.LLStudio.settingsSection()+'<section class="setting-section"><span class="eyebrow">02 · DEIN ACCOUNT</span><h2>Anmeldedaten</h2>'+
  '<div class="account-settings-grid"><div class="panel"><h3>Zugangsdaten</h3>'+
  '<div class="settings-row"><div><strong>E-Mail-Adresse</strong><p>'+esc(email)+'</p></div><span class="chip free">Hinterlegt</span></div>'+
  '<div class="settings-row"><div><strong>Benutzername</strong><p>'+esc(username||'Noch nicht festgelegt')+'</p></div><span class="chip '+(username?'free':'plus')+'">'+(username?'Aktiv':'Optional')+'</span></div>'+
@@ -1804,7 +1805,7 @@ async function init(){
  try{api=window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
   void api.rpc('academy_shop_discount').then(res=>{if(!res.error){s.shopDiscount=Number(res.data)||0;if(s.ready&&['plans','admin'].includes(parseRoute().page))render();}}).catch(()=>{});
   void api.rpc('academy_beta_status').then(beta=>{if(!beta.error){s.service.beta_open=beta.data===true;if(!s.ready)login();}}).catch(()=>{});
-  await boot();}
+  window.LLStudio.connect({state:()=>s,client:()=>api,notice,go,render});await boot();}
  catch(err){content.innerHTML='<div class="auth-layout panel"><h2>Academy nicht erreichbar</h2><p class="muted">'+esc(formatError(err))+'</p><button class="btn" onclick="location.reload()">Erneut versuchen</button></div>';}
 }
 init();
