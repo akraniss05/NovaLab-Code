@@ -4,6 +4,9 @@ on:
     branches: [main]
     paths:
       - 'site/academy-v21.js'
+      - 'site/academy-curriculum.js'
+      - 'site/academy-v31-layout.css'
+      - 'supabase/functions/admin-users/index.ts'
       - 'site/academy-studio.js'
       - 'site/academy-runtime.js'
       - 'site/academy-learning-sync.js'
@@ -14,11 +17,15 @@ on:
       - 'tests/runtime-browser.cjs'
       - 'tests/runtime-grading.cjs'
       - 'tests/simple-academy.cjs'
+      - 'tests/admin-plans.cjs'
       - 'tests/learning-sync.cjs'
       - '.github/workflows/studio-tests.yml'
   pull_request:
     paths:
       - 'site/academy-v21.js'
+      - 'site/academy-curriculum.js'
+      - 'site/academy-v31-layout.css'
+      - 'supabase/functions/admin-users/index.ts'
       - 'site/academy-studio.js'
       - 'site/academy-runtime.js'
       - 'site/academy-learning-sync.js'
@@ -29,6 +36,7 @@ on:
       - 'tests/runtime-browser.cjs'
       - 'tests/runtime-grading.cjs'
       - 'tests/simple-academy.cjs'
+      - 'tests/admin-plans.cjs'
       - 'tests/learning-sync.cjs'
       - '.github/workflows/studio-tests.yml'
 permissions:
@@ -44,12 +52,15 @@ jobs:
       - name: Validate JavaScript
         run: |
           node --check site/academy-v21.js
+          node --check site/academy-curriculum.js
           node --check site/academy-studio.js
           node --check site/academy-runtime.js
           node --check site/academy-learning-sync.js
           node --check site/practice-engine.js
       - name: Simple Academy and timer regression tests
         run: node tests/simple-academy.cjs
+      - name: Subscription Edge Function security regression
+        run: node tests/admin-plans.cjs
       - name: Existing practice tests
         run: node tests/practice.cjs
       - name: New studio regression tests
