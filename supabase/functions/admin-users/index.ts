@@ -93,19 +93,61 @@ Deno.serve(async(req:Request)=>{
       if(updateError)throw updateError;
       return reply(200,{ok:true,role});
     }
-    if(body.action==='setTier'){
+    if(body.action==='setTier'||body.action==='adjustPlan'){
       const id=String(body.userId||'');
-      const tier=String(body.tier||'');
-      if(!isUUID(id)||!['free','pro','ultimate'].includes(tier)||id===user.id)
-        return reply(400,{error:'Ungültiger Tarif oder Account'});
+      if(!isUUID(id)||id===user.id||ownerIds.has(id))
+        return reply(400,{error:'Ungültiges oder geschütztes Mitgliedskonto'});
       const {data:target,error:targetError}=await admin.from('academy_profiles')
         .select('role').eq('id',id).maybeSingle();
       if(targetError||!target||target.role!=='student')return reply(403,{error:'Nur Mitgliedertarife können geändert werden'});
+      const {data:previous,error:readError}=await admin.from('academy_plans')
+        .select('tier,expires_at').eq('user_id',id).maybeSingle();
+      if(readError)throw readError;
+      const now=Date.now(),nowIso=new Date(now).toISOString(),dayMs=86400000;
+      let tier=String(previous?.tier||'free');
+      let expiresAt:string|null=previous?.expires_at||null;
+      if(body.action==='setTier'){
+        const requested=String(body.tier||'');
+        if(!['free','pro','ultimate'].includes(requested))return reply(400,{error:'Ungültiger Tarif'});
+        if(requested==='free'){tier='free';expiresAt=nowIso;}
+        else{
+          const active=previous&&previous.tier!=='free'&&
+            (previous.expires_at===null||Date.parse(previous.expires_at)>now);
+          // Preserve existing remaining time on a paid-to-paid switch.
+          // New or expired grants start with a transparent 30-day period.
+          if(!active)expiresAt=new Date(now+30*dayMs).toISOString();
+          tier=requested;
+        }
+      }else{
+        const operation=String(body.operation||'');
+        if(!['extend','reduce','set','end'].includes(operation))
+          return reply(400,{error:'Ungültige Laufzeit-Aktion'});
+        if(operation==='end'){tier='free';expiresAt=nowIso;}
+        else{
+          const days=Number(body.days);
+          if(!Number.isInteger(days)||days<1||days>3650)
+            return reply(400,{error:'Bitte 1 bis 3650 ganze Tage eingeben'});
+          if(tier==='free'||!previous)return reply(409,{error:'Zuerst eine Plus- oder Ultimate-Mitgliedschaft vergeben'});
+          if(expiresAt===null&&operation!=='set')
+            return reply(409,{error:'Unbefristetes Abo: zuerst eine feste Laufzeit festlegen'});
+          const baseline=operation==='set'?now:
+            operation==='extend'?Math.max(now,Date.parse(expiresAt!)):
+              Date.parse(expiresAt!);
+          if(!Number.isFinite(baseline))return reply(409,{error:'Gespeichertes Ablaufdatum ist ungültig'});
+          const result=operation==='reduce'?baseline-days*dayMs:baseline+days*dayMs;
+          if(result>now+3650*dayMs)return reply(400,{error:'Maximale Restlaufzeit: 3650 Tage'});
+          if(result<=now){tier='free';expiresAt=nowIso;}
+          else expiresAt=new Date(result).toISOString();
+        }
+      }
       const {error:planError}=await admin.from('academy_plans').upsert({
-        user_id:id,tier,granted_by:user.id,expires_at:null,updated_at:new Date().toISOString()
+        user_id:id,tier,granted_by:user.id,expires_at:expiresAt,updated_at:nowIso
       },{onConflict:'user_id'});
       if(planError)throw planError;
-      return reply(200,{ok:true,tier});
+      return reply(200,{ok:true,userId:id,tier,expires_at:expiresAt,
+        remaining_seconds:tier==='free'?0:expiresAt===null?null:
+          Math.max(0,Math.ceil((Date.parse(expiresAt)-now)/1000)),
+        ended:tier==='free'});
     }
     if(body.action==='list'){
       const page=Math.max(1,Math.min(100,Math.trunc(Number(body.page)||1)));
@@ -117,6 +159,20 @@ Deno.serve(async(req:Request)=>{
       const users=members.users.filter(u=>map.has(u.id)).map(u=>({
         id:u.id,email:u.email||'',username:map.get(u.id)?.username||null,needs_password_change:map.get(u.id)?.needs_password_change||false,role:map.get(u.id)?.role||'student',is_owner:ownerIds.has(u.id),active:map.get(u.id)?.active??false,access_status:map.get(u.id)?.access_status||'blocked',email_confirmed:!!u.email_confirmed_at&&u.app_metadata?.academy_signup_flow!=='manual_request',email_review_required:u.app_metadata?.academy_signup_flow==='manual_request',created_at:u.created_at
       }));
+      // Include the real, server-read expiry for each visible member.
+      // Never expose subscription details outside the authenticated admin action.
+      const memberIds=users.map(u=>u.id);
+      if(memberIds.length){
+        const {data:plans,error:plansError}=await admin.from('academy_plans')
+          .select('user_id,tier,expires_at').in('user_id',memberIds);
+        if(plansError)throw plansError;
+        const planMap=new Map((plans||[]).map(p=>[p.user_id,p]));
+        for(const entry of users){
+          const plan=planMap.get(entry.id);
+          entry.plan_tier=plan?.tier||'free';
+          entry.plan_expires_at=plan?.expires_at||null;
+        }
+      }
       users.sort((a,b)=>(a.access_status==='pending'?0:1)-(b.access_status==='pending'?0:1));
       return reply(200,{users,page,isOwner,hasMore:members.users.length===100,pendingCount:users.filter(u=>u.access_status==='pending').length});
     }
