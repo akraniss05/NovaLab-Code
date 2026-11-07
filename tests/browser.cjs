@@ -4,7 +4,7 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),asse
 const {chromium}=require('playwright-core');
 const root=path.join(__dirname,'..');
 const source=fs.readFileSync(path.join(root,'site/academy-v21.js'),'utf8');
-const css=fs.readFileSync(path.join(root,'site/app-v21.css'),'utf8');
+const css=['site/app-v21.css','site/academy-studio.css','site/academy-learning-extras.css','site/academy-v31-layout.css'].map(file=>fs.readFileSync(path.join(root,file),'utf8')).join('\n');
 const expose='\nwindow.__views={s,trackPage,lessonPage,scriptPage,examPage,examsPage,referencePage,plansPage,adminPage,login,profilePage,friendsPage,supportPage,settingsPage,homePage,streakModalHtml,llIcon,paywall};\n})();';
 assert.match(source,/\ninit\(\);\n\}\)\(\);\s*$/);
 const rewritten=source.replace(/\ninit\(\);\n\}\)\(\);\s*$/,expose);
@@ -103,6 +103,8 @@ return {
  continueDisplay:get('.ll-home-continue')?getComputedStyle(get('.ll-home-continue')).display:null,
  modalWidth:get('.ll-streak-modal')?get('.ll-streak-modal').getBoundingClientRect().width:null,
  bannerRatio:get('.ll-home-brand-banner')?get('.ll-home-brand-banner').getBoundingClientRect().width/get('.ll-home-brand-banner').getBoundingClientRect().height:null,
+ bannerHeight:get('.ll-home-brand-banner')?.getBoundingClientRect().height||null,
+ headerHeight:get('.topbar')?.getBoundingClientRect().height||null,
  bannerDebug:get('.ll-home-brand-banner')?{width:get('.ll-home-brand-banner').getBoundingClientRect().width,height:get('.ll-home-brand-banner').getBoundingClientRect().height,aspect:getComputedStyle(get('.ll-home-brand-banner')).aspectRatio,display:getComputedStyle(get('.ll-home-brand-banner')).display,imagePosition:getComputedStyle(get('.ll-home-brand-banner img')).position,rules:Array.from(document.styleSheets).map(x=>x.cssRules?.length||0)}:null
 };
 },selectors);
@@ -110,7 +112,7 @@ assert.equal(actual.missing.length,0,name+' @'+width+' missing '+actual.missing.
 assert.ok(actual.overflow<=2,name+' @'+width+' horizontal overflow '+actual.overflow+'px');
 assert.ok(actual.mainWidth<=width,name+' @'+width+' content too wide');
 assert.ok(actual.iconWidths.every(v=>v===0||(v>=1&&v<=48)),name+' @'+width+' icon HUGE: '+JSON.stringify(actual.iconWidths));
-if(name==='home'){console.log('BANNER GEOMETRY '+width+' '+JSON.stringify(actual.bannerDebug));assert.equal(actual.shortcutDisplay,'grid','Home shortcuts must be a grid');assert.equal(actual.continueDisplay,'flex','Continue card must be styled');const bannerRatioOk=width<820?(actual.bannerRatio>1.7&&actual.bannerRatio<1.9):(actual.bannerRatio>2.0&&actual.bannerRatio<3.3);assert.ok(bannerRatioOk,'Banner aspect broken: '+actual.bannerRatio);}
+if(name==='home'){console.log('BANNER GEOMETRY '+width+' '+JSON.stringify(actual.bannerDebug));assert.equal(actual.shortcutDisplay,'grid','Home shortcuts must be a grid');assert.equal(actual.continueDisplay,'flex','Continue card must be styled');const bannerRatioOk=actual.bannerRatio>2.5&&actual.bannerRatio<2.75;assert.ok(bannerRatioOk,'Banner aspect broken: '+actual.bannerRatio);if(width<820){assert.ok(actual.bannerHeight<191,'iPhone banner is too tall: '+actual.bannerHeight);assert.ok(actual.headerHeight<=75,'Mobile header became multi-row: '+actual.headerHeight)}}
 if(name.startsWith('streak')){assert.ok(actual.modalWidth>200&&actual.modalWidth<=width,'Daily popup size broken');}
 if(width<820){assert.equal(actual.navRows,1,'Five bottom nav tabs must stay on ONE ROW: '+actual.navRows);}
 if(name==='track'){assert.equal(actual.cardDisplay,'grid');assert.ok(actual.titleBelow,'Lesson title/description collision');}
