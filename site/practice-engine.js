@@ -54,7 +54,7 @@ function evaluate(source,payload){const code=clean(source),lang=String(payload.l
  if(!code)return {ok:false,diagnostic:'Schreibe zuerst deine Lösung.',output:[]};
  const error=syntax(code,lang);if(error)return {ok:false,diagnostic:error,output:[]};
  const required=(Array.isArray(payload.checks)?payload.checks:[]).filter(x=>typeof x==='string'&&x.trim());
- const missing=required.filter(x=>!matches(code,x)),out=output(code,lang),expected=output(solution,lang);
+ const missing=required.filter(x=>!matches(x.startsWith('--')?code:candidate,x)),out=output(code,lang),expected=output(solution,lang);
  if(missing.length)return {ok:false,diagnostic:'Prüfe diese Schritte: '+missing.slice(0,3).map(describe).join(', ')+'.',output:out.lines};
  if(['lua','javascript','python'].includes(lang)&&expected.supported&&expected.lines.length&&out.supported){
   const personal=/eigenen Namen/i.test(payload.task||''),variable=/Ändere anschließend mindestens einen Wert/i.test(payload.task||'');
