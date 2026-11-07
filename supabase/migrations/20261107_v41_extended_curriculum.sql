@@ -12,7 +12,7 @@ DECLARE
 BEGIN
  FOR r IN
   SELECT c.lesson_id,c.payload,i.title,i.course_id,i.position,
-  (SELECT title FROM public.ll_lesson_index nxt WHERE nxt.course_id=i.course_id AND nxt.position>i.position ORDER BY nxt.position LIMIT 1) following
+  (SELECT nxt.title FROM public.ll_lesson_index nxt WHERE nxt.course_id=i.course_id AND nxt.position>i.position ORDER BY nxt.position LIMIT 1) following
   FROM public.ll_lesson_content c JOIN public.ll_lesson_index i ON i.id=c.lesson_id
   WHERE jsonb_typeof(c.payload)='object' AND (c.payload->>'quiz_version') IS DISTINCT FROM '2'
  LOOP
