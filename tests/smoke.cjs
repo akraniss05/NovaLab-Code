@@ -5,7 +5,7 @@ const read=file=>fs.readFileSync(path.join(__dirname,'..',file),'utf8');
 const html=read('site/index.html'),js=read('site/academy-v21.js'),css=read('site/app-v21.css');
 for(const file of ['site/reference-data.js','site/app-v21.css','site/app-v12.css','site/config.js','site/auth-mfa-v15.js','site/academy-v21.js','site/privacy.html','site/manifest.webmanifest','site/icon.svg','supabase/functions/academy-signin/index.ts','supabase/functions/admin-users/index.ts'])
  assert(fs.existsSync(path.join(__dirname,'..',file)),file+' missing');
-for(const token of ['app-v21.css?build=20261106v23b','academy-v21.js?build=20261106v23b','auth-mfa-v15.js?build=20261106v23b','config.js?build=20261106v23b','LiveryLab v23'])
+for(const token of ['app-v21.css?build=20261107v24','academy-v21.js?build=20261107v24','auth-mfa-v15.js?build=20261107v24','config.js?build=20261107v24','LiveryLab v24'])
  assert(html.includes(token),'Versioned asset missing: '+token);
 for(const obsolete of ['styles.css','refined.css','music-studio.js','studio3d-v5.js'])
  assert(!html.includes(obsolete),'Old asset still linked: '+obsolete);
@@ -18,7 +18,7 @@ assert(css.includes('@media(max-width:560px)'),'Mobile breakpoint missing');
 assert(!/sb_secret_|SUPABASE_SERVICE_ROLE_KEY\s*[:=]/.test(read('site/config.js')),'Secret key detected in public config');
 assert(/sb_publishable_/.test(read('site/config.js')),'Supabase publishable key missing');
 for(const feature of ['academy_voucher_apply','academy_voucher_create','academy_voucher_list','academy_voucher_status','academy_voucher_set_active','academy_open_lesson','academy_project_examples','redeem-voucher','create-voucher','membership-card','daily-strip'])assert(js.includes(feature),'Missing membership feature: '+feature);
-for(const token of ['app-v21.css?build=20261106v23b','LiveryLab v23'])assert(html.includes(token),'Missing v23 asset: '+token);
+for(const token of ['app-v21.css?build=20261107v24','LiveryLab v24'])assert(html.includes(token),'Missing v24 asset: '+token);
 for(const token of ['registerAccount','waitingApproval','reference-language','reference-search','approval-card','academy_exam_start','setTier','access_status','3 pro Tag','6 pro Tag'])assert(js.includes(token),'Missing v15 capability: '+token);
 const reference=read('site/reference-data.js');assert(reference.includes('window.LL_REFERENCE_DATA'),'Reference data source missing');
 assert(!html.includes('reference-data.js?release='),'Reference dataset must not be loaded by all users');
@@ -49,4 +49,6 @@ assert(js.includes('width="24" height="24"'), 'SVG icons missing explicit dimens
 assert(css.includes('grid-template-columns:repeat(5,minmax(0,1fr))'), 'Bottom navigation must fit five icons');
 assert(html.includes('id="streak-portal"')&&html.includes('data-streak-open'),'Streak mount and header button missing');
 for(const token of ['data-form="profile-title"','profile-title-badge','auth-showcase','admin-overview','blender-video-step'])assert(js.includes(token),'Missing v23 feature: '+token);
-console.log('App v23 Blender video learning, profile titles, admin and login tests passed');
+for(const token of ['data-focus-course','ll-home-focus','data-pref="','data-admin-filter','admin-search-empty','Größere Schrift','Hoher Kontrast','Weniger Bewegung'])assert(js.includes(token),'Missing v24 function: '+token);
+for(const token of ['.ll-home-focus','.ll-focus-result','.appearance-toggle:focus-within','.admin-search-empty[hidden]'])assert(css.includes(token),'Missing v24 styling: '+token);
+console.log('App v24 focus, appearance, Blender, profile titles, admin and login tests passed');
