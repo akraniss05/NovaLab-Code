@@ -8,10 +8,10 @@ const exposed=source.replace(end,"\nwindow.__appTest={s,quizQuestions,paintTimer
 const saved=new Map(),callbacks={},elements=new Map();
 function classList(){const set=new Set();return {add(...names){names.forEach(n=>set.add(n))},remove(...names){names.forEach(n=>set.delete(n))},toggle(name,state){if(state===undefined)state=!set.has(name);state?set.add(name):set.delete(name)},contains(name){return set.has(name)}};}
 const fake=()=>({innerHTML:'',textContent:'',hidden:false,disabled:false,value:'',dataset:{},classList:classList(),setAttribute(){},focus(){},querySelector(){return null},replaceChildren(){},isConnected:true});
-for(const key of ['#content','#sidebar','#bottom-nav','#toast','#focus-header','#focus-clock','#timer-portal','#timer-minutes','#practice-input','#practice-feedback','#practice-status','#practice-workspace','#mark-lesson','[data-action="complete-practice"]','#answer-result','#video-check'])elements.set(key,fake());
+for(const key of ['#content','#sidebar','#bottom-nav','#toast','#focus-header','#focus-clock','#timer-portal','#timer-minutes','#practice-input','#practice-feedback','#practice-status','#practice-workspace','#mark-lesson','[data-action="complete-practice"]','#answer-result','#video-check','#quiz-choices','#quiz-question','#quiz-progress','#quiz-meter-fill','#lesson-explanation'])elements.set(key,fake());
 const answerButtons=['0','1','2'].map(value=>({dataset:{answer:value},disabled:false,classList:classList()}));
 const doc={querySelector(selector){return elements.get(selector)||null},querySelectorAll(selector){return selector==='[data-answer]'?answerButtons:[]},addEventListener(name,fn){(callbacks[name]||(callbacks[name]=[])).push(fn)},body:{classList:classList()}};
-const window={LL_CONFIG:{},LLPractice:require('../site/practice-engine.js').LLPractice,addEventListener(){}};
+const window={LL_CONFIG:{},LLPractice:require('../site/practice-engine.js').LLPractice,LLCurriculum:require('../site/academy-curriculum.js').LLCurriculum,addEventListener(){}};
 window.LLLearning={queue(){},mark(){}};
 window.LLRuntime={async run(text){return {available:true,ok:true,lines:[text.includes('Wrong')?'Wrong':'Hello']}}};
 const sandbox={window,document:doc,localStorage:{getItem:key=>saved.get(key)||null,setItem:(key,value)=>saved.set(key,value),removeItem:key=>saved.delete(key)},sessionStorage:{getItem:()=>null},location:{hash:'#lesson/lua-01'},console,setTimeout,clearTimeout,setInterval(){return 1},clearInterval(){},Date,Math,Number,Promise,Map,Set,Intl,confirm(){return true}};
@@ -65,5 +65,31 @@ async function click(selector,node){for(const fn of callbacks.click||[])await fn
  assert.equal(s.quizPassed,true,'Correct quiz answer passes');
  assert.equal(elements.get('#answer-result').classList.contains('quiz-correct'),true,'Correct quiz is green');
  assert.equal(elements.get('#mark-lesson').disabled,false,'Correct video + code + quiz unlocks completion');
- console.log('PASS: Timer always centered/visible and persistent, red/green code check, correct/incorrect quiz and completion gate.');
+ // A second lesson with eight chapters and six stored topic questions.
+ const chapters=Array.from({length:8},(_,i)=>({title:'Lernteil '+(i+1),paragraphs:['Ausführliche Erklärung zu Teil '+(i+1)+'.'],bullets:['Wichtiger Begriff'],exercise:'Aufgabe ausführen.'}));
+ const questions=Array.from({length:6},(_,i)=>({question:'Wissensfrage '+(i+1)+' zum Thema Lua?',options:['Antwort A','Antwort B','Antwort C'],correct:i%3,explanation:'Prüfe die Erklärung im Lernteil.'}));
+ s.lesson.payload={...s.lesson.payload,sections:chapters,quiz_items:questions,quiz_version:2};
+ s.quizStep=0;s.choice=null;s.quizPassed=false;
+ assert.equal(app.quizQuestions(s.lesson.payload).length,6,'Six distinct, stored quiz questions');
+ await click('[data-lesson-part]',{dataset:{lessonPart:'3'}});
+ assert.equal(s.sectionIndex,3,'Reader switches chapters');
+ assert.match(elements.get('#lesson-explanation').innerHTML,/LERNTEIL 4 VON 8/);
+ for(let i=0;i<6;i++){
+  assert.equal(s.quizStep,i,'Quiz starts at the required question');
+  await click('[data-answer]',{dataset:{answer:String((i+1)%3)}});
+  assert.equal(s.quizStep,i,'Incorrect answer never advances');
+  assert.equal(s.quizPassed,false,'Incorrect answer never completes the quiz');
+  await click('[data-answer]',{dataset:{answer:String(i%3)}});
+  assert.equal(s.quizStep,i===5?5:i+1,'Correct answer advances exactly one question');
+  assert.equal(s.quizPassed,i===5,'Quiz completion only after all six correct answers');
+ }
+ assert.equal(s.progress.quizProgress['lua-01'].total,6,'Saved progress records quiz length');
+ assert.equal(s.progress.quizProgress['lua-01'].passed,true,'Final quiz status persisted');
+ assert.match(elements.get('#quiz-progress').textContent,/Frage 6 von 6/);
+ assert.equal(elements.get('#mark-lesson').disabled,false,'All quiz questions unlock lesson completion');
+ // The redesigned timer keeps the old controls and adds presets/ring.
+ assert.match(elements.get('#timer-portal').innerHTML,/ll-focus-ring/,'Streak-style circular countdown present');
+ assert.match(elements.get('#timer-portal').innerHTML,/data-timer-preset="25"/,'Quick preset controls present');
+ console.log('PASS: Focus timer, green/red code check, eight learning chapters, six sequential quiz questions and saved progress.');
+
 })().catch(err=>{console.error(err);process.exitCode=1});
