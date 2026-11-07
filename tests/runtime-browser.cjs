@@ -12,6 +12,13 @@ if(!chrome)throw Error('Chrome/Chromium not available for live runtime verificat
 const server=http.createServer((req,res)=>{
  if(req.url==='/runtime.js'){res.writeHead(200,{'Content-Type':'text/javascript'});res.end(source);return;}
  if(req.url==='/vendor/fengari-web.bundle.js'){const file=path.join(root,'vendor/fengari-web.bundle.js');if(!fs.existsSync(file)){res.writeHead(404);res.end('missing bundled Lua runtime');return;}res.writeHead(200,{'Content-Type':'text/javascript'});res.end(fs.readFileSync(file));return;}
+ if(req.url?.startsWith('/vendor/pyodide/')){
+  const filename=path.basename(req.url),filepath=path.join(root,'vendor/pyodide',filename);
+  if(!fs.existsSync(filepath)){res.writeHead(404);res.end('Pyodide file not found: '+filename);return;}
+  const ext=path.extname(filename),type=ext==='.wasm'?'application/wasm':ext==='.js'||ext==='.mjs'?'text/javascript':ext==='.json'?'application/json':ext==='.zip'?'application/zip':'application/octet-stream';
+  res.writeHead(200,{'Content-Type':type,'Access-Control-Allow-Origin':'*'});
+  res.end(fs.readFileSync(filepath));return;
+ }
  res.writeHead(200,{'Content-Type':'text/html;charset=utf-8'});
  res.end('<!doctype html><html><head><title>LL Runtime test</title></head><body><script src="/runtime.js"></script></body></html>');
 });
@@ -34,9 +41,13 @@ async function start(){
   assert.equal(lua.ok,true,'Lua must really run: '+JSON.stringify(lua));
   assert.equal(lua.lines.length,1);
   assert.equal(lua.lines[0],'number\tboolean\tstring','Lua print reflects real Lua types');
-  const unsupported=await page.evaluate(()=>window.LLRuntime.run('print("x")','python'));
-  assert.equal(unsupported.available,false,'Python must not simulate execution');
-  console.log('PASS: real JavaScript output, JavaScript errors, Lua 5.3 types, honest unsupported Python.');
+  const python=await page.evaluate(()=>window.LLRuntime.run('name = "LiveryLab"\nlevel = 3\nprint(name,level)','python'));
+  assert.equal(python.available,true,'Python WebAssembly runner is available');
+  assert.equal(python.ok,true,'Python must execute successfully: '+JSON.stringify(python));
+  assert.deepEqual([...python.lines],['LiveryLab 3'],'Python output must originate from interpreter');
+  const unsupported=await page.evaluate(()=>window.LLRuntime.run('SELECT 1','sql'));
+  assert.equal(unsupported.available,false,'Unimplemented SQL must not simulate execution');
+  console.log('PASS: real JavaScript, Lua 5.3 and Python outputs; explicit unsupported SQL.');
   await page.close();
  }finally{await browser.close();}
 }
