@@ -33,6 +33,7 @@ jobs:
           node --check site/config.js
           node tests/smoke.cjs
           node tests/practice.cjs
+          node tests/simple-academy.cjs
           node tests/render.cjs
           node tests/registration.cjs
           node tests/streak.cjs
