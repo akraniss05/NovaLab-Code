@@ -32,6 +32,9 @@ assert.ok(window.LLStudio.levelPage().includes('Aktivieren')===false || window.L
 assert.match(window.LLStudio.levelPage(),/DEIN NÄCHSTER MEILENSTEIN/);
 assert.match(window.LLStudio.homeSection(),/Portfolio/);
 assert.match(window.LLStudio.portfolioPage(),/studio-project-form/);
+assert.match(window.LLStudio.portfolioPage(),/Portfolio als Markdown exportieren/);
+assert.match(window.LLStudio.challengesPage(),/Tagesziel/);
+assert.match(window.LLStudio.calendarPage(),/Lernkalender/);
 assert.match(window.LLStudio.skilltreePage(),/Variablen/);
 assert.match(window.LLStudio.lessonAddon(fixture.lessons[1],fixture.courses[0],{steps:['Vorbereitung','Übung']}),/studio-lesson-note/);
 assert.match(window.LLStudio.settingsSection(),/fontSize/);
