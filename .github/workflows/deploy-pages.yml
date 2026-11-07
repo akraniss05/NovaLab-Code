@@ -27,6 +27,7 @@ jobs:
           node --check site/reference-data.js
           node --check site/academy.js
           node --check site/academy-v21.js
+          node --check site/academy-curriculum.js
           node --check site/academy-studio.js
           node --check site/academy-runtime.js
           node --check site/auth-mfa-v15.js
@@ -34,6 +35,7 @@ jobs:
           node tests/smoke.cjs
           node tests/practice.cjs
           node tests/simple-academy.cjs
+          node tests/admin-plans.cjs
           node tests/render.cjs
           node tests/registration.cjs
           node tests/streak.cjs
