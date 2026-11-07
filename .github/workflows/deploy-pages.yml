@@ -1,4 +1,4 @@
-name: Deploy LiveryLab Academy v28 • learning and community tools
+name: Deploy LiveryLab Academy v29 • learning and community tools
 on:
   push:
     branches: [main]
@@ -45,7 +45,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: academy-v28-mobile-captures
+          name: academy-v29-mobile-captures
           path: test-results/
           if-no-files-found: ignore
       - name: Remove restricted reference data from public site artifact
