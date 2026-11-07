@@ -47,7 +47,7 @@ fs.mkdirSync(path.join(root,'test-results'),{recursive:true});
 const scenes=[
  ['home',app.homePage(),['.ll-home-brand-banner img','.ll-home-shortcuts','.ll-home-continue','.ll-streak-shortcut']],
  ['track',app.trackPage('fivem'),['.lesson-card','.lesson-main strong','.lesson-summary','.status-ring']],
- ['lesson',app.lessonPage('fivem-01'),['.lesson-steps','.lesson-step','.step-box','.video-frame','.quiz-choice','.exercise-textarea']],
+ ['lesson',app.lessonPage('fivem-01'),['.lesson-steps','.lesson-step','.step-box','.video-frame','.quiz-choice','.exercise-textarea','.code-editor','#code-lines','[data-action="reset-lesson"]']],
  ['script',app.scriptPage(),['.file-tree','.file-tabs','.file-preview']],
  ['reference',app.referencePage(),['.reference-row','.reference-block']],
  ['plans',app.plansPage(),['.membership-card','.voucher-panel','.voucher-input-row']],
