@@ -302,3 +302,35 @@ body.focus-modal-visible{overflow:hidden}
  #timer-portal .ll-focus-presets button{padding:10px 2px;font-size:11px}
 }
 @media(prefers-reduced-motion:reduce){#timer-portal .ll-focus-ring{transition:none}}
+
+
+/* v43 · Only two learning parts per lesson. Clean compact navigation. */
+#lesson-explanation .ll-part-heading{margin:6px 0 13px;align-items:center}
+#lesson-explanation .ll-part-heading h2{margin:5px 0 0}
+#lesson-explanation .ll-part-selector-two{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:10px;overflow:visible;margin:7px 0 18px;padding:0;width:100%;
+}
+#lesson-explanation .ll-part-selector-two button{
+ width:100%;min-width:0;min-height:48px;height:auto;
+ display:flex;align-items:center;justify-content:center;gap:10px;
+ flex:none;border-radius:13px;padding:10px 12px;font-size:13px;
+ color:#d7c2ef;white-space:normal;text-align:center;line-height:1.4;
+ background:#251a37;border:1px solid #624680;
+}
+#lesson-explanation .ll-part-selector-two button.active{
+ color:#fff;background:linear-gradient(130deg,#6941a4,#523079);
+ border-color:#c49af2;box-shadow:0 0 0 1px #a06ce361;
+}
+#lesson-explanation .ll-part-selector-two .ll-part-number{
+ display:grid;place-items:center;flex:0 0 28px;width:28px;height:28px;
+ border-radius:9px;border:1px solid #76579a;background:#38234e;font-size:13px;font-weight:800;
+}
+#lesson-explanation .ll-part-selector-two button.active .ll-part-number{background:#ab75e4;color:#190f25;border-color:#d9b2ff}
+#lesson-explanation .ll-part-controls{justify-content:flex-end;margin-top:17px}
+#lesson-explanation .ll-part-controls button{min-height:43px;min-width:0}
+@media(max-width:430px){
+ #lesson-explanation .ll-part-selector-two{gap:7px}
+ #lesson-explanation .ll-part-selector-two button{min-height:44px;padding:9px 6px;font-size:12px;gap:6px}
+ #lesson-explanation .ll-part-selector-two .ll-part-number{width:25px;height:25px;flex-basis:25px}
+}
