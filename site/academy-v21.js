@@ -1269,6 +1269,18 @@ function achievementGallery(){
    '<span class="achievement-state">'+(ok?'✓ Freigeschaltet':'Gesperrt')+'</span></article>';
  }).join('')+'</div></section>';
 }
+function xpHistoryHtml(){
+ const rows=(s.xpAwards||[]).slice().sort((a,b)=>Date.parse(b.awarded_at||0)-Date.parse(a.awarded_at||0));
+ const cards=rows.map(item=>{
+  const lesson=s.lessons.find(l=>l.id===item.lesson_id),course=lesson?courseOf(lesson.course_id):null;
+  const date=new Date(item.awarded_at||0);
+  const formatted=Number.isNaN(date.getTime())?'Datum unbekannt':date.toLocaleDateString('de-DE',{day:'2-digit',month:'short',year:'numeric'});
+  return '<div class="ll-xp-row"><div class="ll-xp-symbol">✦</div><div class="ll-xp-detail"><strong>'+esc(lesson?.title||item.lesson_id)+'</strong><small>'+esc(course?.name||'Lektion')+' · '+esc(formatted)+'</small></div><span class="ll-xp-amount">+'+Math.max(0,Number(item.xp)||0)+' XP</span></div>';
+ });
+ return '<section class="ll-xp-history"><div class="section-heading"><div><span class="eyebrow">[ ✦ ] DEINE BELOHNUNGEN</span><h3>Wofür du XP bekommen hast</h3><p>Jede Lektion gibt genau einmal 30 XP. Wiederholungen bringen keine neuen XP.</p></div><span class="chip free">'+rows.length+' Lektionen</span></div>'+
+ (rows.length?cards.slice(0,5).join('')+(rows.length>5?'<details class="ll-xp-more"><summary>Alle '+rows.length+' XP-Gutschriften anzeigen</summary>'+cards.slice(5).join('')+'</details>':''):
+ '<p class="muted">Du hast noch keine XP gesammelt. Schließe deine erste Lektion ab.</p>')+'</section>';
+}
 function profilePage(){
  const name=s.profile?.display_name||s.profile?.username||'Developer';
  const streak=Number(s.loginStreak?.current||0),best=Number(s.loginStreak?.best||0),titles=(s.social?.titles||['Developer']).filter(Boolean),selected=s.social?.profile?.title||'Developer';
@@ -1279,6 +1291,7 @@ function profilePage(){
  '<section class="profile-quick-stats"><div class="profile-quick-tile"><span>🔥</span><strong>'+streak+'</strong><small>Login-Streak in Tagen</small></div>'+
  '<div class="profile-quick-tile"><span>🏅</span><strong>'+best+'</strong><small>Bisheriger Rekord</small></div>'+
  '<div class="profile-quick-tile"><span>✦</span><strong>'+xpEarned()+'</strong><small>Erlernte XP</small></div></section>'+
+ xpHistoryHtml()+
  '<p class="micro streak-explanation">Deine Streak zählt nur, wenn du täglich den Claim bestätigst. Nach dem Einlösen wartest du mindestens 24 Stunden. Der Kalendertag richtet sich nach Europe/Berlin.</p>'+
  achievementGallery()+
  '<section class="profile-friends-link"><div><span class="eyebrow">[ ♡ ] NETZWERK</span><h3>Freunde & gemeinsame Fortschritte</h3>'+
