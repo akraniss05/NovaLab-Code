@@ -7,7 +7,7 @@
 'use strict';
 var cfg=window.LL_CONFIG||{}, $=function(q,root){return (root||document).querySelector(q);};
 var content=$('#content'), sidebar=$('#sidebar'), bottom=$('#bottom-nav'), toastNode=$('#toast');
-var api=null, s={shopDiscount:0,service:{beta_open:true,mine:[],admin:[]},streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,quizStep:0,quizPassed:false,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},adminPage:1,adminFilter:'all',adminSearch:'',catalogLimit:9,practiceChecked:false,draft:'',prefs:null,projectTab:0,projectSource:'',projectLoading:false};
+var api=null, s={shopDiscount:0,service:{beta_open:true,mine:[],admin:[]},streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,quizStep:0,quizPassed:false,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},adminPage:1,adminFilter:'all',adminSearch:'',catalogLimit:9,practiceChecked:false,draft:'',hintStage:0,prefs:null,projectTab:0,projectSource:'',projectLoading:false};
 var plans={free:'Free',pro:'Plus',ultimate:'Ultimate'};
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];});}
 function safeLink(url){return /^https:\/\/[^\s<>"]+$/i.test(String(url||''))?esc(url):'#';}
@@ -325,7 +325,7 @@ async function navigateCurrent(){
  if(!s.ready)return;
  var route=parseRoute();s.route=route.page;
  if(route.page==='lesson'){
-   s.choice=null;s.quizStep=0;s.quizPassed=false;s.videoChecked=watchedIds().has(route.id);s.practiceChecked=(s.progress.verifiedPractice||[]).includes(route.id);s.draft=readDraft(route.id);s.videoLoaded=false;s.lesson=null;s.lessonGate=null;
+   s.choice=null;s.quizStep=0;s.quizPassed=false;s.hintStage=0;s.videoChecked=watchedIds().has(route.id);s.practiceChecked=(s.progress.verifiedPractice||[]).includes(route.id);s.draft=readDraft(route.id);s.videoLoaded=false;s.lesson=null;s.lessonGate=null;
    frame();content.innerHTML='<div class="center-screen"><div class="spinner"></div><p>Geschützte Lektion wird geladen …</p></div>';
    var meta=s.lessons.find(function(l){return l.id===route.id;});
    if(meta&&allowed(meta)){var result=await api.rpc('academy_open_lesson',{p_lesson:route.id});if(result.error){s.lessonGate={reason:'error',error:formatError(result.error)};notice(formatError(result.error));}else if(result.data?.allowed){s.lesson=result.data;s.progress.lastLesson={id:route.id,at:new Date().toISOString()};void saveProgress().catch(()=>{});if(s.daily){s.daily.used_today=result.data.used;s.daily.remaining_today=result.data.remaining;}}else{s.lessonGate=result.data||{reason:'error'};}}
@@ -704,10 +704,20 @@ async function completePractice(){
  var value=box.value.trim();
  if(value.length<5){notice('Schreibe zuerst deine eigene Lösung.');box.focus();return;}
  const payload=s.lesson.payload||{},lang=String(payload.lang||'').toLowerCase(),isVisual=lang==='blender'||lang==='text';
- const result=isVisual?{ok:value.length>=60,diagnostic:value.length>=60?'Deine Arbeitsschritte sind dokumentiert. Prüfe deine Szene selbst in Blender.':'Beschreibe mindestens 60 Zeichen mit konkreten Arbeitsschritten.',output:[]}:window.LLPractice.evaluate(value,payload);
- const runtime=isVisual?{lines:[],error:'Vergleiche deine Arbeit in Blender.'}:window.LLPractice.output(value,lang);
- const consoleNode=$('#practice-output'),feedback=$('#practice-feedback');if(consoleNode)consoleNode.textContent=runtime.lines.length?runtime.lines.map(x=>'> '+x).join('\n'):runtime.error||'Noch keine Ausgabe. Prüfe deine print-Aufrufe.';
- if(feedback){feedback.textContent=(result.ok?'✓ ':'✕ ')+result.diagnostic;feedback.classList.toggle('error',!result.ok)}
+ let result=isVisual?{ok:value.length>=60,diagnostic:value.length>=60?'Arbeitsschritte dokumentiert. Vergleiche deine tatsächliche Blender-Szene manuell.':'Beschreibe mindestens 60 Zeichen mit konkreten Arbeitsschritten.',output:[]}:window.LLPractice.evaluate(value,payload);
+ const runtime=isVisual?{available:false,ok:false,lines:[],error:'Blender-Szenen können im Browser nicht automatisch ausgeführt werden.'}:await window.LLRuntime.run(value,lang);
+ if(!isVisual&&runtime.available&&!runtime.ok){result={ok:false,diagnostic:'Laufzeitfehler: '+runtime.error,output:runtime.lines};}
+ if(!isVisual&&runtime.ok&&result.ok&&payload.solution&&!/eigenen Namen|Ändere anschließend mindestens einen Wert/i.test(payload.task||'')){
+  const expected=await window.LLRuntime.run(payload.solution,lang);
+  if(expected.ok&&expected.lines.length&&JSON.stringify(expected.lines)!==JSON.stringify(runtime.lines)){
+   result={ok:false,diagnostic:'Die echte Ausgabe weicht von der Musterlösung ab. Prüfe deine Werte und print-Aufrufe.',output:runtime.lines};
+  }
+ }
+ const consoleNode=$('#practice-output'),feedback=$('#practice-feedback');
+ if(consoleNode)consoleNode.textContent=isVisual?runtime.error:
+  runtime.available?(runtime.lines.map(x=>'> '+x).join('\n')+(runtime.error?'\n✕ '+runtime.error:runtime.ok&&runtime.lines.length===0?'(Programm ausgeführt, keine Konsolenausgabe)':'')):
+  runtime.error;
+ if(feedback){feedback.textContent=(result.ok?'✓ ':'✕ ')+result.diagnostic+(!isVisual&&!runtime.available?' Hinweis: Nur statische Prüfung; keine bestätigte Programmausführung.':'');feedback.classList.toggle('error',!result.ok)}
  if(!result.ok){s.practiceChecked=false;updateLessonControls();return;}
  saveDraft(id,value);s.practiceChecked=true;
  if(!s.progress.practiced)s.progress.practiced=[];
@@ -1465,11 +1475,20 @@ document.addEventListener('click',async function(e){
   }
   if(['run-practice','show-hint','show-solution','reset-practice'].includes(name)){
    const p=s.lesson?.payload||{},box=$('#practice-input'),out=$('#practice-output'),feedback=$('#practice-feedback');if(!box)return;
-   if(name==='show-hint'){if(feedback)feedback.textContent='Tipp: '+String(p.hint||'Lies die Erklärung und prüfe die Beispiele.');return;}
-   if(name==='show-solution'){if(feedback)feedback.textContent='Musterlösung:\n'+String(p.solution||p.example||'Noch keine Musterlösung verfügbar.');return;}
-   if(name==='reset-practice'){box.value=String(p.starter||'');box.dispatchEvent(new Event('input',{bubbles:true}));if(out)out.textContent='Editor zurückgesetzt.';if(feedback)feedback.textContent='';return;}
-   const result=window.LLPractice.evaluate(box.value,p),runtime=window.LLPractice.output(box.value,String(p.lang||'').toLowerCase());if(out)out.textContent=runtime.lines.length?runtime.lines.map(x=>'> '+x).join('\n'):runtime.error||'Noch keine Ausgabe. Prüfe deine print-Aufrufe.';
-   if(feedback){feedback.textContent=result.diagnostic;feedback.classList.toggle('error',!result.ok)}return;
+   if(name==='show-hint'){
+    s.hintStage=(s.hintStage||0)%3+1;
+    const points=Array.isArray(p.keyPoints)?p.keyPoints:[],steps=Array.isArray(p.steps)?p.steps.filter(x=>typeof x==='string'):[];
+    const tips=[String(p.hint||points[0]||'Lies noch einmal das Lernziel.'),
+      String(points[0]||steps[0]||p.hint||'Sieh dir das erste Beispiel an und überprüfe die Schreibweise.'),
+      String(p.mistake||steps[1]||points[1]||'Vergleiche jeden geforderten Teilschritt mit deinem Entwurf.')];
+    if(feedback){feedback.textContent='Tipp '+s.hintStage+' / 3: '+tips[s.hintStage-1];feedback.classList.remove('error');}return;
+   }
+   if(name==='show-solution'){if(feedback){feedback.textContent='Musterlösung:\n'+String(p.solution||p.example||'Für diese Aufgabe ist noch keine Musterlösung hinterlegt.')+'\n\nErklärung: '+String(p.theory||p.goal||'Vergleiche den Aufbau mit der Aufgabe.');feedback.classList.remove('error')}return;}
+   if(name==='reset-practice'){box.value=String(p.starter||'');box.dispatchEvent(new Event('input',{bubbles:true}));if(out)out.textContent='Editor zurückgesetzt.';if(feedback)feedback.textContent='';s.hintStage=0;return;}
+   if(out)out.textContent='Code wird in der Laufzeitumgebung ausgeführt …';
+   const lang=String(p.lang||'').toLowerCase(),runtime=await window.LLRuntime.run(box.value,lang);
+   if(out)out.textContent=runtime.available?(runtime.lines.map(x=>'> '+x).join('\n')+(runtime.error?'\n✕ '+runtime.error:runtime.ok&&runtime.lines.length===0?'(Programm ohne Ausgabe erfolgreich ausgeführt)':'')):runtime.error;
+   if(feedback){feedback.textContent=runtime.ok?'Programm wirklich ausgeführt. Klicke auf „Meinen Code prüfen“, um die Aufgabe zu bewerten.':runtime.available?'Ausführungsfehler: '+runtime.error:'Für diese Sprache ist eine separate Runtime nötig. Die Ausgabe wird nicht simuliert.';feedback.classList.toggle('error',!runtime.ok)}return;
   }
   if(name==='reset-appearance'){
     for(const key of ['compact','motion','largeTypography','contrast','softCorners','backgroundArt'])
