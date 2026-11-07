@@ -1,4 +1,4 @@
-name: Deploy LiveryLab Academy v29 • learning and community tools
+name: Deploy LiveryLab Academy v30 • learning and community tools
 on:
   push:
     branches: [main]
@@ -30,6 +30,7 @@ jobs:
           node --check site/auth-mfa-v15.js
           node --check site/config.js
           node tests/smoke.cjs
+          node tests/practice.cjs
           node tests/render.cjs
           node tests/registration.cjs
           node tests/streak.cjs
@@ -45,7 +46,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: academy-v29-mobile-captures
+          name: academy-v30-mobile-captures
           path: test-results/
           if-no-files-found: ignore
       - name: Remove restricted reference data from public site artifact
