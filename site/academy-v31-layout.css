@@ -201,3 +201,36 @@ body:not(.is-auth) .topbar > .top-right{
 .quiz-choice.bad{border-color:#c75470!important;background:#422230!important;color:#ffe2ec!important}
 .quiz-choice[disabled]{cursor:default}
 @media(max-width:400px){.practice-actions-simple .btn{font-size:12px;padding:9px 5px}}
+
+
+/* V41 · Expanded learning chapters and multi-question quiz.
+   Scoped to lessons; the original homepage/navigation remains unchanged. */
+#lesson-explanation{scroll-margin-top:90px}
+.ll-part-heading{display:flex;align-items:start;justify-content:space-between;gap:16px;margin:14px 0 18px}
+.ll-part-heading .eyebrow{font-size:11px;letter-spacing:.12em}
+.ll-part-heading h2{margin:8px 0 0;font-size:clamp(20px,4vw,28px);line-height:1.25}
+.ll-part-count{font:800 13px ui-monospace,monospace;flex:0 0 auto;color:#c8a8f9;background:#37234e;border:1px solid #5e437f;border-radius:12px;padding:8px 11px}
+.ll-part-progress,.ll-quiz-progress{width:100%;height:8px;background:#322443;border-radius:100px;overflow:hidden;margin:12px 0 16px}
+.ll-part-progress>span,.ll-quiz-progress>span{display:block;height:100%;min-width:0;max-width:100%;background:linear-gradient(90deg,#8b61f1,#be84f9);border-radius:100px;transition:width .2s ease}
+.ll-part-selector{display:flex;gap:8px;max-width:100%;overflow-x:auto;overscroll-behavior-inline:contain;padding:4px 2px 11px;margin-bottom:12px;scrollbar-width:thin}
+.ll-part-selector button{display:grid;place-items:center;flex:0 0 37px;height:37px;border:1px solid #6a5185;border-radius:11px;background:#23192f;color:#d7c6e6;font-weight:750;cursor:pointer}
+.ll-part-selector button:hover,.ll-part-selector button.active{background:#7047ab;border-color:#b58bf5;color:#fff}
+.ll-part-selector button:focus-visible,.ll-part-controls .btn:focus-visible{outline:3px solid #b68af4;outline-offset:2px}
+.ll-part-body{min-width:0;overflow-wrap:anywhere}
+.ll-part-body p{line-height:1.85;margin:13px 0;color:var(--soft,#d9c9e7)}
+.ll-part-body ul{margin:17px 0 20px;padding-left:22px;line-height:1.8}
+.ll-part-body li{padding:5px 0}
+.ll-part-body .codebox{max-width:100%;overflow:auto}
+.ll-part-body pre{overflow:auto;max-width:100%;white-space:pre}
+.ll-part-body .note{line-height:1.75;margin:19px 0}
+.ll-part-controls{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:9px;margin-top:20px}
+.ll-part-controls .btn{min-height:43px}
+.ll-part-controls button[disabled]{opacity:.4;cursor:not-allowed}
+.ll-quiz-progress{margin:12px 0 22px}
+#quiz-question{line-height:1.6;font-weight:650}
+#quiz-choices{max-width:100%;min-width:0}
+#quiz-choices .quiz-choice{max-width:100%;min-width:0;white-space:normal;overflow-wrap:anywhere;line-height:1.55;align-items:flex-start;text-align:left}
+#quiz-choices .quiz-choice>span{flex:0 0 auto}
+#answer-result{line-height:1.6;margin:13px 0}
+@media(max-width:580px){.ll-part-heading h2{font-size:21px}.ll-part-selector{gap:6px}.ll-part-selector button{flex-basis:34px;height:34px}.ll-part-body p{font-size:14px;line-height:1.8}.ll-part-controls .btn{flex:1;min-width:0;font-size:12px;padding:9px 8px}#quiz-choices .quiz-choice{font-size:14px}}
+@media(prefers-reduced-motion:reduce){.ll-part-progress>span,.ll-quiz-progress>span{transition:none}}
