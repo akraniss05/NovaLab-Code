@@ -58,7 +58,6 @@ html,body,.app-shell,.app-column{max-width:100%;min-width:0}
   .topbar .brand-mark,.topbar .brand-mark img{width:31px;height:31px;min-width:31px}
   .topbar .icon-btn,.topbar .avatar-btn{flex:0 0 auto}
   .topbar .xp-header{display:none}
-  .topbar .focus-header:not([hidden]){display:none}
   .topbar .header-streak-chip{white-space:nowrap;flex:0 0 auto;max-width:95px;min-height:33px;padding:5px 7px}
   .topbar .header-streak-chip .ll-icon{width:14px!important;height:14px!important}
   .topbar .icon-btn[data-go="settings"]{display:none}
@@ -97,3 +96,108 @@ html,body,.app-shell,.app-column{max-width:100%;min-width:0}
   .topbar .brand{font-size:12px}
   .topbar .brand-mark{display:none}
 }
+
+/* Compact v31 header with a permanently visible, centered focus timer.
+   Keep the original Academy design, no secondary toolbar or stacked rows. */
+body:not(.is-auth) .topbar{
+ display:grid!important;
+ grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;
+ align-items:center!important;
+ column-gap:7px!important;
+}
+body:not(.is-auth) .topbar > .brandbox{
+ grid-column:1;
+ min-width:0;
+ max-width:100%;
+ overflow:hidden;
+ flex:initial;
+}
+body:not(.is-auth) .topbar > .focus-center{
+ grid-column:2;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ justify-self:center;
+ min-width:0;
+}
+body:not(.is-auth) .topbar > .top-right{
+ grid-column:3;
+ justify-self:end;
+ display:flex;
+ align-items:center;
+ flex-wrap:nowrap;
+ gap:5px;
+ min-width:0;
+ max-width:100%;
+}
+.topbar .focus-center .focus-header{
+ display:inline-flex!important;
+ justify-content:center;
+ align-items:center;
+ white-space:nowrap;
+ line-height:1.2;
+ min-height:34px;
+ padding:7px 11px;
+ border:1px solid #8964c2;
+ border-radius:24px;
+ background:#38234d;
+ color:#f0e1ff;
+ font:750 12px ui-monospace,monospace;
+ cursor:pointer;
+ font-variant-numeric:tabular-nums;
+}
+.topbar .focus-center .focus-header.is-running{
+ border-color:#b88de9;
+ background:#4a2b64;
+}
+.topbar .focus-center .focus-header:focus-visible{
+ outline:3px solid #ba92ff;
+ outline-offset:2px;
+}
+@media(max-width:820px){
+ body:not(.is-auth) .topbar{
+  grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;
+  height:69px!important;
+  min-height:69px!important;
+ }
+ .topbar .focus-center .focus-header{font-size:11px;min-height:32px;padding:6px 8px}
+ .topbar .top-right .header-streak-chip{max-width:89px;min-width:0;padding-inline:5px}
+}
+@media(max-width:430px){
+ .topbar .brand-mark{display:none}
+ body:not(.is-auth) .topbar > .brandbox{gap:5px}
+ body:not(.is-auth) .topbar > .top-right{gap:4px}
+ .topbar .focus-center .focus-header{min-height:31px;padding:5px 6px;font-size:11px}
+ .topbar .header-streak-chip{max-width:80px!important;font-size:10px!important}
+}
+/* Simplified practice: no console, just verify, hint and solution. */
+.practice-actions.practice-actions-simple{
+ display:grid;
+ grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:8px;
+ margin:14px 0 0;
+}
+.practice-actions-simple .btn{min-width:0;min-height:43px;padding:10px 7px;white-space:normal;font-size:13px}
+#practice-feedback[hidden]{display:none!important}
+#practice-feedback{
+ display:block;
+ padding:13px 15px;
+ margin:14px 0 0;
+ min-height:auto;
+ border-radius:12px;
+ border:1px solid transparent;
+ white-space:pre-wrap;
+ overflow-wrap:anywhere;
+ line-height:1.55;
+}
+#practice-feedback.is-success{color:#b4f4d1;background:#183b2c;border-color:#37875b}
+#practice-feedback.is-error{color:#ffd1d7;background:#44202b;border-color:#aa4b64}
+#practice-feedback.is-tip{color:#e4d5fc;background:#2d203f;border-color:#775fa0}
+#practice-workspace.practice-correct{border-color:#37875b;box-shadow:0 0 0 1px #37875b55}
+#practice-workspace.practice-incorrect{border-color:#aa4b64;box-shadow:0 0 0 1px #aa4b6455}
+.quiz-feedback.quiz-correct{color:#b4f4d1;font-weight:700}
+.quiz-feedback.quiz-incorrect{color:#ffc5d1;font-weight:650}
+.quiz-choice.good{border-color:#459267!important;background:#204434!important;color:#e3fff0!important}
+.quiz-choice.bad{border-color:#c75470!important;background:#422230!important;color:#ffe2ec!important}
+.quiz-choice[disabled]{cursor:default}
+@media(max-width:400px){.practice-actions-simple .btn{font-size:12px;padding:9px 5px}}
