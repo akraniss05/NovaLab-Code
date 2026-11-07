@@ -88,8 +88,8 @@ function evaluateRuntime(code,payload,actual,expected){
  for(const [pattern,name] of structure[lang]||[])if(pattern.test(solution)&&!pattern.test(source))concepts.push(name);
  if(concepts.length)return {ok:false,diagnostic:'In dieser Aufgabe musst du noch '+concepts.join(', ')+' verwenden.',output:actual.lines||[]};
  if(lang==='python'){
-  const expectedAssignments=(solution.match(/^\\s*[a-zA-Z_]\\w*\\s*=(?!=)/gm)||[]).length;
-  const actualAssignments=(source.match(/^\\s*[a-zA-Z_]\\w*\\s*=(?!=)/gm)||[]).length;
+  const expectedAssignments=(solution.match(/^\s*[a-zA-Z_]\w*\s*=(?!=)/gm)||[]).length;
+  const actualAssignments=(source.match(/^\s*[a-zA-Z_]\w*\s*=(?!=)/gm)||[]).length;
   if(expectedAssignments&&actualAssignments<expectedAssignments)return {ok:false,diagnostic:'Nutze die geforderten Variablen und Zuweisungen aus der Übung.',output:actual.lines||[]};
  }
  const lines=actual.lines||[],expectedLines=expected.lines||[];
