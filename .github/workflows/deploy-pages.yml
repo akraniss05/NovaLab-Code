@@ -37,12 +37,19 @@ jobs:
           node tests/registration.cjs
           node tests/streak.cjs
       - name: Install browser test dependency
-        run: npm install --no-save --ignore-scripts --no-package-lock playwright-core@1.56.1 fengari-web@0.1.4
+        run: npm install --no-save --ignore-scripts --no-package-lock playwright-core@1.56.1 fengari-web@0.1.4 pyodide@0.27.8
       - name: Prepare local Lua runtime
         run: |
           mkdir -p site/vendor
           cp node_modules/fengari-web/dist/fengari-web.bundle.js site/vendor/fengari-web.bundle.js
           test -s site/vendor/fengari-web.bundle.js
+      - name: Prepare Python WebAssembly runtime
+        run: |
+          mkdir -p site/vendor/pyodide
+          cp -R node_modules/pyodide/. site/vendor/pyodide/
+          test -s site/vendor/pyodide/pyodide.js
+          test -s site/vendor/pyodide/pyodide.asm.wasm
+          test -s site/vendor/pyodide/python_stdlib.zip
       - name: Validate mobile layouts in Chrome
         run: node tests/browser.cjs
       - name: Test real logged-in Daily Streak popup and claim
