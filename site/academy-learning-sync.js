@@ -1,94 +1,98 @@
-/* LiveryLab Academy · cross-device exercise autosave & five-stage resume.
+/* LiveryLab Academy · local per-user browser lesson drafts and resume.
+ * New edits remain on this device in localStorage; no cloud autosave.
+ * Previously saved cloud drafts may be imported one time when no local copy exists.
  * Made with 💙 by NyxAtheris (LiveryLab Studios).
- * Authenticated Supabase draft rows are owned by auth.uid() via RLS.
  */
 (function(root){
 'use strict';
-let bridge=null, userKey='', session=0;
-const records=new Map(),timers=new Map(),flights=new Map();
-const debounceMs=1000;
-function localKey(id){return 'liverylab-draft-'+(uid()||'guest')+'-'+id;}
-function fallback(id){
- try{
-  const scoped=localStorage.getItem(localKey(id));
-  if(scoped!==null)return scoped;
-  // Import old device-only drafts once for the first signed-in account,
-  // never expose them to another user of the same browser.
-  const key='liverylab-legacy-draft-owner',owner=localStorage.getItem(key);
-  if(!owner&&uid())localStorage.setItem(key,uid());
-  return (owner||uid())===uid()?localStorage.getItem('liverylab-draft-'+id)||'':'';
- }catch(_){return '';}
-}
-function writeLocal(id,content){try{localStorage.setItem(localKey(id),content);}catch(_){/* Storage unavailable */}}
-function removeLocal(id){try{localStorage.removeItem(localKey(id));}catch(_){}}
+let bridge=null,userKey='';
+const records=new Map();
 function state(){return bridge&&bridge.state();}
 function api(){return bridge&&bridge.client();}
 function uid(){return state()?.user?.id||'';}
+function hasId(id){return typeof id==='string'&&/^[\w.-]{1,150}$/.test(id);}
 function clampStep(step){return Math.max(1,Math.min(5,Math.floor(Number(step)||1)));}
-function hasId(id){return typeof id==='string' && /^[\w.-]{1,150}$/.test(id);}
-function label(id,text){if(document.querySelector('#practice-status') && (root.location?.hash||'').includes('lesson/'+id))document.querySelector('#practice-status').textContent=text;}
-function attach(b){bridge=b;userKey=uid();}
-function clear(){
- session++;for(const timer of timers.values())clearTimeout(timer);
- timers.clear();records.clear();flights.clear();userKey='';
+function localKey(id){return 'liverylab-draft-'+(uid()||'guest')+'-'+id;}
+function stepKey(id){return 'liverylab-draft-step-'+(uid()||'guest')+'-'+id;}
+function deletedKey(id){return 'liverylab-draft-deleted-'+(uid()||'guest')+'-'+id;}
+function label(id,text){
+ if(document.querySelector('#practice-status')&&(root.location?.hash||'').includes('lesson/'+id)){
+  document.querySelector('#practice-status').textContent=text;
+ }
 }
+function read(key){try{return localStorage.getItem(key);}catch(_){return null;}}
+function write(key,value){try{localStorage.setItem(key,String(value));}catch(_){}}
+function erase(key){try{localStorage.removeItem(key);}catch(_){}}
+function fallback(id){
+ const own=read(localKey(id));
+ if(own!==null)return own;
+ if(read(deletedKey(id))==='1')return '';
+ // Permit a one-time migration of old unscoped browser code to the
+ // original account only, so members sharing a device cannot see each other's drafts.
+ let owner=read('liverylab-legacy-draft-owner');
+ if(!owner&&uid()){owner=uid();write('liverylab-legacy-draft-owner',owner);}
+ return owner&&owner===uid()?(read('liverylab-draft-'+id)||''):'';
+}
+function attach(b){bridge=b;userKey=uid();}
+function clear(){records.clear();bridge=null;userKey='';}
 async function load(id){
- if(!hasId(id)||!api()||!uid())return {content:fallback(id),step:1};
- if(userKey!==uid()){clear();userKey=uid();}
- const currentSession=session,account=uid(),local=fallback(id);
- const result=await api().from('academy_code_drafts').select('content,step,updated_at').eq('user_id',account).eq('lesson_id',id).maybeSingle();
- if(currentSession!==session||uid()!==account)return {content:local,step:1};
- if(result.error){bridge.notice('Cloud-Entwurf nicht geladen – lokale Sicherung bleibt erhalten.');return {content:local,step:1};}
- const server=result.data;
- const content=server?String(server.content||'').slice(0,10000):local;
- const step=clampStep(server?.step||1);
- // Preserve pre-cloud drafts on first sync.
- if(server)writeLocal(id,content);
- records.set(id,{content,step,changed:false});
- if(!server && local)queue(id,local,step);
- return {content,step};
+ if(!hasId(id)||!uid())return {content:'',step:1};
+ if(userKey!==uid()){records.clear();userKey=uid();}
+ const account=uid(),record=records.get(id);
+ if(record)return {content:record.content,step:record.step};
+ const scoped=read(localKey(id)),deleted=read(deletedKey(id))==='1';
+ if(scoped!==null||deleted){
+  const content=deleted?'':scoped||'',step=clampStep(read(stepKey(id)));
+  records.set(id,{content,step});
+  return {content,step};
+ }
+ const legacy=fallback(id);
+ if(legacy){
+  write(localKey(id),legacy);
+  const step=clampStep(read(stepKey(id)));
+  records.set(id,{content:legacy,step});
+  return {content:legacy,step};
+ }
+ // Import old authenticated cloud drafts just once, if available.
+ // New edits and step changes are never sent to the server.
+ if(api()&&typeof api().from==='function'){
+  try{
+   const response=await api().from('academy_code_drafts').select('content,step').eq('user_id',account).eq('lesson_id',id).maybeSingle();
+   if(uid()!==account)return {content:'',step:1};
+   if(!response.error&&response.data){
+    const content=String(response.data.content||'').slice(0,10000);
+    const step=clampStep(response.data.step);
+    write(localKey(id),content);write(stepKey(id),step);
+    records.set(id,{content,step});
+    return {content,step};
+   }
+  }catch(_){}
+ }
+ write(localKey(id),'');
+ records.set(id,{content:'',step:1});
+ return {content:'',step:1};
 }
 function queue(id,content,step){
  if(!hasId(id)||!uid())return;
- const value=String(content||'').slice(0,10000),old=records.get(id),nextStep=clampStep(step||old?.step||1);
- records.set(id,{content:value,step:nextStep,changed:true});writeLocal(id,value);
- clearTimeout(timers.get(id));timers.set(id,setTimeout(()=>{void flush(id);},debounceMs));
- label(id,'Entwurf wird gespeichert …');
+ const value=String(content||'').slice(0,10000);
+ const nextStep=clampStep(step||records.get(id)?.step||read(stepKey(id))||1);
+ erase(deletedKey(id));
+ write(localKey(id),value);write(stepKey(id),nextStep);
+ records.set(id,{content:value,step:nextStep});
+ label(id,'✓ Nur auf diesem Gerät gespeichert');
 }
 function mark(id,step){
  if(!hasId(id)||!uid())return;
- const current=records.get(id)||{content:fallback(id),step:1};
- queue(id,current.content,step);
+ queue(id,records.get(id)?.content??fallback(id),step);
  if(bridge?.onStep)bridge.onStep(id,clampStep(step));
  updateButtons(clampStep(step));
 }
-async function flush(id){
- if(!hasId(id)||!uid())return false;
- clearTimeout(timers.get(id));timers.delete(id);
- const data=records.get(id);if(!data?.changed)return true;
- const currentSession=session,account=uid(),payload={user_id:account,lesson_id:id,content:data.content,step:data.step,updated_at:new Date().toISOString()};
- // Serialize successive writes to avoid out-of-order old autosaves overwriting new code.
- const previous=flights.get(id)||Promise.resolve();
- const job=previous.catch(()=>{}).then(async()=>{
-  if(session!==currentSession||uid()!==account)return false;
-  const response=await api().from('academy_code_drafts').upsert(payload,{onConflict:'user_id,lesson_id'});
-  if(response.error){label(id,'Nur lokal gespeichert · Cloud nicht erreichbar');return false;}
-  const now=records.get(id);
-  if(now&&now.content===payload.content&&now.step===payload.step){now.changed=false;label(id,'✓ Auf deinem Konto gespeichert');}
-  return true;
- });
- flights.set(id,job);
- try{return await job;}catch(_){label(id,'Nur lokal gespeichert · Cloud nicht erreichbar');return false;}
- finally{if(flights.get(id)===job)flights.delete(id);}
-}
+async function flush(id){return hasId(id)&&!!uid();}
 async function remove(id){
  if(!hasId(id)||!uid())return;
- clearTimeout(timers.get(id));timers.delete(id);
- const flight=flights.get(id);if(flight)try{await flight;}catch(_){}
- const account=uid();
- const result=await api().from('academy_code_drafts').delete().eq('user_id',account).eq('lesson_id',id);
- if(result.error)throw result.error;
- records.delete(id);removeLocal(id);
+ records.delete(id);
+ erase(localKey(id));erase(stepKey(id));
+ write(deletedKey(id),'1'); // Blocks re-importing a deleted legacy cloud draft.
 }
 function stepBar(step,watched,practiced,quiz,finished){
  const names=['Erklären','Video','Code','Quiz','Ergebnis'];
@@ -111,7 +115,7 @@ function restore(id,step){
  if(!(root.location?.hash||'').endsWith('lesson/'+id))return;
  updateButtons(clampStep(step));
  const status=document.querySelector('#learning-resume');
- if(status)status.textContent='Zuletzt bearbeitet: Schritt '+clampStep(step)+' von 5 · Code im Konto gespeichert';
+ if(status)status.textContent='Zuletzt bearbeitet: Schritt '+clampStep(step)+' von 5 · Entwurf nur in diesem Browser gespeichert';
 }
 document.addEventListener('click',event=>{
  const target=event.target.closest?.('[data-learning-step]');
