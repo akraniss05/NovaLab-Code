@@ -29,8 +29,15 @@ function paywall(feature,tier,description){return '<section class="feature-gate"
 function badge(t){return '<span class="chip '+esc(t)+'">'+tierLabel(t)+'</span>';}
 function levelText(l){var x=String(l||'beginner').toLowerCase();return /beginner|anfänger/.test(x)?'Anfänger':/intermediate|mittelstufe/.test(x)?'Aufbau':'Fortgeschritten';}
 
-function readDraft(id){try{return localStorage.getItem('liverylab-draft-'+id)||''}catch(_){return ''}}
-function saveDraft(id,value){try{localStorage.setItem('liverylab-draft-'+id,String(value).slice(0,10000))}catch(_){}}
+function lessonLocalKey(kind,id){return 'liverylab-'+kind+'-'+(s.user?.id||'guest')+'-'+id;}
+function readDraft(id){try{return localStorage.getItem(lessonLocalKey('draft',id))||'';}catch(_){return '';}}
+function saveDraft(id,value){try{localStorage.setItem(lessonLocalKey('draft',id),String(value).slice(0,10000));}catch(_){}}
+function readQuizLocal(id){
+ try{const value=JSON.parse(localStorage.getItem(lessonLocalKey('quiz',id))||'null');return value&&typeof value==='object'?value:null;}catch(_){return null;}
+}
+function saveQuizLocal(id,value){
+ try{localStorage.setItem(lessonLocalKey('quiz',id),JSON.stringify(value));}catch(_){notice('Quiz-Zwischenstand konnte in diesem Browser nicht gespeichert werden.');}
+}
 function setPreference(key,value){try{localStorage.setItem('liverylab-pref-'+key,value?'1':'0')}catch(_){}applyPreferences()}
 function getPreference(key){try{return localStorage.getItem('liverylab-pref-'+key)==='1'}catch(_){return false}}
 function getChoicePreference(key,fallback){
@@ -316,7 +323,8 @@ async function loadData(){
 }
 async function logout(){window.LLLearning?.clear?.();try{await api.auth.signOut();}catch(e){}s.authScreen='login';s.ready=false;s.streakModalOpen=false;s.streakError='';s.loginStreak=null;paintStreakModal();s.user=null;s.profile=null;s.lesson=null;s.courses=[];s.lessons=[];location.hash='#home';login();}
 async function saveProgress(){
- var res=await api.from('academy_progress').upsert({user_id:s.user.id,key:'liverylab-v10',payload:s.progress,updated_at:new Date().toISOString()},{onConflict:'user_id,key'});
+ var accountProgress={...s.progress};delete accountProgress.quizProgress;
+ var res=await api.from('academy_progress').upsert({user_id:s.user.id,key:'liverylab-v10',payload:accountProgress,updated_at:new Date().toISOString()},{onConflict:'user_id,key'});
  if(res.error)throw res.error;frame();
 }
 function go(path){var h='#'+path;if(location.hash===h){navigateCurrent();}else{location.hash=h;}sidebar.classList.remove('open');syncBackdrop();}
@@ -330,12 +338,15 @@ async function navigateCurrent(){
    var meta=s.lessons.find(function(l){return l.id===route.id;});
    if(meta&&allowed(meta)){var result=await api.rpc('academy_open_lesson',{p_lesson:route.id});if(result.error){s.lessonGate={reason:'error',error:formatError(result.error)};notice(formatError(result.error));}else if(result.data?.allowed){s.lesson=result.data;
       if(window.LLLearning){const cloud=await window.LLLearning.load(route.id);if(parseRoute().id!==route.id)return;s.draft=cloud.content;s.lessonStep=cloud.step;}
-      const quiz=s.lesson.payload||{},bank=quizQuestions(quiz),old=s.progress.quizProgress?.[route.id];
+      const quiz=s.lesson.payload||{},bank=quizQuestions(quiz),savedLocal=readQuizLocal(route.id),old=s.progress.quizProgress?.[route.id];
+      const savedQuiz=savedLocal||old; // One-time import of previous account quiz state into this browser.
       if(doneIds().has(route.id)){s.quizPassed=true;s.quizStep=Math.max(0,bank.length-1);}
-      else if(old&&old.total===bank.length&&old.version===Number(quiz.quiz_version||1)){
-        s.quizStep=Math.max(0,Math.min(bank.length-1,Number(old.step)||0));s.quizPassed=!!old.passed;
+      else if(savedQuiz&&savedQuiz.total===bank.length&&savedQuiz.version===Number(quiz.quiz_version||1)){
+        s.quizStep=Math.max(0,Math.min(bank.length-1,Number(savedQuiz.step)||0));s.quizPassed=!!savedQuiz.passed;
+        if(!savedLocal)saveQuizLocal(route.id,savedQuiz);
       }
-      try{s.sectionIndex=Math.max(0,Number(localStorage.getItem('liverylab-part-'+(s.user?.id||'guest')+'-'+route.id))||0);}catch(_){}
+      const count=window.LLCurriculum?.parts?.(quiz)?.length||1;
+      try{s.sectionIndex=Math.min(count-1,Math.max(0,Number(localStorage.getItem(lessonLocalKey('part',route.id)))||0));}catch(_){s.sectionIndex=0;}
       s.progress.lastLesson={id:route.id,step:s.lessonStep,at:new Date().toISOString()};void saveProgress().catch(()=>{});if(s.daily){s.daily.used_today=result.data.used;s.daily.remaining_today=result.data.remaining;}}else{s.lessonGate=result.data||{reason:'error'};}}
  }
  if(route.page==='admin'&&s.profile?.role==='admin'){try{await Promise.all([fetchMembers(),fetchVouchers()]);}catch(e){notice('Adminliste: '+formatError(e));}}
@@ -674,7 +685,7 @@ function lessonPage(id){
  '<section class="step-box" id="lesson-practice"><span class="eyebrow">SCHRITT 03 · SELBST AUSPROBIEREN</span><h2>'+(isBlender?'Dein Arbeitsschritt.':'Löse diese Aufgabe im Editor.')+'</h2>'+
  '<p>'+esc(p.task||'Setze die Erklärung eigenständig in einem Beispiel um.')+'</p>'+
  '<div class="practice-workspace'+(isPracticeDone?' is-complete':'')+'" id="practice-workspace"><div class="practice-title"><strong>'+(isBlender?'Deine Umsetzung':'Dein Code-Entwurf')+'</strong>'+
- '<span class="practice-status" id="practice-status">'+(isPracticeDone?'✓ Praxis erledigt':'Cloud-Speicherung aktiv')+'</span></div>'+
+ '<span class="practice-status" id="practice-status">'+(isPracticeDone?'✓ Praxis erledigt':'Nur auf diesem Gerät gespeichert')+'</span></div>'+
  '<label class="micro" for="practice-input">'+(isBlender?'Beschreibe, was du in Blender umgesetzt hast:':'Datei: '+esc(p.filename||({lua:'client.lua',python:'main.py',javascript:'main.js'}[String(p.lang||'').toLowerCase()]||'lösung.txt')))+'</label>'+
  '<div class="code-editor"><div class="code-lines" id="code-lines" aria-hidden="true">1</div><textarea class="exercise-textarea" id="practice-input" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" wrap="off" rows="7" maxlength="10000" placeholder="'+(isBlender?'Welche Schritte hast du ausgeführt und was ist dabei entstanden?':'Schreibe hier deine Lösung …')+'">'+d+'</textarea></div>'+
  '<p class="practice-tip">'+(isBlender?'Beschreibe deine Umsetzung und vergleiche sie mit den Schritten.':'Schreibe deine Lösung und tippe auf „Prüfen“. Das Ergebnis wird grün oder rot angezeigt.')+'</p>'+
@@ -1641,8 +1652,8 @@ document.addEventListener('click',async function(e){
    for(const key of ['done','watched','practiced','verifiedPractice'])s.progress[key]=(s.progress[key]||[]).filter(x=>x!==id);
    if(s.progress.completedAt)delete s.progress.completedAt[id];
    if(s.progress.quizProgress)delete s.progress.quizProgress[id];
-   try{localStorage.removeItem('liverylab-part-'+(s.user?.id||'guest')+'-'+id);}catch(_){}
-   try{await saveProgress();if(window.LLLearning)await window.LLLearning.remove(id);localStorage.removeItem('liverylab-draft-'+id);s.draft='';s.lessonStep=1;await navigateCurrent();notice('Diese Lektion wurde neu gestartet.');}
+   try{localStorage.removeItem(lessonLocalKey('part',id));localStorage.removeItem(lessonLocalKey('quiz',id));}catch(_){}
+   try{await saveProgress();if(window.LLLearning)await window.LLLearning.remove(id);localStorage.removeItem(lessonLocalKey('draft',id));s.draft='';s.lessonStep=1;await navigateCurrent();notice('Diese Lektion wurde neu gestartet.');}
    catch(e){s.progress=previous;notice('Neustart konnte nicht gespeichert werden: '+formatError(e));}return;
   }
   if(name==='show-hint'||name==='show-solution'){
@@ -1715,7 +1726,7 @@ document.addEventListener('click',async function(e){
   if(Number.isInteger(index)&&index>=0&&index<parts.length){
    s.sectionIndex=index;
    const node=$('#lesson-explanation');if(node)node.innerHTML='<span class="eyebrow">SCHRITT 01 · VERSTEHEN</span>'+window.LLCurriculum.render(s.lesson.payload,index,esc,safeLink);
-   try{localStorage.setItem('liverylab-part-'+(s.user?.id||'guest')+'-'+parseRoute().id,String(index));}catch(_){}
+   try{localStorage.setItem(lessonLocalKey('part',parseRoute().id),String(index));}catch(_){}
    if(node?.scrollIntoView)node.scrollIntoView({block:'start',behavior:'smooth'});
   }
   return;
@@ -1724,9 +1735,7 @@ document.addEventListener('click',async function(e){
  if(s.choice===q.correct){
   if(s.quizStep===qs.length-1){s.quizPassed=true;window.LLLearning?.mark?.(parseRoute().id,4);notice('Alle '+qs.length+' Fragen richtig beantwortet!');updateLessonControls();}
   else{s.quizStep++;s.choice=null;paintQuiz();notice('Richtig! Jetzt Frage '+(s.quizStep+1)+' von '+qs.length+'.');}
-  if(!s.progress.quizProgress)s.progress.quizProgress={};
-  s.progress.quizProgress[parseRoute().id]={step:s.quizStep,total:qs.length,version:Number(s.lesson?.payload?.quiz_version||1),passed:s.quizPassed};
-  void saveProgress().catch(()=>{});
+  saveQuizLocal(parseRoute().id,{step:s.quizStep,total:qs.length,version:Number(s.lesson?.payload?.quiz_version||1),passed:s.quizPassed});
  }else{updateLessonControls();}
  return;}
  var exam=e.target.closest('[data-exam-answer]');if(exam){await submitExamAnswer(Number(exam.dataset.examAnswer));return;}
@@ -1848,7 +1857,7 @@ document.addEventListener('input',function(e){if(e.target.id==='support-search')
   paintEditorLines();
   const live=$('#practice-feedback'),workspace=$('#practice-workspace');if(live){live.textContent='';live.hidden=true;live.classList.remove('error','is-success','is-error','is-tip');}if(workspace)workspace.classList.remove('practice-correct','practice-incorrect');
   if(s.practiceChecked){s.practiceChecked=false;s.progress.verifiedPractice=(s.progress.verifiedPractice||[]).filter(id=>id!==parseRoute().id);void saveProgress().catch(()=>{});const workspace=$('#practice-workspace');if(workspace)workspace.classList.remove('is-complete');updateLessonControls()}
-  var status=$('#practice-status');if(status&&!s.practiceChecked)status.textContent=window.LLLearning?'Entwurf wird mit deinem Konto synchronisiert …':'Entwurf lokal gespeichert';
+  var status=$('#practice-status');if(status&&!s.practiceChecked)status.textContent='✓ Nur auf diesem Gerät gespeichert';
  }
 });
 document.addEventListener('scroll',function(e){if(e.target.id==='practice-input'){const gutter=$('#code-lines');if(gutter)gutter.scrollTop=e.target.scrollTop;}},true);
