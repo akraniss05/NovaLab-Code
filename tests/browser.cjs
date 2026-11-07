@@ -75,9 +75,22 @@ s.members=[
  {id:'pending-test',username:'DeveloperNeu',email:'neu@example.com',role:'student',active:false,access_status:'pending',email_confirmed:true},
  {id:'member-test',username:'DevAktiv',email:'dev@example.com',role:'student',active:true,access_status:'approved',email_confirmed:true}
 ];
-s.memberPlans={'member-test':'pro'};
+s.memberPlans={'member-test':'pro'};s.memberExpiry={'member-test':new Date(Date.now()+17*86400000).toISOString()};
 s.vouchers=[{code:'NYXATHERIS5',kind:'gift',tier:'pro',days:7,uses:0,max_uses:1,active:true,expires_at:'2028-06-01T00:00:00Z'}];
-scenes.push(['admin',app.adminPage(),['.approval-card','.member-card','.member-management','[data-admin-tier]','.voucher-maker','[data-voucher-delete]']]);
+scenes.push(['admin',app.adminPage(),['.approval-card','.member-card','.member-management','[data-admin-tier]','[data-plan-clock]','[data-plan-action="extend"]','[data-plan-action="reduce"]','[data-plan-action="end"]','.voucher-maker','[data-voucher-delete]']]);
+
+scenes.push(['focus-timer',
+ '<div class="timer-backdrop ll-focus-backdrop"></div><section class="timer-dialog ll-focus-modal" role="dialog">'+
+ '<button class="ll-focus-close" type="button">×</button><div class="ll-focus-emblem">◷</div>'+
+ '<span class="eyebrow ll-focus-kicker">LIVERYLAB · DEIN LERNMODUS</span>'+
+ '<h2 class="ll-focus-title">Deine <span class="gradient">Fokuszeit.</span></h2>'+
+ '<p class="ll-focus-lede">Konzentriert lernen, Schritt für Schritt. Deine Zeit bleibt beim Seitenwechsel erhalten.</p>'+
+ '<div class="ll-focus-ring" data-timer-ring style="--focus-progress:45%"><div class="ll-focus-ring-inner"><span>✦</span><strong data-timer-time>14:20</strong><small>VERBLEIBENDE ZEIT</small></div></div>'+
+ '<div class="ll-focus-presets">'+[15,25,45,60].map(v=>'<button>'+v+' Min</button>').join('')+'</div>'+
+ '<label class="ll-focus-duration">Eigene Dauer <span class="ll-focus-input-row"><input class="input" value="25" type="number"><span>Minuten</span></span></label>'+
+ '<div class="timer-actions ll-focus-actions"><button class="btn primary">▶ Starten</button><button class="btn">Zeit einstellen</button></div>'+
+ '<div class="ll-focus-state">Der Timer läuft auch beim Seitenwechsel.</div><button class="ll-focus-reset">↻ Zurücksetzen</button></section>',
+ ['.ll-focus-backdrop','.ll-focus-modal','.ll-focus-ring','.ll-focus-presets','.ll-focus-actions']]);
 s.ready=false;s.authScreen='register';app.login();
 scenes.push(['registration',fakeNodes['#content'].innerHTML,['form[data-form="register"]','.auth-card']]);
 s.ready=true;s.profile.role='student';
@@ -102,6 +115,8 @@ return {
  shortcutDisplay:get('.ll-home-shortcuts')?getComputedStyle(get('.ll-home-shortcuts')).display:null,
  continueDisplay:get('.ll-home-continue')?getComputedStyle(get('.ll-home-continue')).display:null,
  modalWidth:get('.ll-streak-modal')?get('.ll-streak-modal').getBoundingClientRect().width:null,
+ focusBounds:get('.ll-focus-modal')?{width:get('.ll-focus-modal').getBoundingClientRect().width,height:get('.ll-focus-modal').getBoundingClientRect().height,top:get('.ll-focus-modal').getBoundingClientRect().top,left:get('.ll-focus-modal').getBoundingClientRect().left}:null,
+ planManagementWidth:get('.ll-plan-manager')?get('.ll-plan-manager').getBoundingClientRect().width:null,
  bannerRatio:get('.ll-home-brand-banner')?get('.ll-home-brand-banner').getBoundingClientRect().width/get('.ll-home-brand-banner').getBoundingClientRect().height:null,
  bannerHeight:get('.ll-home-brand-banner')?.getBoundingClientRect().height||null,
  headerHeight:get('.topbar')?.getBoundingClientRect().height||null,
@@ -118,6 +133,8 @@ assert.equal(actual.timerVisible,true,name+' @'+width+' centered timer must be v
 assert.ok(actual.timerCenterOffset<3,name+' @'+width+' timer not centered: '+actual.timerCenterOffset+'px');
 if(name==='home'){console.log('BANNER GEOMETRY '+width+' '+JSON.stringify(actual.bannerDebug));assert.equal(actual.shortcutDisplay,'grid','Home shortcuts must be a grid');assert.equal(actual.continueDisplay,'flex','Continue card must be styled');const bannerRatioOk=actual.bannerRatio>2.5&&actual.bannerRatio<2.75;assert.ok(bannerRatioOk,'Banner aspect broken: '+actual.bannerRatio);if(width<820){assert.ok(actual.bannerHeight<191,'iPhone banner is too tall: '+actual.bannerHeight);assert.ok(actual.headerHeight<=75,'Mobile header became multi-row: '+actual.headerHeight)}}
 if(name.startsWith('streak')){assert.ok(actual.modalWidth>200&&actual.modalWidth<=width,'Daily popup size broken');}
+if(name==='focus-timer'){assert.ok(actual.focusBounds.width>220&&actual.focusBounds.width<=width,'Focus popup exceeds screen width');assert.ok(actual.focusBounds.height<=850,'Focus modal too tall');assert.ok(actual.focusBounds.top>=0,'Focus modal cut off above viewport');}
+if(name==='admin'){assert.ok(actual.planManagementWidth>120&&actual.planManagementWidth<=actual.mainWidth,'Subscription admin panel overflows content');}
 if(width<820){assert.equal(actual.navRows,1,'Five bottom nav tabs must stay on ONE ROW: '+actual.navRows);}
 if(name==='track'){assert.equal(actual.cardDisplay,'grid');assert.ok(actual.titleBelow,'Lesson title/description collision');}
 if(name==='lesson'){assert.equal(actual.stepsDisplay,'grid');assert.equal(actual.stepChildren,4);assert.ok(actual.videoRatio>1.65&&actual.videoRatio<1.9,'Video aspect ratio');}
