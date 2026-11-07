@@ -65,15 +65,16 @@ async function click(selector,node){for(const fn of callbacks.click||[])await fn
  assert.equal(s.quizPassed,true,'Correct quiz answer passes');
  assert.equal(elements.get('#answer-result').classList.contains('quiz-correct'),true,'Correct quiz is green');
  assert.equal(elements.get('#mark-lesson').disabled,false,'Correct video + code + quiz unlocks completion');
- // A second lesson with eight chapters and six stored topic questions.
- const chapters=Array.from({length:8},(_,i)=>({title:'Lernteil '+(i+1),paragraphs:['Ausführliche Erklärung zu Teil '+(i+1)+'.'],bullets:['Wichtiger Begriff'],exercise:'Aufgabe ausführen.'}));
+ // A lesson with exactly two compact chapters and six stored topic questions.
+ const chapters=Array.from({length:2},(_,i)=>({title:'Lernteil '+(i+1),paragraphs:['Ausführliche Erklärung zu Teil '+(i+1)+'.'],bullets:['Wichtiger Begriff'],exercise:'Aufgabe ausführen.'}));
  const questions=Array.from({length:6},(_,i)=>({question:'Wissensfrage '+(i+1)+' zum Thema Lua?',options:['Antwort A','Antwort B','Antwort C'],correct:i%3,explanation:'Prüfe die Erklärung im Lernteil.'}));
  s.lesson.payload={...s.lesson.payload,sections:chapters,quiz_items:questions,quiz_version:2};
  s.quizStep=0;s.choice=null;s.quizPassed=false;
  assert.equal(app.quizQuestions(s.lesson.payload).length,6,'Six distinct, stored quiz questions');
- await click('[data-lesson-part]',{dataset:{lessonPart:'3'}});
- assert.equal(s.sectionIndex,3,'Reader switches chapters');
- assert.match(elements.get('#lesson-explanation').innerHTML,/LERNTEIL 4 VON 8/);
+ await click('[data-lesson-part]',{dataset:{lessonPart:'1'}});
+ assert.equal(s.sectionIndex,1,'Reader switches to the second part');
+ assert.match(elements.get('#lesson-explanation').innerHTML,/LERNTEIL 2 VON 2/);
+ assert.equal(saved.get('liverylab-part-'+s.user.id+'-lua-01'),'1','Current part saved locally per user');
  for(let i=0;i<6;i++){
   assert.equal(s.quizStep,i,'Quiz starts at the required question');
   await click('[data-answer]',{dataset:{answer:String((i+1)%3)}});
@@ -83,13 +84,15 @@ async function click(selector,node){for(const fn of callbacks.click||[])await fn
   assert.equal(s.quizStep,i===5?5:i+1,'Correct answer advances exactly one question');
   assert.equal(s.quizPassed,i===5,'Quiz completion only after all six correct answers');
  }
- assert.equal(s.progress.quizProgress['lua-01'].total,6,'Saved progress records quiz length');
- assert.equal(s.progress.quizProgress['lua-01'].passed,true,'Final quiz status persisted');
+ const localQuiz=JSON.parse(saved.get('liverylab-quiz-'+s.user.id+'-lua-01'));
+ assert.equal(localQuiz.total,6,'Browser checkpoint records quiz length');
+ assert.equal(localQuiz.passed,true,'Quiz completion stored locally');
+ assert.equal(s.progress.quizProgress,undefined,'Quiz in-progress data is not sent to account progress');
  assert.match(elements.get('#quiz-progress').textContent,/Frage 6 von 6/);
  assert.equal(elements.get('#mark-lesson').disabled,false,'All quiz questions unlock lesson completion');
  // The redesigned timer keeps the old controls and adds presets/ring.
  assert.match(elements.get('#timer-portal').innerHTML,/ll-focus-ring/,'Streak-style circular countdown present');
  assert.match(elements.get('#timer-portal').innerHTML,/data-timer-preset="25"/,'Quick preset controls present');
- console.log('PASS: Focus timer, green/red code check, eight learning chapters, six sequential quiz questions and saved progress.');
+ console.log('PASS: Focus timer, green/red code check, two learning parts and six sequential quiz questions saved locally.');
 
 })().catch(err=>{console.error(err);process.exitCode=1});
