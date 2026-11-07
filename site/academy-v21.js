@@ -7,7 +7,7 @@
 'use strict';
 var cfg=window.LL_CONFIG||{}, $=function(q,root){return (root||document).querySelector(q);};
 var content=$('#content'), sidebar=$('#sidebar'), bottom=$('#bottom-nav'), toastNode=$('#toast');
-var api=null, s={service:{beta_open:true,mine:[],admin:[]},streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},adminPage:1,adminFilter:'all',adminSearch:'',catalogLimit:9,practiceChecked:false,draft:'',prefs:null,projectTab:0,projectSource:'',projectLoading:false};
+var api=null, s={service:{beta_open:true,mine:[],admin:[]},streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},adminPage:1,adminFilter:'all',adminSearch:'',catalogLimit:9,practiceChecked:false,draft:'',prefs:null,projectTab:0,projectSource:'',projectLoading:false};
 var plans={free:'Free',pro:'Plus',ultimate:'Ultimate'};
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];});}
 function safeLink(url){return /^https:\/\/[^\s<>"]+$/i.test(String(url||''))?esc(url):'#';}
@@ -111,7 +111,7 @@ function frame(){
 function login(){
  s.ready=false;frame();
  const betaLabel=s.service?.beta_open===false?'LIVERYLAB · ACADEMY':'LIVERYLAB · PRIVATE BETA';
- const brand='<img class="ll-login-banner" src="./liverylab-banner.webp" alt="Livery-Lab Premium FiveM Systems Banner"><div class="brandmark"><img class="ll-brand-symbol" src="./liverylab-symbol.svg" alt=""><span>LiveryLab <span class="gradient">Academy</span></span></div><div class="ll-auth-release">'+(s.service?.beta_open===false?'ACADEMY':'PRIVATE BETA')+' <span>NEUE ACADEMY · V27</span></div>';
+ const brand='<img class="ll-login-banner" src="./liverylab-banner.webp" alt="Livery-Lab Premium FiveM Systems Banner"><div class="brandmark"><img class="ll-brand-symbol" src="./liverylab-symbol.svg" alt=""><span>LiveryLab <span class="gradient">Academy</span></span></div><div class="ll-auth-release">'+(s.service?.beta_open===false?'ACADEMY':'PRIVATE BETA')+' <span>NEUE ACADEMY · V28</span></div>';
  if(s.authScreen==='register'){
  content.innerHTML='<div class="auth-layout auth-login-layout"><aside class="auth-showcase"><span class="eyebrow">'+betaLabel+'</span><h2>Baue echte Skills.<br><em>Schritt für Schritt.</em></h2><p>Programmierung, FiveM und Blender in klaren Lernpfaden – mit Videos, Praxis, Quizzen und Abschlussprüfungen.</p><div class="auth-feature-grid"><span>▶ Video-Lektionen</span><span>✓ Praxisaufgaben</span><span>✦ XP & Titel</span><span>★ Kursprüfungen</span></div><small>Made with 💙 from NyxAtheris (LiveryLab Studios)</small></aside><section class="auth-card">'+brand+
  '<span class="eyebrow">[ + ] BEWERBUNG</span><h1>Dein Weg in die <span class="gradient">Academy.</span></h1>'+
@@ -777,12 +777,13 @@ function examsPage(){
  const cap=Number(s.examStatus?.limit??examCap()),used=Number(s.examStatus?.used||0);
  const suitable=s.courses.filter(c=>{const ls=lessonsOf(c.id);return ls.length>0&&ls.every(l=>allowed(l));})
  .sort((a,b)=>(countDone(a.id)===lessonsOf(a.id).length?0:1)-(countDone(b.id)===lessonsOf(b.id).length?0:1)||a.name.localeCompare(b.name,'de'));
+ const filtered=suitable.filter(c=>{const done=countDone(c.id),total=lessonsOf(c.id).length,passed=!!s.progress.exams?.[c.id];return s.examFilter==='all'||(s.examFilter==='ready'&&done===total&&!passed)||(s.examFilter==='passed'&&passed)||(s.examFilter==='learning'&&done<total);});
  return pageHeading('PRÜFUNGEN','Deine <span class="gradient">Kursprüfungen.</span>','Jede Prüfung gehört zu genau einem freigeschalteten Kurs. Schließe zuerst dessen Lektionen ab.')+
  '<div class="exam-quota"><strong>✦ '+(cap<0?'Unbegrenzt':Math.max(0,cap-used)+' von '+cap)+' Prüfungen heute übrig</strong><small>Free: 2 · Plus: 4 · Ultimate: unbegrenzt. Reset um Mitternacht (Berlin).</small><button class="btn small" data-go="plans">Tarife →</button></div>'+
- '<section class="section"><div class="section-heading"><div><span class="eyebrow">DEINE KURSE</span><h2>'+suitable.length+' passende Prüfungen</h2></div></div><div class="course-grid">'+suitable.map(c=>{
+ '<section class="section"><div class="section-heading"><div><span class="eyebrow">DEINE KURSE</span><h2>'+suitable.length+' passende Prüfungen</h2></div></div><div class="exam-filters" role="group" aria-label="Prüfungen filtern">'+[['all','Alle'],['ready','Bereit'],['learning','Noch lernen'],['passed','Bestanden']].map(([key,label])=>'<button class="pill'+(s.examFilter===key?' active':'')+'" type="button" data-exam-filter="'+key+'">'+label+'</button>').join('')+'</div><div class="course-grid">'+(filtered.map(c=>{
   const ls=lessonsOf(c.id),count=countDone(c.id),ready=count===ls.length,passed=!!s.progress.exams?.[c.id];
   return '<article class="course-card '+(passed?'is-complete':'')+'"><div class="course-head"><span class="course-icon">'+esc(courseAccent(c))+'</span><span class="chip '+(passed?'free':'plus')+'">'+(passed?'✓ Bestanden':ready?'Bereit':'Noch gesperrt')+'</span></div><span class="micro">'+esc(c.category)+'</span><h3>'+esc(c.name)+'</h3><p>'+count+' / '+ls.length+' Lektionen abgeschlossen</p><div class="progress"><span style="width:'+pct(count,ls.length)+'%"></span></div><button class="btn block" data-go="'+(ready?'exam/':'track/')+esc(c.id)+'">'+(ready?'Prüfung öffnen →':'Kurs fortsetzen →')+'</button></article>';
- }).join('')+'</div></section>';
+ }).join('')||'<div class="empty">Hier sind gerade keine passenden Prüfungen.</div>')+'</div></section>';
 }
 async function loadExam(id){
  s.exam=null;s.examGate=null;
@@ -886,7 +887,7 @@ function scriptPage(){
  '<div class="file-tabs" role="tablist" aria-label="Projektdateien">'+PROJECT_FILES.map((f,i)=>
  '<button type="button" role="tab" aria-selected="'+(s.projectTab===i)+'" class="file-tab'+(i===s.projectTab?' active':'')+'" data-project-tab="'+i+'">'+esc(f.name)+'</button>').join('')+'</div>'+
  '<div class="file-preview"><div class="file-preview-head"><span>'+esc(file.name)+'</span>'+
- (unlocked.length?'<button class="btn small" type="button" data-action="copy-project">Kopieren</button>':'<span class="lock-mini">🔒 Gesperrt</span>')+'</div>'+
+ (unlocked.length?'<span class="file-actions"><button class="btn small" type="button" data-action="copy-project">Kopieren</button><button class="btn small" type="button" data-action="download-project">.lua laden ↓</button></span>':'<span class="lock-mini">🔒 Gesperrt</span>')+'</div>'+
  '<pre class="file-code"><code>'+(unlocked.length?esc(code||'-- Codebeispiele werden geladen …'):
  '-- 🔒 Zu diesem Teil fehlen noch bestandene Lektionen.\n-- Bearbeite die passenden Kapitel, um ihn freizuschalten.')+'</code></pre></div>'+
  '<div class="project-message"><strong>'+(unlocked.length?'Lernbeispiel freigeschaltet.':'Teile gesperrt.')+'</strong>'+
@@ -993,7 +994,7 @@ function friendsPage(){
  const tab=['friends','requests','search'].includes(s.friendTab)?s.friendTab:'friends';
  const card=(user,actions)=>{
   const banner=esc(user.banner_style||'nebula');
-  return '<article class="friend-profile-card"><div class="friend-card-banner banner-'+banner+'"><span>✦ LIVERYLAB ACADEMY</span></div>'+
+  return '<article class="friend-profile-card" data-friend-name="'+esc((user.display_name||'')+' '+(user.username||''))+'"><div class="friend-card-banner banner-'+banner+'"><span>✦ LIVERYLAB ACADEMY</span></div>'+
   '<div class="friend-card-body"><div class="friend-card-top">'+avatarFor(user,user.display_name||user.username,'')+
   '<div class="friend-identity"><strong class="name-'+esc(user.name_style||'classic')+'">'+esc(user.display_name||user.username||'Developer')+'</strong>'+
   '<span>@'+esc(user.username||'')+'</span></div><span class="social-title">✦ '+esc(user.title||'Developer')+'</span></div>'+
@@ -1008,7 +1009,7 @@ function friendsPage(){
  if(tab==='friends'){
   content='<section class="friends-tab-content"><div class="section-heading"><div><span class="eyebrow">[ ♡ ] BESTÄTIGTE FREUNDE</span><h2>Deine Developer</h2>'+
   '<p>Nur bestätigte Freunde erscheinen hier. Sie bestimmen selbst, ob du ihren Fortschritt sehen darfst.</p></div></div>'+
-  (friends.length?'<div class="friend-profile-grid">'+friends.map(u=>card(u,
+  (friends.length?'<div class="friend-toolbar"><input class="input" id="friend-list-search" type="search" aria-label="Freunde filtern" placeholder="Deine Freunde durchsuchen …"><span class="chip">'+friends.length+' Freunde</span></div><div class="friend-profile-grid">'+friends.map(u=>card(u,
   '<button type="button" class="btn small danger" data-friend-action="remove" data-friend-id="'+esc(u.id)+'">Freund entfernen</button>')).join('')+'</div>':
   '<div class="empty friend-empty"><div class="empty-icon">♡</div><h3>Noch keine Freunde</h3>'+
   '<p>Du kannst Freunde per Benutzername suchen und ihnen eine Anfrage senden.</p>'+
@@ -1200,7 +1201,7 @@ function settingsPage(){
  '<span><b>Discord-Support</b><p>Schreibe NyxAtheris eine DM oder öffne ein Ticket und erwähne @nyxatheris.</p></span></div>'+
  '<a class="btn small discord" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord ↗</a></div></div></section>'+
  '<section class="section panel"><span class="eyebrow">LIVERYLAB STUDIOS</span><h3>Über die Academy</h3>'+
- '<p class="micro">Developer-Lernplattform mit Kursen, sicheren Accounts, Profilen, Freunden und Erfolgen. Version 27.</p>'+
+ '<p class="micro">Developer-Lernplattform mit Kursen, sicheren Accounts, Profilen, Freunden und Erfolgen. Version 28.</p>'+
  '<a href="./privacy.html">Datenschutzhinweise ansehen ↗</a><p class="smallprint" style="margin-top:16px">Made with 💙 from NyxAtheris (LiveryLab Studios)</p></section>';
 }
 
@@ -1426,6 +1427,11 @@ document.addEventListener('click',async function(e){
    catch(_){notice('Kopieren nicht möglich. Markiere den Text im Codefeld.');}
    return;
   }
+  if(name==='download-project'){
+   if(!s.projectSource||!projectUnblocked(PROJECT_FILES[s.projectTab]).length){notice('Noch kein Code freigeschaltet.');return;}
+   const file=PROJECT_FILES[s.projectTab],blob=new Blob([s.projectSource],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+   a.href=url;a.download=file.name.replaceAll('/','-');document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);notice('Datei heruntergeladen.');return;
+  }
   if(name==='restart-exam'){await loadExam(parseRoute().id);render();return;}
  }
 
@@ -1438,6 +1444,7 @@ document.addEventListener('click',async function(e){
  var answer=e.target.closest('[data-answer]');if(answer){s.choice=Number(answer.dataset.answer);updateLessonControls();return;}
  var exam=e.target.closest('[data-exam-answer]');if(exam){await submitExamAnswer(Number(exam.dataset.examAnswer));return;}
  var filter=e.target.closest('[data-filter]');if(filter){s.filter=filter.dataset.filter;s.catalogLimit=9;render();return;}
+ var examFilter=e.target.closest('[data-exam-filter]');if(examFilter){s.examFilter=examFilter.dataset.examFilter;render();return;}
 
  var voucherDelete=e.target.closest('[data-voucher-delete]');
  if(voucherDelete){
@@ -1515,6 +1522,11 @@ document.addEventListener('input',function(e){
    list.querySelectorAll('.member-card').forEach(card=>{const id=card.querySelector('[data-admin-tier],[data-reset-user],[data-active-user]')?.dataset.adminTier||card.querySelector('[data-reset-user]')?.dataset.resetUser||card.querySelector('[data-active-user]')?.dataset.activeUser;card.hidden=!matches.some(u=>u.id===id);});
    let empty=list.querySelector('.admin-search-empty');if(!empty){empty=document.createElement('div');empty.className='empty admin-search-empty';empty.textContent='Keine passenden Mitglieder gefunden.';list.appendChild(empty)}empty.hidden=matches.length>0;
   }
+  return;
+ }
+ if(e.target.id==='friend-list-search'){
+  const query=e.target.value.trim().toLocaleLowerCase('de');
+  document.querySelectorAll('.friends-tab-content .friend-profile-card').forEach(card=>{card.hidden=!String(card.dataset.friendName||'').toLocaleLowerCase('de').includes(query);});
   return;
  }
  if(e.target.id==='course-search'){
