@@ -697,7 +697,9 @@ function updateLessonControls(){
  var status=$('#answer-result');
  if(status&&!finished){status.classList.toggle('quiz-incorrect',s.choice!==null&&!s.quizPassed);status.classList.toggle('quiz-correct',s.quizPassed);status.textContent=
   !questions.length?'Quizdaten fehlen. Bitte melde diese Lektion.':
-  s.quizPassed?'✓ Richtig! Quiz bestanden.':
+  s.quizPassed&&!s.videoChecked?'✓ Quiz bestanden! Bestätige noch das Video.':
+  s.quizPassed&&!s.practiceChecked?'✓ Quiz bestanden! Prüfe noch deinen Code.':
+  s.quizPassed?'✓ Quiz bestanden! Du kannst die Lektion abschließen.':
   s.choice==null?'Wähle eine Antwort und löse die Schritte darüber.':
   s.choice!==correct?'Das ist noch nicht die richtige Antwort. Sieh dir die Erklärung erneut an.':
   !s.videoChecked?'Richtige Antwort ✓ · Sieh noch das Tutorial an und bestätige es.':
@@ -724,7 +726,7 @@ async function completePractice(){
  const id=parseRoute().id,box=$('#practice-input');
  if(!box||!s.lesson)return;
  const value=box.value.trim(),button=$('[data-action="complete-practice"]');
- if(button)button.disabled=true;
+ if(button){button.disabled=true;button.textContent='Prüft …';button.setAttribute('aria-busy','true');}
  try{
   if(value.length<5){showPracticeResult(false,'✕ Schreibe zuerst deine eigene Lösung.');box.focus();return;}
   const payload=s.lesson.payload||{},lang=String(payload.lang||'').toLowerCase();
@@ -773,7 +775,7 @@ async function completePractice(){
   s.practiceChecked=false;
   showPracticeResult(false,'✕ Prüfung fehlgeschlagen: '+formatError(error));
   updateLessonControls();
- }finally{if(button&&button.isConnected)button.disabled=false;}
+ }finally{if(button&&button.isConnected){button.disabled=false;button.textContent='✓ Prüfen';button.setAttribute('aria-busy','false');}}
 }
 async function markLesson(){
  var id=parseRoute().id,l=s.lessons.find(x=>x.id===id);
