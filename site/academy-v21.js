@@ -73,7 +73,7 @@ function navHTML(route){
  const items=[
   ['home','⌂','Startseite'],['courses','▦','Lernen'],['script','⌘',hasScript()?'Script':'Script 🔒'],
   ['exams','☆','Prüfung'],['reference','▤',fullAccess()?'Referenz':'Referenz 🔒'],['plans','✦','Free / Plus / Ultimate'],
-  ['level','✦','Level & Belohnungen'],['skilltree','⬡','Skilltree'],['portfolio','▣','Portfolio'],['notes','▤','Notizen'],['profile','◉','Mein Profil'],['friends','♡','Freunde'],['support','?','Support'],['settings','⚙','Einstellungen']
+  ['level','✦','Level & Belohnungen'],['skilltree','⬡','Skilltree'],['portfolio','▣','Portfolio'],['notes','▤','Notizen'],['challenges','⚡','Challenges'],['calendar','▦','Lernkalender'],['profile','◉','Mein Profil'],['friends','♡','Freunde'],['support','?','Support'],['settings','⚙','Einstellungen']
  ];
  if(s.profile?.role==='admin')items.push(['admin','♢','Administration']);
  return items.map(([id,icon,label])=>{
@@ -357,7 +357,7 @@ function render(){
  frame();window.LLStudio?.apply?.();const r=parseRoute();
  const pages={home:homePage,courses:coursesPage,track:()=>trackPage(r.id),lesson:()=>lessonPage(r.id),
   script:()=>hasScript()?scriptPage():paywall('Script-Werkstatt','Plus','Codebeispiele sind ab Plus verfügbar.'),plans:plansPage,exams:examsPage,exam:()=>examPage(r.id),
-  reference:()=>fullAccess()?referencePage():paywall('Code-Referenzen','Pro / Ultimate','Die vollständige Sprachbibliothek gehört zum höchsten Tarif.'),level:()=>window.LLStudio?.levelPage?.()||notFound(),skilltree:()=>window.LLStudio?.skilltreePage?.()||notFound(),portfolio:()=>window.LLStudio?.portfolioPage?.()||notFound(),notes:()=>window.LLStudio?.notesPage?.()||notFound(),profile:profilePage,friends:friendsPage,support:supportPage,settings:settingsPage,admin:adminPage};
+  reference:()=>fullAccess()?referencePage():paywall('Code-Referenzen','Pro / Ultimate','Die vollständige Sprachbibliothek gehört zum höchsten Tarif.'),level:()=>window.LLStudio?.levelPage?.()||notFound(),skilltree:()=>window.LLStudio?.skilltreePage?.()||notFound(),portfolio:()=>window.LLStudio?.portfolioPage?.()||notFound(),notes:()=>window.LLStudio?.notesPage?.()||notFound(),challenges:()=>window.LLStudio?.challengesPage?.()||notFound(),calendar:()=>window.LLStudio?.calendarPage?.()||notFound(),profile:profilePage,friends:friendsPage,support:supportPage,settings:settingsPage,admin:adminPage};
  content.innerHTML=(pages[r.page]||homePage)();
  if(r.page==='settings')renderMFA();
  paintStreakModal();
@@ -1686,6 +1686,7 @@ document.addEventListener('change',async function(e){
  }
 
  if(e.target.id==='video-check'){
+  window.LLLearning?.mark?.(parseRoute().id,2);
   const id=parseRoute().id,previous=s.videoChecked;
   s.videoChecked=e.target.checked;
   if(!Array.isArray(s.progress.watched))s.progress.watched=[];
@@ -1829,7 +1830,7 @@ async function init(){
  try{api=window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
   void api.rpc('academy_shop_discount').then(res=>{if(!res.error){s.shopDiscount=Number(res.data)||0;if(s.ready&&['plans','admin'].includes(parseRoute().page))render();}}).catch(()=>{});
   void api.rpc('academy_beta_status').then(beta=>{if(!beta.error){s.service.beta_open=beta.data===true;if(!s.ready)login();}}).catch(()=>{});
-  window.LLStudio?.connect?.({state:()=>s,client:()=>api,notice,go,render});window.LLLearning?.attach?.({state:()=>s,client:()=>api,notice,onStep:(id,step)=>{if(s.progress.lastLesson?.id===id)s.progress.lastLesson.step=step;}});await boot();}
+  window.LLStudio?.connect?.({state:()=>s,client:()=>api,notice,go,render});window.LLLearning?.attach?.({state:()=>s,client:()=>api,notice,onStep:(id,step)=>{s.lessonStep=step;if(s.progress.lastLesson?.id===id){s.progress.lastLesson.step=step;void saveProgress().catch(()=>{});}}});await boot();}
  catch(err){content.innerHTML='<div class="auth-layout panel"><h2>Academy nicht erreichbar</h2><p class="muted">'+esc(formatError(err))+'</p><button class="btn" onclick="location.reload()">Erneut versuchen</button></div>';}
 }
 init();
