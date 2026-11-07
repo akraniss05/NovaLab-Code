@@ -1473,7 +1473,7 @@ function paintTimer(){
  if(header){
   header.hidden=false;
   header.textContent=(focusRunning?'◷ ':'◷ ')+label;
-  header.setAttribute('aria-label','Fokus-Timer: '+label+' verbleibend, '+(focusRunning?'läuft':'pausiert')+'. Zum Einstellen öffnen.');
+  if(typeof header.setAttribute==='function')header.setAttribute('aria-label','Fokus-Timer: '+label+' verbleibend, '+(focusRunning?'läuft':'pausiert')+'. Zum Einstellen öffnen.');
   header.title='Fokus-Timer öffnen · '+label;
   header.classList.toggle('is-running',focusRunning);
  }
