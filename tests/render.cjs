@@ -14,7 +14,7 @@ const sandbox={
  document:{querySelector(s){return fakeNodes[s]||null},querySelectorAll(){return[]},addEventListener(){},body:{classList:{toggle(){}}}},
  location:{hash:'#lesson/python-01'},
  localStorage:{getItem(k){return mocks.get(k)||null},setItem(k,v){mocks.set(k,v)},removeItem(k){mocks.delete(k)}},
- console,setTimeout(){},clearTimeout(){},confirm(){return true},FormData:class{},
+ console,setTimeout(){},clearTimeout(){},setInterval(){return 1},clearInterval(){},confirm(){return true},FormData:class{},
 };
 vm.createContext(sandbox);vm.runInContext(fs.readFileSync(path.join(__dirname,'../site/reference-data.js'),'utf8'),sandbox,{filename:'reference-data.js'});vm.runInContext(body,sandbox,{filename:'academy.js'});
 const app=sandbox.window.__test,state=app.s;
