@@ -70,4 +70,4 @@ for(const token of ['LLPractice.evaluate','quizQuestions','practice-console','we
 
 for(const entry of ['site/academy-learning-sync.js','site/academy-learning-extras.css'])assert(fs.existsSync(path.join(__dirname,'..',entry)),entry+' missing');
 for(const token of ['academy-learning-sync.js?build=20261107v35','academy-learning-extras.css?build=20261107v35'])assert(html.includes(token)&&read('site/v31.html').includes(token),'v35 website/PWA asset missing: '+token);
-for(const token of ['data-studio-from-lesson','LLLearning?.load','lesson-summary','challengesPage','calendarPage'])assert(js.includes(token)||read('site/academy-studio.js').includes(token),'v35 feature missing: '+token);
+for(const token of ['data-studio-from-lesson','window.LLLearning.load','lesson-summary','challengesPage','calendarPage'])assert(js.includes(token)||read('site/academy-studio.js').includes(token),'v35 feature missing: '+token);
