@@ -12,7 +12,7 @@ html,body,.app-shell,.app-column{max-width:100%;min-width:0}
   max-width:100%!important;
   height:auto!important;
   min-height:0!important;
-  max-height:280px!important;
+  max-height:none!important;
   aspect-ratio:2.63 / 1!important;
   overflow:hidden!important;
   margin-inline:0!important;
