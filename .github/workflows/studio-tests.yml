@@ -6,6 +6,8 @@ on:
       - 'site/academy-v21.js'
       - 'site/academy-studio.js'
       - 'site/academy-runtime.js'
+      - 'site/academy-learning-sync.js'
+      - 'site/academy-learning-extras.css'
       - 'site/practice-engine.js'
       - 'tests/practice.cjs'
       - 'tests/studio.cjs'
@@ -15,6 +17,8 @@ on:
       - 'site/academy-v21.js'
       - 'site/academy-studio.js'
       - 'site/academy-runtime.js'
+      - 'site/academy-learning-sync.js'
+      - 'site/academy-learning-extras.css'
       - 'site/practice-engine.js'
       - 'tests/practice.cjs'
       - 'tests/studio.cjs'
@@ -34,11 +38,14 @@ jobs:
           node --check site/academy-v21.js
           node --check site/academy-studio.js
           node --check site/academy-runtime.js
+          node --check site/academy-learning-sync.js
           node --check site/practice-engine.js
       - name: Existing practice tests
         run: node tests/practice.cjs
       - name: New studio regression tests
         run: node tests/studio.cjs
+      - name: Account draft autosave tests
+        run: node tests/learning-sync.cjs
       - name: Install browser test dependency
         run: npm install --no-save --ignore-scripts --no-package-lock playwright-core@1.56.1 fengari-web@0.1.4
       - name: Prepare local Lua runtime
