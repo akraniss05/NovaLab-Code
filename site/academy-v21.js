@@ -7,8 +7,8 @@
 'use strict';
 var cfg=window.LL_CONFIG||{}, $=function(q,root){return (root||document).querySelector(q);};
 var content=$('#content'), sidebar=$('#sidebar'), bottom=$('#bottom-nav'), toastNode=$('#toast');
-var api=null, s={streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},adminPage:1,adminFilter:'all',adminSearch:'',catalogLimit:9,practiceChecked:false,draft:'',prefs:null,projectTab:0,projectSource:'',projectLoading:false};
-var plans={free:'Free',pro:'Plus',ultimate:'Pro / Ultimate'};
+var api=null, s={service:{beta_open:true,mine:[],admin:[]},streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},adminPage:1,adminFilter:'all',adminSearch:'',catalogLimit:9,practiceChecked:false,draft:'',prefs:null,projectTab:0,projectSource:'',projectLoading:false};
+var plans={free:'Free',pro:'Plus',ultimate:'Ultimate'};
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];});}
 function safeLink(url){return /^https:\/\/[^\s<>"]+$/i.test(String(url||''))?esc(url):'#';}
 function notice(message){toastNode.textContent=message;toastNode.classList.add('show');clearTimeout(notice.timer);notice.timer=setTimeout(function(){toastNode.classList.remove('show');},5000);}
@@ -69,8 +69,8 @@ function videoInfo(id){var sources={
 function navHTML(route){
  const items=[
   ['home','⌂','Startseite'],['courses','▦','Lernen'],['script','⌘',hasScript()?'Script':'Script 🔒'],
-  ['exams','☆','Prüfung'],['reference','▤',fullAccess()?'Referenz':'Referenz 🔒'],['plans','✦','Free / Plus / Pro'],
-  ['profile','◉','Mein Profil'],['friends','♡','Freunde'],['settings','⚙','Einstellungen']
+  ['exams','☆','Prüfung'],['reference','▤',fullAccess()?'Referenz':'Referenz 🔒'],['plans','✦','Free / Plus / Ultimate'],
+  ['profile','◉','Mein Profil'],['friends','♡','Freunde'],['support','?','Support'],['settings','⚙','Einstellungen']
  ];
  if(s.profile?.role==='admin')items.push(['admin','♢','Administration']);
  return items.map(([id,icon,label])=>{
@@ -110,11 +110,11 @@ function frame(){
 
 function login(){
  s.ready=false;frame();
- const brand='<img class="ll-login-banner" src="./liverylab-banner.webp" alt="Livery-Lab Premium FiveM Systems Banner"><div class="brandmark"><img class="ll-brand-symbol" src="./liverylab-symbol.svg" alt=""><span>LiveryLab <span class="gradient">Academy</span></span></div><div class="ll-auth-release">PRIVATE BETA <span>NEUE ACADEMY · V25</span></div>';
+ const brand='<img class="ll-login-banner" src="./liverylab-banner.webp" alt="Livery-Lab Premium FiveM Systems Banner"><div class="brandmark"><img class="ll-brand-symbol" src="./liverylab-symbol.svg" alt=""><span>LiveryLab <span class="gradient">Academy</span></span></div><div class="ll-auth-release">PRIVATE BETA <span>NEUE ACADEMY · V26</span></div>';
  if(s.authScreen==='register'){
  content.innerHTML='<div class="auth-layout auth-login-layout"><aside class="auth-showcase"><span class="eyebrow">LIVERYLAB · PRIVATE BETA</span><h2>Baue echte Skills.<br><em>Schritt für Schritt.</em></h2><p>Programmierung, FiveM und Blender in klaren Lernpfaden – mit Videos, Praxis, Quizzen und Abschlussprüfungen.</p><div class="auth-feature-grid"><span>▶ Video-Lektionen</span><span>✓ Praxisaufgaben</span><span>✦ XP & Titel</span><span>★ Kursprüfungen</span></div><small>Made with 💙 from NyxAtheris (LiveryLab Studios)</small></aside><section class="auth-card">'+brand+
  '<span class="eyebrow">[ + ] BEWERBUNG</span><h1>Dein Weg in die <span class="gradient">Academy.</span></h1>'+
- '<p class="lede">Erstelle dein Konto. Die Academy ist noch in der Testphase: Erst nach Freigabe durch NyxAtheris erhältst du Zugang. Plus/Pro gibt es derzeit auf Anfrage über Discord.</p>'+
+ '<p class="lede">Erstelle dein Konto. Die Academy ist noch in der Testphase: Erst nach Freigabe durch NyxAtheris erhältst du Zugang. Plus/Ultimate gibt es derzeit auf Anfrage über Discord.</p>'+
  '<form data-form="register"><div class="form-group"><label class="form-label" for="reg-email">E-Mail-Adresse</label>'+
  '<input class="input" type="email" id="reg-email" name="email" autocomplete="email" required maxlength="254" placeholder="du@beispiel.de"></div>'+
  '<div class="form-group"><label class="form-label" for="reg-user">Benutzername</label>'+
@@ -145,7 +145,7 @@ function login(){
  '<input class="input" type="password" id="password" name="password" autocomplete="current-password" required placeholder="Dein Passwort"></div>'+
  '<button class="btn primary block" type="submit">Anmelden →</button></form>'+
  '<div class="auth-secondary"><span>Noch kein Konto?</span><button type="button" class="btn" data-action="show-register">Jetzt registrieren →</button></div>'+
- '<p class="micro">LiveryLab ist aktuell eine betreute Test-Academy. Dein Konto muss freigegeben werden. Für Plus/Pro: Schreib NyxAtheris per Discord-DM oder eröffne ein Ticket mit dem Grund und erwähne @nyxatheris.</p>'+
+ '<p class="micro">LiveryLab ist aktuell eine betreute Test-Academy. Dein Konto muss freigegeben werden. Für Plus/Ultimate: Schreib NyxAtheris per Discord-DM oder eröffne ein Ticket mit dem Grund und erwähne @nyxatheris.</p>'+
  '<a class="btn discord block discord-block" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord beitreten</a>'+
  '<p class="smallprint" style="text-align:center;margin-top:19px">Sicherer Zugang über LiveryLab Academy</p></section></div>';
 }
@@ -295,7 +295,8 @@ async function loadData(){
   api.rpc('academy_exam_status'),
   api.rpc('academy_social_list'),
   api.rpc('academy_entitled_courses'),
-  api.rpc('academy_social_media_list')
+  api.rpc('academy_social_media_list'),
+  api.rpc('academy_service',{p_action:'list',p_payload:{}})
  ]).then(results=>{
   if(!s.ready)return;
   const data=results.map(x=>x.status==='fulfilled'&&!x.value?.error?x.value?.data:null);
@@ -303,6 +304,7 @@ async function loadData(){
   s.social=data[1]||null;
   s.entitledCourses=data[2]||null;
   s.socialMedia=data[3]||{};
+  s.service=data[4]||s.service;
   if(!s.streakModalOpen&&parseRoute().page==='home')render();
  }).catch(()=>{});
  await navigateCurrent();
@@ -324,6 +326,7 @@ async function navigateCurrent(){
    if(meta&&allowed(meta)){var result=await api.rpc('academy_open_lesson',{p_lesson:route.id});if(result.error){s.lessonGate={reason:'error',error:formatError(result.error)};notice(formatError(result.error));}else if(result.data?.allowed){s.lesson=result.data;if(s.daily){s.daily.used_today=result.data.used;s.daily.remaining_today=result.data.remaining;}}else{s.lessonGate=result.data||{reason:'error'};}}
  }
  if(route.page==='admin'&&s.profile?.role==='admin'){try{await Promise.all([fetchMembers(),fetchVouchers()]);}catch(e){notice('Adminliste: '+formatError(e));}}
+ if(route.page==='support'||route.page==='admin'||route.page==='plans'){try{await refreshService();}catch(e){notice('Support: '+formatError(e));}}
  if(route.page==='script'&&hasScript()){await loadProjectTab();}
  if(route.page==='reference'&&fullAccess()&&!s.referenceData){const ref=await api.rpc('academy_reference_get');if(!ref.error)s.referenceData=ref.data||{};}
  if(route.page==='friends'||route.page==='profile'){try{const r=await api.rpc('academy_social_list');if(!r.error)s.social=r.data;}catch(_){}}
@@ -346,7 +349,7 @@ function render(){
  frame();const r=parseRoute();
  const pages={home:homePage,courses:coursesPage,track:()=>trackPage(r.id),lesson:()=>lessonPage(r.id),
   script:()=>hasScript()?scriptPage():paywall('Script-Werkstatt','Plus','Codebeispiele sind ab Plus verfügbar.'),plans:plansPage,exams:examsPage,exam:()=>examPage(r.id),
-  reference:()=>fullAccess()?referencePage():paywall('Code-Referenzen','Pro / Ultimate','Die vollständige Sprachbibliothek gehört zum höchsten Tarif.'),profile:profilePage,friends:friendsPage,settings:settingsPage,admin:adminPage};
+  reference:()=>fullAccess()?referencePage():paywall('Code-Referenzen','Pro / Ultimate','Die vollständige Sprachbibliothek gehört zum höchsten Tarif.'),profile:profilePage,friends:friendsPage,support:supportPage,settings:settingsPage,admin:adminPage};
  content.innerHTML=(pages[r.page]||homePage)();
  if(r.page==='settings')renderMFA();
  paintStreakModal();
@@ -513,6 +516,7 @@ function homePage(){
  '<span class="ll-shortcut-symbol fire">'+llIcon('fire')+'</span><span class="ll-shortcut-text"><strong>Daily Streak <span class="ll-streak-day-pill">'+streak+' '+(streak===1?'Tag':'Tage')+'</span></strong>'+
  '<small>'+(ready?'Dein Claim ist bereit – sichere deine Serie!':s.loginStreak?.next_claim_at?'Nächster Claim in <span data-streak-countdown>'+durationDisplay(streakRemaining())+'</span>':'Melde dich an und starte deine erste Serie.')+'</small></span>'+llIcon('arrow')+'</button>'+
  homeShortcut('friends','Freunde','Vernetze dich und vergleiche Lernfortschritte.','friends',false,false)+
+ homeShortcut('book','Support & Feedback','Fehler melden, Hilfe bekommen und Antworten lesen.','support',false,false)+
  homeShortcut('settings','Einstellungen','Account, Sicherheit und persönliches Design.','settings',false,true)+
  homeShortcut('profile','Mein Profil','Erfolge ansehen und freigeschalteten Titel wählen.','profile',false,false)+
  homeShortcut('xp','Mitgliedschaften','Free, Plus und Pro vergleichen.','plans',false,false)+
@@ -690,6 +694,25 @@ async function markLesson(){
 
 
 function euro(cents){return (Number(cents||0)/100).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'}
+async function refreshService(){
+ const r=await api.rpc('academy_service',{p_action:'list',p_payload:{}});
+ if(r.error)throw r.error;
+ s.service=r.data||{beta_open:false,mine:[],admin:[]};return s.service;
+}
+function supportPage(){
+ const data=s.service||{},mine=Array.isArray(data.mine)?data.mine:[];
+ const names={support:'Allgemeine Hilfe',bug:'Fehlerbericht',beta:'Beta-Feedback',plan:'Mitgliedschaft'};
+ return pageHeading('HILFE & FEEDBACK','Wir helfen dir <span class="gradient">direkt in der App.</span>',
+ 'Melde technische Fehler, schick uns Ideen oder frage während der Beta eine Mitgliedschaft an. Deine Anfragen bleiben hier sichtbar.')+
+ '<div class="support-grid"><section class="panel support-compose"><span class="eyebrow">[ + ] NEUE ANFRAGE</span><h2>Schreib dem Team</h2>'+
+ '<form data-form="support-ticket"><div class="form-group"><label class="form-label" for="support-category">Worum geht es?</label><select class="select" id="support-category" name="category"><option value="support">Allgemeine Frage</option><option value="bug">Fehler melden</option>'+
+ (data.beta_open?'<option value="beta">Beta-Feedback</option><option value="plan">Plus / Ultimate anfragen</option>':'')+'</select></div>'+
+ (data.beta_open?'<div class="form-group support-plan-field" hidden><label class="form-label">Gewünschter Tarif</label><select class="select" name="tier"><option value="pro">Plus · 1,99 €</option><option value="ultimate">Ultimate · 5,99 €</option></select><small>Freigabe erfolgt manuell durch das Team. Keine automatische Zahlung.</small></div>':'')+
+ '<div class="form-group"><label class="form-label" for="support-message">Deine Nachricht</label><textarea class="input" id="support-message" name="message" minlength="10" maxlength="2000" rows="6" required placeholder="Beschreibe dein Anliegen möglichst genau …"></textarea></div><button class="btn primary block" type="submit">Anfrage senden →</button></form><p class="micro">Bis zu fünf Anfragen innerhalb von 24 Stunden. Bitte sende keine Passwörter.</p></section>'+
+ '<section class="panel support-history"><span class="eyebrow">[ ◷ ] DEIN POSTEINGANG</span><h2>Deine Anfragen</h2>'+
+ (mine.length?mine.map(t=>'<article class="support-ticket"><div><strong>'+esc(names[t.category]||'Anfrage')+'</strong><span class="chip '+(t.status==='approved'?'free':'plus')+'">'+esc(t.status||'open')+'</span></div><small>'+new Date(t.created_at).toLocaleString('de-DE')+'</small><p>'+esc(t.message)+'</p>'+(t.reply?'<blockquote>'+esc(t.reply)+'</blockquote>':'')+'</article>').join(''):'<p class="muted">Noch keine Anfragen. Deine Antwort erscheint später hier.</p>')+
+ '</section></div>';
+}
 async function fetchVouchers(){
  if(s.profile?.role!=='admin')return;
  const r=await api.rpc('academy_voucher_list');
@@ -704,9 +727,10 @@ function dailyStrip(){
 }
 
 function membershipHelp(){
- return '<section class="membership-help-callout"><div class="membership-help-spark">✦</div><span class="eyebrow">LIVERYLAB STUDIOS · BETA</span><h2>Plus oder Pro testen?</h2>'+
+ if(s.service?.beta_open===false)return '';
+ return '<section class="membership-help-callout"><div class="membership-help-spark">✦</div><span class="eyebrow">LIVERYLAB STUDIOS · BETA</span><h2>Plus oder Ultimate testen?</h2>'+
  '<p>Schreib <strong>NyxAtheris</strong> eine Discord-DM oder eröffne ein <strong>Ticket</strong> auf dem LiveryLab-Server. Erwähne dort <strong>@nyxatheris</strong> und teile mit, warum du Zugang möchtest. Wir schalten Testmitglieder manuell frei.</p>'+
- '<div class="membership-help-actions"><a class="btn primary" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Ticket auf Discord eröffnen ↗</a>'+
+ '<div class="membership-help-actions"><button class="btn primary" data-go="support">In der App anfragen →</button>'+
  '<button class="btn" data-go="plans">Mitgliedschaften vergleichen →</button></div></section>';
 }
 
@@ -716,25 +740,25 @@ function plansPage(){
   const current=own===tier,included=(tier==='free'&&own!=='free')||(tier==='pro'&&own==='ultimate');
   return '<article class="membership-card tier-'+tier+(current?' current':'')+'">'+
    '<div class="membership-top"><div><span class="eyebrow">'+(tier==='free'?'KOSTENLOS':tier==='pro'?'MEHR LERNEN':'VOLLER ZUGRIFF')+'</span><h2>'+name+'</h2></div>'+
-   '<span class="membership-price">'+price+'<small>/Monat</small>'+(tier==='free'?'':'<em class="membership-beta">BETA · nur auf Anfrage</em>')+'</span></div>'+
+   '<span class="membership-price">'+price+'<small>/Monat</small>'+(tier==='free'||s.service?.beta_open===false?'':'<em class="membership-beta">BETA · nur auf Anfrage</em>')+'</span></div>'+
    '<div class="membership-limits"><span>▦ '+cap+' Kurse</span><span>◷ '+stations+'</span></div>'+
    '<p class="membership-desc">'+desc+'</p>'+
    '<ul class="membership-benefits">'+benefits.map(x=>'<li>'+x+'</li>').join('')+'</ul>'+
    (current?'<div class="membership-own">✓ Dein aktueller Tarif</div>':
    included?'<div class="membership-included">✓ In deinem Tarif enthalten</div>':
-   '<a class="btn primary block" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">'+name+' anfragen →</a>')+
+   (s.service?.beta_open===false?'<div class="membership-included">Aktuell keine Anfragen</div>':'<button class="btn primary block" data-go="support">'+name+' anfragen →</button>'))+
    '</article>';
  }
  const quote=s.discount;
  return pageHeading('MITGLIEDSCHAFT','Dein <span class="gradient">Lernzugang.</span>',
- 'Wähle deinen Lernumfang. Free: 2 Prüfungen pro Tag, Plus: 4 Prüfungen und Script, Pro/Ultimate: alles unbegrenzt.')+
+ 'Wähle deinen Lernumfang. Free: 2 Prüfungen pro Tag, Plus: 4 Prüfungen und Script, Ultimate: alles unbegrenzt.')+
  dailyStrip()+
  '<div class="membership-stack">'+
  tile('free','Free','10','3 pro Tag','0,00 €','Die wichtigsten Grundlagen für deinen Anfang.',[
   '10 Grundlagenkurse und 3 neue Lektionen pro Tag','2 Kursprüfungen pro Tag','Script-Werkstatt und Referenzen gesperrt'])+
  tile('pro','Plus','25','6 pro Tag','1,99 €','Mehr Themen und mehr Übungszeit.',[
   '25 Lernpfade, 6 Lektionen pro Tag','4 Prüfungen pro Tag','Script-Werkstatt freigeschaltet · Referenzen gesperrt'])+
- tile('ultimate','Pro','Alle '+allCourseCount,'Unbegrenzt','3,99 €','Der gesamte Kurskatalog.',[
+ tile('ultimate','Ultimate','Alle '+allCourseCount,'Unbegrenzt','5,99 €','Der gesamte Kurskatalog.',[
   'Alle Kurse, Lektionen und Prüfungen unbegrenzt','Script-Werkstatt + vollständige Code-Referenzen','Sämtliche Lernfunktionen ohne Tageslimit'])+
  '</div>'+
  '<section class="voucher-panel"><div class="voucher-head"><div><span class="eyebrow">[ % ] GUTSCHEIN</span><h2>Code einlösen</h2></div><span class="voucher-icon">◇</span></div>'+
@@ -742,8 +766,8 @@ function plansPage(){
  '<form data-form="redeem-voucher" class="voucher-form"><label class="form-label" for="voucher-code">Dein Gutscheincode</label>'+
  '<div class="voucher-input-row"><input class="input" id="voucher-code" name="code" autocapitalize="characters" autocomplete="off" required maxlength="64" placeholder="LL-XXXXXXXXXXXX">'+
  '<button type="submit" class="btn primary">Einlösen →</button></div></form>'+
- (quote?'<div class="voucher-quote">✓ Dein reservierter Rabatt: <strong>'+Number(quote.percent)+' % auf '+(quote.tier==='pro'?'Plus':'Pro')+'</strong>'+
- '<div><s>'+euro(quote.original_cents)+'</s> <strong>'+euro(quote.final_cents)+'</strong> / Monat bei bestätigter Freischaltung</div>'+
+ (quote?'<div class="voucher-quote">✓ Dein reservierter Rabatt: <strong>'+Number(quote.percent)+' % auf '+(quote.tier==='all'?'Plus und Ultimate':quote.tier==='pro'?'Plus':'Ultimate')+'</strong>'+
+ '<div>'+(quote.tier==='all'?'Plus '+euro(Math.round(199*(100-Number(quote.percent))/100))+' · Ultimate '+euro(Math.round(599*(100-Number(quote.percent))/100)):'<s>'+euro(quote.original_cents)+'</s> <strong>'+euro(quote.final_cents)+'</strong>')+' / Monat bei bestätigter Freischaltung</div>'+
  '<small>Für Zahlung und Aktivierung den LiveryLab-Support kontaktieren.</small></div>':'')+
  '<small>Rabattcodes sind Angebote, kein automatischer Kauf. Kostenpflichtige Mitgliedschaften werden derzeit vom Team nach Bestätigung aktiviert.</small></section>'+
  membershipHelp();
@@ -753,7 +777,7 @@ function examsPage(){
  const suitable=s.courses.filter(c=>{const ls=lessonsOf(c.id);return ls.length>0&&ls.every(l=>allowed(l));})
  .sort((a,b)=>(countDone(a.id)===lessonsOf(a.id).length?0:1)-(countDone(b.id)===lessonsOf(b.id).length?0:1)||a.name.localeCompare(b.name,'de'));
  return pageHeading('PRÜFUNGEN','Deine <span class="gradient">Kursprüfungen.</span>','Jede Prüfung gehört zu genau einem freigeschalteten Kurs. Schließe zuerst dessen Lektionen ab.')+
- '<div class="exam-quota"><strong>✦ '+(cap<0?'Unbegrenzt':Math.max(0,cap-used)+' von '+cap)+' Prüfungen heute übrig</strong><small>Free: 2 · Plus: 4 · Pro/Ultimate: unbegrenzt. Reset um Mitternacht (Berlin).</small><button class="btn small" data-go="plans">Tarife →</button></div>'+
+ '<div class="exam-quota"><strong>✦ '+(cap<0?'Unbegrenzt':Math.max(0,cap-used)+' von '+cap)+' Prüfungen heute übrig</strong><small>Free: 2 · Plus: 4 · Ultimate: unbegrenzt. Reset um Mitternacht (Berlin).</small><button class="btn small" data-go="plans">Tarife →</button></div>'+
  '<section class="section"><div class="section-heading"><div><span class="eyebrow">DEINE KURSE</span><h2>'+suitable.length+' passende Prüfungen</h2></div></div><div class="course-grid">'+suitable.map(c=>{
   const ls=lessonsOf(c.id),count=countDone(c.id),ready=count===ls.length,passed=!!s.progress.exams?.[c.id];
   return '<article class="course-card '+(passed?'is-complete':'')+'"><div class="course-head"><span class="course-icon">'+esc(courseAccent(c))+'</span><span class="chip '+(passed?'free':'plus')+'">'+(passed?'✓ Bestanden':ready?'Bereit':'Noch gesperrt')+'</span></div><span class="micro">'+esc(c.category)+'</span><h3>'+esc(c.name)+'</h3><p>'+count+' / '+ls.length+' Lektionen abgeschlossen</p><div class="progress"><span style="width:'+pct(count,ls.length)+'%"></span></div><button class="btn block" data-go="'+(ready?'exam/':'track/')+esc(c.id)+'">'+(ready?'Prüfung öffnen →':'Kurs fortsetzen →')+'</button></article>';
@@ -1100,7 +1124,7 @@ function profilePage(){
  const streak=Number(s.loginStreak?.current||0),best=Number(s.loginStreak?.best||0),titles=(s.social?.titles||['Developer']).filter(Boolean),selected=s.social?.profile?.title||'Developer';
  return pageHeading('DEIN PROFIL','Dein Lern-<span class="gradient">fortschritt.</span>',
  'Hier siehst du deine wichtigsten Werte und freigeschalteten Erfolge. Persönliche App-Farben und Hintergründe findest du in den Einstellungen.')+
- '<section class="profile-overview-card"><div class="profile-overview-avatar">'+esc(name.slice(0,1).toUpperCase())+'</div><div><span class="eyebrow">LIVERYLAB DEVELOPER</span><h2>'+esc(name)+'</h2><span class="profile-title-badge">✦ '+esc(selected)+'</span><p>@'+esc(s.profile?.username||'developer')+' · '+esc(tierLabel(s.tier))+'</p></div><button class="btn small" data-go="settings">App-Design ändern →</button></section>'+
+ '<section class="profile-overview-card"><div class="profile-overview-avatar">'+esc(name.slice(0,1).toUpperCase())+'</div><div><span class="eyebrow">LIVERYLAB DEVELOPER</span><h2>'+esc(name)+'</h2><span class="profile-title-badge">✦ '+esc(selected)+'</span><p>@'+esc(s.profile?.username||'developer')+' · '+esc(plans[s.tier]||'Free')+'</p>'+(s.tier!=='free'?'<p class="plan-expiry">'+(s.planExpires?'Freigeschaltet bis '+esc(new Date(s.planExpires).toLocaleString('de-DE')):'Dauerhaft freigeschaltet')+'</p>':'')+'</div><button class="btn small" data-go="settings">App-Design ändern →</button></section>'+
  '<section class="profile-title-picker"><div><span class="eyebrow">[ ✦ ] DEIN PROFILTITEL</span><h3>Zeig, was du erreicht hast.</h3><p>Du kannst nur Titel auswählen, die du durch Lektionen, Prüfungen, Freunde oder Streaks freigeschaltet hast.</p></div><form data-form="profile-title"><label class="form-label" for="profile-title">Freigeschalteten Titel auswählen</label><div class="profile-title-row"><select class="select" id="profile-title" name="title">'+titles.map(t=>'<option value="'+esc(t)+'" '+(t===selected?'selected':'')+'>'+esc(t)+'</option>').join('')+'</select><button class="btn primary" type="submit">Titel verwenden</button></div></form></section>'+
  '<section class="profile-quick-stats"><div class="profile-quick-tile"><span>🔥</span><strong>'+streak+'</strong><small>Login-Streak in Tagen</small></div>'+
  '<div class="profile-quick-tile"><span>🏅</span><strong>'+best+'</strong><small>Bisheriger Rekord</small></div>'+
@@ -1175,7 +1199,7 @@ function settingsPage(){
  '<span><b>Discord-Support</b><p>Schreibe NyxAtheris eine DM oder öffne ein Ticket und erwähne @nyxatheris.</p></span></div>'+
  '<a class="btn small discord" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord ↗</a></div></div></section>'+
  '<section class="section panel"><span class="eyebrow">LIVERYLAB STUDIOS</span><h3>Über die Academy</h3>'+
- '<p class="micro">Developer-Lernplattform mit Kursen, sicheren Accounts, Profilen, Freunden und Erfolgen. Version 25.</p>'+
+ '<p class="micro">Developer-Lernplattform mit Kursen, sicheren Accounts, Profilen, Freunden und Erfolgen. Version 26.</p>'+
  '<a href="./privacy.html">Datenschutzhinweise ansehen ↗</a><p class="smallprint" style="margin-top:16px">Made with 💙 from NyxAtheris (LiveryLab Studios)</p></section>';
 }
 
@@ -1187,7 +1211,7 @@ function voucherAdminSection(){
   const expiry=Number.isFinite(expires.getTime())?new Intl.DateTimeFormat('de-DE',{day:'2-digit',month:'short',year:'numeric'}).format(expires):'–';
   return '<article class="voucher-manage-card '+(v.active?'':'is-inactive')+'"><div class="voucher-manage-top">'+
    '<div class="voucher-manage-code"><span class="voucher-code-icon">%</span><div><code>'+esc(v.code)+'</code>'+
-   '<small>'+esc(v.kind==='gift'?'Gratis '+(v.tier==='pro'?'Plus':'Pro')+' · '+Number(v.days)+' Tage':Number(v.percent)+' % Rabatt für '+(v.tier==='pro'?'Plus':'Pro'))+'</small></div></div>'+
+   '<small>'+esc(v.kind==='gift'?'Gratis '+(plans[v.tier]||v.tier)+' · '+(v.seconds?Math.round(Number(v.seconds)/60)+' Minuten':Number(v.days)+' Tage'):Number(v.percent)+' % Rabatt für '+(v.tier==='all'?'alle Tarife':plans[v.tier]||v.tier))+'</small></div></div>'+
    '<span class="chip '+(v.active?'free':'plus')+'">'+(v.active?'Aktiv':'Pausiert')+'</span></div>'+
    '<div class="voucher-manage-meta"><span>◷ Bis '+esc(expiry)+'</span><span>◈ '+used+' / '+max+' eingelöst</span></div>'+
    '<div class="voucher-use-progress"><span style="width:'+Math.min(100,Math.round(used/max*100))+'%"></span></div>'+
@@ -1203,7 +1227,7 @@ function voucherAdminSection(){
  '<form data-form="create-voucher"><div class="form-row"><div class="form-group"><label class="form-label">Gutscheintyp</label><select class="select" name="kind">'+
  '<option value="gift">Gratis-Mitgliedschaft</option><option value="discount">Rabattcode</option></select></div>'+
  '<div class="form-group"><label class="form-label">Mitgliedschaft</label><select class="select" name="tier">'+
- '<option value="pro">Plus · 1,99 € / Monat</option><option value="ultimate">Pro / Ultimate · 3,99 € / Monat</option></select></div>'+
+ '<option value="pro">Plus · 1,99 € / Monat</option><option value="ultimate">Ultimate · 5,99 € / Monat</option><option value="all" class="voucher-all-tier" hidden>Alle Tarife · Rabatt</option></select></div>'+
  '<div class="form-group"><label class="form-label">Code erstellen</label><select class="select" name="code_mode">'+
  '<option value="random">Automatisch generieren</option><option value="custom">Eigenen Code bestimmen</option></select></div>'+
  '<div class="form-group voucher-custom-field" hidden><label class="form-label">Dein Wunschcode</label>'+
@@ -1211,15 +1235,21 @@ function voucherAdminSection(){
  '<small>3–64 Zeichen, Buchstaben, Zahlen und Bindestriche. Groß-/Kleinschreibung ist egal.</small></div>'+
  '<div class="form-group voucher-discount-field" hidden><label class="form-label">Rabatt</label>'+
  '<input class="input" type="number" name="percent" min="1" max="90" value="20"><small>Prozent auf den angefragten Tarif.</small></div>'+
- '<div class="form-group voucher-gift-field"><label class="form-label">Kostenlose Mitgliedschaft für</label><select class="select" name="membership_days">'+
- '<option value="7">7 Tage</option><option value="30" selected>30 Tage</option><option value="90">90 Tage</option><option value="365">365 Tage</option></select></div>'+
+ '<div class="form-group voucher-gift-field"><label class="form-label">Mitgliedschaft für</label><div class="duration-fields"><input class="input" type="number" name="duration_value" min="1" max="10000" value="30"><select class="select" name="duration_unit"><option value="minute">Minuten</option><option value="day" selected>Tage</option><option value="year">Jahre</option></select></div></div>'+
  '<div class="form-group"><label class="form-label">Maximale Einlösungen</label><input class="input" type="number" name="max_uses" min="1" max="1000" value="1" required></div>'+
- '<div class="form-group"><label class="form-label">Gültigkeit des Gutscheins</label><select class="select" name="valid_days">'+
- '<option value="1">1 Tag</option><option value="7">7 Tage</option><option value="30" selected>30 Tage</option><option value="90">90 Tage</option><option value="365">365 Tage</option></select></div></div>'+
+ '<div class="form-group"><label class="form-label">Code gültig für</label><div class="duration-fields"><input class="input" type="number" name="valid_value" min="1" max="10000" value="30" required><select class="select" name="valid_unit"><option value="minute">Minuten</option><option value="day" selected>Tage</option><option value="year">Jahre</option></select></div></div></div>'+
  '<button class="btn primary block" type="submit">Gutschein sicher erstellen →</button></form><div id="created-voucher" class="voucher-created" hidden></div></div>'+
  '<div class="voucher-list-heading"><h3>Deine Gutscheine</h3><button class="btn small" type="button" data-action="refresh-admin">↻ Aktualisieren</button></div>'+
  '<div class="voucher-admin-list">'+(rows||'<div class="empty"><strong>Keine aktiven Gutscheine mehr.</strong><p>Erstelle oben einen neuen Code. Abgelaufene und gelöschte Gutscheine verschwinden automatisch aus der Liste.</p></div>')+'</div>'+
  '<p class="micro voucher-footnote">Bereits eingelöste Codes bleiben für Abrechnung und Nachweise intern archiviert. Ungenutzte Codes werden nach Ablauf automatisch gelöscht. Die automatische Bereinigung läuft etwa jede Minute.</p></section>';
+}
+
+function supportAdminSection(){
+ const entries=Array.isArray(s.service?.admin)?s.service.admin:[];
+ return '<section class="section panel support-admin"><div class="section-heading"><div><span class="eyebrow">ADMIN · SUPPORT & BETA</span><h2>Support-Posteingang</h2><p>Beantworte Meldungen und genehmige angefragte Testzugänge.</p></div><button class="btn small" data-action="refresh-support">↻ Aktualisieren</button></div>'+
+ '<label class="beta-switch"><span><strong>Beta-Anfragen sichtbar</strong><small>Wenn ausgeschaltet, verschwinden Beta- und Tarif-Anfragen aus der App. Bestehende Anfragen bleiben im Posteingang.</small></span><input type="checkbox" id="beta-enabled" '+(s.service?.beta_open?'checked':'')+'></label>'+
+ (entries.length?entries.map(t=>'<article class="support-ticket admin-ticket"><div><strong>'+esc(t.username||'Mitglied')+' · '+esc(t.category)+(t.tier?' · '+esc(plans[t.tier]||t.tier):'')+'</strong><span class="chip plus">'+esc(t.status)+'</span></div><small>'+new Date(t.created_at).toLocaleString('de-DE')+'</small><p>'+esc(t.message)+'</p>'+(t.reply?'<blockquote>'+esc(t.reply)+'</blockquote>':'')+
+ '<form data-form="support-reply" data-ticket-id="'+esc(t.id)+'"><textarea class="input" name="reply" maxlength="2000" rows="2" placeholder="Antwort an das Mitglied …">'+esc(t.reply||'')+'</textarea><div class="support-reply-actions"><select class="select" name="status"><option value="answered">Beantworten</option><option value="closed">Schließen</option><option value="rejected">Ablehnen</option>'+(t.category==='plan'&&t.status!=='approved'?'<option value="approved">Mitgliedschaft freigeben</option>':'')+'</select>'+(t.category==='plan'&&t.status!=='approved'?'<label>Freigabe in Tagen <input class="input" type="number" name="days" min="1" max="3650" value="30"></label>':'')+'<button class="btn primary small" type="submit">Speichern</button></div></form></article>').join(''):'<div class="empty">Noch keine Supportanfragen.</div>')+'</section>';
 }
 
 function adminPage(){
@@ -1249,7 +1279,7 @@ function adminPage(){
    '<select class="select" data-admin-tier="'+esc(u.id)+'" aria-label="Mitgliedschaft ändern für '+esc(u.username||u.email||'Mitglied')+'">'+
    '<option value="free" '+(tier==='free'?'selected':'')+'>Free · 3/Tag</option>'+
    '<option value="pro" '+(tier==='pro'?'selected':'')+'>Plus · 6/Tag</option>'+
-   '<option value="ultimate" '+(tier==='ultimate'?'selected':'')+'>Pro/Ultimate · Unbegrenzt</option></select>')+
+   '<option value="ultimate" '+(tier==='ultimate'?'selected':'')+'>Ultimate · Unbegrenzt</option></select>')+
    '</div><div class="member-actions">'+
    '<button class="btn small" data-reset-user="'+esc(u.id)+'" '+(owner?'disabled':'')+'>Passwort zurücksetzen</button>'+
    '<button class="btn small '+(u.active?'danger':'primary')+'" data-active-user="'+esc(u.id)+'" data-active-value="'+(!u.active)+'" '+(owner?'disabled':'')+'>'+
@@ -1279,7 +1309,7 @@ function adminPage(){
  '<div class="form-group"><label class="form-label">Vorläufiges Passwort</label><input class="input" type="password" name="password" minlength="14" required autocomplete="new-password"></div>'+
  '<div class="form-group"><label class="form-label">Tarif</label><select class="select" name="tier"><option value="free">Free</option><option value="pro">Plus</option><option value="ultimate">Pro/Ultimate</option></select></div></div>'+
  '<button class="btn primary" type="submit">Benutzerkonto erstellen →</button></form></details></section>'+
- voucherAdminSection();
+ supportAdminSection()+voucherAdminSection();
 }
 async function fetchMembers(){
  if(s.profile?.role!=='admin')return;
@@ -1334,6 +1364,7 @@ document.addEventListener('click',async function(e){
  if(focusBtn){if(courseOf(focusBtn.dataset.focusCourse)){setChoicePreference('focus',focusBtn.dataset.focusCourse);render()}return;}
  var adminFilter=e.target.closest('[data-admin-filter]');
  if(adminFilter){s.adminFilter=adminFilter.dataset.adminFilter||'all';render();return;}
+ if(e.target.closest('[data-action="refresh-support"]')){try{await refreshService();render();}catch(err){notice(formatError(err))}return;}
  var friendAction=e.target.closest('[data-friend-action]');
  if(friendAction){
   const command=friendAction.dataset.friendAction,id=friendAction.dataset.friendId;
@@ -1521,7 +1552,14 @@ document.addEventListener('change',async function(e){
   const frm=e.target.closest('form'),discount=frm.querySelector('.voucher-discount-field'),gift=frm.querySelector('.voucher-gift-field');
   if(discount)discount.hidden=e.target.value!=='discount';
   if(gift)gift.hidden=e.target.value==='discount';
+  const all=frm.querySelector('.voucher-all-tier'),tier=frm.querySelector('select[name="tier"]');
+  if(all)all.hidden=e.target.value!=='discount';
+  if(tier&&e.target.value==='gift'&&tier.value==='all')tier.value='pro';
   return;
+ }
+ if(e.target.id==='support-category'){const field=e.target.closest('form')?.querySelector('.support-plan-field');if(field)field.hidden=e.target.value!=='plan';return;}
+ if(e.target.id==='beta-enabled'){
+  const box=e.target;try{const r=await api.rpc('academy_service',{p_action:'set_beta',p_payload:{enabled:box.checked}});if(r.error)throw r.error;await refreshService();render();notice('Beta-Anfragen '+(box.checked?'aktiviert.':'geschlossen.'));}catch(err){box.checked=!box.checked;notice(formatError(err))}return;
  }
 
  if(e.target.id==='video-check'){
@@ -1558,6 +1596,19 @@ document.addEventListener('submit',async function(e){
   if(mode==='login'){await signIn(fd,button);return;}
   if(mode==='register'){await registerAccount(fd);return;}
   if(mode==='first-password'){await finishPassword(fd,button);return;}
+  if(mode==='support-ticket'){
+   const category=String(fd.get('category')),message=String(fd.get('message')||'').trim(),tier=category==='plan'?String(fd.get('tier')):null;
+   if(message.length<10||message.length>2000)throw Error('Bitte 10 bis 2000 Zeichen schreiben.');
+   const r=await api.rpc('academy_service',{p_action:'create',p_payload:{category,message,tier}});
+   if(r.error)throw r.error;await refreshService();render();notice('Anfrage gesendet. Deine Antwort erscheint hier.');return;
+  }
+  if(mode==='support-reply'){
+   if(s.profile?.role!=='admin')throw Error('Nur Administratoren');
+   const status=String(fd.get('status')),days=Number(fd.get('days')||30),reply=String(fd.get('reply')||'').trim();
+   if(status==='approved'&&!confirm('Diese Mitgliedschaft für '+days+' Tage freigeben? Es erfolgt keine automatische Zahlung.'))return;
+   const r=await api.rpc('academy_service',{p_action:'respond',p_payload:{id:form.dataset.ticketId,status,days,reply}});
+   if(r.error)throw r.error;await refreshService();render();notice('Anfrage aktualisiert.');return;
+  }
   if(mode==='set-username'){
    var chosen=String(fd.get('username')||'').trim();
    if(!/^[A-Za-z][A-Za-z0-9_]{2,23}$/.test(chosen))throw Error('Benutzername: 3-24 Zeichen, Buchstaben, Zahlen und Unterstrich.');
@@ -1609,11 +1660,11 @@ document.addEventListener('submit',async function(e){
     const kind=String(fd.get('kind')),tier=String(fd.get('tier'));
     const custom=String(fd.get('code_mode')||'random')==='custom'?String(fd.get('custom_code')||'').trim():'';
     if(fd.get('code_mode')==='custom'&&!/^[A-Za-z0-9][A-Za-z0-9-]{2,63}$/.test(custom))throw Error('Eigener Code: mindestens 3 Zeichen, nur Buchstaben, Zahlen und Bindestriche.');
-    const r=await api.rpc('academy_voucher_create_custom',{
+    const r=await api.rpc('academy_voucher_create_flexible',{
       p_custom_code:custom,p_kind:kind,p_tier:tier,
       p_percent:kind==='discount'?Number(fd.get('percent')):null,
-      p_membership_days:kind==='gift'?Number(fd.get('membership_days')):null,
-      p_max_uses:Number(fd.get('max_uses')),p_valid_days:Number(fd.get('valid_days'))
+      p_duration_value:Number(fd.get('duration_value')),p_duration_unit:String(fd.get('duration_unit')),
+      p_max_uses:Number(fd.get('max_uses')),p_valid_value:Number(fd.get('valid_value')),p_valid_unit:String(fd.get('valid_unit'))
     });
     if(r.error)throw r.error;
     if(!r.data?.ok||!r.data.code)throw Error('Gutschein wurde nicht erstellt.');
