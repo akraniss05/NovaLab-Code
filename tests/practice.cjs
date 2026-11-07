@@ -1,0 +1,13 @@
+const assert=require('node:assert/strict');
+const {LLPractice:p}=require('../site/practice-engine.js');
+const task={lang:'lua',solution:'print("Hello Livery-Lab")',checks:['print']};
+assert.equal(p.evaluate('print("Hello Livery-Lab")',task).ok,true);
+assert.equal(p.evaluate("print('Hello Livery-Lab')",task).ok,true,'Equivalent quoting should pass');
+assert.equal(p.evaluate('print("falsch")',task).ok,false,'Wrong output must fail');
+assert.equal(p.evaluate('print("Hello Livery-Lab',task).ok,false,'Unclosed quote must fail');
+assert.equal(p.evaluate('x = "Hello Livery-Lab"',task).ok,false,'No print must fail');
+assert.equal(p.evaluate('print(hello)',task).ok,false,'Undefined variable must fail');
+assert.equal(p.evaluate('console.log("ok")',{lang:'javascript',solution:'console.log("ok")',checks:['console']}).ok,true);
+assert.equal(p.evaluate('console.log("ok"',{lang:'javascript',solution:'console.log("ok")'}).ok,false);
+assert.equal(p.evaluate('nothing',{lang:'python',solution:'print("ok")'}).ok,false);
+console.log('Practice evaluator rejects wrong answers and accepts equivalent simple output.');
