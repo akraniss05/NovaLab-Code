@@ -23,9 +23,13 @@ scope.onmessage=async function(event){
    const result=fn(consoleProxy,undefined,undefined,undefined,undefined,undefined);
    if(result&&typeof result.then==='function')await result;
   }else if(lang==='lua'){
+   // The npm bundle exports through CommonJS; give it a local module object.
+   scope.module={exports:{}};
+   scope.exports=scope.module.exports;
    importScripts(input.luaBundleUrl);
-   if(!scope.fengari?.load)throw Error('Lua-Interpreter konnte nicht geladen werden.');
-   const evalLua=scope.fengari.load;
+   const fengari=scope.fengari||scope.module.exports?.fengari||scope.module.exports?.default||scope.module.exports;
+   if(!fengari||typeof fengari.load!=='function')throw Error('Lua-Interpreter konnte nicht initialisiert werden.');
+   const evalLua=fengari.load;
    evalLua("___ll_output = {}\nprint = function(...) local a={} for i=1, select('#', ...) do a[#a+1]=tostring(select(i,...)) end ___ll_output[#__ll_output+1]=table.concat(a, '\\t') end")();
    evalLua(code,'lesson.lua')();
    const out=String(evalLua("return table.concat(___ll_output, '\\n')")()||'');
@@ -54,7 +58,8 @@ function run(code,lang){
    worker=new Worker(url);
    worker.onmessage=event=>settle(event.data||{ok:false,lines:[],error:'Keine Antwort vom Interpreter.',available:false});
    worker.onerror=()=>settle({ok:false,lines:[],error:'Die Ausführungsumgebung konnte nicht starten. Prüfe Browser und Verbindung.',available:false});
-   timeout=setTimeout(()=>settle({ok:false,lines:[],error:'Ausführung nach 4 Sekunden abgebrochen. Prüfe deinen Code auf Endlosschleifen.',available:true}),4000);
+   const maxTime=lang==='lua'?10000:4000;
+   timeout=setTimeout(()=>settle({ok:false,lines:[],error:'Ausführung nach '+(maxTime/1000)+' Sekunden abgebrochen. Prüfe deinen Code auf Endlosschleifen.',available:true}),maxTime);
    const base=(typeof document!=='undefined'&&document.baseURI)||(typeof location!=='undefined'?location.href:'');
    const luaBundleUrl=base?new URL('vendor/fengari-web.bundle.js',base).href:'';
    worker.postMessage({code:String(code||''),lang,luaBundleUrl});
