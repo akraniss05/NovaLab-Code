@@ -33,9 +33,9 @@ async function load(id){
  const content=server?String(server.content||'').slice(0,10000):local;
  const step=clampStep(server?.step||1);
  // Preserve pre-cloud drafts on first sync.
- if(!server && local)queue(id,local,step);
  if(server)writeLocal(id,content);
  records.set(id,{content,step,changed:false});
+ if(!server && local)queue(id,local,step);
  return {content,step};
 }
 function queue(id,content,step){
