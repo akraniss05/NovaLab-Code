@@ -2,7 +2,7 @@
    Made with 💙 by NyxAtheris (LiveryLab Studios). */
 (function(root){
 'use strict';
-let bridge=null,projects=[],prefs={},notes={},ready=false,editing=null;
+let bridge=null,projects=[],prefs={},notes={},ready=false,editing=null,pendingProject=null,selectedMonth=new Date();
 const REWARDS=[
  {level:1,name:'Starter',icon:'✦',detail:'Deine erste Entwickler-Karte',frame:'starter'},
  {level:2,name:'Neon',icon:'◈',detail:'Neon-Profilrahmen',frame:'neon'},
@@ -39,7 +39,7 @@ function apply(){
  const avatar=$('.avatar-btn');if(avatar)avatar.dataset.studioFrame=choice;
 }
 async function load(){
- ready=false;projects=[];notes={};prefs={};editing=null;
+ ready=false;projects=[];notes={};prefs={};editing=null;pendingProject=null;
  const id=getId(),api=client();if(!id||!api)return;
  const responses=await Promise.allSettled([
   api.from('academy_portfolio_projects').select('id,title,description,category,technologies,project_url,featured,created_at,updated_at').eq('user_id',id).order('created_at',{ascending:false}).limit(120),
@@ -54,7 +54,7 @@ async function load(){
  if(!result(2)?.error)for(const n of result(2)?.data||[])notes[n.lesson_id]=n.body||'';
  ready=true;apply();
 }
-function clear(){projects=[];prefs={};notes={};ready=false;editing=null;delete document.body.dataset.studioFrame;}
+function clear(){projects=[];prefs={};notes={};ready=false;editing=null;pendingProject=null;delete document.body.dataset.studioFrame;}
 async function setPref(key,value){
  const id=getId(),api=client();if(!id||!api)return;
  if(key==='frame'&&!available().some(r=>r.frame===value)){message('Dieser Rahmen ist noch gesperrt.');return;}
@@ -106,9 +106,10 @@ function projectCard(p){
  '<div class="studio-inline-actions">'+link+'<button class="btn small" data-studio-edit="'+e(p.id)+'">Bearbeiten</button><button class="btn small" data-studio-delete="'+e(p.id)+'">Löschen</button></div></div></article>';
 }
 function portfolioPage(){
- const current=projects.find(x=>x.id===editing),p=current||{};
+ const current=projects.find(x=>x.id===editing),p=current||pendingProject||{};
  const category=p.category||'coding',n=projects.length;
  return heading('MEINE PROJEKTE','Dein <span class="gradient">Portfolio.</span>','Dokumentiere deine ersten Codes, Websites, FiveM-Ressourcen und Blender-Modelle. Deine Projekte werden in deinem Supabase-Konto gespeichert.')+
+ '<div class="studio-inline-actions"><button class="btn small" data-studio-export type="button">Portfolio als Markdown exportieren</button></div>'+ 
  '<section class="studio-level-hero studio-portfolio-intro"><div><span class="eyebrow">DEINE WERKE</span><h2>'+n+' '+(n===1?'Projekt':'Projekte')+' im Portfolio</h2><p>Deine Projekte bleiben privat in deinem Konto. Verlinke bei Bedarf eine öffentlich erreichbare Demo oder ein GitHub-Repository.</p></div><span class="studio-big-icon">⬡</span></section>'+
  '<div class="studio-project-layout"><section class="studio-section"><h2>'+(current?'Projekt bearbeiten':'Neues Projekt hinzufügen')+'</h2>'+
  '<form id="studio-project-form" class="studio-form">'+
@@ -148,7 +149,9 @@ function homeSection(){
  '<div class="studio-home-cards"><button data-go="level" class="studio-home-card"><strong>✦ Level '+m.number+'</strong><small>'+m.next+' XP bis zum nächsten Level</small><span>Belohnungen ansehen →</span></button>'+
  '<button data-go="portfolio" class="studio-home-card"><strong>⬡ Mein Portfolio</strong><small>'+projects.length+' Projekte · '+e(last?.title||'Dein erstes Werk erstellen')+'</small><span>Portfolio öffnen →</span></button>'+
  '<button data-go="skilltree" class="studio-home-card"><strong>⌘ Skilltree</strong><small>'+e(l?.title||'Deine nächsten Lernschritte')+'</small><span>Lernreise ansehen →</span></button>'+
- '<button data-go="notes" class="studio-home-card"><strong>▤ Lernnotizen</strong><small>'+Object.values(notes).filter(Boolean).length+' Notizen gespeichert</small><span>Notizen öffnen →</span></button></div></section>';
+ '<button data-go="notes" class="studio-home-card"><strong>▤ Lernnotizen</strong><small>'+Object.values(notes).filter(Boolean).length+' Notizen gespeichert</small><span>Notizen öffnen →</span></button>'+ 
+ '<button data-go="challenges" class="studio-home-card"><strong>⚡ Challenges</strong><small>Neue persönliche Lernziele</small><span>Challenges ansehen →</span></button>'+ 
+ '<button data-go="calendar" class="studio-home-card"><strong>▦ Lernkalender</strong><small>Deine Lernaktivität im Überblick</small><span>Kalender öffnen →</span></button></div></section>';
 }
 function settingsSection(){
  return '<section class="setting-section studio-section"><span class="eyebrow">LERNSTUDIO · ZUSATZFUNKTIONEN</span><h2>Editor, Fokus & Belohnungen</h2><p>Diese Einstellungen werden in deinem Supabase-Konto gespeichert und beim nächsten Login wieder geladen.</p>'+
@@ -173,7 +176,7 @@ async function saveProject(form){
  else response=await api.from('academy_portfolio_projects').insert({...value,user_id:id}).select();
  if(response.error)throw response.error;
  if(!response.data?.length)throw Error('Änderung nicht bestätigt.');
- editing=null;await refreshProjects();redraw();message('Projekt erfolgreich gespeichert.');
+ editing=null;pendingProject=null;await refreshProjects();redraw();message('Projekt erfolgreich gespeichert.');
 }
 async function refreshProjects(){
  const r=await client().from('academy_portfolio_projects').select('id,title,description,category,technologies,project_url,featured,created_at,updated_at').eq('user_id',getId()).order('created_at',{ascending:false}).limit(120);
@@ -185,12 +188,80 @@ async function saveNote(id){
  const r=await client().from('academy_lesson_notes').upsert({user_id:getId(),lesson_id:id,body,updated_at:new Date().toISOString()},{onConflict:'user_id,lesson_id'});
  if(r.error)throw r.error;notes[id]=body;message('Lernnotiz gespeichert.');
 }
+
+function dateKey(date){
+ const parts=new Intl.DateTimeFormat('de-DE',{timeZone:'Europe/Berlin',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(date));
+ const get=t=>parts.find(p=>p.type===t)?.value||'00';
+ return get('year')+'-'+get('month')+'-'+get('day');
+}
+function activity(){
+ const days=new Map();
+ for(const iso of Object.values(state()?.progress?.completedAt||{})){
+  const when=new Date(iso);if(Number.isNaN(when.getTime()))continue;
+  const key=dateKey(when);days.set(key,(days.get(key)||0)+1);
+ }
+ return days;
+}
+function challengesPage(){
+ const days=activity(),today=dateKey(new Date()),todayDone=days.get(today)||0,allDone=completed(),lessonCount=(state()?.lessons||[]).length;
+ const weekStart=new Date();weekStart.setHours(12,0,0,0);weekStart.setDate(weekStart.getDate()-(weekStart.getDay()+6)%7);
+ const weekKeys=Array.from({length:7},(_,i)=>{const d=new Date(weekStart);d.setDate(d.getDate()+i);return dateKey(d)});
+ const weekDone=weekKeys.reduce((n,key)=>n+(days.get(key)||0),0);
+ const finished=(state()?.courses||[]).filter(c=>{const ls=lessonList(c.id);return ls.length>0&&ls.every(l=>allDone.has(l.id));}).length;
+ const challenges=[
+  {icon:'🎯',label:'Tagesziel',desc:'Schließe heute eine neue Lektion ab.',count:todayDone,target:1,route:'courses'},
+  {icon:'⚡',label:'Power-Lerntag',desc:'Schließe an einem Tag drei Lektionen ab.',count:todayDone,target:3,route:'courses'},
+  {icon:'📅',label:'Wochenmission',desc:'Schaffe fünf Lektionen von Montag bis Sonntag.',count:weekDone,target:5,route:'calendar'},
+  {icon:'⬡',label:'Portfolio-Starter',desc:'Dokumentiere dein erstes eigenes Projekt.',count:projects.length,target:1,route:'portfolio'},
+  {icon:'▤',label:'Wissenssammler',desc:'Speichere drei persönliche Lernnotizen.',count:Object.values(notes).filter(x=>String(x||'').trim()).length,target:3,route:'notes'},
+  {icon:'🏆',label:'Kursmeister',desc:'Schließe einen vollständigen Kurs ab.',count:finished,target:1,route:'courses'}
+ ];
+ return heading('CHALLENGE-BOARD','Deine <span class="gradient">Lernmissionen.</span>','Arbeite an konkreten täglichen und langfristigen Lernzielen. Die Aufgaben überprüfen echte Abschlüsse, Notizen und Projekte – ohne erfundene Zusatz-XP.')+
+ '<div class="studio-stat-row"><div><strong>'+todayDone+'</strong><span>Heute geschafft</span></div><div><strong>'+weekDone+'</strong><span>Diese Woche</span></div><div><strong>'+finished+'</strong><span>Kurse beendet</span></div><div><strong>'+allDone.size+'/'+lessonCount+'</strong><span>Gesamtfortschritt</span></div></div>'+
+ '<section class="studio-challenges">'+challenges.map(ch=>{const pct=Math.min(100,Math.round(ch.count/ch.target*100)),finished=ch.count>=ch.target;return '<article class="studio-challenge '+(finished?'complete':'')+'"><span class="studio-challenge-icon">'+ch.icon+'</span><div><span class="eyebrow">'+(finished?'✓ GEMEISTERT':'AKTIVE MISSION')+'</span><h3>'+e(ch.label)+'</h3><p>'+e(ch.desc)+'</p><div class="studio-meter"><span style="width:'+pct+'%"></span></div><small>'+Math.min(ch.count,ch.target)+' / '+ch.target+' erreicht</small></div>'+btn(finished?'Ansehen':'Weiter →',ch.route)+'</article>';}).join('')+'</section>';
+}
+function calendarPage(){
+ const days=activity(),year=selectedMonth.getFullYear(),month=selectedMonth.getMonth(),first=new Date(year,month,1),length=new Date(year,month+1,0).getDate();
+ const pad=(first.getDay()+6)%7,full=Math.ceil((pad+length)/7)*7,today=dateKey(new Date());
+ const title=new Intl.DateTimeFormat('de-DE',{month:'long',year:'numeric'}).format(first);
+ const keys=Array.from({length},(_,i)=>year+'-'+String(month+1).padStart(2,'0')+'-'+String(i+1).padStart(2,'0'));
+ const count=keys.reduce((n,k)=>n+(days.get(k)||0),0),active=keys.filter(k=>days.get(k)).length;
+ const cells=Array.from({length:full},(_,i)=>{
+  const day=i-pad+1;if(day<1||day>length)return '<div class="studio-calendar-day is-outside" aria-hidden="true"></div>';
+  const key=year+'-'+String(month+1).padStart(2,'0')+'-'+String(day).padStart(2,'0'),c=days.get(key)||0;
+  return '<div class="studio-calendar-day '+(c?'is-active ':'')+(today===key?'is-today':'')+'" title="'+day+'.'+(month+1)+'.'+year+' · '+c+' abgeschlossene Lektionen"><strong>'+day+'</strong><span>'+ (c?c+' ✓':'')+'</span></div>';
+ });
+ return heading('LERNAKTIVITÄT','Dein <span class="gradient">Lernkalender.</span>','Sieh, an welchen Tagen du wirklich Lektionen abgeschlossen hast. Der Kalender nutzt gespeicherte Abschlussdaten und die deutsche Zeitzone.')+
+ '<section class="studio-section"><div class="studio-calendar-toolbar"><button class="btn small" data-studio-month="-1" type="button" aria-label="Vorheriger Monat">←</button><h2>'+e(title)+'</h2><button class="btn small" data-studio-month="1" type="button" aria-label="Nächster Monat">→</button></div>'+
+ '<div class="studio-stat-row"><div><strong>'+count+'</strong><span>Abschlüsse im Monat</span></div><div><strong>'+active+'</strong><span>Aktive Lerntage</span></div></div>'+
+ '<div class="studio-calendar-grid">'+['Mo','Di','Mi','Do','Fr','Sa','So'].map(x=>'<span class="studio-weekday">'+x+'</span>').join('')+cells.join('')+'</div>'+
+ '<p class="micro">Nur abgeschlossene Lektionen mit gespeicherten Zeitstempeln werden gezählt. Mehrfaches Wiederholen erzeugt keine zusätzlichen Abschlüsse.</p></section>'+
+ '<div class="studio-inline-actions">'+btn('Zurück zu den Challenges','challenges')+btn('Weiterlernen','home','btn primary')+'</div>';
+}
+function exportPortfolio(){
+ const name=state()?.profile?.display_name||state()?.profile?.username||'Developer';
+ const lines=['# '+name+' · LiveryLab Portfolio','','Erstellt in der LiveryLab Academy','','## Projekte',''];
+ for(const p of projects){
+  lines.push('### '+p.title,'',p.description||'Keine Beschreibung','');
+  if(p.technologies?.length)lines.push('**Technologien:** '+p.technologies.join(', '),'');
+  if(/^https:\/\/[^\s<>"']{4,500}$/i.test(p.project_url||''))lines.push('**Projektlink:** '+p.project_url,'');
+ }
+ if(!projects.length)lines.push('Noch keine Projekte erfasst.','');
+ lines.push('---','Made with 💙 by NyxAtheris (LiveryLab Studios)');
+ const blob=new Blob([lines.join('\n')],{type:'text/markdown;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download='LiveryLab-Portfolio.md';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);
+ message('Portfolio als Markdown exportiert.');
+}
+
 document.addEventListener('click',async ev=>{
  if(!bridge||!state()?.ready)return;
- const clicked=ev.target.closest('[data-studio-frame],[data-studio-edit],[data-studio-delete],[data-studio-cancel],[data-studio-note]');if(!clicked)return;
+ const clicked=ev.target.closest('[data-studio-frame],[data-studio-edit],[data-studio-delete],[data-studio-cancel],[data-studio-note],[data-studio-from-lesson],[data-studio-export],[data-studio-month]');if(!clicked)return;
  ev.preventDefault();
  try{
-  if(clicked.hasAttribute('data-studio-frame')){await setPref('frame',clicked.dataset.studioFrame);redraw();}
+  if(clicked.hasAttribute('data-studio-from-lesson')){const st=state(),l=(st?.lessons||[]).find(x=>x.id===clicked.dataset.studioFromLesson);const course=(st?.courses||[]).find(x=>x.id===l?.course_id),payload=st?.lesson?.payload||{},category=String(course?.category||'').includes('Blender')?'blender':String(course?.category||'').includes('FiveM')?'fivem':'coding';pendingProject={title:('Meine Übung: '+(l?.title||'Lernprojekt')).slice(0,100),category,description:('Lernziel: '+(payload.goal||l?.summary||'Eigenständiges Lernprojekt')+'\nUmsetzung: ').slice(0,2500),technologies:[String(payload.lang||'').toUpperCase()].filter(Boolean),project_url:'',featured:false};editing=null;go('portfolio');}
+  else if(clicked.hasAttribute('data-studio-export')){exportPortfolio();}
+  else if(clicked.hasAttribute('data-studio-month')){const move=Number(clicked.dataset.studioMonth)||0;if(Math.abs(move)!==1)return;selectedMonth=new Date(selectedMonth.getFullYear(),selectedMonth.getMonth()+move,1);redraw();}
+  else if(clicked.hasAttribute('data-studio-frame')){await setPref('frame',clicked.dataset.studioFrame);redraw();}
   else if(clicked.hasAttribute('data-studio-edit')){editing=clicked.dataset.studioEdit;redraw();$('#studio-project-form')?.scrollIntoView({behavior:'smooth'});}
   else if(clicked.hasAttribute('data-studio-cancel')){editing=null;redraw();}
   else if(clicked.hasAttribute('data-studio-delete')){
@@ -213,5 +284,5 @@ document.addEventListener('submit',async ev=>{
  try{await saveProject(form);}catch(err){message(err.message||'Projekt konnte nicht gespeichert werden.');}
  finally{if(button&&button.isConnected)button.disabled=false;}
 },true);
-root.LLStudio={connect:b=>{bridge=b},load,clear,apply,levelPage,skilltreePage,portfolioPage,notesPage,lessonAddon,homeSection,settingsSection,level,rewards:REWARDS};
+root.LLStudio={connect:b=>{bridge=b},load,clear,apply,levelPage,skilltreePage,portfolioPage,notesPage,challengesPage,calendarPage,lessonAddon,homeSection,settingsSection,level,rewards:REWARDS};
 })(window);
