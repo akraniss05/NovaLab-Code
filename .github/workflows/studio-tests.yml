@@ -11,6 +11,7 @@ on:
       - 'site/practice-engine.js'
       - 'tests/practice.cjs'
       - 'tests/studio.cjs'
+      - 'tests/runtime-browser.cjs'
       - 'tests/learning-sync.cjs'
       - '.github/workflows/studio-tests.yml'
   pull_request:
@@ -23,6 +24,7 @@ on:
       - 'site/practice-engine.js'
       - 'tests/practice.cjs'
       - 'tests/studio.cjs'
+      - 'tests/runtime-browser.cjs'
       - 'tests/learning-sync.cjs'
       - '.github/workflows/studio-tests.yml'
 permissions:
