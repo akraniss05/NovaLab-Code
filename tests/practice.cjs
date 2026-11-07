@@ -14,6 +14,7 @@ const types={lang:'lua',task:'Erstelle preis (number), aktiv (boolean) und titel
 assert.match(p.evaluate('number = 10\nboolean = true\nstring = "text"',types).diagnostic,/lokale Variable „preis“/);
 assert.equal(p.evaluate('local preis = 10\nlocal aktiv = true\nlocal titel = "text"\nprint(type(preis),type(aktiv),type(titel))',types).ok,true,'Equivalent values and correct types must pass');
 assert.equal(p.evaluate('local preis = "10"\nlocal aktiv = true\nlocal titel = "text"\nprint(type(preis),type(aktiv),type(titel))',types).ok,false,'Wrong variable type must fail');
+assert.equal(p.evaluate('-- local preis\n-- local aktiv\n-- local titel\nprint("number", "boolean", "string")',types).ok,false,'Commented requirements must not count');
 assert.equal(p.evaluate('local preis = 10\nlocal aktiv = true\nlocal titel = "text"\nprint(type(preis),type(aktiv),type(unknown))',types).ok,false,'Undefined variable must fail');
 const twoPrints={lang:'lua',task:'Gib deinen eigenen Namen und danach „Ich lerne FiveM“ mit zwei print()-Aufrufen aus.',checks:['print\\s*\\(','print\\s*\\([^)]*\\)[\\s\\S]*print\\s*\\('],solution:'print("NyxAtheris")\nprint("Ich lerne FiveM")'};
 assert.equal(p.evaluate('print("Luca")\nprint("Ich lerne FiveM")',twoPrints).ok,true,'Own name is valid');
