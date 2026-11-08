@@ -25,7 +25,15 @@ for(const token of ['difficultyBadge(c)','difficultyBadge(course)','difficultyBa
  assert(js.includes(token),'missing difficulty feature: '+token);
 for(const page of ['index.html','v21.html','v31.html']){
  const html=fs.readFileSync(path.join(__dirname,'../site/'+page),'utf8');
- assert(html.includes('academy-difficulty.js?build=20261108v53'),page+' missing difficulty script');
+ assert(html.includes('academy-difficulty.js?build=20261108v55'),page+' missing difficulty script');
  assert(html.indexOf('academy-difficulty.js?build=')<html.indexOf('academy-v21.js?build='),page+' wrong script order');
 }
-console.log('Difficulty: all 52 courses, 5 levels and bilingual labels verified.');
+assert.match(d.levelDescription(1),/Perfect for beginners/);
+assert.match(d.searchTerms({id:'rust'}),/5\/5/);
+assert.match(d.searchTerms({id:'python'}),/Leicht/);
+for(const name of ['index.html','v21.html','v31.html']){
+ const html=fs.readFileSync(path.join(__dirname,'../site/'+name),'utf8');
+ assert(html.includes('academy-difficulty.js?build=20261108v55'),name+' chart module cache key');
+ assert(html.includes('academy-v21.js?build=20261108v55'),name+' app script cache key');
+}
+console.log('Difficulty: all 52 courses, descriptions, DE/EN labels and chart search terms verified.');

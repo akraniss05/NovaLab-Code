@@ -5,7 +5,7 @@ const {chromium}=require('playwright-core');
 const root=path.join(__dirname,'..');
 const source=fs.readFileSync(path.join(root,'site/academy-v21.js'),'utf8');
 const css=['site/app-v21.css','site/academy-v31-layout.css'].map(file=>fs.readFileSync(path.join(root,file),'utf8')).join('\n');
-const expose='\nwindow.__views={s,trackPage,lessonPage,scriptPage,examPage,examsPage,referencePage,plansPage,adminPage,login,profilePage,friendsPage,supportPage,settingsPage,homePage,streakModalHtml,llIcon,paywall};\n})();';
+const expose='\nwindow.__views={s,filteredCourses,difficultyDiagram,coursesPage,trackPage,lessonPage,scriptPage,examPage,examsPage,referencePage,plansPage,adminPage,login,profilePage,friendsPage,supportPage,settingsPage,homePage,streakModalHtml,llIcon,paywall};\n})();';
 assert.match(source,/\ninit\(\);\n\}\)\(\);\s*$/);
 const rewritten=source.replace(/\ninit\(\);\n\}\)\(\);\s*$/,expose);
 const fake=()=>({innerHTML:'',classList:{toggle(){},add(){},remove(){},contains(){return false}}});
@@ -29,6 +29,35 @@ const titles=['Variablen, Typen & print','Bedingungen & Schleifen','Funktionen',
 s.lessons=Array.from({length:13},(_,i)=>({id:'fivem-'+String(i+1).padStart(2,'0'),course_id:'fivem',chapter:i<5?'01 · Lua-Grundlagen':i<10?'02 · FiveM-Scripting':'03 · Fortgeschritten',position:i+1,title:titles[i],summary:'Jede Lektion erklärt ein Konzept und zeigt einen praktischen Anwendungsfall.',minutes:12,required_plan:'free'}));
 s.progress={done:['fivem-01'],watched:[],practiced:[],exams:{}};
 s.lesson={payload:{title:titles[0],theory:'Mit Variablen speicherst du Werte, die du später wiederverwenden kannst.',example:'local name = "LiveryLab"\nlocal points = 10\nprint(name, points)',task:'Schreibe eine eigene Variable und gib sie mit print aus.',quiz:'Wofür steht local in Lua?',options:['Lokale Variable','Globale Datei','Neuer Server'],correct:0,goal:'Du kannst Variablen erklären und verwenden.',sections:[{title:'1 · Verstehen & Beispiel',paragraphs:['Variablen enthalten Daten.'],bullets:['Datentypen','Werte'],code:'local score = 10'},{title:'2 · Ausprobieren & festigen',paragraphs:['Verändere einen Wert und prüfe die Ausgabe.'],exercise:'Print die Variable'}]},video_id:'xcmGSRdCXc4',video_start:510};
+// v1.5 difficulty radar: actual filter matching, search terms and chart rendering.
+const originalCatalogCourses=s.courses, originalCatalogState={filter:s.filter,search:s.search,difficultyFilter:s.difficultyFilter};
+s.courses=[
+ {id:'html',name:'HTML',category:'Webentwicklung',level:'beginner',difficulty:1},
+ {id:'lua',name:'Lua',category:'Programmieren',level:'beginner',difficulty:2},
+ {id:'javascript',name:'JavaScript',category:'Programmieren',level:'beginner',difficulty:3},
+ {id:'rust',name:'Rust',category:'Programmieren',level:'advanced',difficulty:5}
+];
+s.filter='Alle';s.search='';s.difficultyFilter='all';
+assert.equal(app.filteredCourses().length,4);
+assert.equal((app.difficultyDiagram().match(/data-difficulty-filter="[1-5]"/g)||[]).length,5,'Chart must show five interactive levels');
+assert.match(app.coursesPage(),/id="course-difficulty-select"/);
+assert.match(app.coursesPage(),/id="course-search"/);
+s.difficultyFilter=3;
+assert.deepEqual(Array.from(app.filteredCourses(),c=>c.id),['javascript'],'Difficulty dropdown and chart share the same state');
+assert.match(app.difficultyDiagram(),/aria-pressed="true"/);
+s.difficultyFilter='all';s.search='5/5';
+assert.deepEqual(Array.from(app.filteredCourses(),c=>c.id),['rust'],'Score search must find 5/5 courses');
+s.search='leicht';
+assert.deepEqual(Array.from(app.filteredCourses(),c=>c.id),['lua','html'],'German easy search should match 1/5 and 2/5');
+s.search='rust';s.difficultyFilter=3;
+assert.equal(app.filteredCourses().length,0,'Difficulty and text query must combine');
+s.search='';s.difficultyFilter='all';s.filter='Webentwicklung';
+assert.deepEqual(Array.from(app.filteredCourses(),c=>c.id),['html'],'Category filter must coexist with difficulty');
+s.courses=originalCatalogCourses;
+s.filter=originalCatalogState.filter;
+s.search=originalCatalogState.search;
+s.difficultyFilter=originalCatalogState.difficultyFilter;
+
 const bannerB64=fs.readFileSync(path.join(root,'site/liverylab-banner.webp')).toString('base64');
 function capture(html){
 html=html.replaceAll('src="./liverylab-banner.webp"','src="data:image/webp;base64,'+bannerB64+'"');
