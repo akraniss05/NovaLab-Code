@@ -21,7 +21,7 @@ function doneIds(){return new Set(s.progress.done||[]);}
 function watchedIds(){return new Set(s.progress.watched||[]);}
 // The Lua beginner path finishes at its existing final exam. Older extra lessons
 // stay in Supabase (and retain their IDs, drafts and XP) for existing deep links.
-function inMainPath(l){return l.course_id!=='lua'||/^lua-(0[1-9]|[12][0-9]|30)$/.test(l.id);}
+function inMainPath(l){return l.course_id!=='lua'||/^lua-(0[1-9]|[12][0-9]|30)$/.test(l.id)||/^lua-path-\\d{3}$/.test(l.id);}
 function countDone(courseId){var d=doneIds();return lessonsOf(courseId).filter(function(l){return d.has(l.id);}).length;}
 function lessonsOf(id){return s.lessons.filter(function(l){return l.course_id===id&&inMainPath(l);}).sort(function(a,b){return a.position-b.position;});}
 function courseOf(id){return s.courses.find(function(c){return c.id===id;});}
@@ -279,14 +279,42 @@ async function boot(){
   await loadData();
  }catch(e){s.ready=false;frame();content.innerHTML='<div class="auth-layout panel"><h2>Kein Zugriff</h2><p class="muted">'+esc(formatError(e))+'</p><a class="btn discord" href="https://discord.gg/livery-lab" target="_blank" rel="noopener">Discord-Support</a><button type="button" data-action="logout" class="btn ghost">Abmelden</button></div>';}
 }
+// Supabase Data API responses are capped per request. Page through the index so
+// a large curriculum never silently loses lessons after the first 1,000 rows.
+async function loadLessonIndexPages(){
+ const fields='id,course_id,chapter,position,title,summary,minutes,required_plan';
+ const rows=[];const pageSize=500;
+ for(let offset=0;offset<10000;offset+=pageSize){
+  const result=await api.from('ll_lesson_index').select(fields)
+   .order('course_id',{ascending:true}).order('position',{ascending:true})
+   .order('id',{ascending:true}).range(offset,offset+pageSize-1);
+  if(result.error)return result;
+  const page=Array.isArray(result.data)?result.data:[];
+  rows.push(...page);
+  if(page.length<pageSize)return {data:rows,error:null};
+ }
+ return {data:null,error:new Error('Kursindex ist größer als die technische Sicherheitsgrenze.')};
+}
+async function loadXpAwardPages(){
+ const rows=[];const pageSize=500;
+ for(let offset=0;offset<10000;offset+=pageSize){
+  const result=await api.from('academy_lesson_xp_awards').select('lesson_id,xp,awarded_at')
+   .order('awarded_at',{ascending:false}).order('lesson_id',{ascending:true}).range(offset,offset+pageSize-1);
+  if(result.error)return result;
+  const page=Array.isArray(result.data)?result.data:[];
+  rows.push(...page);
+  if(page.length<pageSize)return {data:rows,error:null};
+ }
+ return {data:null,error:new Error('XP-Protokoll ist größer als die technische Sicherheitsgrenze.')};
+}
 async function loadData(){
  var all=await Promise.all([
  api.from('ll_courses').select('id,name,category,level,icon,source_url'),
- api.from('ll_lesson_index').select('id,course_id,chapter,position,title,summary,minutes,required_plan').order('position',{ascending:true}),
+ loadLessonIndexPages(),
  api.from('academy_plans').select('tier,expires_at').eq('user_id',s.user.id).maybeSingle(),
  api.from('academy_progress').select('payload').eq('user_id',s.user.id).eq('key','liverylab-v10').maybeSingle(),
  api.rpc('academy_voucher_status'),
- api.from('academy_lesson_xp_awards').select('lesson_id,xp,awarded_at').order('awarded_at',{ascending:false})
+ loadXpAwardPages()
  ]);
  if(all[0].error)throw all[0].error;if(all[1].error)throw all[1].error;
  s.courses=all[0].data||[];s.lessons=all[1].data||[];
