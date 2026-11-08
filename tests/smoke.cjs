@@ -53,8 +53,8 @@ assert(html.includes('id="streak-portal"')&&html.includes('data-streak-open'),'S
 for(const token of ['data-form="profile-title"','profile-title-badge','auth-showcase','admin-overview','blender-video-step'])assert(js.includes(token),'Missing v23 feature: '+token);
 for(const token of ['data-focus-course','ll-home-focus','data-pref="','data-admin-filter','admin-search-empty','Größere Schrift','Hoher Kontrast','Weniger Bewegung'])assert(js.includes(token),'Missing v24 function: '+token);
 for(const token of ['.ll-home-focus','.ll-focus-result','.appearance-toggle:focus-within','.admin-search-empty[hidden]'])assert(css.includes(token),'Missing v24 styling: '+token);
-for(const token of ['ll-home-metrics','ll-catalog-spotlight','NEUE ACADEMY · V28'])assert(js.includes(token),'Missing v25 interface: '+token);
-for(const token of ['.ll-home-metrics','.ll-catalog-intro','.ll-auth-release'])assert(css.includes(token),'Missing v25 styling: '+token);
+for(const token of ['ll-home-metrics','ll-difficulty-dashboard','data-difficulty-filter','NEUE ACADEMY · V28'])assert(js.includes(token),'Missing v25 interface: '+token);
+for(const token of ['.ll-home-metrics','.ll-difficulty-dashboard','.ll-difficulty-chart','.ll-course-filter-controls','.ll-auth-release'])assert(css.includes(token),'Missing v25 styling: '+token);
 console.log('App v28 support, appearance, Blender, profile titles, admin and login tests passed');
 
 for(const token of ['academy_service','supportPage','supportAdminSection','beta-enabled','support-ticket','support-reply','plan-expiry'])assert(js.includes(token),'Missing support feature: '+token);
