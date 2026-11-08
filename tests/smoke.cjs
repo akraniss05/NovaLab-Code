@@ -180,3 +180,5 @@ for(const keyword of ['.ll-roadmap-catalog','.ll-roadmap-course','.ll-roadmap-le
  assert(roadmapCss.includes(keyword),'Missing roadmap design '+keyword);
 for(const keyword of ['roadmapJourney()','roadmapCoursePreview(c,done,total)','ll-roadmap-course','ll-roadmap-lesson-list','ll-map-entry','ll-roadmap-lesson','ll-learning-hero'])
  assert(js.includes(keyword),'Missing rendered roadmap feature '+keyword);
+
+require('./roadmap.cjs');
