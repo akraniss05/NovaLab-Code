@@ -448,6 +448,7 @@ body:not(.is-auth) .topbar > .top-right{position:relative;z-index:4}
 .ll-member-expand{flex:0 0 auto;color:#bca2db;font-size:11px;white-space:nowrap}
 .ll-member-compact[open] .ll-member-expand{color:#edceff}
 .ll-member-compact>.member-management{padding:16px;margin:0;border-top:1px solid #4e396c;flex-wrap:wrap;align-items:stretch}
+.ll-member-compact:not([open])>.member-management{display:none!important}
 .ll-member-compact .ll-plan-manager{margin:0}
 .ll-admin-inbox{margin:15px 0 0}
 .ll-admin-ticket-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin-top:17px}
