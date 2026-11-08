@@ -192,7 +192,7 @@ assert(js.includes('roadmapLessonArtwork(l,course)'), 'Each lesson must get topi
 const neonCss=read('site/academy-neon-ui.css');
 for(const entry of ['site/index.html','site/v21.html','site/v31.html']){
  const html=read(entry);
- assert(html.includes('academy-neon-ui.css?build=20261108v61'),entry+' missing page-wide neon CSS');
+ assert(html.includes('academy-neon-ui.css?build=20261108v62'),entry+' missing page-wide neon CSS');
  assert(html.indexOf('academy-neon-ui.css?build=')>html.indexOf('academy-roadmap.css?build='),'Neon theme must override earlier page styles');
 }
 for(const sel of ['.ll-neon-page-heading','.ll-neon-menu-grid','.ll-neon-menu-tile','.ll-neon-feature','.ll-neon-stat-row','.ll-neon-home','.ll-neon-script','.ll-neon-exams','.ll-neon-reference','.ll-neon-plans','.ll-neon-profile','.ll-neon-friends','.ll-neon-support','.ll-neon-settings','.ll-neon-admin'])
