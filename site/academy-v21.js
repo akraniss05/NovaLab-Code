@@ -1952,6 +1952,36 @@ document.addEventListener('click',async function(e){
  if(e.target.closest('[data-chat-close]')){
   s.chatTicketId=null;s.chatMessages=[];render();return;
  }
+ if(s.profile?.role==='admin'){
+  const progressOpen=e.target.closest('[data-view-progress]');
+  if(progressOpen){await loadAdminStudentProgress(progressOpen.dataset.viewProgress);return;}
+  if(e.target.closest('[data-close-admin-progress]')){
+   s.adminLearner=null;s.adminProgressSearch='';s.adminProgressFilter='all';render();return;
+  }
+  if(e.target.closest('[data-registration-refresh]')){
+   try{await fetchRegistrationPolicy(true);render();notice('Registrierungsmodus aktualisiert.');}
+   catch(err){notice('Registrierung: '+formatError(err));render();}
+   return;
+  }
+  const policyButton=e.target.closest('[data-registration-mode]');
+  if(policyButton){
+   const mode=policyButton.dataset.registrationMode;
+   if(!s.isOwner||s.registrationPolicy?.loaded!==true||!['open','approval'].includes(mode))return;
+   if(mode===s.registrationPolicy.mode)return;
+   const promptText=mode==='open'
+    ?'Freie Registrierung einschalten? Neue Konten können dann ohne Einzelprüfung sofort die Free-Kurse nutzen. Die E-Mail-Adresse wird im aktuellen Anmeldeweg nicht automatisch verifiziert.'
+    :'Bewerbungspflicht einschalten? Ab jetzt müssen alle neuen Konten erst von einem Administrator angenommen werden. Bereits freigegebene Konten bleiben aktiv.';
+   if(!confirm(promptText))return;
+   policyButton.disabled=true;
+   try{
+    const result=await adminCall({action:'setRegistrationMode',mode});
+    if(!result.ok||result.mode!==mode)throw Error('Registrierungsmodus wurde nicht bestätigt.');
+    await fetchRegistrationPolicy(true);render();
+    notice(mode==='open'?'Freie Registrierung ist jetzt aktiv.':'Bewerbungsmodus ist jetzt aktiv.');
+   }catch(err){policyButton.disabled=false;notice('Registrierung: '+formatError(err));}
+   return;
+  }
+ }
  var adminFilter=e.target.closest('[data-admin-filter]');
  if(adminFilter){s.adminFilter=adminFilter.dataset.adminFilter||'all';render();return;}
  if(e.target.closest('[data-action="refresh-support"]')){try{await refreshService();render();}catch(err){notice(formatError(err))}return;}
@@ -2178,7 +2208,13 @@ document.addEventListener('keydown',function(e){
  }
  if(e.key==='Escape'){if($('#timer-portal .timer-dialog'))closeTimer();if(s.streakModalOpen){s.streakModalOpen=false;paintStreakModal();}sidebar.classList.remove('open');syncBackdrop();}
 });
-document.addEventListener('input',function(e){if(e.target.id==='support-search'){filterSupportTickets();return;}
+document.addEventListener('input',function(e){
+ if(e.target.id==='admin-progress-search'){
+  s.adminProgressSearch=e.target.value;
+  const list=$('#admin-progress-course-results');if(list)list.innerHTML=renderAdminCourseProgress();
+  return;
+ }
+ if(e.target.id==='support-search'){filterSupportTickets();return;}
  if(e.target.id==='reference-search'){
   s.refSearch=e.target.value;const results=referenceResults();
   const container=$('#reference-results'),counter=$('#reference-count');
@@ -2213,6 +2249,12 @@ document.addEventListener('input',function(e){if(e.target.id==='support-search')
 });
 document.addEventListener('scroll',function(e){if(e.target.id==='practice-input'){const gutter=$('#code-lines');if(gutter)gutter.scrollTop=e.target.scrollTop;}},true);
 document.addEventListener('change',async function(e){
+ if(e.target.id==='admin-progress-filter'){
+  const value=e.target.value;
+  s.adminProgressFilter=['all','started','finished'].includes(value)?value:'all';
+  const list=$('#admin-progress-course-results');if(list)list.innerHTML=renderAdminCourseProgress();
+  return;
+ }
  if(e.target.id==='course-difficulty-select'){
   const value=e.target.value,level=Number(value);
   s.difficultyFilter=value==='all'?'all':(Number.isInteger(level)&&level>=1&&level<=5?level:'all');
