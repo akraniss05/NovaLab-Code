@@ -1,0 +1,654 @@
+{
+  "version": 51,
+  "group": "4b",
+  "topics": [
+    {
+      "course": "json",
+      "ordinal": 1,
+      "title": "JSON String",
+      "theory": "Ein JSON-String steht immer in doppelten Anführungszeichen. Anders als JavaScript-Objekte erlaubt JSON keine frei geschriebenen Feldnamen.",
+      "example": "{\"name\":\"LiveryLab\"}",
+      "example_note": "Sowohl Schlüssel als auch Textwert stehen in doppelten Anführungszeichen.",
+      "task": "Schreibe ein Objekt mit zwei Textfeldern."
+    },
+    {
+      "course": "json",
+      "ordinal": 2,
+      "title": "JSON Numbers",
+      "theory": "JSON speichert Zahlen ohne Anführungszeichen. Zahlen als Text sind ein anderer Datentyp.",
+      "example": "{\"punkte\":30}",
+      "example_note": "punkte ist eine Zahl, nicht der Text \"30\".",
+      "task": "Unterscheide drei Zahlen- und Textwerte."
+    },
+    {
+      "course": "json",
+      "ordinal": 3,
+      "title": "JSON Boolean",
+      "theory": "true und false sind in JSON kleingeschriebene Wahrheitswerte.",
+      "example": "{\"aktiv\":true}",
+      "example_note": "Der Wert aktiv ist ein Boolean und keine Zeichenkette.",
+      "task": "Erstelle zwei Statusfelder."
+    },
+    {
+      "course": "json",
+      "ordinal": 4,
+      "title": "JSON null",
+      "theory": "null bezeichnet in JSON einen bewusst fehlenden oder leeren Wert.",
+      "example": "{\"avatar\":null}",
+      "example_note": "Das Feld existiert, enthält aber aktuell keinen Wert.",
+      "task": "Verwende null bei einem optionalen Bild."
+    },
+    {
+      "course": "json",
+      "ordinal": 5,
+      "title": "JSON Arrays",
+      "theory": "Eckige Klammern enthalten geordnete Listenwerte; die Einträge sind durch Kommas getrennt.",
+      "example": "{\"tags\":[\"lua\",\"python\"]}",
+      "example_note": "Der Schlüssel tags enthält ein Array mit zwei Strings.",
+      "task": "Lege eine Liste aus drei Kursnamen an."
+    },
+    {
+      "course": "json",
+      "ordinal": 6,
+      "title": "Verschachtelte Objekte",
+      "theory": "Ein JSON-Objekt kann weitere Objekte enthalten und damit eine Hierarchie ausdrücken.",
+      "example": "{\"user\":{\"name\":\"Alex\",\"level\":3}}",
+      "example_note": "Die Daten unter user bilden eine eigenständige verschachtelte Struktur.",
+      "task": "Modelliere ein Profil mit Einstellungen."
+    },
+    {
+      "course": "json",
+      "ordinal": 7,
+      "title": "JSON Parse",
+      "theory": "JSON.parse wandelt einen gültigen JSON-String in einen JavaScript-Wert um. Ungültige Syntax erzeugt eine Exception.",
+      "example": "const data=JSON.parse('{\"punkte\":5}');",
+      "example_note": "data.punkte liefert die Zahl 5.",
+      "task": "Behandle einen bewusst fehlerhaften JSON-Text."
+    },
+    {
+      "course": "json",
+      "ordinal": 8,
+      "title": "JSON Stringify",
+      "theory": "JSON.stringify erzeugt aus geeigneten JavaScript-Werten einen JSON-Text zur Übertragung oder Speicherung.",
+      "example": "JSON.stringify({name:\"Alex\"});",
+      "example_note": "Die Ausgabe ist ein JSON-String mit korrekt gesetzten Anführungszeichen.",
+      "task": "Speichere ein kleines Objekt als Text."
+    },
+    {
+      "course": "json",
+      "ordinal": 9,
+      "title": "YAML Einrückung",
+      "theory": "YAML bildet Hierarchien häufig über Einrückung ab. Unterschiedliche Einrückung kann die Bedeutung ändern.",
+      "example": "server:\n  port: 3000",
+      "example_note": "port ist ein Feld des Objekts server.",
+      "task": "Schreibe eine kleine hierarchische YAML-Konfiguration."
+    },
+    {
+      "course": "json",
+      "ordinal": 10,
+      "title": "YAML Listen",
+      "theory": "Ein Strich beginnt einen Eintrag einer YAML-Sequenz.",
+      "example": "sprachen:\n  - lua\n  - python",
+      "example_note": "Die Liste enthält zwei Sprachen.",
+      "task": "Erstelle eine YAML-Liste mit drei Einträgen."
+    },
+    {
+      "course": "json",
+      "ordinal": 11,
+      "title": "Config validieren",
+      "theory": "Eine Konfigurationsdatei muss gegen erwartete Typen und Grenzen geprüft werden, bevor Werte genutzt werden.",
+      "example": "if(!Number.isInteger(config.port))throw Error(\"port\");",
+      "example_note": "Der Port muss eine Ganzzahl sein, sonst wird die Konfiguration abgelehnt.",
+      "task": "Prüfe zwei ungültige Konfigurationswerte."
+    },
+    {
+      "course": "json",
+      "ordinal": 12,
+      "title": "Secrets auslagern",
+      "theory": "Passwörter, Zugangstoken und Secret Keys gehören nicht in öffentliche JSON- oder YAML-Dateien des Repositories.",
+      "example": "APP_SECRET=<nur-in-server-umgebung>",
+      "example_note": "Der Eintrag ist nur eine Platzhalterdarstellung und darf niemals ein echtes Secret enthalten.",
+      "task": "Trenne ein öffentliches Setting von einem geheimen Schlüssel."
+    },
+    {
+      "course": "docker",
+      "ordinal": 1,
+      "title": "Container vs Image",
+      "theory": "Ein Image ist eine wiederverwendbare Vorlage, während ein Container eine laufende oder gestoppte Instanz davon ist.",
+      "example": "docker image ls",
+      "example_note": "Der Befehl zeigt vorhandene Images, nicht nur gestartete Container.",
+      "task": "Erkläre den Unterschied mit einem Beispiel."
+    },
+    {
+      "course": "docker",
+      "ordinal": 2,
+      "title": "docker ps",
+      "theory": "docker ps listet laufende Container; mit -a werden auch gestoppte angezeigt.",
+      "example": "docker ps -a",
+      "example_note": "Die Ausgabe enthält beide Zustände.",
+      "task": "Finde einen gestoppten Container."
+    },
+    {
+      "course": "docker",
+      "ordinal": 3,
+      "title": "Dockerfile FROM",
+      "theory": "FROM bestimmt das Basisimage für eine Image-Buildstufe. Ein kleineres vertrauenswürdiges Basisimage senkt oft den Wartungsaufwand.",
+      "example": "FROM node:22-alpine",
+      "example_note": "Der Build startet von einem Node-Image. In echten Projekten sollten Versionen überprüft und fixiert werden.",
+      "task": "Wähle ein Basisimage für eine kleine App."
+    },
+    {
+      "course": "docker",
+      "ordinal": 4,
+      "title": "WORKDIR",
+      "theory": "WORKDIR bestimmt das Arbeitsverzeichnis für folgende Dockerfile-Anweisungen.",
+      "example": "WORKDIR /app",
+      "example_note": "Die späteren Schritte werden relativ zu /app ausgeführt.",
+      "task": "Setze einen Arbeitsordner im Dockerfile."
+    },
+    {
+      "course": "docker",
+      "ordinal": 5,
+      "title": "COPY",
+      "theory": "COPY übernimmt Dateien aus dem Buildkontext in das Containerimage. Eine .dockerignore-Datei begrenzt ungewollte Inhalte.",
+      "example": "COPY package.json ./",
+      "example_note": "Es wird zunächst nur die Paketbeschreibung kopiert.",
+      "task": "Verhindere, dass ein Secret-Ordner im Image landet."
+    },
+    {
+      "course": "docker",
+      "ordinal": 6,
+      "title": "RUN",
+      "theory": "RUN führt während des Image-Builds Befehle aus und erstellt eine neue Buildebene.",
+      "example": "RUN npm ci --omit=dev",
+      "example_note": "Die im Lockfile festgelegten Produktionsabhängigkeiten werden installiert.",
+      "task": "Erkläre RUN gegenüber CMD."
+    },
+    {
+      "course": "docker",
+      "ordinal": 7,
+      "title": "CMD",
+      "theory": "CMD legt den Standardstartbefehl eines Containers fest; er wird nicht bei jedem Build ausgeführt.",
+      "example": "CMD [\"node\",\"server.js\"]",
+      "example_note": "Beim Containerstart wird Node mit server.js aufgerufen.",
+      "task": "Definiere einen Startbefehl."
+    },
+    {
+      "course": "docker",
+      "ordinal": 8,
+      "title": "Ports",
+      "theory": "Mit -p wird ein Containerport am Host veröffentlicht. Ohne Veröffentlichung ist ein Dienst nicht automatisch von außen erreichbar.",
+      "example": "docker run -p 3000:3000 app",
+      "example_note": "Host-Port 3000 wird auf Port 3000 des Containers abgebildet.",
+      "task": "Erkläre den Unterschied zwischen internem und Host-Port."
+    },
+    {
+      "course": "docker",
+      "ordinal": 9,
+      "title": "Volumes",
+      "theory": "Volumes speichern Daten getrennt vom Lebenszyklus einzelner Container.",
+      "example": "docker run -v app_data:/data app",
+      "example_note": "Das benannte Volume kann Daten über einen Containerneustart hinaus erhalten.",
+      "task": "Plane einen dauerhaften Speicherort."
+    },
+    {
+      "course": "docker",
+      "ordinal": 10,
+      "title": "Healthcheck",
+      "theory": "HEALTHCHECK beschreibt, wie Docker den Gesundheitszustand eines laufenden Dienstes prüfen soll.",
+      "example": "HEALTHCHECK CMD wget -q -O /dev/null http://localhost:3000/ || exit 1",
+      "example_note": "Ein fehlgeschlagener HTTP-Abruf kennzeichnet den Container als ungesund.",
+      "task": "Definiere einen passenden Testendpunkt."
+    },
+    {
+      "course": "docker",
+      "ordinal": 11,
+      "title": "Compose Services",
+      "theory": "Eine Compose-Datei beschreibt zusammengehörige Dienste, Volumes und Verbindungen in einer Datei.",
+      "example": "services:\n  web:\n    image: nginx:alpine",
+      "example_note": "Der Dienst web verwendet das angegebene Image.",
+      "task": "Ergänze einen zweiten Dienst."
+    },
+    {
+      "course": "docker",
+      "ordinal": 12,
+      "title": "Multi-Stage Builds",
+      "theory": "Mehrstufige Builds können Werkzeuge in einer Buildstufe behalten und nur die nötigen Laufzeitdateien ins finale Image kopieren.",
+      "example": "FROM node:22 AS build",
+      "example_note": "Die erste Stufe bekommt den Namen build und kann später referenziert werden.",
+      "task": "Skizziere eine Trennung zwischen Build und Runtime."
+    },
+    {
+      "course": "nodejs",
+      "ordinal": 1,
+      "title": "process.argv",
+      "theory": "process.argv enthält die Kommandozeilenargumente eines Node-Prozesses einschließlich Laufzeit und Skriptpfad.",
+      "example": "console.log(process.argv.slice(2));",
+      "example_note": "Nur die vom Benutzer übergebenen Zusatzargumente werden angezeigt.",
+      "task": "Lies ein optionales Startargument."
+    },
+    {
+      "course": "nodejs",
+      "ordinal": 2,
+      "title": "process.env",
+      "theory": "Umgebungsvariablen konfigurieren ein Programm ohne Werte im Quellcode fest einzubauen. Geheimnisse müssen serverseitig bleiben.",
+      "example": "const port=Number(process.env.PORT || 3000);",
+      "example_note": "Bei fehlender Variable wird Port 3000 verwendet.",
+      "task": "Lies einen optionalen Konfigurationswert."
+    },
+    {
+      "course": "nodejs",
+      "ordinal": 3,
+      "title": "CommonJS vs ESM",
+      "theory": "Node unterstützt require/module.exports und moderne ECMAScript-Module mit import/export. Die Projektkonfiguration beeinflusst die Verwendung.",
+      "example": "import {readFile} from \"node:fs/promises\";",
+      "example_note": "Eine Funktion wird aus dem eingebauten Node-Modul importiert.",
+      "task": "Trenne zwei Hilfsfunktionen in eine Moduldatei."
+    },
+    {
+      "course": "nodejs",
+      "ordinal": 4,
+      "title": "fs/promises",
+      "theory": "fs/promises bietet asynchrone Dateifunktionen, die Promises zurückgeben.",
+      "example": "const text=await readFile(\"daten.json\",\"utf8\");",
+      "example_note": "Der Dateitext wird erst nach Abschluss des Lesevorgangs verfügbar.",
+      "task": "Lies eine Testdatei mit await."
+    },
+    {
+      "course": "nodejs",
+      "ordinal": 5,
+      "title": "path.join",
+      "theory": "path.join verbindet Pfadteile mit den zum Betriebssystem passenden Trennzeichen.",
+      "example": "import path from \"node:path\";\nconst p=path.join(\"data\",\"config.json\");",
+      "example_note": "Der Pfad wird ohne manuell gesetzten Slash gebildet.",
+      "task": "Erzeuge einen Dateipfad aus drei Teilen."
+    },
+    {
+      "course": "nodejs",
+      "ordinal": 6,
+      "title": "HTTP Request",
+      "theory": "Der eingebaute HTTP-Server empfängt Requests und gibt Responses zurück. Methode und URL bestimmen den gewünschten Endpunkt.",
+      "example": "http.createServer((req,res)=>{res.end(\"OK\");});",
+      "example_note": "Jede Anfrage erhält im Beispiel den Text OK.",
+      "task": "Antworte bei /health mit einem kurzen Status."
+    },
+    {
+      "course": "nodejs",
+      "ordinal": 7,
+      "title": "JSON Body",
+      "theory": "Ein Request-Body muss eingelesen und sicher geparst werden. Große Bodies sollten begrenzt werden.",
+      "example": "const obj=JSON.parse(bodyText);",
+      "example_note": "Ein JSON-Text wird in ein JavaScript-Objekt übersetzt; ungültiger Text wirft einen Fehler.",
+      "task": "Behandle einen nicht parsebaren Request-Body."
+    },
+    {
+      "course": "nodejs",
+      "ordinal": 8,
+      "title": "HTTP Status setzen",
+      "theory": "res.statusCode bestimmt den Status der HTTP-Antwort, unabhängig vom Antworttext.",
+      "example": "res.statusCode=404;\nres.end(\"Nicht gefunden\");",
+      "example_note": "Clientprogramme erkennen den Fehler am 404-Status.",
+      "task": "Gib bei einem fehlenden Eintrag 404 zurück."
+    },
+    {
+      "course": "nodejs",
+      "ordinal": 9,
+      "title": "Middleware",
+      "theory": "Middleware sind Verarbeitungsfunktionen vor dem eigentlichen Endpoint, etwa für Logging oder Authentifizierung.",
+      "example": "app.use((req,res,next)=>{console.log(req.method);next();});",
+      "example_note": "Nach dem Loggen wird die Anfrage mit next weitergereicht.",
+      "task": "Schreibe eine Logging-Middleware."
+    },
+    {
+      "course": "nodejs",
+      "ordinal": 10,
+      "title": "Fehler-Middleware",
+      "theory": "Eine zentrale Fehlerbehandlung verhindert uneinheitliche HTTP-Antworten und schützt interne Fehlerdetails.",
+      "example": "app.use((err,req,res,next)=>res.status(500).json({error:\"Serverfehler\"}));",
+      "example_note": "Die Antwort verrät keine internen Stacktraces an Nutzer.",
+      "task": "Plane getrennte Client- und Serverfehler."
+    },
+    {
+      "course": "nodejs",
+      "ordinal": 11,
+      "title": "Rate Limiting",
+      "theory": "Ein API-Ratenlimit begrenzt die Zahl erlaubter Anfragen pro Zeitfenster. Hinter Proxies müssen IP-Regeln korrekt konfiguriert sein.",
+      "example": "const key=req.ip; // nur bei korrekt konfiguriertem Proxy vertrauenswürdig",
+      "example_note": "Ein geeigneter Schlüssel wird zur Wiedererkennung eines Clients genutzt.",
+      "task": "Entwirf ein Limit pro Benutzerkonto."
+    },
+    {
+      "course": "nodejs",
+      "ordinal": 12,
+      "title": "Node Test Runner",
+      "theory": "node:test ermöglicht eingebaute Tests ohne zusätzlichen Test-Runner.",
+      "example": "import test from \"node:test\";\nimport assert from \"node:assert/strict\";\ntest(\"summe\",()=>assert.equal(2+3,5));",
+      "example_note": "Die Assertion prüft ein erwartetes Ergebnis.",
+      "task": "Ergänze einen Test für eine Fehlerfunktion."
+    },
+    {
+      "course": "react",
+      "ordinal": 1,
+      "title": "JSX",
+      "theory": "JSX beschreibt die UI-Struktur als aus JavaScript ableitbare Darstellung. JavaScript-Ausdrücke stehen in geschweiften Klammern.",
+      "example": "const titel=<h1>Academy</h1>;",
+      "example_note": "Das JSX-Element kann in einer Komponente zurückgegeben werden.",
+      "task": "Zeige einen dynamischen Titel."
+    },
+    {
+      "course": "react",
+      "ordinal": 2,
+      "title": "Props",
+      "theory": "Props übergeben Daten von einer übergeordneten Komponente an ein Kind. Eine Komponente soll Props nicht direkt verändern.",
+      "example": "function Karte({name}){return <h2>{name}</h2>;}",
+      "example_note": "name kommt aus den übergebenen Props und wird angezeigt.",
+      "task": "Baue eine Karte mit zwei Props."
+    },
+    {
+      "course": "react",
+      "ordinal": 3,
+      "title": "State",
+      "theory": "useState speichert einen lokalen Zustand und liefert eine Setterfunktion zur Aktualisierung.",
+      "example": "const [count,setCount]=useState(0);",
+      "example_note": "setCount verändert den Zustand und veranlasst eine neue Darstellung.",
+      "task": "Erstelle einen Klickzähler."
+    },
+    {
+      "course": "react",
+      "ordinal": 4,
+      "title": "Funktionales Update",
+      "theory": "Ein funktionaler Setter berechnet den neuen Zustand aus dem vorherigen Wert und vermeidet veraltete Zwischenwerte.",
+      "example": "setCount(c=>c+1);",
+      "example_note": "Die Aktualisierung verwendet den aktuellen gespeicherten Zähler.",
+      "task": "Erhöhe den Zähler zweimal zuverlässig."
+    },
+    {
+      "course": "react",
+      "ordinal": 5,
+      "title": "Eventhandler",
+      "theory": "Ein onClick-Handler erhält eine Funktion, die React bei einem Klick aufruft.",
+      "example": "<button onClick={()=>setCount(c=>c+1)}>+</button>",
+      "example_note": "Die Funktion wird erst bei einem Klick ausgeführt.",
+      "task": "Ergänze einen Reset-Button."
+    },
+    {
+      "course": "react",
+      "ordinal": 6,
+      "title": "Listen rendern",
+      "theory": "map kann aus Daten eine Liste von React-Elementen erzeugen.",
+      "example": "items.map(item=><li key={item.id}>{item.name}</li>)",
+      "example_note": "Für jeden Datensatz wird ein li-Element erzeugt.",
+      "task": "Zeige drei Kurskarten aus einem Array."
+    },
+    {
+      "course": "react",
+      "ordinal": 7,
+      "title": "Keys",
+      "theory": "Keys helfen React, Listenelemente über Änderungen hinweg wiederzuerkennen. Stabile IDs sind besser als wechselnde Arrayindizes.",
+      "example": "<li key={kurs.id}>{kurs.name}</li>",
+      "example_note": "kurs.id identifiziert das Element auch nach Sortierung.",
+      "task": "Erkläre, warum ein Index bei Umordnung problematisch ist."
+    },
+    {
+      "course": "react",
+      "ordinal": 8,
+      "title": "Controlled Input",
+      "theory": "Ein kontrolliertes Eingabefeld erhält seinen Wert aus State und aktualisiert ihn über onChange.",
+      "example": "<input value={name} onChange={e=>setName(e.target.value)}/>",
+      "example_note": "Der sichtbare Feldwert entspricht dem React-Zustand.",
+      "task": "Erstelle ein Namensfeld mit State."
+    },
+    {
+      "course": "react",
+      "ordinal": 9,
+      "title": "useEffect",
+      "theory": "useEffect synchronisiert eine Komponente mit externen Systemen; es ist nicht für jede normale Berechnung nötig.",
+      "example": "useEffect(()=>{document.title=name;},[name]);",
+      "example_note": "Der Browser-Titel wird bei Änderungen von name aktualisiert.",
+      "task": "Setze den Dokumenttitel aus einem State."
+    },
+    {
+      "course": "react",
+      "ordinal": 10,
+      "title": "Effect Cleanup",
+      "theory": "Eine Effect-Cleanup-Funktion räumt Listener oder Abos vor erneuter Ausführung oder beim Unmount auf.",
+      "example": "useEffect(()=>{const id=setInterval(tick,1000);return ()=>clearInterval(id);},[]);",
+      "example_note": "Der Timer wird beim Verlassen der Komponente entfernt.",
+      "task": "Erstelle einen Timer mit Cleanup."
+    },
+    {
+      "course": "react",
+      "ordinal": 11,
+      "title": "Custom Hooks",
+      "theory": "Ein Custom Hook kapselt wiederverwendbare Hook-Logik und beginnt mit use.",
+      "example": "function useBoolean(){return useState(false);}",
+      "example_note": "Mehrere Komponenten können denselben Zustandsaufbau wiederverwenden, besitzen aber eigenen State.",
+      "task": "Baue einen Hook für einen Toggle."
+    },
+    {
+      "course": "react",
+      "ordinal": 12,
+      "title": "Memoization",
+      "theory": "useMemo speichert das Ergebnis einer Berechnung bis sich Abhängigkeiten ändern; es ist keine allgemeine Pflichtoptimierung.",
+      "example": "const summe=useMemo(()=>liste.reduce((a,n)=>a+n,0),[liste]);",
+      "example_note": "Die Summe wird nur neu berechnet, wenn sich die referenzierte Liste ändert.",
+      "task": "Finde eine geeignete teure Berechnung."
+    },
+    {
+      "course": "api",
+      "ordinal": 1,
+      "title": "URL-Pfade",
+      "theory": "Ein API-Pfad bezeichnet eine Ressource oder Sammlung; Query-Parameter beeinflussen die Auswahl oder Darstellung.",
+      "example": "GET /api/users/42",
+      "example_note": "Die URL adressiert den Benutzer mit Kennung 42.",
+      "task": "Entwirf URLs für Benutzer und Beiträge."
+    },
+    {
+      "course": "api",
+      "ordinal": 2,
+      "title": "GET",
+      "theory": "GET liest eine Ressource, ohne eine Änderung des Serverzustands als beabsichtigten Effekt auszulösen.",
+      "example": "GET /api/courses",
+      "example_note": "Der Client fordert die Kursliste an.",
+      "task": "Plane einen Leseendpunkt."
+    },
+    {
+      "course": "api",
+      "ordinal": 3,
+      "title": "POST",
+      "theory": "POST sendet Daten zur Verarbeitung und kann eine neue Ressource erzeugen. Die Antwort sollte den Erfolg eindeutig zeigen.",
+      "example": "POST /api/courses",
+      "example_note": "Der Request-Body könnte einen neuen Kurstitel enthalten.",
+      "task": "Beschreibe die Erfolgsmeldung einer Erstellung."
+    },
+    {
+      "course": "api",
+      "ordinal": 4,
+      "title": "PUT",
+      "theory": "PUT ersetzt typischerweise die vollständige Repräsentation einer Ressource am angegebenen Ziel.",
+      "example": "PUT /api/users/42",
+      "example_note": "Der Client übermittelt die vollständigen gewünschten Benutzerdaten.",
+      "task": "Unterscheide PUT von PATCH."
+    },
+    {
+      "course": "api",
+      "ordinal": 5,
+      "title": "PATCH",
+      "theory": "PATCH beschreibt partielle Änderungen einer Ressource. Nur die vorgesehenen Felder sollten geändert werden.",
+      "example": "PATCH /api/users/42",
+      "example_note": "Ein Request kann nur den Anzeigenamen aktualisieren, ohne andere Felder zu ersetzen.",
+      "task": "Entwirf ein Teilupdate."
+    },
+    {
+      "course": "api",
+      "ordinal": 6,
+      "title": "DELETE",
+      "theory": "DELETE fordert das Löschen einer Ressource an und sollte Berechtigungen und Besitzrechte prüfen.",
+      "example": "DELETE /api/posts/17",
+      "example_note": "Der Server entscheidet, ob der Aufrufer den Beitrag 17 löschen darf.",
+      "task": "Beschreibe ein sicheres Löschrecht."
+    },
+    {
+      "course": "api",
+      "ordinal": 7,
+      "title": "201 Created",
+      "theory": "HTTP 201 signalisiert, dass eine neue Ressource erstellt wurde. Eine Location-Angabe kann auf sie zeigen.",
+      "example": "HTTP/1.1 201 Created",
+      "example_note": "Der Status ist für erfolgreiche Erstellungen passender als ein beliebiges 200.",
+      "task": "Definiere eine Antwort nach einer Erstellung."
+    },
+    {
+      "course": "api",
+      "ordinal": 8,
+      "title": "400 vs 422",
+      "theory": "400 bezeichnet eine ungültige Anfrage; 422 wird häufig für syntaktisch korrekte, aber inhaltlich ungültige Daten verwendet.",
+      "example": "HTTP/1.1 422 Unprocessable Content",
+      "example_note": "Ein formal gültiges JSON mit negativem Preis könnte als inhaltlich ungültig abgelehnt werden.",
+      "task": "Ordne drei unterschiedliche Fehlerfälle zu."
+    },
+    {
+      "course": "api",
+      "ordinal": 9,
+      "title": "Authentication",
+      "theory": "Authentifizierung stellt fest, wer eine Anfrage sendet. Sie allein gewährt nicht automatisch Zugriff auf alle Ressourcen.",
+      "example": "Authorization: Bearer <token>",
+      "example_note": "Der Server muss das Token verifizieren und dessen Gültigkeit prüfen.",
+      "task": "Unterscheide Anmeldung und Rechteprüfung."
+    },
+    {
+      "course": "api",
+      "ordinal": 10,
+      "title": "Authorization",
+      "theory": "Autorisierung entscheidet, welche Aktion ein identifizierter Nutzer auf einer bestimmten Ressource ausführen darf.",
+      "example": "if (post.ownerId!==user.id) return res.sendStatus(403);",
+      "example_note": "Ein Benutzer darf nicht jeden fremden Beitrag verändern.",
+      "task": "Prüfe Besitzrechte für ein Update."
+    },
+    {
+      "course": "api",
+      "ordinal": 11,
+      "title": "Pagination",
+      "theory": "Pagination begrenzt Ergebnismengen und stellt Mechanismen für die nächste Seite bereit.",
+      "example": "GET /api/courses?limit=20&cursor=abc",
+      "example_note": "Der Client fordert eine begrenzte Datenmenge ab einem Cursor an.",
+      "task": "Entwirf eine nächste-Seite-Antwort."
+    },
+    {
+      "course": "api",
+      "ordinal": 12,
+      "title": "Idempotency Keys",
+      "theory": "Ein Idempotency Key hilft dabei, wiederholte Anfragen zu erkennen und doppelte Wirkungen zu vermeiden.",
+      "example": "Idempotency-Key: bestellung-123",
+      "example_note": "Der Server kann den Schlüssel mit dem bereits gespeicherten Ergebnis vergleichen.",
+      "task": "Verhindere eine doppelte Bestellung."
+    },
+    {
+      "course": "testing",
+      "ordinal": 1,
+      "title": "Arrange Act Assert",
+      "theory": "Ein Test trennt Vorbereitung, Aktion und Ergebnisprüfung. Dadurch wird sichtbar, welche Funktion geprüft wird.",
+      "example": "const start=2;const result=start+3;assert.equal(result,5);",
+      "example_note": "Der Test bereitet eine Zahl vor, rechnet und prüft das Resultat.",
+      "task": "Schreibe einen Test in drei Schritten."
+    },
+    {
+      "course": "testing",
+      "ordinal": 2,
+      "title": "Grenzwerte",
+      "theory": "Fehler treten häufig an Ober- und Untergrenzen auf. Tests sollten Werte direkt vor, an und nach der Grenze nutzen.",
+      "example": "assert.equal(isAdult(18),true);",
+      "example_note": "Der Grenzwert 18 wird gezielt überprüft.",
+      "task": "Teste 17, 18 und 19."
+    },
+    {
+      "course": "testing",
+      "ordinal": 3,
+      "title": "Negative Testfälle",
+      "theory": "Negative Tests prüfen, ob ungültige Eingaben sicher abgelehnt werden.",
+      "example": "assert.throws(()=>parsePrice(-1));",
+      "example_note": "Eine negative Preisangabe muss einen Fehler auslösen.",
+      "task": "Teste einen nicht erlaubten Wert."
+    },
+    {
+      "course": "testing",
+      "ordinal": 4,
+      "title": "Unit-Tests",
+      "theory": "Ein Unit-Test prüft eine kleine, isolierte Funktion ohne echte Netzwerk- oder Datenbankzugriffe.",
+      "example": "assert.equal(add(2,3),5);",
+      "example_note": "Die Berechnung ist ohne externen Dienst prüfbar.",
+      "task": "Teste eine Funktion mit zwei Eingaben."
+    },
+    {
+      "course": "testing",
+      "ordinal": 5,
+      "title": "Integrationstests",
+      "theory": "Ein Integrationstest prüft die Zusammenarbeit echter Komponenten oder klar definierter Testsysteme.",
+      "example": "POST /api/orders mit Testdatenbank",
+      "example_note": "Es wird geprüft, ob API und Datenbank dieselbe Bestellung konsistent verarbeiten.",
+      "task": "Plane einen Test über zwei Komponenten."
+    },
+    {
+      "course": "testing",
+      "ordinal": 6,
+      "title": "Test Doubles",
+      "theory": "Ein Stub liefert kontrollierte Antworten; ein Mock kann Interaktionen prüfen. Solche Ersatzobjekte ersetzen gezielt externe Abhängigkeiten.",
+      "example": "const repo={find:async()=>({id:1})};",
+      "example_note": "Der Test nutzt eine vorhersehbare Datenquelle statt einer echten Datenbank.",
+      "task": "Ersetze eine externe API durch ein Stub."
+    },
+    {
+      "course": "testing",
+      "ordinal": 7,
+      "title": "Dependency Injection",
+      "theory": "Abhängigkeiten werden als Parameter übergeben statt innerhalb einer Funktion fest eingebaut. So kann der Test einen Ersatz nutzen.",
+      "example": "function makeService(repo){return {load:id=>repo.find(id)}}",
+      "example_note": "Der Service benutzt das übergebene Repository.",
+      "task": "Übergib ein Testrepository."
+    },
+    {
+      "course": "testing",
+      "ordinal": 8,
+      "title": "Regressionstest",
+      "theory": "Ein Regressionstest hält einen früheren Fehler als prüfbaren Fall fest, damit er nicht wiederkehrt.",
+      "example": "assert.equal(parsePrice(\"0\"),0);",
+      "example_note": "Der Test schützt einen bestimmten zuvor fehlerhaften Eingabefall.",
+      "task": "Formuliere einen Test für einen behobenen Bug."
+    },
+    {
+      "course": "testing",
+      "ordinal": 9,
+      "title": "Testabdeckung",
+      "theory": "Coverage misst, welche Codebereiche während Tests ausgeführt wurden. Hohe Prozentzahlen beweisen nicht automatisch korrekte Logik.",
+      "example": "node --test --experimental-test-coverage",
+      "example_note": "Der Node-Testlauf berichtet zusätzlich ausgeführte Codebereiche.",
+      "task": "Finde eine nicht geprüfte Verzweigung."
+    },
+    {
+      "course": "testing",
+      "ordinal": 10,
+      "title": "Snapshot Tests",
+      "theory": "Ein Snapshot vergleicht eine Ausgabe mit einer gespeicherten Referenz. Änderungen müssen bewusst überprüft werden.",
+      "example": "expect(render()).toMatchSnapshot();",
+      "example_note": "Ein ungewollter Text- oder Strukturunterschied wird gemeldet.",
+      "task": "Prüfe eine kleine UI-Ausgabe."
+    },
+    {
+      "course": "testing",
+      "ordinal": 11,
+      "title": "End-to-End Tests",
+      "theory": "E2E-Tests führen echte Nutzerwege über die Oberfläche aus. Sie sind langsamer als Unit-Tests, decken aber Integrationsfehler auf.",
+      "example": "await page.getByRole(\"button\",{name:\"Login\"}).click();",
+      "example_note": "Der Test benutzt einen sichtbaren Button wie ein echter Nutzer.",
+      "task": "Teste den Login bis zur Kursübersicht."
+    },
+    {
+      "course": "testing",
+      "ordinal": 12,
+      "title": "CI Pipeline",
+      "theory": "Eine CI-Pipeline startet Prüfungen nach Änderungen automatisch und verhindert idealerweise das Mergen fehlerhafter Builds.",
+      "example": "npm test",
+      "example_note": "Der Befehl kann in jedem Pipeline-Lauf vor dem Deployment ausgeführt werden.",
+      "task": "Erstelle eine Reihenfolge aus Lint, Test und Build."
+    }
+  ]
+}
