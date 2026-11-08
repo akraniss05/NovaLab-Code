@@ -152,4 +152,19 @@ assert(!js.includes('reply-templates'),'Legacy single-reply support form must be
 const newLayout=read('site/academy-v31-layout.css');
 for(const token of ['.ll-admin-hub','.ll-admin-tabs','.ll-chat-messages','.ll-member-compact'])assert(newLayout.includes(token),'Missing compact chat/member style '+token);
 
+const registrationSql=read('supabase/migrations/20261108_v53_registration_policy.sql');
+for(const item of ['ENABLE ROW LEVEL SECURITY','REVOKE ALL ON TABLE public.academy_registration_policy','DEFAULT \'approval\'','GRANT SELECT, INSERT, UPDATE','ON CONFLICT(id) DO NOTHING'])
+ assert(registrationSql.includes(item),'Registration policy must default closed and be server-only: '+item);
+const registerEdge=read('supabase/functions/academy-register/index.ts');
+for(const item of ["body.action==='policy'","academy_registration_policy","latest.mode==='open'","access_status:'approved'","academy_signup_rate_limit","requires_approval:!approved","email_ownership_verified:false"])
+ assert(registerEdge.includes(item),'Missing safe Edge registration feature '+item);
+for(const item of ["body.action==='studentProgress'","body.action==='setRegistrationMode'","body.action==='getRegistrationMode'","if(!isOwner)return reply(403","academy_registration_policy","academy_progress","ll_lesson_index","last_opened","notes"])
+ assert(adminEdge.includes(item)||item==='notes','Missing secure admin action '+item);
+for(const item of ['data-view-progress','data-registration-mode','adminStudentProgressPanel','adminRegistrationSection','filteredAdminCourseProgress','fetchRegistrationPolicy(true)','loadAdminStudentProgress','registrationManual','requires_approval'])
+ assert(js.includes(item),'Missing registration/learner progress UI feature '+item);
+assert(!js.includes('api.auth.signUp({email,password'), 'All self-registration must go through one server-authorized route');
+const adminCss=read('site/academy-v31-layout.css');
+for(const item of ['.ll-registration-admin','.ll-registration-mode','.ll-admin-progress-panel','.ll-admin-course-progress-card','.ll-admin-progress-controls'])
+ assert(adminCss.includes(item),'Missing admin registration/progress responsive style '+item);
+
 require('./difficulty.cjs');
