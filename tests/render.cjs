@@ -25,6 +25,15 @@ state.user={email:'demo@example.com'};
 state.tier='free';state.courses=[course];state.lessons=[lesson];state.referenceData=sandbox.window.LL_REFERENCE_DATA;
 state.progress={done:[],watched:[],practiced:[],exams:{}};
 state.lesson={payload:{theory:'Eine Variable speichert einen Wert.',example:'zahl = 1',goal:'Verstehe Variablen',task:'Lege eine Variable an.',quiz:'Welche Zuweisung ist gültig?',correct:0,options:['zahl = 1','zahl ===','nichts']},video_id:'e6vPt_e9sRw',video_start:597};
+// The original Lua exam is the end of the concise main path. Historic lessons
+// remain in memory so existing IDs, saved progress and direct links survive.
+const originalCourses=state.courses,originalLessons=state.lessons;
+state.courses=[{id:'lua',name:'Lua',category:'Sprachen',level:'beginner'}];
+state.lessons=Array.from({length:70},(_,i)=>({id:`lua-${String(i+1).padStart(2,'0')}`,course_id:'lua',chapter:'Lua',position:i+1,title:`Lektion ${i+1}`,summary:'',minutes:10,required_plan:'free'}));
+assert.equal((app.trackPage('lua').match(/class="lesson-card/g)||[]).length,30,'Lua main path should contain 30 lessons');
+assert(app.courseCard(state.courses[0]).includes('30 Lektionen'),'Lua course card should show 30 lessons');
+assert.equal(state.lessons.length,70,'Historic lesson data stays available');
+state.courses=originalCourses;state.lessons=originalLessons;
 assert(app.homePage().includes('Developer Academy'),'Neon dashboard home rendered');
 assert(app.homePage().includes('liverylab-banner.webp'),'Original site banner displayed');
 assert(app.homePage().includes('ll-home-shortcuts'),'Dashboard menu displayed');

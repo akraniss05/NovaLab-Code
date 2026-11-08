@@ -19,8 +19,11 @@ function xpAwarded(id){return (s.xpAwards||[]).some(entry=>entry.lesson_id===id)
 function xpFromCourse(id){const awarded=new Set((s.xpAwards||[]).map(entry=>entry.lesson_id));return s.lessons.filter(l=>l.course_id===id&&awarded.has(l.id)).length*30;}
 function doneIds(){return new Set(s.progress.done||[]);}
 function watchedIds(){return new Set(s.progress.watched||[]);}
-function countDone(courseId){var d=doneIds();return s.lessons.filter(function(l){return l.course_id===courseId&&d.has(l.id);}).length;}
-function lessonsOf(id){return s.lessons.filter(function(l){return l.course_id===id;}).sort(function(a,b){return a.position-b.position;});}
+// The Lua beginner path finishes at its existing final exam. Older extra lessons
+// stay in Supabase (and retain their IDs, drafts and XP) for existing deep links.
+function inMainPath(l){return l.course_id!=='lua'||/^lua-(0[1-9]|[12][0-9]|30)$/.test(l.id);}
+function countDone(courseId){var d=doneIds();return lessonsOf(courseId).filter(function(l){return d.has(l.id);}).length;}
+function lessonsOf(id){return s.lessons.filter(function(l){return l.course_id===id&&inMainPath(l);}).sort(function(a,b){return a.position-b.position;});}
 function courseOf(id){return s.courses.find(function(c){return c.id===id;});}
 function pct(n,total){return total?Math.round(n/total*100):0;}
 function tierLabel(t){return t==='plus'?'Plus':t==='pro'?'Pro':'Free';}
@@ -399,7 +402,7 @@ function paintEditorLines(){const input=$('#practice-input'),lines=$('#code-line
 
 
 function stats(){
- const done=(s.progress.done||[]).length,available=s.lessons.filter(allowed).length,started=s.courses.filter(c=>countDone(c.id)>0).length;
+ const done=s.lessons.filter(l=>inMainPath(l)&&doneIds().has(l.id)).length,available=s.lessons.filter(l=>inMainPath(l)&&allowed(l)).length,started=s.courses.filter(c=>countDone(c.id)>0).length;
  return '<div class="stats-grid">'+
   '<div class="stat-card"><strong>'+done+'<span class="stat-total">/'+available+'</span></strong><small>LEKTIONEN</small></div>'+
   '<div class="stat-card"><strong>'+xpEarned()+'</strong><small>XP</small></div>'+
@@ -526,7 +529,7 @@ function homeShortcut(icon,label,description,route,locked,wide){
  '<small>'+esc(description)+'</small></span>'+llIcon('arrow')+'</button>';
 }
 function homePage(){
- const completed=doneIds(),available=s.lessons.filter(allowed);
+ const completed=doneIds(),available=s.lessons.filter(l=>inMainPath(l)&&allowed(l));
  const events=Object.values(s.progress.completedAt||{}).map(x=>new Date(x)).filter(x=>!isNaN(x));
  const now=new Date(),today=events.filter(x=>x.toDateString()===now.toDateString()).length;
  const weekStart=new Date(now);weekStart.setHours(0,0,0,0);weekStart.setDate(now.getDate()-(now.getDay()+6)%7);
