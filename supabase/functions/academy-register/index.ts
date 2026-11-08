@@ -3,8 +3,9 @@
  * Made with 💙 from NyxAtheris (LiveryLab Studios)
  *
  * This Edge Function is an explicit server-side fallback: accounts are created
- * only as PENDING, never as administrators. They have no course access until
- * the administrator approves them. Email ownership is NOT verified by this flow.
+ * only as PENDING initially, never as administrators. Access requires the
+ * administrator's approval unless server policy is explicitly in open mode.
+ * Email ownership is NOT verified by this flow.
  * Never put service-role credentials in a browser or GitHub Pages assets.
  */
 import {createClient} from 'npm:@supabase/supabase-js@2.81.1';
@@ -50,7 +51,18 @@ Deno.serve(async (request:Request)=>{
   if(!body||typeof body!=='object'||Array.isArray(body))
     return respond(400,{error:'Ungültige Registrierungsdaten.'},origin);
   if(Object.keys(body).length>5)return respond(400,{error:'Ungültige Anfrage.'},origin);
-  if(body.website){return respond(201,{ok:true,requires_approval:true},origin);}
+  if(body.action!=='policy'&&body.website){return respond(201,{ok:true,requires_approval:true},origin);}
+  if(body.action==='policy'){
+    const url=Deno.env.get('SUPABASE_URL')||'';
+    const secret=Deno.env.get('SUPABASE_SECRET_KEY')||Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')||'';
+    if(!url||!secret)return respond(503,{error:'Registrierungsstatus nicht erreichbar.'},origin);
+    try{
+      const admin=createClient(url,secret,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+      const {data:policy,error}=await admin.from('academy_registration_policy').select('mode').eq('id',true).single();
+      if(error||!policy)return respond(503,{error:'Registrierungsstatus nicht erreichbar.'},origin);
+      return respond(200,{ok:true,mode:policy.mode,requires_approval:policy.mode!=='open'},origin);
+    }catch(_){return respond(503,{error:'Registrierungsstatus nicht erreichbar.'},origin);}
+  }
   const email=String(body.email||'').trim().toLowerCase();
   const username=String(body.username||'').trim().toLowerCase();
   const password=typeof body.password==='string'?body.password:'';
@@ -63,6 +75,15 @@ Deno.serve(async (request:Request)=>{
   if(!url||!secret)return respond(503,{error:'Registrierung ist momentan nicht erreichbar.'},origin);
   try{
     const admin=createClient(url,secret,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+    // Public requests always consult the server's authoritative default-closed policy.
+    // The public browser cannot set the approval mode using request body fields.
+    const {data:policy,error:policyError}=await admin.from('academy_registration_policy')
+      .select('mode').eq('id',true).single();
+    if(policyError||!policy||!['approval','open'].includes(policy.mode))
+      return respond(503,{error:'Registrierung ist vorübergehend nicht erreichbar.'},origin);
+    if(body.action==='policy')
+      return respond(200,{ok:true,mode:policy.mode,requires_approval:policy.mode!=='open'},origin);
+    const autoApprove=policy.mode==='open';
     // Hash contact/IP fingerprints before persistence; no passwords, emails or IPs are logged.
     // The globally serialized database quota is authoritative; IP limits are best effort
     // because forwarding headers can be influenced by upstream proxy configuration.
@@ -88,7 +109,7 @@ Deno.serve(async (request:Request)=>{
     const {data:created,error:createError}=await admin.auth.admin.createUser({
       email,password,email_confirm:true,
       user_metadata:{username,name:username},
-      app_metadata:{academy_signup_flow:'manual_request'}
+      app_metadata:{academy_signup_flow:autoApprove?'self_service':'manual_request'}
     });
     if(createError||!created?.user?.id){
       if(createError)console.error('Registration creation failed',createError.code||'auth_error');
@@ -102,11 +123,35 @@ Deno.serve(async (request:Request)=>{
       console.error('Pending-account guard rejected registration');
       return respond(503,{error:'Die Anmeldung konnte nicht sicher eingerichtet werden. Bitte erneut versuchen.'},origin);
     }
+    // The auth trigger created a disabled, pending student account.
+    // In self-service mode approve only after a SECOND policy check: switching
+    // back to manual approval during registration must not grant new access.
+    let approved=false;
+    if(autoApprove){
+      const {data:latest,error:latestError}=await admin.from('academy_registration_policy')
+        .select('mode').eq('id',true).single();
+      if(latestError||!latest){
+        await admin.auth.admin.deleteUser(id);
+        return respond(503,{error:'Registrierungsstatus konnte nicht bestätigt werden.'},origin);
+      }
+      if(latest.mode==='open'){
+        const {data:updated,error:updateError}=await admin.from('academy_profiles')
+          .update({active:true,access_status:'approved'})
+          .eq('id',id).eq('role','student').eq('active',false).eq('access_status','pending')
+          .select('id,active,access_status').single();
+        if(updateError||!updated||updated.active!==true||updated.access_status!=='approved'){
+          await admin.auth.admin.deleteUser(id);
+          return respond(503,{error:'Konto konnte nicht sicher freigeschaltet werden.'},origin);
+        }
+        approved=true;
+      }
+    }
     return respond(201,{
-      ok:true,
-      requires_approval:true,
+      ok:true,requires_approval:!approved,
       email_ownership_verified:false,
-      message:'Registrierungsanfrage eingegangen. Der Administrator prüft deinen Zugang.'
+      message:approved
+        ?'Konto erstellt! Du kannst dich jetzt anmelden und mit Free-Kursen beginnen.'
+        :'Registrierungsanfrage eingegangen. Der Administrator prüft deinen Zugang.'
     },origin);
   }catch(err){
     console.error('Registration backend unavailable',err instanceof Error?err.name:'Error');

@@ -5,7 +5,7 @@
  * and SUPABASE_SERVICE_ROLE_KEY / SUPABASE_SECRET_KEY via Supabase secrets.
  * Never expose server secrets in the GitHub Pages frontend.
  */
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createClient } from 'npm:@supabase/supabase-js@2.81.1';
 const origin = Deno.env.get('ACADEMY_ORIGIN') || 'https://akraniss05.github.io';
 const allowedOrigins = new Set([origin,'https://akraniss05.github.io','https://liverylab-academy.dev']);
 const headers: Record<string,string> = {
@@ -81,6 +81,98 @@ Deno.serve(async(req:Request)=>{
     if(ownerError)return reply(503,{error:'Eigentümerrechte konnten nicht geprüft werden'});
     const ownerIds=new Set((ownerList||[]).map((x:{user_id:string})=>x.user_id));
     const isOwner=ownerIds.has(user.id);
+    // Registration policy is private data: only a verified admin can view it,
+    // and only the original project owner can change it.
+    if(body.action==='getRegistrationMode'||body.action==='setRegistrationMode'){
+      if(body.action==='setRegistrationMode'){
+        if(!isOwner)return reply(403,{error:'Nur der Eigentümer darf den Registrierungsmodus ändern.'});
+        if(body.mode!=='approval'&&body.mode!=='open')return reply(400,{error:'Ungültiger Registrierungsmodus.'});
+        const {data:updated,error:ue}=await admin.from('academy_registration_policy')
+          .update({mode:body.mode,updated_at:new Date().toISOString(),updated_by:user.id})
+          .eq('id',true).select('mode,updated_at').single();
+        if(ue||!updated)return reply(503,{error:'Registrierungsmodus konnte nicht gespeichert werden.'});
+        return reply(200,{ok:true,mode:updated.mode,updated_at:updated.updated_at});
+      }
+      const {data:policy,error:pe}=await admin.from('academy_registration_policy')
+        .select('mode,updated_at').eq('id',true).single();
+      if(pe||!policy)return reply(503,{error:'Registrierungsmodus konnte nicht gelesen werden.'});
+      return reply(200,{ok:true,mode:policy.mode,updated_at:policy.updated_at,canChange:isOwner});
+    }
+    // A member's learning progress can be inspected ONLY after this function's
+    // verified administrator + MFA checks. Never return drafts, code or notes.
+    if(body.action==='studentProgress'){
+      const id=String(body.userId||'');
+      if(!isUUID(id))return reply(400,{error:'Ungültige Mitglieds-ID.'});
+      const {data:student,error:se}=await admin.from('academy_profiles')
+        .select('id,username,display_name,role,active,access_status')
+        .eq('id',id).maybeSingle();
+      if(se||!student)return reply(404,{error:'Mitglied wurde nicht gefunden.'});
+      const {data:progress,error:re}=await admin.from('academy_progress')
+        .select('payload,updated_at').eq('user_id',id)
+        .eq('key','liverylab-v10').maybeSingle();
+      if(re)return reply(503,{error:'Lernfortschritt konnte nicht gelesen werden.'});
+      const saved=progress?.payload&&typeof progress.payload==='object'&&!Array.isArray(progress.payload)
+        ?progress.payload:{};
+      const completedIds=new Set(
+        (Array.isArray(saved.done)?saved.done:[])
+          .filter((value:unknown):value is string=>typeof value==='string'&&value.length<=128)
+      );
+      const lastId=typeof saved.lastLesson?.id==='string'?saved.lastLesson.id:'';
+      const {data:courses,error:ce}=await admin.from('ll_courses')
+        .select('id,name,category,level').order('name',{ascending:true});
+      if(ce)return reply(503,{error:'Kursübersicht konnte nicht gelesen werden.'});
+      // Supabase PostgREST limits response rows; page through the lesson index.
+      const allLessons:Array<{id:string,course_id:string,title:string,chapter:string,position:number}>=[];
+      for(let offset=0;offset<10000;offset+=500){
+        const {data:page,error:le}=await admin.from('ll_lesson_index')
+          .select('id,course_id,title,chapter,position')
+          .order('course_id',{ascending:true}).order('position',{ascending:true})
+          .order('id',{ascending:true}).range(offset,offset+499);
+        if(le)return reply(503,{error:'Lektionen konnten nicht gelesen werden.'});
+        const values=page||[];allLessons.push(...values);
+        if(values.length<500)break;
+        if(offset>=9500)return reply(503,{error:'Zu viele Lektionen für die Übersicht.'});
+      }
+      const lessonGroups=new Map<string,typeof allLessons>();
+      const validIds=new Set<string>();
+      for(const lesson of allLessons){
+        // Keep the historic Lua lessons 31–70 available via deep links but
+        // exclude them from the actual main path, exactly like the frontend.
+        if(lesson.course_id==='lua'&&!/^lua-(0[1-9]|[12][0-9]|30)$/.test(lesson.id)&&
+           !/^lua-path-[0-9]{3}$/.test(lesson.id))continue;
+        validIds.add(lesson.id);
+        if(!lessonGroups.has(lesson.course_id))lessonGroups.set(lesson.course_id,[]);
+        lessonGroups.get(lesson.course_id)!.push(lesson);
+      }
+      const last=lastId&&validIds.has(lastId)?allLessons.find(l=>l.id===lastId):null;
+      const courseStats=(courses||[]).map(course=>{
+        const lessons=lessonGroups.get(course.id)||[];
+        const count=lessons.filter(lesson=>completedIds.has(lesson.id)).length;
+        const next=lessons.find(lesson=>!completedIds.has(lesson.id))||null;
+        const current=last&&last.course_id===course.id?last:next;
+        return {id:course.id,name:course.name,category:course.category,
+          completed:count,total:lessons.length,
+          percent:lessons.length?Math.round(count/lessons.length*100):0,
+          last_opened:last&&last.course_id===course.id
+            ?{id:last.id,title:last.title,chapter:last.chapter}:null,
+          next:next?{id:next.id,title:next.title,chapter:next.chapter}:null,
+          current:current?{id:current.id,title:current.title,chapter:current.chapter}:null};
+      }).sort((a,b)=>((b.completed>0?1:0)-(a.completed>0?1:0))||
+        (b.percent-a.percent)||a.name.localeCompare(b.name,'de'));
+      const totalDone=courseStats.reduce((n,course)=>n+course.completed,0);
+      return reply(200,{
+        ok:true,student:{id:student.id,username:student.username,
+          display_name:student.display_name,role:student.role,
+          active:student.active,access_status:student.access_status},
+        progress:{completed:totalDone,total:courseStats.reduce((n,c)=>n+c.total,0),
+          started_courses:courseStats.filter(c=>c.completed>0||!!c.last_opened).length,
+          finished_courses:courseStats.filter(c=>c.total>0&&c.completed===c.total).length,
+          last_opened:last?{id:last.id,title:last.title,course_id:last.course_id,chapter:last.chapter}:null,
+          updated_at:progress?.updated_at||null},
+        courses:courseStats,
+        has_cloud_record:!!progress
+      });
+    }
     if(body.action==='setRole'){
       if(!isOwner)return reply(403,{error:'Nur der Projekteigentümer darf Administratorrollen vergeben'});
       const id=String(body.userId||'');
