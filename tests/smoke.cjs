@@ -205,7 +205,7 @@ require('./neon-ui.cjs');
 const atelierCss=read('site/academy-atelier.css');
 for(const page of ['site/index.html','site/v21.html','site/v31.html']){
  const entry=read(page);
- assert(entry.includes('academy-atelier.css?build=20261108v63'),page+' missing Atelier style');
+ assert(entry.includes('academy-atelier.css?build=20261108v64'),page+' missing Atelier style');
  assert(entry.indexOf('academy-atelier.css?build=')>entry.indexOf('academy-neon-ui.css?build='),'Atelier must have last precedence');
 }
 for(const selector of ['.ll-atelier-scene','.ll-atelier-cube','.ll-atelier-mission-strip',
@@ -214,3 +214,5 @@ for(const selector of ['.ll-atelier-scene','.ll-atelier-cube','.ll-atelier-missi
  '@media(max-width:490px)','prefers-reduced-motion'])
  assert(atelierCss.includes(selector),'Atelier missing '+selector);
 require('./atelier.cjs');
+
+assert(atelierCss.includes('.ll-atelier-exam-card{position:relative;isolation:isolate;overflow:hidden'), 'Exam illustrations must not create desktop overflow');

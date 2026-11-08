@@ -476,3 +476,8 @@
  .ll-neon-screen .ll-atelier-scene *{animation:none!important;transition:none!important}
  .ll-atelier-rail-card:hover,.ll-neon-menu .ll-neon-menu-tile:hover{transform:none!important}
 }
+
+/* The decorative exam halo must not escape its card when the page is rendered
+   without the SPA wrapper (desktop embedding / previews / accessibility). */
+.ll-atelier-exam-card{position:relative;isolation:isolate;overflow:hidden;min-width:0;max-width:100%}
+.ll-atelier-exam-card-glow{pointer-events:none}
