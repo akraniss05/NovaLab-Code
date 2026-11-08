@@ -1,0 +1,50 @@
+/* LiveryLab Academy · optional interaction effects v48
+   Non-interactive overlays; existing navigation and design are untouched. */
+#ll-ambient-layer{position:fixed;inset:0;overflow:hidden;pointer-events:none;
+ z-index:2;opacity:0;visibility:hidden;isolation:isolate;contain:layout paint;
+ transition:opacity .45s ease,visibility .45s ease}
+body.ll-effects-ambient #ll-ambient-layer{opacity:1;visibility:visible}
+#ll-ambient-layer::before,#ll-ambient-layer::after{
+ content:"";position:absolute;inset:auto;pointer-events:none;
+ width:min(78vw,650px);height:min(78vw,650px);border-radius:50%;
+ background:radial-gradient(circle,var(--accent,#b78cff) 0%,#9457f633 35%,transparent 70%);
+ opacity:.13;will-change:transform}
+#ll-ambient-layer::before{left:-24%;top:-30%;animation:ll-ambient-float-one 25s ease-in-out infinite alternate}
+#ll-ambient-layer::after{right:-28%;bottom:-31%;opacity:.09;animation:ll-ambient-float-two 31s ease-in-out infinite alternate}
+@keyframes ll-ambient-float-one{
+ from{transform:translate3d(0,0,0) scale(.9)}
+ to{transform:translate3d(24vw,19vh,0) scale(1.25)}
+}
+@keyframes ll-ambient-float-two{
+ from{transform:translate3d(0,0,0) scale(1.08)}
+ to{transform:translate3d(-22vw,-17vh,0) scale(.8)}
+}
+#ll-click-overlay{position:fixed;inset:0;pointer-events:none;z-index:4100;overflow:hidden;contain:layout paint}
+.ll-tap-halo{position:absolute;left:0;top:0;width:12px;height:12px;border:1.5px solid var(--accent,#b78cff);
+ border-radius:999px;background:#c99dff29;box-shadow:0 0 14px #c99dff6c;
+ transform:translate(-50%,-50%) scale(.3);opacity:.7;
+ animation:ll-tap-expand .48s cubic-bezier(.16,.75,.3,1) both;pointer-events:none}
+@keyframes ll-tap-expand{
+ 0%{transform:translate(-50%,-50%) scale(.4);opacity:.75}
+ 100%{transform:translate(-50%,-50%) scale(5.5);opacity:0}
+}
+/* An unobtrusive pressed state, not a new button design. */
+body.ll-effects-buttons button:active:not(:disabled),
+body.ll-effects-buttons .btn:active,
+body.ll-effects-buttons a.side-link:active{filter:brightness(1.13)}
+.ll-sound-volume{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:10px 0 18px;padding:13px 14px;
+ border:1px solid var(--stroke,#56456e);border-radius:14px;background:#21192f}
+.ll-sound-volume label{flex:1 1 150px;font-size:13px;font-weight:650}
+.ll-sound-volume input{flex:2 1 125px;min-width:100px;accent-color:var(--accent,#bb91fa)}
+.ll-sound-volume output{min-width:43px;text-align:right;font:750 12px ui-monospace,monospace}
+.ll-sound-volume p{flex:1 0 100%;font-size:11px;color:var(--muted,#b8abc7);margin:0}
+@media(max-width:480px){
+ #ll-ambient-layer::before,#ll-ambient-layer::after{width:82vw;height:82vw;opacity:.08}
+ #ll-ambient-layer::after{opacity:.06}
+}
+body.less-motion #ll-ambient-layer,body.less-motion #ll-click-overlay,
+body.ll-effects-reduced #ll-ambient-layer,body.ll-effects-reduced #ll-click-overlay{display:none!important}
+@media(prefers-reduced-motion:reduce){
+ #ll-ambient-layer,#ll-click-overlay{display:none!important}
+ #ll-ambient-layer::before,#ll-ambient-layer::after,.ll-tap-halo{animation:none!important}
+}
