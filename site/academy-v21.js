@@ -919,14 +919,25 @@ function lessonPage(id){
  var videoStart=Math.max(0,Number(s.lesson.video_start||p.videoStart)||0),validVideo=video&&/^[a-zA-Z0-9_-]{11}$/.test(video),url=validVideo?'https://www.youtube.com/watch?v='+video+'&t='+videoStart+'s':null;
  var search='https://www.youtube.com/results?search_query='+encodeURIComponent(c.name+' '+l.title+' Anleitung Tutorial deutsch');
  var next=all[index+1],d=esc(s.draft),isPracticeDone=s.practiceChecked||finished;
- return '<article class="lesson-article">'+back+
- '<header><span class="eyebrow">'+esc(c.name)+' · '+esc(l.chapter)+'</span><h1>'+esc(l.title)+'</h1>'+
- '<p>'+esc(p.goal||l.summary)+'</p><div class="chips"><span class="chip">'+(index+1)+' von '+all.length+'</span><span class="chip">'+l.minutes+' Minuten</span>'+difficultyBadge(c)+
- '<span class="chip '+(finished?'free':'')+'">'+(finished?'✓ Abgeschlossen':rewarded?'✓ 30 XP bereits erhalten':'30 XP möglich')+'</span></div>'+
- '<div class="lesson-steps"><div class="lesson-step done"><span class="step-index">01</span>Verstehen</div>'+
- '<div class="lesson-step '+(s.videoChecked?'done':'')+'"><span class="step-index">02</span>Video</div>'+
- '<div class="lesson-step '+(isPracticeDone?'done':'')+'"><span class="step-index">03</span>Praxis</div>'+
- '<div class="lesson-step '+(finished?'done':'')+'"><span class="step-index">04</span>Quiz</div></div></header>'+
+ return '<article class="lesson-article ll-roadmap-lesson">'+back+
+ '<header class="ll-lesson-hero"><div class="ll-lesson-hero-glow" aria-hidden="true"></div>'+
+ '<div class="ll-lesson-hero-intro"><span class="eyebrow">'+esc(c.name)+' · '+esc(l.chapter)+'</span>'+
+ '<span class="ll-lesson-order">'+catalogText('LEKTION','LESSON')+' '+String(index+1).padStart(2,'0')+' / '+all.length+'</span></div>'+
+ '<span class="ll-lesson-hero-symbol" aria-hidden="true">'+esc(roadmapLessonSymbol(l,c))+'</span>'+
+ '<h1>'+esc(l.title)+'</h1><p>'+esc(p.goal||l.summary)+'</p>'+
+ '<div class="chips ll-lesson-chips"><span class="chip">◷ '+l.minutes+' '+catalogText('Minuten','minutes')+'</span>'+
+ difficultyBadge(c)+
+ '<span class="chip '+(finished?'free':'')+'">'+
+ (finished?'✓ '+catalogText('Abgeschlossen','Completed'):rewarded?'✓ 30 XP erhalten':'✦ 30 XP möglich')+'</span></div>'+
+ '<div class="ll-lesson-overview-progress"><div><span>'+catalogText('Deine Position im Lernpfad','Your place in the learning path')+'</span>'+
+ '<strong>'+(index+1)+' / '+all.length+'</strong></div>'+
+ '<div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="'+all.length+'" aria-valuenow="'+(index+1)+'" aria-label="'+catalogText('Position im Kurs','Position in course')+'"><span style="width:'+pct(index+1,all.length)+'%"></span></div></div>'+
+ '<div class="lesson-steps ll-lesson-road-stages" aria-label="'+catalogText('Lektionsschritte','Lesson steps')+'">'+
+ '<div class="lesson-step done"><span class="step-index">◇</span>'+catalogText('Verstehen','Learn')+'</div>'+
+ '<div class="lesson-step '+(s.videoChecked?'done':'')+'"><span class="step-index">▷</span>'+catalogText('Video','Video')+'</div>'+
+ '<div class="lesson-step '+(isPracticeDone?'done':'')+'"><span class="step-index">⟨/⟩</span>'+catalogText('Praxis','Practice')+'</div>'+
+ '<div class="lesson-step '+(finished?'done':'')+'"><span class="step-index">✓</span>'+catalogText('Quiz','Quiz')+'</div></div></header>'+
+
  (finished?'<div class="done-banner" style="margin:15px 0"><strong>✓ Lektion abgeschlossen</strong><p>'+(rewarded?'Die 30 XP für diese Lektion hast du bereits erhalten.':'Deine Lektion ist abgeschlossen. Bitte bestätige die XP-Gutschrift.')+'</p>'+(rewarded?'':'<button class="btn small" type="button" data-action="retry-lesson-xp">XP-Gutschrift überprüfen</button>')+'</div>':'')+
  '<section class="step-box" id="lesson-explanation"><span class="eyebrow">SCHRITT 01 · VERSTEHEN</span>'+
  (window.LLCurriculum?.render(p,s.sectionIndex,esc,safeLink)||'<p>'+esc(p.theory||l.summary)+'</p>')+
