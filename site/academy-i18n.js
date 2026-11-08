@@ -152,6 +152,18 @@ Object.assign(translations,{
 'Supabase konnte nicht geladen werden. Bitte lade die Seite erneut oder überprüfe deine Verbindung.':'Supabase could not load. Reload the page or check your internet connection.'
 });
 
+Object.assign(translations,{
+'Erstelle dein Konto. Nach der Freigabe durch NyxAtheris erhältst du Zugang. Mitgliedschaften kannst du nach der Anmeldung direkt in der App anfragen.':'Create your account. After approval by NyxAtheris, you will gain access. You can request memberships in the app after signing in.',
+'Dein Passwort wird sicher über Supabase Auth verarbeitet. Deine Anmeldung wird vom Team geprüft; ohne Genehmigung erhältst du keinen Zugriff.':'Your password is processed securely through Supabase Auth. The team reviews your registration; without approval you cannot access the Academy.',
+'Deine':'Your',
+'Für dieses Spezialthema gibt es noch keinen einzeln geprüften Videoguide. Öffne eine gezielte Suche, wähle ein Tutorial und arbeite das passende Thema durch.':'There is no individually reviewed video guide for this advanced topic yet. Open a targeted search, choose a tutorial, and work through the relevant material.',
+'Rabattcodes sind Angebote, kein automatischer Kauf. Kostenpflichtige Mitgliedschaften werden derzeit vom Team nach Bestätigung aktiviert.':'Discount codes are offers, not automatic purchases. Paid memberships are currently activated manually by the team after confirmation.',
+'Dein':'Your',
+'Deine Developer':'Your developers',
+'[ ✦ ] DEINE BELOHNUNGEN':'[ ✦ ] YOUR REWARDS',
+'Academy nicht erreichbar':'Academy unavailable'
+});
+
 const patterns=[
  [/^Frage (\d+) von (\d+)$/i,(_,a,b)=>'Question '+a+' of '+b],
  [/^LERNTEIL (\d+) VON (\d+)$/i,(_,a,b)=>'PART '+a+' OF '+b],
