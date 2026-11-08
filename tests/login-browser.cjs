@@ -30,7 +30,7 @@ function reply(table) {
 }
 window.supabase={createClient:()=>({
  auth:{getUser:async()=>({data:{user:{id:'test-user',email:'tester@example.com'}},error:null}),signOut:async()=>({error:null})},
- from(table){return {select(){return this},eq(){return this},order(){return Promise.resolve(reply(table))},maybeSingle(){return Promise.resolve(reply(table))},then(resolve,reject){return Promise.resolve(reply(table)).then(resolve,reject)}}},
+ from(table){return {select(){return this},eq(){return this},order(){return this},range(){return Promise.resolve(reply(table))},maybeSingle(){return Promise.resolve(reply(table))},then(resolve,reject){return Promise.resolve(reply(table)).then(resolve,reject)}}},
  rpc(name){
   if(name==='academy_streak_status'){window.__mock.reads++;return Promise.resolve({data:window.__mock.claims?{current:1,best:1,claimable:false,claimed_today:true,next_claim_at:tomorrow,server_now:new Date().toISOString()}:{current:0,best:0,claimable:true,claimed_today:false,next_claim_at:null,server_now:new Date().toISOString()},error:null});}
   if(name==='academy_streak_claim'){window.__mock.claims++;return Promise.resolve({data:{ok:true,status:{current:1,best:1,claimable:false,claimed_today:true,next_claim_at:tomorrow,server_now:new Date().toISOString()}},error:null});}
