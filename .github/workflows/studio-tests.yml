@@ -23,6 +23,8 @@ on:
       - 'tests/runtime-grading.cjs'
       - 'tests/simple-academy.cjs'
       - 'tests/support-submit.cjs'
+      - 'tests/support-conversations.cjs'
+      - 'supabase/data/v49_support_conversations.sql'
       - 'supabase/data/v47_contextual_quizzes.sql'
       - 'tests/admin-plans.cjs'
       - 'tests/xp-rewards.cjs'
@@ -51,6 +53,8 @@ on:
       - 'tests/runtime-grading.cjs'
       - 'tests/simple-academy.cjs'
       - 'tests/support-submit.cjs'
+      - 'tests/support-conversations.cjs'
+      - 'supabase/data/v49_support_conversations.sql'
       - 'supabase/data/v47_contextual_quizzes.sql'
       - 'tests/admin-plans.cjs'
       - 'tests/xp-rewards.cjs'
@@ -79,6 +83,8 @@ jobs:
           node --check site/practice-engine.js
       - name: Simple Academy and timer regression tests
         run: node tests/simple-academy.cjs
+      - name: Two-way member and admin ticket conversations
+        run: node tests/support-conversations.cjs
       - name: Support ticket sending and receipt regression
         run: node tests/support-submit.cjs
       - name: Subscription Edge Function security regression
