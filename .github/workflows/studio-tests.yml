@@ -6,6 +6,9 @@ on:
       - 'site/academy-v21.js'
       - 'site/academy-curriculum.js'
       - 'site/academy-i18n.js'
+      - 'site/academy-effects.js'
+      - 'site/academy-effects.css'
+      - 'tests/effects-browser.cjs'
       - 'tests/i18n-browser.cjs'
       - 'site/academy-v31-layout.css'
       - 'supabase/functions/admin-users/index.ts'
@@ -31,6 +34,9 @@ on:
       - 'site/academy-v21.js'
       - 'site/academy-curriculum.js'
       - 'site/academy-i18n.js'
+      - 'site/academy-effects.js'
+      - 'site/academy-effects.css'
+      - 'tests/effects-browser.cjs'
       - 'tests/i18n-browser.cjs'
       - 'site/academy-v31-layout.css'
       - 'supabase/functions/admin-users/index.ts'
@@ -66,6 +72,7 @@ jobs:
           node --check site/academy-v21.js
           node --check site/academy-curriculum.js
           node --check site/academy-i18n.js
+          node --check site/academy-effects.js
           node --check site/academy-studio.js
           node --check site/academy-runtime.js
           node --check site/academy-learning-sync.js
@@ -102,5 +109,7 @@ jobs:
           test -s site/vendor/pyodide/python_stdlib.zip
       - name: DE/EN browser translation and responsive toggle regression
         run: node tests/i18n-browser.cjs
+      - name: Button audio, ambient motion and tap effects regression
+        run: node tests/effects-browser.cjs
       - name: Check real browser runtimes
         run: node tests/runtime-browser.cjs
