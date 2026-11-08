@@ -1457,14 +1457,23 @@ function voucherAdminSection(){
  '<p class="micro voucher-footnote">Bereits eingelöste Codes bleiben für Abrechnung und Nachweise intern archiviert. Ungenutzte Codes werden nach Ablauf automatisch gelöscht. Die automatische Bereinigung läuft etwa jede Minute.</p></section>';
 }
 
+function shopDiscountAdminSection(){
+ return '<section class="panel ll-shop-discount"><form data-form="shop-sale" class="shop-sale-admin"><div><strong>Allgemeiner Shoprabatt</strong><small>Für Plus und Ultimate. 0 % beendet die Aktion.</small></div>'+
+ '<label><input class="input" type="number" name="percent" min="0" max="90" value="'+Number(s.shopDiscount||0)+'" required> %</label>'+
+ '<button class="btn primary small" type="submit">Rabatt speichern</button></form></section>';
+}
 function supportAdminSection(){
- const entries=Array.isArray(s.service?.admin)?s.service.admin:[];
- return '<section class="section panel support-admin"><div class="section-heading"><div><span class="eyebrow">ADMIN · SUPPORT & BETA</span><h2>Support-Posteingang</h2><p>Beantworte Meldungen und genehmige angefragte Testzugänge.</p></div><button class="btn small" data-action="refresh-support">↻ Aktualisieren</button></div>'+
- '<form data-form="shop-sale" class="shop-sale-admin"><div><strong>Allgemeiner Shoprabatt</strong><small>Für alle Besucher auf Plus und Ultimate sichtbar. 0 % beendet die Aktion.</small></div><label><input class="input" type="number" name="percent" min="0" max="90" value="'+Number(s.shopDiscount||0)+'" required> %</label><button class="btn primary small" type="submit">Rabatt speichern</button></form>'+
+ const entries=Array.isArray(s.service?.admin)?[...s.service.admin].sort((a,b)=>Date.parse(b.updated_at||b.created_at)-Date.parse(a.updated_at||a.created_at)):[];
+ return '<section class="section panel support-admin ll-admin-inbox"><div class="section-heading"><div><span class="eyebrow">ADMIN · SUPPORT</span><h2>Support-Posteingang</h2>'+
+ '<p>Alle Anfragen an einem Ort. Wähle ein Ticket aus und schreibe mit dem Mitglied.</p></div><button type="button" class="btn small" data-action="refresh-support">↻ Aktualisieren</button></div>'+
  '<div class="support-admin-stats">'+[['Offen','open'],['Beantwortet','answered'],['Genehmigt','approved']].map(([label,status])=>'<span><strong>'+entries.filter(x=>x.status===status).length+'</strong><small>'+label+'</small></span>').join('')+'</div>'+
- '<label class="beta-switch"><span><strong>Beta-Anfragen sichtbar</strong><small>Wenn ausgeschaltet, verschwinden Beta- und Tarif-Anfragen aus der App. Bestehende Anfragen bleiben im Posteingang.</small></span><input type="checkbox" id="beta-enabled" '+(s.service?.beta_open?'checked':'')+'></label>'+
- (entries.length?entries.map(t=>'<article class="support-ticket admin-ticket"><div><strong>'+esc(t.username||'Mitglied')+' · '+esc(t.category)+(t.tier?' · '+esc(plans[t.tier]||t.tier):'')+'</strong><span class="chip plus">'+esc(t.status)+'</span></div><small>'+new Date(t.created_at).toLocaleString('de-DE')+'</small><p>'+esc(t.message)+'</p>'+(t.reply?'<blockquote>'+esc(t.reply)+'</blockquote>':'')+
- '<div class="reply-templates"><button type="button" class="btn small" data-reply-template="Danke für deine Meldung. Wir prüfen das und melden uns hier zurück.">Eingang bestätigen</button><button type="button" class="btn small" data-reply-template="Bitte beschreibe die Schritte und dein Gerät genauer, damit wir den Fehler nachstellen können.">Details anfragen</button></div><form data-form="support-reply" data-ticket-id="'+esc(t.id)+'"><textarea class="input" name="reply" maxlength="2000" rows="2" placeholder="Antwort an das Mitglied …">'+esc(t.reply||'')+'</textarea><div class="support-reply-actions"><select class="select" name="status"><option value="answered">Beantworten</option><option value="closed">Schließen</option><option value="rejected">Ablehnen</option>'+(t.category==='plan'&&t.status!=='approved'?'<option value="approved">Mitgliedschaft freigeben</option>':'')+'</select>'+(t.category==='plan'&&t.status!=='approved'?'<label>Freigabe in Tagen <input class="input" type="number" name="days" min="1" max="3650" value="30"></label>':'')+'<button class="btn primary small" type="submit">Speichern</button></div></form></article>').join(''):'<div class="empty">Noch keine Supportanfragen.</div>')+'</section>';
+ '<label class="beta-switch"><span><strong>Beta-Anfragen sichtbar</strong><small>Bestehende Tickets bleiben erhalten.</small></span><input type="checkbox" id="beta-enabled" '+(s.service?.beta_open?'checked':'')+'></label>'+
+ '<div class="ll-admin-ticket-list">'+(entries.length?entries.map(t=>
+  '<article class="ll-admin-ticket '+(s.chatTicketId===t.id?'selected':'')+'"><div class="ll-ticket-row"><strong>'+esc(t.username||'Mitglied')+'</strong>'+
+  '<span class="chip '+(t.status==='approved'?'free':'plus')+'">'+esc(t.status)+'</span></div>'+
+  '<small>'+esc(t.category)+(t.tier?' · '+esc(plans[t.tier]||t.tier):'')+' · '+new Date(t.updated_at||t.created_at).toLocaleString('de-DE')+'</small>'+
+  '<p>'+esc((t.reply||t.message||'').slice(0,170))+'</p><button class="btn small" type="button" data-chat-open="'+esc(t.id)+'">'+(s.chatTicketId===t.id?'Gespräch aktualisieren':'Chat öffnen →')+'</button></article>').join(''):
+  '<div class="empty">Noch keine Supportanfragen. Neue Tickets erscheinen hier automatisch.</div>')+'</div></section>'+ticketChatPanel(true);
 }
 
 function membershipRemainingText(tier,expiry){
