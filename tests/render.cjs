@@ -114,6 +114,31 @@ const adminHtml=app.adminPage();
 for(const value of ['data-plan-clock="paid-user"','data-plan-action="extend"','data-plan-action="reduce"','data-plan-action="end"','Laufzeit in Tagen','Endet am'])
  assert(adminHtml.includes(value),'Missing admin subscription duration feature '+value);
 assert(adminHtml.includes('data-plan-user="paid-user"'),'Subscription actions are scoped to the target account');
+assert(adminHtml.includes('data-view-progress="paid-user"'),'Click on a member to inspect their course progress');
+state.adminLearner={
+ student:{id:'paid-user',username:'PlusTester',display_name:'Plus Tester'},
+ progress:{completed:1,total:2,started_courses:1,finished_courses:0,
+  last_opened:{id:'python-02',title:'Schleifen',chapter:'Grundlagen',course_id:'python'},
+  updated_at:'2030-01-01T12:00:00Z'},
+ courses:[{id:'python',name:'Python',category:'Sprachen',completed:1,total:2,percent:50,
+  last_opened:{id:'python-02',title:'Schleifen',chapter:'Grundlagen'},
+  next:{id:'python-02',title:'Schleifen',chapter:'Grundlagen'}}]
+};
+const detailHtml=app.adminPage();
+for(const word of ['admin-progress-detail','PlusTester','Lektionen erledigt','Schleifen','50 %','admin-progress-filter','admin-progress-search'])
+ assert(detailHtml.includes(word),'Missing member progress view '+word);
+state.adminLearner=null;
+state.registrationPolicy={mode:'approval',loaded:true};state.isOwner=true;
+sandbox.location.hash='#admin/registration';
+assert(app.adminPage().includes('Bewerbung mit Freigabe'),'Application mode is visible');
+assert(app.adminPage().includes('Freie Registrierung'),'Self-service mode is visible');
+assert(app.adminPage().includes('data-registration-mode="open"'),'Owner may switch the mode');
+state.registrationPolicy.mode='open';
+assert(app.adminPage().includes('Freie Registrierung aktiv'),'Open mode reflects current settings');
+state.isOwner=false;
+assert(app.adminPage().includes('Nur der Projekteigentümer'),'Non-owner admin is read-only');
+state.registrationPolicy={mode:'approval',loaded:true};state.isOwner=true;
+sandbox.location.hash='#admin/members';
 state.memberExpiry['paid-user']=null;
 assert(app.adminPage().includes('Laufzeit festlegen'),'Permanent subscriptions can be converted to a fixed duration');
 state.members.pop();
