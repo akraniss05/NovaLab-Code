@@ -1,0 +1,546 @@
+{
+  "version": 51,
+  "group": "3a",
+  "topics": [
+    {
+      "course": "cpp",
+      "ordinal": 1,
+      "title": "Namespaces",
+      "theory": "Namespaces gruppieren Namen und vermeiden Kollisionen zwischen Bibliotheken. Der std-Namespace enthält viele Standardtypen.",
+      "example": "std::cout << \"Hallo\";",
+      "example_note": "Der Qualifizierer std:: kennzeichnet das Symbol aus der Standardbibliothek.",
+      "task": "Verwende einen Standardnamen ohne using namespace."
+    },
+    {
+      "course": "cpp",
+      "ordinal": 2,
+      "title": "std::string",
+      "theory": "std::string verwaltet eine veränderliche Zeichenkette mit eigener Speicherverwaltung.",
+      "example": "std::string name=\"Alex\";\nstd::cout << name;",
+      "example_note": "Der Wert wird ohne manuelle char-Array-Verwaltung ausgegeben.",
+      "task": "Verkette zwei Strings."
+    },
+    {
+      "course": "cpp",
+      "ordinal": 3,
+      "title": "std::vector",
+      "theory": "Ein vector verwaltet eine veränderliche Folge gleichartiger Werte. push_back hängt einen Wert an.",
+      "example": "std::vector<int> z{1,2};\nz.push_back(3);",
+      "example_note": "Die Liste enthält danach drei Ganzzahlen.",
+      "task": "Füge einer Liste zwei Zahlen hinzu."
+    },
+    {
+      "course": "cpp",
+      "ordinal": 4,
+      "title": "Range-for",
+      "theory": "Die Range-for-Schleife besucht alle Einträge eines Containers. Eine Referenz kann Kopien vermeiden.",
+      "example": "for(const auto& zahl:zahlen){std::cout << zahl;}",
+      "example_note": "Jeder vorhandene Wert wird ohne extra Indexvariable gelesen.",
+      "task": "Gib alle Elemente eines vectors aus."
+    },
+    {
+      "course": "cpp",
+      "ordinal": 5,
+      "title": "Referenzen",
+      "theory": "Eine Referenz bezeichnet dasselbe Objekt wie eine andere Variable. const kann Änderungen über diese Referenz verhindern.",
+      "example": "int wert=5;\nconst int& ref=wert;",
+      "example_note": "ref liest denselben Wert, darf ihn aber nicht über die Referenz ändern.",
+      "task": "Erkläre die Veränderung eines Wertes über eine nichtkonstante Referenz."
+    },
+    {
+      "course": "cpp",
+      "ordinal": 6,
+      "title": "RAII",
+      "theory": "RAII bindet die Lebenszeit einer Ressource an ein Objekt. Destruktoren geben Ressourcen beim Verlassen des Gültigkeitsbereichs frei.",
+      "example": "std::lock_guard<std::mutex> lock(mutex);",
+      "example_note": "Das Sperrobjekt gibt die Mutex beim Scope-Ende wieder frei.",
+      "task": "Beschreibe eine sichere Dateiverwaltung durch RAII."
+    },
+    {
+      "course": "cpp",
+      "ordinal": 7,
+      "title": "unique_ptr",
+      "theory": "std::unique_ptr besitzt ein Objekt exklusiv und löscht es beim Zerstören automatisch.",
+      "example": "auto p=std::make_unique<int>(42);",
+      "example_note": "Der Speicher gehört einem Besitzer, ohne manuelles delete.",
+      "task": "Erstelle einen unique_ptr für ein eigenes Objekt."
+    },
+    {
+      "course": "cpp",
+      "ordinal": 8,
+      "title": "move",
+      "theory": "std::move erlaubt, einen Ausdruck als verschiebbaren Wert zu behandeln. Ob tatsächlich Ressourcen bewegt werden, hängt vom Typ ab.",
+      "example": "std::string ziel=std::move(quelle);",
+      "example_note": "Der Inhalt darf in ziel übernommen werden; quelle bleibt gültig, aber sein Wert ist nicht spezifiziert.",
+      "task": "Erkläre einen Move statt einer Kopie."
+    },
+    {
+      "course": "cpp",
+      "ordinal": 9,
+      "title": "Lambdas",
+      "theory": "Eine Lambda-Funktion kann direkt an einen Algorithmus übergeben werden und benötigte Variablen erfassen.",
+      "example": "auto doppelt=[](int x){return x*2;};",
+      "example_note": "doppelt(3) liefert 6.",
+      "task": "Schreibe eine Lambda für eine Grenzprüfung."
+    },
+    {
+      "course": "cpp",
+      "ordinal": 10,
+      "title": "std::optional",
+      "theory": "std::optional<T> repräsentiert einen vorhandenen oder fehlenden Wert ohne magische Ersatzwerte.",
+      "example": "std::optional<int> id=std::nullopt;",
+      "example_note": "id enthält noch keine Zahl; has_value kann das prüfen.",
+      "task": "Schreibe eine Funktion mit optionalem Rückgabewert."
+    },
+    {
+      "course": "cpp",
+      "ordinal": 11,
+      "title": "Exceptions",
+      "theory": "Exceptions melden Fehler über throw und lassen sich durch passende catch-Blöcke behandeln.",
+      "example": "try{throw std::runtime_error(\"Fehler\");}catch(const std::exception& e){std::cerr<<e.what();}",
+      "example_note": "Die Exception wird abgefangen und ihre Meldung ausgegeben.",
+      "task": "Behandle einen absichtlich erzeugten Fehler."
+    },
+    {
+      "course": "cpp",
+      "ordinal": 12,
+      "title": "CMake",
+      "theory": "CMake beschreibt, wie ein C++-Projekt aus Quelltexten gebaut werden soll. Der Build-Generator erstellt die benötigten Dateien.",
+      "example": "add_executable(app main.cpp)",
+      "example_note": "CMake erzeugt ein ausführbares Ziel app aus main.cpp.",
+      "task": "Lege ein kleines Projekt mit zwei Quelldateien an."
+    },
+    {
+      "course": "csharp",
+      "ordinal": 1,
+      "title": "Properties",
+      "theory": "Properties kapseln den Lese- und Schreibzugriff auf ein Feld und können Regeln für Änderungen enthalten.",
+      "example": "public int Level { get; private set; }",
+      "example_note": "Außerhalb der Klasse kann Level gelesen, aber nicht beliebig gesetzt werden.",
+      "task": "Lege eine nur intern veränderbare Eigenschaft an."
+    },
+    {
+      "course": "csharp",
+      "ordinal": 2,
+      "title": "Nullable Types",
+      "theory": "Mit ? lässt sich ein Werttyp nullable machen. So kann ein Wert ausdrücklich fehlen.",
+      "example": "int? level=null;",
+      "example_note": "Die Variable enthält aktuell keine Ganzzahl; HasValue prüft ihren Zustand.",
+      "task": "Verarbeite ein möglicherweise fehlendes Level."
+    },
+    {
+      "course": "csharp",
+      "ordinal": 3,
+      "title": "Pattern Matching",
+      "theory": "Pattern Matching prüft einen Wert anhand seines Typs oder seiner Struktur und kann ihn direkt binden.",
+      "example": "if(value is int zahl){Console.WriteLine(zahl);}",
+      "example_note": "Im if-Block steht zahl sicher als int zur Verfügung.",
+      "task": "Unterscheide Text- und Zahlenargumente."
+    },
+    {
+      "course": "csharp",
+      "ordinal": 4,
+      "title": "Records",
+      "theory": "Ein record eignet sich für Datenmodelle mit wertorientierten Vergleichsregeln und kurzer Syntax.",
+      "example": "public record Player(string Name,int Level);",
+      "example_note": "Zwei Records mit denselben Eigenschaften werden wertorientiert verglichen.",
+      "task": "Definiere einen Datenrecord."
+    },
+    {
+      "course": "csharp",
+      "ordinal": 5,
+      "title": "Interfaces",
+      "theory": "Ein Interface beschreibt einen Vertrag, den eine implementierende Klasse erfüllen muss.",
+      "example": "public interface ILogger { void Log(string text); }",
+      "example_note": "Eine Loggerklasse muss die vereinbarte Methode bereitstellen.",
+      "task": "Erstelle ein Interface für Speichervorgänge."
+    },
+    {
+      "course": "csharp",
+      "ordinal": 6,
+      "title": "Generics",
+      "theory": "Generische Typen verwenden Typvariablen, um Code wiederverwendbar und typsicher zu machen.",
+      "example": "List<string> namen=new();",
+      "example_note": "Die Liste darf nur Strings enthalten.",
+      "task": "Schreibe eine generische Hilfsmethode."
+    },
+    {
+      "course": "csharp",
+      "ordinal": 7,
+      "title": "LINQ Where",
+      "theory": "Where filtert eine Sequenz durch ein Prädikat und liefert eine neue Abfrage der passenden Werte.",
+      "example": "var top=spieler.Where(p=>p.Level>10);",
+      "example_note": "Nur Spieler mit Level über 10 werden ausgewählt.",
+      "task": "Filtere eine Liste von Punktzahlen."
+    },
+    {
+      "course": "csharp",
+      "ordinal": 8,
+      "title": "LINQ Select",
+      "theory": "Select projiziert aus jedem Eintrag einen neuen Wert oder ein neues Objekt.",
+      "example": "var namen=spieler.Select(p=>p.Name);",
+      "example_note": "Statt ganzer Spielerobjekte enthält die Ausgabe nur Namen.",
+      "task": "Erzeuge eine Namensliste aus Objekten."
+    },
+    {
+      "course": "csharp",
+      "ordinal": 9,
+      "title": "async Task",
+      "theory": "Eine async-Methode, die keinen direkten Ergebniswert zurückgibt, verwendet meist Task statt async void.",
+      "example": "public async Task Laden(){await Task.Delay(100);}",
+      "example_note": "Der Aufrufer kann den Task abwarten und Fehler behandeln.",
+      "task": "Implementiere eine asynchrone Wartefunktion."
+    },
+    {
+      "course": "csharp",
+      "ordinal": 10,
+      "title": "CancellationToken",
+      "theory": "Ein CancellationToken überträgt eine Abbruchanforderung an kooperative asynchrone Methoden.",
+      "example": "await Task.Delay(1000,cancellationToken);",
+      "example_note": "Die Operation kann bei einer Abbruchanforderung früh beendet werden.",
+      "task": "Reiche einen Token an eine Task-Methode weiter."
+    },
+    {
+      "course": "csharp",
+      "ordinal": 11,
+      "title": "Events",
+      "theory": "Ein event stellt ein Benachrichtigungsmuster bereit, bei dem andere Komponenten Handler anmelden können.",
+      "example": "public event EventHandler? Updated;",
+      "example_note": "Abonnenten können auf die Aktualisierung reagieren, ohne eng gekoppelt zu sein.",
+      "task": "Melde einen Eventhandler an."
+    },
+    {
+      "course": "csharp",
+      "ordinal": 12,
+      "title": "FiveM Event-Sicherheit",
+      "theory": "In serverseitigen FiveM-C#-Handlers müssen Spieleridentität und Rechte aus der Serverumgebung geprüft werden.",
+      "example": "EventHandlers[\"shop:buy\"] += new Action<Player,string>((player,item)=>{ /* prüfen */ });",
+      "example_note": "Der Handler erhält einen Spieler und einen Artikel, aber die eigentlichen Prüfungen müssen im Servercode erfolgen.",
+      "task": "Definiere zwei serverseitige Validierungsregeln."
+    },
+    {
+      "course": "go",
+      "ordinal": 1,
+      "title": "Zero Values",
+      "theory": "In Go erhalten nicht initialisierte Variablen eines Typs automatisch ihren Nullwert, etwa 0 für int.",
+      "example": "var punkte int\nfmt.Println(punkte)",
+      "example_note": "Die Ausgabe ist 0, obwohl kein Wert ausdrücklich zugewiesen wurde.",
+      "task": "Vergleiche Nullwerte von int, bool und string."
+    },
+    {
+      "course": "go",
+      "ordinal": 2,
+      "title": "Pointer",
+      "theory": "Ein Pointer verweist auf eine Variable. Mit & erhältst du eine Adresse und mit * greifst du auf ihren Wert zu.",
+      "example": "n:=5\np:=&n\nfmt.Println(*p)",
+      "example_note": "Das Dereferenzieren zeigt 5.",
+      "task": "Ändere einen int-Wert über einen Pointer."
+    },
+    {
+      "course": "go",
+      "ordinal": 3,
+      "title": "Slices",
+      "theory": "Ein Slice ist eine flexible Ansicht auf ein zugrunde liegendes Array. append kann nötigenfalls neuen Speicher bereitstellen.",
+      "example": "zahlen:=[]int{1,2}\nzahlen=append(zahlen,3)",
+      "example_note": "Nach append hat der Slice drei Werte.",
+      "task": "Füge mehreren Werten einen neuen Eintrag hinzu."
+    },
+    {
+      "course": "go",
+      "ordinal": 4,
+      "title": "Maps",
+      "theory": "Eine Map speichert Werte unter eindeutigen Schlüsseln und bietet einen zusätzlichen bool-Wert zur Existenzprüfung.",
+      "example": "preise:=map[string]int{\"brot\":3}\npreis,ok:=preise[\"brot\"]",
+      "example_note": "ok ist true, preis enthält 3.",
+      "task": "Prüfe bei einem unbekannten Schlüssel den bool-Wert."
+    },
+    {
+      "course": "go",
+      "ordinal": 5,
+      "title": "Structs",
+      "theory": "Ein struct gruppiert benannte Felder zu einem Typ ohne Klassenvererbung.",
+      "example": "type Player struct{Name string;Level int}",
+      "example_note": "Ein Player-Wert enthält Name und Level.",
+      "task": "Erstelle zwei Player-Werte mit verschiedenen Feldern."
+    },
+    {
+      "course": "go",
+      "ordinal": 6,
+      "title": "Methods",
+      "theory": "Eine Methode wird in Go über einen Receiver an einen Typ gebunden. Ein Pointer-Receiver kann den Zustand verändern.",
+      "example": "func(p *Player) LevelUp(){p.Level++}",
+      "example_note": "Der Receiver zeigt auf denselben Player, dessen Level erhöht wird.",
+      "task": "Schreibe eine Methode zur Veränderung eines Feldes."
+    },
+    {
+      "course": "go",
+      "ordinal": 7,
+      "title": "Interfaces",
+      "theory": "Interfaces beschreiben Mengen von Methoden. Ein Typ erfüllt sie implizit, wenn er die geforderten Methoden besitzt.",
+      "example": "type Saver interface{Save() error}",
+      "example_note": "Ein Typ mit Save() error erfüllt Saver ohne implements-Schlüsselwort.",
+      "task": "Entwirf ein Interface zum Speichern."
+    },
+    {
+      "course": "go",
+      "ordinal": 8,
+      "title": "Errors",
+      "theory": "Go gibt Fehler häufig als zusätzlichen Rückgabewert zurück. Die aufrufende Funktion muss err prüfen.",
+      "example": "wert,err:=strconv.Atoi(\"12\")\nif err!=nil{return err}",
+      "example_note": "Die Umwandlung gelingt bei Ziffern; sonst enthält err die Ursache.",
+      "task": "Behandle einen ungültigen Zahlentext."
+    },
+    {
+      "course": "go",
+      "ordinal": 9,
+      "title": "defer",
+      "theory": "defer verschiebt einen Funktionsaufruf bis zum Verlassen der aktuellen Funktion. Es eignet sich für Ressourcenfreigabe.",
+      "example": "f,_:=os.Open(\"daten.txt\")\ndefer f.Close()",
+      "example_note": "Der Datei-Handle wird am Funktionsende geschlossen; reale Anwendungen prüfen zuvor den Open-Fehler.",
+      "task": "Baue eine sichere Dateiöffnung mit defer."
+    },
+    {
+      "course": "go",
+      "ordinal": 10,
+      "title": "Goroutines",
+      "theory": "Eine Goroutine startet eine Funktion nebenläufig. Ohne Synchronisierung kann das Programm enden, bevor sie fertig ist.",
+      "example": "go arbeite()",
+      "example_note": "Der Aufruf startet die Arbeit nebenläufig; für das Ergebnis wird Koordination benötigt.",
+      "task": "Erkläre eine Wartebedingung für zwei Goroutines."
+    },
+    {
+      "course": "go",
+      "ordinal": 11,
+      "title": "Channels",
+      "theory": "Ein Channel überträgt Werte zwischen Goroutines und synchronisiert beim Senden und Empfangen.",
+      "example": "ch:=make(chan int)\ngo func(){ch<-3}()\nzahl:=<-ch",
+      "example_note": "Die empfangende Goroutine erhält den Wert 3 aus dem Channel.",
+      "task": "Sende eine Nachricht über einen Channel."
+    },
+    {
+      "course": "go",
+      "ordinal": 12,
+      "title": "context.Context",
+      "theory": "Ein Context überträgt Fristen, Abbruchsignale und anfragebezogene Daten zwischen Funktionen.",
+      "example": "ctx,cancel:=context.WithTimeout(context.Background(),time.Second)\ndefer cancel()",
+      "example_note": "Der Context wird nach einer Sekunde abgebrochen, falls die Arbeit nicht früher endet.",
+      "task": "Nutze einen Timeout bei einem HTTP-Request."
+    },
+    {
+      "course": "rust",
+      "ordinal": 1,
+      "title": "Pattern Matching",
+      "theory": "match prüft jede Variante eines Werts. Rust verlangt bei match grundsätzlich vollständige Fallabdeckung.",
+      "example": "match status {0=>println!(\"neu\"),_=>println!(\"andere\")}",
+      "example_note": "Der Platzhalter _ behandelt alle übrigen Zahlen.",
+      "task": "Behandle drei Statusvarianten."
+    },
+    {
+      "course": "rust",
+      "ordinal": 2,
+      "title": "if let",
+      "theory": "if let ist eine knappe Schreibweise für das Prüfen und Entpacken einer bestimmten Enum-Variante.",
+      "example": "if let Some(name)=nutzername {println!(\"{}\",name);}",
+      "example_note": "Der Block läuft nur, wenn Some einen Namen enthält.",
+      "task": "Lies einen optionalen Wert sicher."
+    },
+    {
+      "course": "rust",
+      "ordinal": 3,
+      "title": "Vec",
+      "theory": "Vec<T> ist eine dynamische Liste gleichartiger Werte mit eigener Speicherverwaltung.",
+      "example": "let mut v=vec![1,2];\nv.push(3);",
+      "example_note": "Die Liste enthält danach drei Zahlen.",
+      "task": "Füge zwei Einträge hinzu."
+    },
+    {
+      "course": "rust",
+      "ordinal": 4,
+      "title": "Slices",
+      "theory": "Ein Slice &[] ist eine geliehene Ansicht auf zusammenhängende Einträge ohne Besitzübertragung.",
+      "example": "let a=[1,2,3];\nlet teil=&a[1..];",
+      "example_note": "teil referenziert die Werte 2 und 3.",
+      "task": "Übergib einen Teil eines Arrays an eine Funktion."
+    },
+    {
+      "course": "rust",
+      "ordinal": 5,
+      "title": "String und str",
+      "theory": "String ist ein besessener veränderbarer Textpuffer, &str eine geliehene Textansicht.",
+      "example": "let name=String::from(\"Alex\");\nlet ansicht:&str=&name;",
+      "example_note": "ansicht liest denselben Text, ohne ihn zu kopieren.",
+      "task": "Vergleiche eine geliehene und eine besessene Zeichenkette."
+    },
+    {
+      "course": "rust",
+      "ordinal": 6,
+      "title": "Trait",
+      "theory": "Ein Trait beschreibt Fähigkeiten, die unterschiedliche Typen implementieren können.",
+      "example": "trait Begruessen{fn hallo(&self)->String;}",
+      "example_note": "Typen mit der Trait-Implementierung bieten die Methode hallo.",
+      "task": "Definiere einen Trait für eine Ausgabe."
+    },
+    {
+      "course": "rust",
+      "ordinal": 7,
+      "title": "Generics",
+      "theory": "Generics erlauben dieselbe Funktion für mehrere Typen, wenn deren nötige Eigenschaften eingeschränkt werden.",
+      "example": "fn identisch<T>(wert:T)->T{wert}",
+      "example_note": "Der Aufruf liefert denselben Typ, der hineingegeben wurde.",
+      "task": "Schreibe eine generische Rückgabefunktion."
+    },
+    {
+      "course": "rust",
+      "ordinal": 8,
+      "title": "Lifetimes",
+      "theory": "Lifetimes beschreiben Beziehungen zwischen Referenzgültigkeiten. Sie verlängern die Lebensdauer von Daten nicht.",
+      "example": "fn erstes<'a>(a:&'a str,_b:&str)->&'a str{a}",
+      "example_note": "Der Rückgabewert darf nicht länger als die Referenz a gültig sein.",
+      "task": "Beschreibe die Lebensdauer einer geliehenen Textreferenz."
+    },
+    {
+      "course": "rust",
+      "ordinal": 9,
+      "title": "Iterator map",
+      "theory": "map transformiert jeden Iteratorwert; collect materialisiert die Ergebnisse in eine Sammlung.",
+      "example": "let v:Vec<_>=(1..4).map(|n|n*2).collect();",
+      "example_note": "v enthält 2, 4 und 6.",
+      "task": "Erstelle eine neue Liste aus Quadratzahlen."
+    },
+    {
+      "course": "rust",
+      "ordinal": 10,
+      "title": "Result",
+      "theory": "Result<T,E> erzwingt das bewusste Behandeln eines Erfolgs- oder Fehlerwerts.",
+      "example": "let n:\"Result<i32,_>\" = \"3\".parse();",
+      "example_note": "parse kann Ok(3) oder Err liefern; die Typannotation im Beispiel ist als Darstellung zu verstehen.",
+      "task": "Behandle den Fehler beim Parsen einer Zahl."
+    },
+    {
+      "course": "rust",
+      "ordinal": 11,
+      "title": "? Operator",
+      "theory": "? gibt bei einem Fehler frühzeitig aus der Funktion zurück und entpackt bei Erfolg den Wert.",
+      "example": "fn lesen()->Result<i32,std::num::ParseIntError>{\"5\".parse()}",
+      "example_note": "Eine rufende Funktion kann lesen()? benutzen, wenn ihr Rückgabetyp den Fehler unterstützt.",
+      "task": "Ersetze eine ausführliche Result-Prüfung durch ?."
+    },
+    {
+      "course": "rust",
+      "ordinal": 12,
+      "title": "Cargo Tests",
+      "theory": "cargo test führt Rust-Tests aus, die häufig mit #[test] markiert sind.",
+      "example": "#[test]\nfn summe(){assert_eq!(2+3,5);}",
+      "example_note": "Der Test schlägt fehl, wenn die Summe von 2 und 3 nicht 5 ist.",
+      "task": "Ergänze einen negativen Testfall."
+    },
+    {
+      "course": "php",
+      "ordinal": 1,
+      "title": "Strict Types",
+      "theory": "declare(strict_types=1) aktiviert für entsprechende Aufrufe strengere Regeln bei Skalarparametern und Rückgaben.",
+      "example": "<?php declare(strict_types=1);",
+      "example_note": "Damit vermeidest du bestimmte implizite Typumwandlungen beim Funktionsaufruf.",
+      "task": "Deklariere eine Funktion mit int-Parametern."
+    },
+    {
+      "course": "php",
+      "ordinal": 2,
+      "title": "Null Coalescing",
+      "theory": "?? liefert den rechten Wert, wenn links kein Wert vorhanden oder der Wert null ist.",
+      "example": "$name=$_GET[\"name\"] ?? \"Gast\";",
+      "example_note": "Fehlt der URL-Parameter, wird Gast verwendet.",
+      "task": "Gib einen Default für einen optionalen Parameter an."
+    },
+    {
+      "course": "php",
+      "ordinal": 3,
+      "title": "Assoziative Arrays",
+      "theory": "PHP-Arrays können Zeichenketten als Schlüssel verwenden, nicht nur fortlaufende Zahlen.",
+      "example": "$user=[\"name\"=>\"Alex\",\"level\"=>3];",
+      "example_note": "$user[\"name\"] liefert Alex.",
+      "task": "Speichere drei Eigenschaften eines Spielers."
+    },
+    {
+      "course": "php",
+      "ordinal": 4,
+      "title": "foreach",
+      "theory": "foreach läuft über Arraywerte, auf Wunsch mit Schlüssel und Wert.",
+      "example": "foreach($user as $key=>$value){echo $key;}",
+      "example_note": "Die Schleife durchläuft die benannten Felder nacheinander.",
+      "task": "Gib Schlüssel und Werte eines Arrays aus."
+    },
+    {
+      "course": "php",
+      "ordinal": 5,
+      "title": "Funktionen typisieren",
+      "theory": "PHP kann Parameter und Rückgabewerte typisieren und dadurch Vertragsfehler sichtbar machen.",
+      "example": "function doppelt(int $x):int{return $x*2;}",
+      "example_note": "Die Funktion erwartet und liefert einen Integer.",
+      "task": "Ergänze Rückgabetypen an einer Berechnung."
+    },
+    {
+      "course": "php",
+      "ordinal": 6,
+      "title": "Klassen",
+      "theory": "Klassen bündeln Eigenschaften und Methoden in wiederverwendbaren Objekten.",
+      "example": "class User{public function __construct(public string $name){}}",
+      "example_note": "Die Konstruktor-Eigenschaft legt den Namen beim Erzeugen fest.",
+      "task": "Erstelle eine Klasse mit zwei Eigenschaften."
+    },
+    {
+      "course": "php",
+      "ordinal": 7,
+      "title": "Interfaces",
+      "theory": "Interfaces legen fest, welche öffentlichen Methoden eine implementierende Klasse bereitstellen muss.",
+      "example": "interface Saver{public function save():void;}",
+      "example_note": "Eine Klasse mit implements Saver muss save definieren.",
+      "task": "Definiere einen Speichervertrag."
+    },
+    {
+      "course": "php",
+      "ordinal": 8,
+      "title": "Namespaces",
+      "theory": "Namespaces trennen gleichnamige PHP-Klassen unterschiedlicher Module.",
+      "example": "namespace App\\Services;",
+      "example_note": "Die folgenden Klassennamen gehören zum benannten Namensraum.",
+      "task": "Organisiere zwei Klassen in unterschiedlichen Namespaces."
+    },
+    {
+      "course": "php",
+      "ordinal": 9,
+      "title": "PDO Prepared Statements",
+      "theory": "Vorbereitete SQL-Abfragen binden Werte getrennt vom SQL-Code. Das ist die Grundlage zum Schutz vor Injection.",
+      "example": "$stmt=$pdo->prepare(\"SELECT * FROM users WHERE id=?\");\n$stmt->execute([$id]);",
+      "example_note": "Die ID wird als Parameter gebunden und nicht mit SQL-Text verkettet.",
+      "task": "Baue eine SELECT-Abfrage mit Platzhalter."
+    },
+    {
+      "course": "php",
+      "ordinal": 10,
+      "title": "htmlspecialchars",
+      "theory": "htmlspecialchars kodiert Sonderzeichen für HTML-Textkontexte. Damit wird untrusted Text nicht als Markup ausgeführt.",
+      "example": "echo htmlspecialchars($name,ENT_QUOTES,\"UTF-8\");",
+      "example_note": "HTML-Zeichen in $name werden als Text ausgegeben.",
+      "task": "Zeige eine Nutzereingabe sicher im HTML-Text."
+    },
+    {
+      "course": "php",
+      "ordinal": 11,
+      "title": "Sessions",
+      "theory": "Eine PHP-Session speichert serverseitige Daten zwischen HTTP-Anfragen und wird über eine Sitzungs-ID zugeordnet.",
+      "example": "session_start();\n$_SESSION[\"user_id\"]=123;",
+      "example_note": "Der Wert kann bei einer späteren Anfrage derselben Session wieder gelesen werden.",
+      "task": "Speichere eine Test-ID in einer Session."
+    },
+    {
+      "course": "php",
+      "ordinal": 12,
+      "title": "Composer",
+      "theory": "Composer verwaltet PHP-Abhängigkeiten und ihre Versionen. Die Lockdatei sorgt für reproduzierbare Installationen.",
+      "example": "composer install",
+      "example_note": "Composer installiert die im Projekt vorgesehenen Paketversionen.",
+      "task": "Erkläre den Unterschied zu composer update."
+    }
+  ]
+}
