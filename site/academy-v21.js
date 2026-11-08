@@ -7,7 +7,7 @@
 'use strict';
 var cfg=window.LL_CONFIG||{}, $=function(q,root){return (root||document).querySelector(q);};
 var content=$('#content'), sidebar=$('#sidebar'), bottom=$('#bottom-nav'), toastNode=$('#toast');
-var api=null, s={shopDiscount:0,service:{beta_open:true,mine:[],admin:[]},streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],xpAwards:[],xpClaimBusy:false,progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,quizStep:0,quizPassed:false,sectionIndex:0,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},memberExpiry:{},adminPage:1,adminFilter:'all',adminSearch:'',catalogLimit:9,practiceChecked:false,draft:'',lessonStep:1,hintStage:0,prefs:null,projectTab:0,projectSource:'',projectLoading:false};
+var api=null, s={shopDiscount:0,service:{beta_open:true,mine:[],admin:[]},lastSupportReceipt:null,supportBusy:false,streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],xpAwards:[],xpClaimBusy:false,progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,quizStep:0,quizPassed:false,sectionIndex:0,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},memberExpiry:{},adminPage:1,adminFilter:'all',adminSearch:'',catalogLimit:9,practiceChecked:false,draft:'',lessonStep:1,hintStage:0,prefs:null,projectTab:0,projectSource:'',projectLoading:false};
 var plans={free:'Free',pro:'Plus',ultimate:'Ultimate'};
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];});}
 function safeLink(url){return /^https:\/\/[^\s<>"]+$/i.test(String(url||''))?esc(url):'#';}
@@ -850,7 +850,8 @@ function euro(cents){return (Number(cents||0)/100).toLocaleString('de-DE',{minim
 async function refreshService(){
  const r=await api.rpc('academy_service',{p_action:'list',p_payload:{}});
  if(r.error)throw r.error;
- s.service=r.data||{beta_open:false,mine:[],admin:[]};return s.service;
+ if(!r.data||!Array.isArray(r.data.mine))throw Error('Support-Posteingang konnte nicht geladen werden.');
+ s.service=r.data;return s.service;
 }
 function supportPage(){
  const data=s.service||{},mine=Array.isArray(data.mine)?data.mine:[];
@@ -861,7 +862,7 @@ function supportPage(){
  '<form data-form="support-ticket"><div class="form-group"><label class="form-label" for="support-category">Worum geht es?</label><select class="select" id="support-category" name="category"><option value="support">Allgemeine Frage</option><option value="bug">Fehler melden</option>'+
  (data.beta_open?'<option value="beta">Beta-Feedback</option><option value="plan">Plus / Ultimate anfragen</option>':'')+'</select></div>'+
  (data.beta_open?'<div class="form-group support-plan-field" hidden><label class="form-label">Gewünschter Tarif</label><select class="select" name="tier"><option value="pro">Plus · 1,99 €</option><option value="ultimate">Ultimate · 5,99 €</option></select><small>Freigabe erfolgt manuell durch das Team. Keine automatische Zahlung.</small></div>':'')+
- '<div class="form-group"><label class="form-label" for="support-message">Deine Nachricht</label><textarea class="input" id="support-message" name="message" minlength="10" maxlength="2000" rows="6" required placeholder="Beschreibe dein Anliegen möglichst genau …"></textarea></div><button class="btn primary block" type="submit">Anfrage senden →</button></form><p class="micro">Bis zu fünf Anfragen innerhalb von 24 Stunden. Bitte sende keine Passwörter.</p></section>'+
+ '<div class="form-group"><label class="form-label" for="support-message">Deine Nachricht</label><textarea class="input" id="support-message" name="message" minlength="10" maxlength="2000" rows="6" required placeholder="Beschreibe dein Anliegen möglichst genau …"></textarea></div><p class="support-submit-status" id="support-submit-status" role="status" aria-live="polite">'+(s.lastSupportReceipt?'✓ Anfrage gespeichert · Ticket '+esc(s.lastSupportReceipt.slice(0,8)):'Deine Nachricht wird im Support-Posteingang gespeichert.')+'</p><button class="btn primary block" type="submit" '+(s.supportBusy?'disabled':'')+'>'+(s.supportBusy?'Wird gesendet …':'Anfrage senden →')+'</button></form><p class="micro">Bis zu fünf Anfragen innerhalb von 24 Stunden. Bitte sende keine Passwörter.</p></section>'+
  '<section class="panel support-history"><div class="support-faq"><strong>Schnelle Hilfe</strong><details><summary>Wie erhalte ich Plus oder Ultimate?</summary><p>Eröffne während der Beta eine Tarif-Anfrage. Das Team gibt sie manuell frei.</p></details><details><summary>Wo sehe ich die Antwort?</summary><p>Hier in deinem Posteingang. Lade die App bei Bedarf neu.</p></details><details><summary>Wie melde ich einen Fehler?</summary><p>Wähle Fehler melden und beschreibe Gerät und Schritte.</p></details></div><span class="eyebrow">[ ◷ ] DEIN POSTEINGANG</span><h2>Deine Anfragen</h2><div class="support-controls"><input class="input" type="search" id="support-search" placeholder="Anfragen suchen …" aria-label="Anfragen suchen"><select class="select" id="support-filter"><option value="all">Alle Status</option><option value="open">Offen</option><option value="answered">Beantwortet</option><option value="approved">Genehmigt</option><option value="closed">Geschlossen</option></select></div>'+
  (mine.length?mine.map(t=>'<article class="support-ticket" data-ticket-status="'+esc(t.status||'open')+'"><div><strong>'+esc(names[t.category]||'Anfrage')+'</strong><span class="chip '+(t.status==='approved'?'free':'plus')+'">'+esc(t.status||'open')+'</span></div><small>'+new Date(t.created_at).toLocaleString('de-DE')+'</small><p>'+esc(t.message)+'</p>'+(t.reply?'<blockquote>'+esc(t.reply)+'</blockquote>':'')+'</article>').join(''):'<p class="muted">Noch keine Anfragen. Deine Antwort erscheint später hier.</p>')+
  '</section></div>';
@@ -2003,8 +2004,21 @@ document.addEventListener('submit',async function(e){
   if(mode==='support-ticket'){
    const category=String(fd.get('category')),message=String(fd.get('message')||'').trim(),tier=category==='plan'?String(fd.get('tier')):null;
    if(message.length<10||message.length>2000)throw Error('Bitte 10 bis 2000 Zeichen schreiben.');
-   const r=await api.rpc('academy_service',{p_action:'create',p_payload:{category,message,tier}});
-   if(r.error)throw r.error;await refreshService();render();notice('Anfrage gesendet. Deine Antwort erscheint hier.');return;
+   if(s.supportBusy)return;
+   s.supportBusy=true;button.textContent='Wird gesendet …';
+   const status=$('#support-submit-status');if(status)status.textContent='Deine Nachricht wird gespeichert …';
+   try{
+    const r=await api.rpc('academy_service',{p_action:'create',p_payload:{category,message,tier}});
+    if(r.error)throw r.error;
+    if(r.data?.ok!==true||typeof r.data?.id!=='string')throw Error('Keine Bestätigung vom Server erhalten. Prüfe deinen Posteingang vor einem erneuten Versuch.');
+    s.lastSupportReceipt=r.data.id;
+    try{await refreshService();}
+    catch(refreshError){
+     if(!Array.isArray(s.service.mine))s.service.mine=[];
+     s.service.mine.unshift({id:r.data.id,category,tier,message,status:'open',reply:null,created_at:new Date().toISOString()});
+    }
+    render();notice('Anfrage erfolgreich gespeichert · Ticket '+r.data.id.slice(0,8));return;
+   }finally{s.supportBusy=false;}
   }
   if(mode==='support-reply'){
    if(s.profile?.role!=='admin')throw Error('Nur Administratoren');
@@ -2093,7 +2107,14 @@ document.addEventListener('submit',async function(e){
    if(plan!=='free'){try{await updateTier(data.id,plan);}catch(error){notice('Konto erstellt, aber noch Free: '+formatError(error));}}
    notice('Konto '+name+' erfolgreich erstellt. Startpasswort vertraulich übermitteln.');form.reset();await fetchMembers();render();
   }
- }catch(err){notice(formatError(err));}finally{button.disabled=false;}
+ }catch(err){
+   if(mode==='support-ticket'){
+    const status=$('#support-submit-status');
+    if(status){status.textContent='Anfrage nicht bestätigt: '+formatError(err);status.classList.add('error');}
+    s.supportBusy=false;
+   }
+   notice(formatError(err));
+ }finally{button.disabled=false;if(mode==='support-ticket'&&button.isConnected)button.textContent='Anfrage senden →';}
 });
 window.addEventListener('hashchange',function(){if(s.ready)navigateCurrent();});
 async function init(){
