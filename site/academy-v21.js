@@ -768,7 +768,7 @@ function coursesPage(){
  return '<div class="ll-roadmap-catalog">'+
  '<header class="ll-learning-hero"><div class="ll-learning-brand"><img src="./liverylab-symbol.svg" alt="">'+
  '<span>LiveryLab <strong>Academy</strong></span></div>'+
- '<span class="ll-learning-eyebrow">'+catalogText('DEINE ACADEMY · DEIN LERNPFAD','YOUR ACADEMY · YOUR PATH')+'</span>'+
+ '<span class="ll-learning-eyebrow">'+catalogText('KURSBIBLIOTHEK · DEIN LERNPFAD','COURSE LIBRARY · YOUR PATH')+'</span>'+
  '<h1>'+catalogText('Lernen','Learn')+'</h1>'+
  '<p>'+catalogText('Dein geführter Lernpfad für Scripting und Entwicklung.','Your guided path to scripting and software development.')+'</p>'+
  '<span class="ll-learning-hero-art" aria-hidden="true"><span>⟨/⟩</span></span></header>'+
@@ -848,6 +848,7 @@ function trackPage(id){
   '<button type="button" class="btn primary" data-go="lesson/'+esc(next.id)+'">'+catalogText('Weiterlernen →','Continue →')+'</button></div>';
  chapters.forEach((chapter,ci)=>{
   const number=String(ci+1).padStart(2,'0');
+  const chapterName=String(chapter.title||'').replace(/^\s*\d{1,2}\s*[·.\-]\s*/,'');
   const doneInChapter=chapter.items.filter(l=>completed.has(l.id)).length;
   const complete=doneInChapter===chapter.items.length;
   const isActive=ci===currentChapter;
@@ -856,7 +857,7 @@ function trackPage(id){
   const isOpen=isActive||(!next&&ci===0)||chapters.length===1;
   out+='<section class="chapter ll-roadmap-chapter'+(complete?' is-complete':'')+'">'+
    '<details class="ll-map-chapter-details" '+(isOpen?'open':'')+'>'+
-   '<summary class="chapter-title"><span class="ll-chapter-label">[ '+number+' ] '+esc(chapter.title)+'</span>'+
+   '<summary class="chapter-title"><span class="ll-chapter-label">[ '+number+' ] '+esc(chapterName)+'</span>'+
    '<span class="ll-chapter-rule" aria-hidden="true"></span>'+
    '<span class="chapter-count">'+doneInChapter+'/'+chapter.items.length+'</span>'+
    '<span class="ll-chapter-chevron" aria-hidden="true">⌄</span></summary>'+

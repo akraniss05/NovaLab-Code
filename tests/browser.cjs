@@ -4,7 +4,7 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),asse
 const {chromium}=require('playwright-core');
 const root=path.join(__dirname,'..');
 const source=fs.readFileSync(path.join(root,'site/academy-v21.js'),'utf8');
-const css=['site/app-v21.css','site/academy-v31-layout.css'].map(file=>fs.readFileSync(path.join(root,file),'utf8')).join('\n');
+const css=['site/app-v21.css','site/academy-v31-layout.css','site/academy-roadmap.css'].map(file=>fs.readFileSync(path.join(root,file),'utf8')).join('\n');
 const expose='\nwindow.__views={s,filteredCourses,difficultyDiagram,coursesPage,trackPage,lessonPage,scriptPage,examPage,examsPage,referencePage,plansPage,adminPage,login,profilePage,friendsPage,supportPage,settingsPage,homePage,streakModalHtml,llIcon,paywall};\n})();';
 assert.match(source,/\ninit\(\);\n\}\)\(\);\s*$/);
 const rewritten=source.replace(/\ninit\(\);\n\}\)\(\);\s*$/,expose);
@@ -77,7 +77,7 @@ try{
 fs.mkdirSync(path.join(root,'test-results'),{recursive:true});
 const scenes=[
  ['home',app.homePage(),['.ll-home-brand-banner img','.ll-home-shortcuts','.ll-home-continue','.ll-streak-shortcut']],
- ['courses',app.coursesPage(),['.ll-difficulty-dashboard','.ll-difficulty-chart','.ll-difficulty-tile','#course-difficulty-select','#course-search','.course-grid']],
+ ['courses',app.coursesPage(),['.ll-learning-hero','.ll-journey','.ll-journey-step','.ll-difficulty-dashboard','.ll-difficulty-chart','.ll-difficulty-tile','#course-difficulty-select','#course-search','.course-grid','.ll-path-course','.ll-mini-road']],
  ['admin-registration',(()=>{const old=context.location.hash,oldRole=s.profile.role,oldOwner=s.isOwner,oldPolicy=s.registrationPolicy;
   context.location.hash='#admin/registration';s.profile.role='admin';s.isOwner=true;
   s.registrationPolicy={mode:'approval',loaded:true};const html=app.adminPage();
@@ -95,8 +95,8 @@ const scenes=[
   context.location.hash=old;s.profile.role=oldRole;s.members=oldMembers;s.adminLearner=oldLearner;s.registrationPolicy=oldPolicy;
   return html;})(),['.ll-admin-progress-panel','.ll-admin-course-progress-card','#admin-progress-search','#admin-progress-filter','[data-view-progress]']],
 
- ['track',app.trackPage('fivem'),['.lesson-card','.lesson-main strong','.lesson-summary','.status-ring']],
- ['lesson',app.lessonPage('fivem-01'),['.lesson-steps','.lesson-step','.step-box','.video-frame','.quiz-choice','.exercise-textarea','.code-editor','#code-lines','.ll-part-selector-two','[data-lesson-part="0"]','[data-lesson-part="1"]','[data-action="reset-lesson"]']],
+ ['track',app.trackPage('fivem'),['.ll-roadmap-course','.ll-track-summary','.ll-map-entry','.ll-map-timeline-node','.lesson-card','.lesson-main strong','.lesson-summary','.status-ring']],
+ ['lesson',app.lessonPage('fivem-01'),['.ll-roadmap-lesson','.ll-lesson-hero','.lesson-steps','.lesson-step','.step-box','.video-frame','.quiz-choice','.exercise-textarea','.code-editor','#code-lines','.ll-part-selector-two','[data-lesson-part="0"]','[data-lesson-part="1"]','[data-action="reset-lesson"]']],
  ['script',app.scriptPage(),['.file-tree','.file-tabs','.file-preview']],
  ['reference',app.referencePage(),['.reference-row','.reference-block']],
  ['plans',app.plansPage(),['.membership-card','.voucher-panel','.voucher-input-row']],
