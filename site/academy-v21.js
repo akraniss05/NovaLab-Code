@@ -1544,10 +1544,24 @@ function adminPage(){
    (u.active?'Zugriff sperren':'Zugriff erlauben')+'</button>'+
    '<button class="btn small danger" data-delete-user="'+esc(u.id)+'" '+(owner?'disabled':'')+'>Löschen</button></div>'+(s.isOwner&&!u.is_owner?'<div class="admin-role-select"><label class="form-label">Teamrolle</label><select class="select" data-admin-role="'+esc(u.id)+'" aria-label="Teamrolle von '+esc(u.username||'')+'"><option value="student" '+(u.role==='student'?'selected':'')+'>Mitglied</option><option value="admin" '+(u.role==='admin'?'selected':'')+'>Administrator · Team verwalten</option></select></div>':'')+'</div></details>';
  }).join('');
+ const tab=['members','support','vouchers'].includes(parseRoute().id)?parseRoute().id:'overview';
+ const tabs='<nav class="ll-admin-tabs" aria-label="Administration">'+[
+   ['overview','Übersicht'],['support','Support & Chat'],['members','Mitglieder'],['vouchers','Gutscheine']
+ ].map(([key,label])=>'<button type="button" class="btn small '+(key===tab?'primary':'')+'" data-go="'+(key==='overview'?'admin':'admin/'+key)+'" aria-current="'+(key===tab?'page':'false')+'">'+label+'</button>').join('')+'</nav>';
+ const summary='<section class="admin-overview"><article><span>◷</span><strong>'+pending.length+'</strong><small>Registrierungen</small></article>'+
+ '<article><span>✉</span><strong>'+(s.service?.admin||[]).filter(t=>t.status==='open').length+'</strong><small>Offene Tickets</small></article>'+
+ '<article><span>✓</span><strong>'+active+'</strong><small>Aktive Konten</small></article>'+
+ '<article><span>✦</span><strong>'+people.filter(u=>u.role==='admin').length+'</strong><small>Administratoren</small></article></section>';
+ const hub='<div class="ll-admin-hub">'+[
+  ['admin/support','✉','Support & Nachrichten','Alle Anfragen und Gespräche mit Mitgliedern'],
+  ['admin/members','◉','Mitgliederverwaltung','Nutzer, Tarife, Rollen und Anträge'],
+  ['admin/vouchers','%','Gutscheine & Shop','Gutscheincodes und Shopaktionen']
+ ].map(([path,icon,title,subtitle])=>
+  '<button type="button" class="ll-admin-hub-card" data-go="'+path+'"><span>'+icon+'</span><strong>'+title+'</strong><small>'+subtitle+'</small><b>Öffnen →</b></button>'
+ ).join('')+'</div>';
  return pageHeading('ADMINISTRATION','Dein <span class="gradient">Control Center.</span>',
- 'Registrierungen, Mitgliedschaften, Teamrollen und Gutscheine sicher an einem Ort verwalten.')+
- '<section class="admin-overview"><article><span>◷</span><strong>'+pending.length+'</strong><small>Offene Anfragen</small></article><article><span>✓</span><strong>'+active+'</strong><small>Aktive Konten</small></article><article><span>⛔</span><strong>'+blocked+'</strong><small>Gesperrte Konten</small></article><article><span>✦</span><strong>'+people.filter(u=>u.role==='admin').length+'</strong><small>Administratoren</small></article></section>'+
- requests+
+ 'Support, Mitglieder und Gutscheine übersichtlich getrennt verwalten.')+tabs+
+ (tab==='overview'?summary+hub:tab==='support'?supportAdminSection():tab==='members'?requests+
  '<section class="section"><div class="section-heading"><div><span class="eyebrow">[ 02 ] MITGLIEDER</span>'+
  '<h2>Deine Teamkonten</h2><p>Tarifänderungen werden über den geschützten Administrationsserver gespeichert. Administratoren haben immer Vollzugriff.</p></div></div>'+
  '<div class="admin-tools"><input class="input" id="admin-search" type="search" placeholder="Benutzername oder E-Mail suchen …" value="'+esc(s.adminSearch)+'"><div class="admin-filter" role="group" aria-label="Konten filtern">'+[['all','Alle'],['active','Aktiv'],['blocked','Gesperrt'],['admin','Admins']].map(([value,label])=>'<button type="button" class="'+(s.adminFilter===value?'active':'')+'" data-admin-filter="'+value+'">'+label+'</button>').join('')+'</div></div>'+
@@ -1567,7 +1581,9 @@ function adminPage(){
  '<div class="form-group"><label class="form-label">Vorläufiges Passwort</label><input class="input" type="password" name="password" minlength="14" required autocomplete="new-password"></div>'+
  '<div class="form-group"><label class="form-label">Tarif</label><select class="select" name="tier"><option value="free">Free</option><option value="pro">Plus</option><option value="ultimate">Pro/Ultimate</option></select></div></div>'+
  '<button class="btn primary" type="submit">Benutzerkonto erstellen →</button></form></details></section>'+
- supportAdminSection()+voucherAdminSection();
+ '':
+ shopDiscountAdminSection()+voucherAdminSection());
+
 }
 async function fetchMembers(){
  if(s.profile?.role!=='admin')return;
