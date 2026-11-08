@@ -89,7 +89,7 @@ function pageHeading(label,title,description){
   '<div class="ll-neon-page-title"><span class="ll-neon-brand-text"><img src="./liverylab-symbol.svg" alt=""> LiveryLab <em>Academy</em></span>'+
   '<span class="eyebrow ll-neon-kicker">'+esc(label)+'</span><h1>'+esc(entry[0])+'</h1>'+
   '<p class="lede">'+esc(description)+'</p><span class="ll-neon-legacy-heading" aria-hidden="true">'+title+'</span></div>'+
-  '<span class="ll-neon-hero-art" aria-hidden="true"><span class="ll-neon-hero-glyph">'+llIcon(entry[1])+'</span></span>'+
+  '<span class="ll-neon-hero-art" aria-hidden="true"><span class="ll-neon-hero-glyph">'+atelierScene(entry[1],entry[0]==='Shop'?'shop':entry[0]==='Administration'?'admin':entry[0]==='Mein Profil'?'profile':'general')+'</span></span>'+
   '</header>';
 }
 function planCounts(){var f=s.lessons.filter(l=>l.required_plan==='free').length;var pl=s.lessons.filter(l=>l.required_plan==='plus').length;return {free:f,plus:f+pl,pro:s.lessons.length}}
@@ -104,6 +104,104 @@ function videoInfo(id){var sources={
 };return sources[id]||{name:'Video-Tutorial',author:'YouTube',language:'Tutorial'}}
 
 /* v1.5 neon app design: presentation only; existing route/actions/forms are retained. */
+
+/* LiveryLab Atelier: original CSS-driven holograms; all interactions stay native. */
+function atelierScene(icon,variant){
+ const scene=/^[a-z-]+$/.test(variant||'')?variant:'code';
+ return '<span class="ll-atelier-scene ll-atelier-scene-'+scene+'" aria-hidden="true">'+
+  '<span class="ll-atelier-halo"></span><span class="ll-atelier-grid"></span>'+
+  '<span class="ll-atelier-platform"></span><span class="ll-atelier-cube">'+llIcon(icon||'code')+'</span>'+
+  '<span class="ll-atelier-spark ll-spark-one">✦</span><span class="ll-atelier-spark ll-spark-two">✧</span>'+
+  '<span class="ll-atelier-orbit"></span></span>';
+}
+function atelierMissionStrip(){
+ const started=s.courses.filter(c=>countDone(c.id)>0).length,
+  completed=s.lessons.filter(l=>inMainPath(l)&&doneIds().has(l.id)).length,
+  exams=Object.values(s.progress.exams||{}).filter(x=>x?.passed).length,
+  streak=Number(s.loginStreak?.current||0);
+ return '<section class="ll-atelier-mission-strip" aria-label="Deine Lernübersicht">'+
+ [['learn',started,'Lernpfade begonnen'],['code',completed,'Lektionen gemeistert'],
+  ['exam',exams,'Prüfungen bestanden'],['fire',streak,'Tage Lernstreak']].
+ map(([icon,value,label])=>'<div class="ll-atelier-mission-stat"><span>'+llIcon(icon)+'</span>'+
+  '<strong>'+value+'</strong><small>'+label+'</small></div>').join('')+'</section>';
+}
+function atelierCourseRail(){
+ const started=s.courses.filter(c=>countDone(c.id)>0);
+ const courses=started.length?started.slice(0,3):s.courses.slice(0,3);
+ if(!courses.length)return '';
+ return '<section class="ll-atelier-course-rail"><div class="ll-atelier-section-intro"><div>'+
+ '<span class="eyebrow">[ ◈ ] DEIN NÄCHSTER MEILENSTEIN</span><h2>Dein Weg zum nächsten Level.</h2>'+
+ '<p>Deine echten Fortschritte – direkt zu den passenden Lernpfaden.</p></div>'+
+ '<button class="btn small" type="button" data-go="courses">Alle Lernpfade →</button></div>'+
+ '<div class="ll-atelier-rail-list">'+courses.map((c,i)=>{
+ const total=lessonsOf(c.id).length,done=countDone(c.id),percent=pct(done,total);
+ return '<button type="button" class="ll-atelier-rail-card" data-go="track/'+esc(c.id)+'">'+
+ '<span class="ll-atelier-rail-node">'+(done&&done===total?'✓':String(i+1).padStart(2,'0'))+'</span>'+
+ '<span class="ll-atelier-rail-info"><strong>'+esc(c.name)+'</strong><small>'+done+' / '+total+' Lektionen abgeschlossen</small>'+
+ '<span class="ll-atelier-rail-progress"><span style="width:'+percent+'%"></span></span></span>'+
+ '<span class="ll-atelier-rail-percent">'+percent+' %</span></button>';
+ }).join('')+'</div></section>';
+}
+function atelierScriptStats(completed,total){
+ return '<div class="ll-atelier-stats ll-atelier-script-stats">'+
+ '<div><span>'+llIcon('code')+'</span><strong>'+PROJECT_FILES.length+'</strong><small>Projektdateien</small></div>'+
+ '<div><span>'+llIcon('check')+'</span><strong>'+completed+'</strong><small>Teile freigeschaltet</small></div>'+
+ '<div><span>'+llIcon('learn')+'</span><strong>'+Math.max(0,total-completed)+'</strong><small>Noch offen</small></div></div>';
+}
+function atelierReferenceInfo(langs,items){
+ return '<div class="ll-atelier-stats ll-atelier-ref-stats">'+
+ '<div><span>'+llIcon('book')+'</span><strong>'+langs+'</strong><small>Sprachen & Tools</small></div>'+
+ '<div><span>'+llIcon('code')+'</span><strong>'+items+'</strong><small>Referenzeinträge</small></div>'+
+ '<div class="ll-atelier-ref-tip"><span class="eyebrow">QUICK LOOKUP</span><strong>Syntax finden.</strong>'+
+ '<small>Kopieren, verstehen und direkt im Kurs anwenden.</small></div></div>';
+}
+function atelierProfilePath(){
+ const all=s.lessons.filter(inMainPath),done=all.filter(l=>doneIds().has(l.id)).length,
+ started=s.courses.filter(c=>countDone(c.id)>0).length,
+ passed=Object.values(s.progress.exams||{}).filter(x=>x?.passed).length;
+ const milestones=[
+ ['code','01','Erste Schritte',done>0],['learn','02','Lernpfad starten',started>0],
+ ['exam','03','Prüfung bestehen',passed>0],['xp','04','Weiter wachsen',passed>0&&done>=Math.max(10,Math.ceil(all.length*.1))]
+ ];
+ return '<section class="ll-atelier-profile-path"><div class="ll-atelier-section-intro"><div>'+
+ '<span class="eyebrow">[ ⌁ ] DEINE ENTWICKLER-REISE</span><h2>Dein Weg zum Profi.</h2>'+
+ '<p>'+done+' von '+all.length+' Lektionen abgeschlossen · '+started+' Lernpfade begonnen</p></div></div>'+
+ '<div class="ll-atelier-milestones">'+milestones.map(([icon,number,label,achieved])=>
+ '<div class="ll-atelier-milestone '+(achieved?'is-done':'is-upcoming')+'">'+
+ '<span class="ll-atelier-milestone-node">'+llIcon(achieved?'check':icon)+'</span>'+
+ '<strong>'+number+'</strong><small>'+label+'</small></div>').join('')+'</div></section>';
+}
+function atelierSupportPulse(tickets){
+ const open=tickets.filter(t=>['open','in_progress','pending'].includes(t.status)).length,
+ answered=tickets.filter(t=>['answered','approved'].includes(t.status)).length;
+ return '<div class="ll-atelier-stats ll-atelier-support-stats">'+
+ '<div><span>'+llIcon('book')+'</span><strong>'+tickets.length+'</strong><small>Deine Anfragen</small></div>'+
+ '<div><span>'+llIcon('clock')+'</span><strong>'+open+'</strong><small>Noch offen</small></div>'+
+ '<div><span>'+llIcon('check')+'</span><strong>'+answered+'</strong><small>Beantwortet</small></div></div>';
+}
+function atelierSettingsPreview(){
+ const theme=getChoicePreference('theme','violet'),accent=getChoicePreference('accent','lavender'),
+ themeLabel=(COLOR_THEMES.find(x=>x[0]===theme)||COLOR_THEMES[0])[1],
+ accentLabel=(ACCENT_THEMES.find(x=>x[0]===accent)||ACCENT_THEMES[0])[1];
+ return '<section class="ll-atelier-settings-preview"><div class="ll-atelier-settings-preview-copy">'+
+ '<span class="eyebrow">[ ✦ ] DEIN PERSÖNLICHES DESIGN</span><h2>Dein Workspace. Deine Regeln.</h2>'+
+ '<p>Deine aktuelle Auswahl – alle Einstellungen und Schalter findest du direkt darunter.</p>'+
+ '<div class="ll-atelier-preview-tags"><span>'+esc(themeLabel)+'</span><span>'+esc(accentLabel)+'</span></div></div>'+
+ atelierScene('settings','settings')+'</section>';
+}
+function atelierAdminPulse(users,pending){
+ const tickets=(s.service?.admin||[]).filter(t=>t.status==='open').length,
+ active=users.filter(u=>u.active).length;
+ return '<section class="ll-atelier-admin-pulse"><div class="ll-atelier-section-intro"><div>'+
+ '<span class="eyebrow">[ ◎ ] LIVE ÜBERSICHT</span><h2>Dein Academy-Kontrollzentrum.</h2>'+
+ '<p>Reale Kennzahlen und Direkteinstiege – ohne Änderungen an den Admin-Rechten.</p></div></div>'+
+ '<div class="ll-atelier-admin-pulse-cards">'+
+ [['profile',active,'Aktive Mitglieder','admin/members'],['clock',pending.length,'Offene Freigaben','admin/registration'],
+ ['book',tickets,'Offene Supporttickets','admin/support']].map(([icon,value,label,target])=>
+ '<button class="ll-atelier-pulse-card" type="button" data-go="'+target+'">'+
+ '<span>'+llIcon(icon)+'</span><strong>'+value+'</strong><small>'+label+'</small><b>Öffnen →</b></button>').join('')+'</div></section>';
+}
+
 function neonHero(kind){
  const info={
   home:['Startseite','Deine Lernplattform für Scripting und Entwicklung.','code'],
@@ -115,14 +213,14 @@ function neonHero(kind){
   '<div class="ll-neon-page-title"><span class="ll-neon-brand-text"><img src="./liverylab-symbol.svg" alt=""> LiveryLab <em>Academy</em></span>'+
   '<span class="eyebrow ll-neon-kicker">LIVERYLAB ACADEMY</span><h1>'+esc(info[0])+'</h1>'+
   '<p class="lede">'+esc(info[1])+'</p></div>'+
-  '<span class="ll-neon-hero-art" aria-hidden="true"><span class="ll-neon-hero-glyph">'+llIcon(info[2])+'</span></span>'+
+  '<span class="ll-neon-hero-art" aria-hidden="true"><span class="ll-neon-hero-glyph">'+atelierScene(info[2],kind)+'</span></span>'+
   '</header>';
 }
 function neonBanner(title,description,icon,extra){
  return '<section class="ll-neon-feature" aria-label="'+esc(title)+'"><div class="ll-neon-feature-copy">'+
   '<span class="eyebrow">[ ✦ ] LIVERYLAB ACADEMY</span><h2>'+esc(title)+'</h2>'+
   '<p>'+esc(description)+'</p>'+(extra||'')+'</div>'+
-  '<span class="ll-neon-feature-icon" aria-hidden="true">'+llIcon(icon||'code')+'</span></section>';
+  '<span class="ll-neon-feature-icon" aria-hidden="true">'+atelierScene(icon||'code',icon||'code')+'</span></section>';
 }
 function neonExamOverview(){
  const results=s.progress.exams||{};
@@ -159,10 +257,12 @@ function neonMenuPage(){
  ];
  if(s.profile?.role==='admin')entries.push(['admin','settings','Administration','Nutzer, Freigaben und Academy verwalten',false]);
  return pageHeading('HAUPTMENÜ','Alle Bereiche der Academy','Alle Funktionen an einem Ort – mit deinen bisherigen Freigaben und Einstellungen.')+
- '<div class="ll-neon-menu-grid">'+entries.map(([route,icon,label,description,locked])=>
+ '<div class="ll-atelier-menu-lede"><span class="eyebrow">[ ✦ ] DEIN WORKSPACE</span><h2>Alles, was du zum Bauen brauchst.</h2><p>Ein Klick öffnet den gleichen Bereich wie bisher – mit all deinen Daten.</p></div>'+atelierMissionStrip()+
+ '<div class="ll-neon-menu-grid">'+entries.map(([route,icon,label,description,locked],i)=>
   '<button type="button" class="ll-neon-menu-tile'+(locked?' is-locked':'')+'" data-go="'+esc(route)+'">'+
-  '<span class="ll-neon-menu-art" aria-hidden="true">'+llIcon(icon)+'</span>'+
-  '<span class="ll-neon-menu-label"><strong>'+esc(label)+(locked?' <span aria-label="Tarif erforderlich">⌑</span>':'')+
+  '<span class="ll-neon-menu-art" aria-hidden="true">'+atelierScene(icon,route)+'</span>'+
+  '<span class="ll-atelier-tile-kicker">0'+(i+1)+' · '+(locked?'TARIF ERFORDERLICH':route==='courses'?'DEIN LERNPFAD':'ACADEMY')+'</span>'+
+ '<span class="ll-neon-menu-label"><strong>'+esc(label)+(locked?' <span aria-label="Tarif erforderlich">⌑</span>':'')+
   '</strong><small>'+esc(description)+'</small></span><span class="ll-neon-tile-arrow" aria-hidden="true">→</span></button>'
  ).join('')+'</div>'+
  '<section class="ll-neon-menu-footer"><span>'+llIcon('fire')+' '+Number(s.loginStreak?.current||0)+' Tage Lernstreak</span>'+
@@ -768,6 +868,7 @@ function homePage(){
  '<h1>Willkommen zurück, <span class="gradient">'+esc(nickname)+'</span>!</h1><p>Lerne programmieren, entwickle Projekte und erreiche deine nächsten Ziele.</p></div>'+
  '<div class="ll-home-level"><div class="ll-level-top">'+llIcon('xp')+'<span>Level '+level+'</span></div>'+
  '<small>'+levelXp+' / 500 XP bis Level '+(level+1)+'</small><div class="ll-level-bar"><span style="width:'+(levelXp/5)+'%"></span></div></div></div>'+
+ atelierMissionStrip()+
  '<div class="ll-home-metrics"><div><span>✦</span><strong>'+xp+' XP</strong><small>Gesammelt</small></div><div><span>✓</span><strong>'+completed.size+'</strong><small>Lektionen geschafft</small></div><div><span>↗</span><strong>'+s.courses.length+'</strong><small>Lernpfade entdecken</small></div><div><span>🔥</span><strong>'+streak+' Tage</strong><small>Deine Streak</small></div></div>'+
  '<section class="ll-home-continue"><div class="ll-continue-icon">'+llIcon('code')+'</div>'+
  '<div class="ll-continue-copy"><span class="eyebrow">WEITERLERNEN</span>'+
@@ -776,6 +877,7 @@ function homePage(){
  '<p>'+esc(next?.title||'Wähle deinen ersten Kurs und starte mit dem Programmieren.')+'</p>'+
  '<div class="ll-continue-progress"><div class="ll-level-bar"><span style="width:'+progress+'%"></span></div><strong>'+progress+' %</strong></div></div>'+
  '<button type="button" class="btn primary ll-continue-button" data-go="'+(next?'lesson/'+esc(next.id):'courses')+'">Jetzt fortsetzen '+llIcon('arrow')+'</button></section>'+
+ atelierCourseRail()+
  '<section class="ll-home-tools"><div class="ll-tool-card"><span class="eyebrow">DEIN TAGESZIEL</span><h3>'+today+' / '+dailyGoal+' Lektionen heute</h3><div class="progress"><span style="width:'+Math.min(100,Math.round(today/dailyGoal*100))+'%"></span></div><p>Abgeschlossene Lektionen seit Mitternacht auf diesem Konto.</p><select class="select" id="study-goal" aria-label="Tagesziel">'+[1,2,3,4,5,6,7,8,9,10,15,20].map(n=>'<option value="'+n+'" '+(dailyGoal===n?'selected':'')+'>'+n+' Lektionen</option>').join('')+'</select></div><div class="ll-tool-card"><span class="eyebrow">DEIN WOCHENZIEL</span><h3>'+week+' / '+weeklyGoal+' Lektionen</h3><div class="progress"><span style="width:'+Math.min(100,Math.round(week/weeklyGoal*100))+'%"></span></div><p>Montag bis Sonntag · neu abgeschlossene Lektionen.</p><select class="select" id="weekly-goal" aria-label="Wochenziel">'+[3,5,10,15,20,30,50,100].map(n=>'<option value="'+n+'" '+(weeklyGoal===n?'selected':'')+'>'+n+' Lektionen</option>').join('')+'</select></div><div class="ll-tool-card"><span class="eyebrow">FOKUSZEIT</span><h3 id="focus-clock">'+timerLabel()+'</h3><p>Stelle deine eigene Lernzeit ein.</p><button class="btn small" data-timer-open>Timer einstellen</button></div></section>'+
  '<div class="ll-home-heading"><span class="eyebrow">[ ✦ ] DEINE ACADEMY</span><h2>Was möchtest du heute machen?</h2><p>Alle wichtigen Bereiche auf einen Blick.</p></div>'+
  '<div class="ll-home-shortcuts">'+
