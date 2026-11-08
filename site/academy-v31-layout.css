@@ -399,3 +399,20 @@ body.focus-modal-visible{overflow:hidden}
  .topbar .brand{font-size:10px}
  .topbar .ll-lang-btn{min-width:22px}
 }
+
+
+/* v46: the clock is exactly centered in the available Academy header,
+   independently of avatar/streak/language-control widths. */
+body:not(.is-auth) .topbar{position:relative}
+body:not(.is-auth) .topbar > .focus-center{
+ position:absolute!important;
+ top:50%;left:50%;
+ transform:translate(-50%,-50%);
+ z-index:3;
+ grid-column:auto!important;
+ pointer-events:auto;
+}
+body:not(.is-auth) .topbar > .top-right{position:relative;z-index:4}
+@media(max-width:820px){
+ body:not(.is-auth) .topbar > .top-right{justify-self:end}
+}
