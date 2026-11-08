@@ -1709,6 +1709,21 @@ function openTimer(){
 }
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')tickTimer();});
 window.addEventListener('focus',function(){tickTimer();});
+// Light polling keeps both ticket inboxes current without changing the page
+// while somebody is typing. Only active, visible support pages are polled.
+async function pollSupportInbox(){
+ if(!s.ready||document.hidden)return;
+ const route=parseRoute();
+ if(route.page!=='support'&&!(route.page==='admin'&&route.id==='support'))return;
+ if(s.supportBusy||s.chatBusy)return;
+ try{
+  await refreshService();
+  if(s.chatTicketId)await loadTicketThread(s.chatTicketId);
+  const focused=document.activeElement;
+  if(!focused?.closest?.('form[data-form="ticket-chat"],form[data-form="support-ticket"],form[data-form="support-reply"]'))render();
+ }catch(_){}
+}
+if(typeof setInterval==='function')setInterval(pollSupportInbox,20000);
 function filterSupportTickets(){const query=String($('#support-search')?.value||'').toLocaleLowerCase('de'),status=$('#support-filter')?.value||'all';document.querySelectorAll('.support-history .support-ticket').forEach(el=>{el.hidden=!!query&&!el.textContent.toLocaleLowerCase('de').includes(query)||status!=='all'&&el.dataset.ticketStatus!==status;});}
 document.addEventListener('click',async function(e){
  if(e.target.closest('[data-timer-open]')){openTimer();return;}
@@ -1738,6 +1753,21 @@ document.addEventListener('click',async function(e){
  if(friendTab){s.friendTab=friendTab.dataset.friendTab;render();return;}
  var focusBtn=e.target.closest('[data-focus-course]');
  if(focusBtn){if(courseOf(focusBtn.dataset.focusCourse)){setChoicePreference('focus',focusBtn.dataset.focusCourse);render()}return;}
+ const chatOpen=e.target.closest('[data-chat-open]');
+ if(chatOpen){
+  const id=chatOpen.dataset.chatOpen;
+  if(!/^[0-9a-f-]{36}$/i.test(id))return;
+  chatOpen.disabled=true;
+  try{
+   await loadTicketThread(id);render();
+   const panel=$('#academy-chat-panel');
+   if(panel?.scrollIntoView)panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }catch(error){notice('Chat konnte nicht geöffnet werden: '+formatError(error));chatOpen.disabled=false;}
+  return;
+ }
+ if(e.target.closest('[data-chat-close]')){
+  s.chatTicketId=null;s.chatMessages=[];render();return;
+ }
  var adminFilter=e.target.closest('[data-admin-filter]');
  if(adminFilter){s.adminFilter=adminFilter.dataset.adminFilter||'all';render();return;}
  if(e.target.closest('[data-action="refresh-support"]')){try{await refreshService();render();}catch(err){notice(formatError(err))}return;}
@@ -2089,12 +2119,26 @@ document.addEventListener('submit',async function(e){
     s.supportBusy=false;render();notice('Anfrage erfolgreich gespeichert · Ticket '+r.data.id.slice(0,8));return;
    }finally{s.supportBusy=false;}
   }
+  if(mode==='ticket-chat'){
+   const id=form.dataset.ticketId,body=String(fd.get('body')||'').trim();
+   if(id!==s.chatTicketId||!body||body.length>2000)throw Error('Bitte eine gültige Nachricht schreiben.');
+   if(s.chatBusy)return;
+   s.chatBusy=true;button.textContent='Wird gesendet …';
+   try{
+    const reply=await api.rpc('academy_ticket_chat',{p_action:'send',p_ticket:id,p_body:body});
+    if(reply.error)throw reply.error;
+    if(reply.data?.ok!==true||!reply.data.sent_id||!Array.isArray(reply.data.messages))throw Error('Nachricht wurde vom Server nicht bestätigt.');
+    s.chatMessages=reply.data.messages;
+    try{await refreshService();}catch(_){}
+    render();notice('Nachricht gesendet und im Ticket gespeichert.');return;
+   }finally{s.chatBusy=false;}
+  }
   if(mode==='support-reply'){
    if(s.profile?.role!=='admin')throw Error('Nur Administratoren');
    const status=String(fd.get('status')),days=Number(fd.get('days')||30),reply=String(fd.get('reply')||'').trim();
    if(status==='approved'&&!confirm('Diese Mitgliedschaft für '+days+' Tage freigeben? Es erfolgt keine automatische Zahlung.'))return;
    const r=await api.rpc('academy_service',{p_action:'respond',p_payload:{id:form.dataset.ticketId,status,days,reply}});
-   if(r.error)throw r.error;await refreshService();render();notice('Anfrage aktualisiert.');return;
+   if(r.error)throw r.error;await refreshService();await loadTicketThread(form.dataset.ticketId);render();notice('Anfrage aktualisiert.');return;
   }
   if(mode==='set-username'){
    var chosen=String(fd.get('username')||'').trim();
