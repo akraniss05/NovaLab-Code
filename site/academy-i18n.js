@@ -335,7 +335,7 @@ const patterns=[
  [/^Baue das Beispiel „(.+)“ ohne Kopieren nach\. Ändere anschließend mindestens einen Wert oder Parameter und erkläre den Unterschied\.$/i,(_,topic)=>'Recreate the “'+translate(topic)+'” example without copying it. Then change at least one value or parameter and explain the difference.'],
  [/^Passe den Beispielcode an\. Lies die Dokumentation unter (https:\/\/\S+)$/i,(_,url)=>'Adapt the example code. Read the documentation at '+url],
  [/^Schreibe einen Kommentar, der erklärt, warum du (.+)$/i,(_,tail)=>'Write a comment that explains why you '+translate(tail)],
- [/^Wähle (.+) und (.+)$/i,(_,a,b)=>'Choose '+translate(a)+' and '+translate(b)]
+ [/^Wähle (.+) und (.+)$/i,(_,a,b)=>'Choose '+translate(a)+' and '+translate(b)],
 
  [/^Frage (\d+) von (\d+)$/i,(_,a,b)=>'Question '+a+' of '+b],
  [/^LERNTEIL (\d+) VON (\d+)$/i,(_,a,b)=>'PART '+a+' OF '+b],
