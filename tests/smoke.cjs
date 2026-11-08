@@ -108,3 +108,13 @@ assert(js.includes('xpAwarded(id)'),'Repeated lessons must display an already-re
 assert(js.includes('Bereits verdiente XP bleiben'),'Reset must warn that XP persist');
 const ledgerSql=read('supabase/migrations/20261107_v44_one_time_xp_ledger.sql');
 for(const item of ['PRIMARY KEY (user_id, lesson_id)','ON CONFLICT (user_id,lesson_id) DO NOTHING','CREATE POLICY academy_lesson_xp_awards_own_select','GRANT SELECT ON TABLE public.academy_lesson_xp_awards TO authenticated','academy_private.claim_lesson_xp'])assert(ledgerSql.includes(item),'XP ledger lacks guard '+item);
+
+const languageModule=read('site/academy-i18n.js');
+for(const file of ['site/index.html','site/v21.html','site/v31.html']){
+ const contents=read(file);
+ assert(contents.includes('academy-i18n.js?build=20261108v46'),file+' must load i18n before the main app');
+ assert(contents.includes('data-lang="de"')&&contents.includes('data-lang="en"'),file+' must display DE and EN in the topbar');
+}
+for(const token of ['liverylab-language','MutationObserver','setAccount','data-lang','data-no-translate','practice-input','document.documentElement.lang'])assert(languageModule.includes(token),'Language module missing '+token);
+assert(js.includes('LLI18n?.setAccount'),'Logged-in user language must be restored');
+assert(js.includes('LLI18n?.apply'),'Dynamic UI must get translated on rerenders');
