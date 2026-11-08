@@ -1399,6 +1399,7 @@ function supportPage(){
  return pageHeading('HILFE & FEEDBACK','Wir helfen dir <span class="gradient">direkt in der App.</span>',
  'Melde technische Fehler, schick uns Ideen oder frage während der Beta eine Mitgliedschaft an. Deine Anfragen bleiben hier sichtbar.')+
  neonBanner('Brauchst du Hilfe?','Stelle eine Anfrage, melde einen Bug oder lies deine bisherigen Antworten. Dein Support-Ticket landet direkt beim Team.','book')+
+ atelierSupportPulse(mine)+
  '<div class="support-grid"><section class="panel support-compose"><span class="eyebrow">[ + ] NEUE ANFRAGE</span><h2>Schreib dem Team</h2>'+
  '<form data-form="support-ticket"><div class="form-group"><label class="form-label" for="support-category">Worum geht es?</label><select class="select" id="support-category" name="category"><option value="support">Allgemeine Frage</option><option value="bug">Fehler melden</option>'+
  (data.beta_open?'<option value="beta">Beta-Feedback</option><option value="plan">Plus / Ultimate anfragen</option>':'')+'</select></div>'+
@@ -1480,7 +1481,7 @@ function examsPage(){
  neonExamOverview()+'<div class="exam-quota"><strong>✦ '+(cap<0?'Unbegrenzt':Math.max(0,cap-used)+' von '+cap)+' Prüfungen heute übrig</strong><small>Free: 2 · Plus: 4 · Ultimate: unbegrenzt. Reset um Mitternacht (Berlin).</small><button class="btn small" data-go="plans">Tarife →</button></div>'+
  '<section class="section"><div class="section-heading"><div><span class="eyebrow">DEINE KURSE</span><h2>'+suitable.length+' passende Prüfungen</h2></div></div><div class="exam-filters" role="group" aria-label="Prüfungen filtern">'+[['all','Alle'],['ready','Bereit'],['learning','Noch lernen'],['passed','Bestanden']].map(([key,label])=>'<button class="pill'+(s.examFilter===key?' active':'')+'" type="button" data-exam-filter="'+key+'">'+label+'</button>').join('')+'</div><div class="course-grid">'+(filtered.map(c=>{
   const ls=lessonsOf(c.id),count=countDone(c.id),ready=count===ls.length,passed=!!s.progress.exams?.[c.id];
-  return '<article class="course-card '+(passed?'is-complete':'')+'"><div class="course-head"><span class="course-icon">'+esc(courseAccent(c))+'</span><span class="chip '+(passed?'free':'plus')+'">'+(passed?'✓ Bestanden':ready?'Bereit':'Noch gesperrt')+'</span></div><span class="micro">'+esc(c.category)+'</span><h3>'+esc(c.name)+'</h3>'+difficultyBadge(c)+'<p>'+count+' / '+ls.length+' Lektionen abgeschlossen</p><div class="progress"><span style="width:'+pct(count,ls.length)+'%"></span></div><button class="btn block" data-go="'+(ready?'exam/':'track/')+esc(c.id)+'">'+(ready?'Prüfung öffnen →':'Kurs fortsetzen →')+'</button></article>';
+  return '<article class="course-card ll-atelier-exam-card '+(passed?'is-complete':'')+'"><div class="ll-atelier-exam-card-glow" aria-hidden="true"></div><div class="course-head"><span class="course-icon">'+atelierScene(passed?'check':'exam','exam')+'</span><span class="chip '+(passed?'free':'plus')+'">'+(passed?'✓ Bestanden':ready?'Bereit':'Noch gesperrt')+'</span></div><span class="micro">'+esc(c.category)+'</span><h3>'+esc(c.name)+'</h3>'+difficultyBadge(c)+'<div class="ll-atelier-exam-progress"><div><strong>'+pct(count,ls.length)+'%</strong><small>Lernfortschritt</small></div><span>'+count+' / '+ls.length+' Lektionen</span></div><div class="progress"><span style="width:'+pct(count,ls.length)+'%"></span></div><button class="btn block" data-go="'+(ready?'exam/':'track/')+esc(c.id)+'">'+(ready?'Prüfung öffnen →':'Kurs fortsetzen →')+'</button></article>';
  }).join('')||'<div class="empty">Hier sind gerade keine passenden Prüfungen.</div>')+'</div></section>';
 }
 async function loadExam(id){
@@ -1579,15 +1580,16 @@ function scriptPage(){
  return neonHero('script')+'<section class="track-top"><span class="eyebrow">[ ++ ] DEIN PROJEKT</span>'+
  '<h1>sh_shop</h1><p class="lede">Ein FiveM-Lernprojekt, das mit deinen Lektionen wächst. Abgeschlossene Abschnitte schalten passende Codebeispiele frei.</p>'+
  '<span class="progress-pill">'+done+'/'+all.length+' Teile freigeschaltet</span></section>'+
- '<div class="file-tree"><div class="file-root">resources/[scripts]/<strong>sh_shop/</strong></div>'+
+ atelierScriptStats(done,all.length)+
+ '<div class="ll-atelier-studio-shell"><aside class="ll-atelier-studio-files"><div class="ll-atelier-panel-caption"><span class="eyebrow">[ 01 ] WORKSPACE</span><strong>Projekt Explorer</strong></div><div class="file-tree"><div class="file-root">resources/[scripts]/<strong>sh_shop/</strong></div>'+
  PROJECT_FILES.map((f,i)=>'<button type="button" class="tree-file'+(s.projectTab===i?' selected':'')+'" data-project-tab="'+i+'">'+
- '<span class="tree-branch">├─</span><span>'+esc(f.name)+'</span><span class="tree-count">'+projectUnblocked(f).length+'/'+f.ids.filter(k=>all[k]).length+'</span></button>').join('')+'</div>'+
+ '<span class="tree-branch">├─</span><span>'+esc(f.name)+'</span><span class="tree-count">'+projectUnblocked(f).length+'/'+f.ids.filter(k=>all[k]).length+'</span></button>').join('')+'</div></aside><section class="ll-atelier-studio-work"><div class="ll-atelier-panel-caption"><span class="eyebrow">[ 02 ] CODE-VORSCHAU</span><strong>Dein Script</strong></div>'+
  '<div class="file-tabs" role="tablist" aria-label="Projektdateien">'+PROJECT_FILES.map((f,i)=>
  '<button type="button" role="tab" aria-selected="'+(s.projectTab===i)+'" class="file-tab'+(i===s.projectTab?' active':'')+'" data-project-tab="'+i+'">'+esc(f.name)+'</button>').join('')+'</div>'+
  '<div class="file-preview"><div class="file-preview-head"><span>'+esc(file.name)+'</span>'+
  (unlocked.length?'<span class="file-actions"><button class="btn small" type="button" data-action="copy-project">Kopieren</button><button class="btn small" type="button" data-action="download-project">.lua laden ↓</button></span>':'<span class="lock-mini">🔒 Gesperrt</span>')+'</div>'+
  '<pre class="file-code"><code>'+(unlocked.length?esc(code||'-- Codebeispiele werden geladen …'):
- '-- 🔒 Zu diesem Teil fehlen noch bestandene Lektionen.\n-- Bearbeite die passenden Kapitel, um ihn freizuschalten.')+'</code></pre></div>'+
+ '-- 🔒 Zu diesem Teil fehlen noch bestandene Lektionen.\n-- Bearbeite die passenden Kapitel, um ihn freizuschalten.')+'</code></pre></div></section></div>'+
  '<div class="project-message"><strong>'+(unlocked.length?'Lernbeispiel freigeschaltet.':'Teile gesperrt.')+'</strong>'+
  '<p>'+(unlocked.length?'Die Beispiele sind zum Verstehen gedacht, nicht als fertiges Produktiv-Script.':
  'Schließe die zugehörigen Lektionen ab, um die Codebeispiele zu erhalten.')+'</p></div>'+
@@ -1629,6 +1631,7 @@ function referencePage(){
  '<h1>Dein <em>Spickzettel.</em></h1>'+
  '<p class="lede">Alle wichtigen Grundlagen, Funktionen, Befehle und praktische Beispiele, nach Programmiersprache sortiert. Die komplette Sprachreferenz findest du zusätzlich in der offiziellen Dokumentation.</p>'+
  '<div class="ref-overview"><span>⌘ '+langs.length+' Sprachen & Tools</span><span>▦ '+allCount+' Referenzeinträge</span></div></section>'+
+ atelierReferenceInfo(langs.length,allCount)+
  '<section class="reference-picker" aria-label="Programmiersprache wählen">'+
  '<div class="form-row"><div class="form-group"><label class="form-label" for="reference-language">Programmiersprache auswählen</label>'+
  '<select id="reference-language" class="select" aria-label="Programmiersprache auswählen">'+
@@ -1838,7 +1841,7 @@ function profilePage(){
  const streak=Number(s.loginStreak?.current||0),best=Number(s.loginStreak?.best||0),titles=(s.social?.titles||['Developer']).filter(Boolean),selected=s.social?.profile?.title||'Developer';
  return pageHeading('DEIN PROFIL','Dein Lern-<span class="gradient">fortschritt.</span>',
  'Hier siehst du deine wichtigsten Werte und freigeschalteten Erfolge. Persönliche App-Farben und Hintergründe findest du in den Einstellungen.')+
- '<section class="profile-overview-card"><div class="profile-overview-avatar">'+esc(name.slice(0,1).toUpperCase())+'</div><div><span class="eyebrow">LIVERYLAB DEVELOPER</span><h2>'+esc(name)+'</h2><span class="profile-title-badge">✦ '+esc(selected)+'</span><p>@'+esc(s.profile?.username||'developer')+' · '+esc(plans[s.tier]||'Free')+'</p>'+(s.tier!=='free'?'<p class="plan-expiry">'+(s.planExpires?'Freigeschaltet bis '+esc(new Date(s.planExpires).toLocaleString('de-DE')):'Dauerhaft freigeschaltet')+'</p>':'')+'</div><button class="btn small" data-go="settings">App-Design ändern →</button></section>'+
+ '<section class="profile-overview-card"><div class="profile-overview-avatar">'+esc(name.slice(0,1).toUpperCase())+'</div><div><span class="eyebrow">LIVERYLAB DEVELOPER</span><h2>'+esc(name)+'</h2><span class="profile-title-badge">✦ '+esc(selected)+'</span><p>@'+esc(s.profile?.username||'developer')+' · '+esc(plans[s.tier]||'Free')+'</p>'+(s.tier!=='free'?'<p class="plan-expiry">'+(s.planExpires?'Freigeschaltet bis '+esc(new Date(s.planExpires).toLocaleString('de-DE')):'Dauerhaft freigeschaltet')+'</p>':'')+'</div><button class="btn small" data-go="settings">App-Design ändern →</button></section>'+atelierProfilePath()+
  '<section class="profile-title-picker"><div><span class="eyebrow">[ ✦ ] DEIN PROFILTITEL</span><h3>Zeig, was du erreicht hast.</h3><p>Du kannst nur Titel auswählen, die du durch Lektionen, Prüfungen, Freunde oder Streaks freigeschaltet hast.</p></div><form data-form="profile-title"><label class="form-label" for="profile-title">Freigeschalteten Titel auswählen</label><div class="profile-title-row"><select class="select" id="profile-title" name="title">'+titles.map(t=>'<option value="'+esc(t)+'" '+(t===selected?'selected':'')+'>'+esc(t)+'</option>').join('')+'</select><button class="btn primary" type="submit">Titel verwenden</button></div></form></section>'+
  '<section class="profile-quick-stats"><div class="profile-quick-tile"><span>🔥</span><strong>'+streak+'</strong><small>Login-Streak in Tagen</small></div>'+
  '<div class="profile-quick-tile"><span>🏅</span><strong>'+best+'</strong><small>Bisheriger Rekord</small></div>'+
@@ -1869,6 +1872,7 @@ function settingsPage(){
  }
  return pageHeading('EINSTELLUNGEN','Deine Academy. <span class="gradient">Dein Design.</span>',
  'Passe den Hintergrund und die Farben deiner App an. Darunter verwaltest du Anmeldung, Passwort und Sicherheit.')+
+ atelierSettingsPreview()+
  '<section class="setting-section appearance-section"><div class="section-heading"><div><span class="eyebrow">01 · PERSÖNLICHES DESIGN</span>'+
  '<h2>Farben & Hintergrund</h2><p>Die Änderungen werden sofort auf diesem Gerät gespeichert.</p></div></div>'+
  '<div class="settings-appearance-card"><h3>Hintergrund & Oberflächen</h3>'+
@@ -2165,7 +2169,7 @@ function adminPage(){
  return pageHeading('ADMINISTRATION','Dein <span class="gradient">Control Center.</span>',
  'Support, Mitglieder und Gutscheine übersichtlich getrennt verwalten.')+
  neonBanner('Admin-Dashboard','Hier steuerst du echte Registrierungen, Mitglieder, Tarife und Supportanfragen – ohne erfundene Statistiken.','settings')+tabs+
- (tab==='overview'?summary+hub:tab==='support'?supportAdminSection():tab==='registration'?adminRegistrationSection(pending.length):tab==='members'?requests+
+ (tab==='overview'?atelierAdminPulse(people,pending)+summary+hub:tab==='support'?supportAdminSection():tab==='registration'?adminRegistrationSection(pending.length):tab==='members'?requests+
  '<section class="section"><div class="section-heading"><div><span class="eyebrow">[ 02 ] MITGLIEDER</span>'+
  '<h2>Deine Teamkonten</h2><p>Tarifänderungen werden über den geschützten Administrationsserver gespeichert. Administratoren haben immer Vollzugriff.</p></div></div>'+
  '<div class="admin-tools"><input class="input" id="admin-search" type="search" placeholder="Benutzername oder E-Mail suchen …" value="'+esc(s.adminSearch)+'"><div class="admin-filter" role="group" aria-label="Konten filtern">'+[['all','Alle'],['active','Aktiv'],['blocked','Gesperrt'],['admin','Admins']].map(([value,label])=>'<button type="button" class="'+(s.adminFilter===value?'active':'')+'" data-admin-filter="'+value+'">'+label+'</button>').join('')+'</div></div>'+
