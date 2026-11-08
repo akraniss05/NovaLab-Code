@@ -63,7 +63,7 @@ const html='<!doctype html><html lang="de"><head><meta name="viewport" content="
    assert.equal(await page.evaluate(()=>window.LLEffects.impact(50,50)),false,'Taps disabled from preference');
    await page.evaluate(()=>{localStorage.setItem('liverylab-pref-buttonEffects','1');window.LLEffects.sync();});
    assert.equal(await page.evaluate(()=>window.LLEffects.impact(50,50)),true,'Tap halo can render when enabled');
-   assert.equal(await page.locator('.ll-tap-halo').count(),1,'Tap halo draws as an overlay');
+   assert.ok((await page.locator('.ll-tap-halo').count())>=1,'Tap halo draws as an overlay (earlier click halos can still be fading)');
    await page.evaluate(()=>{localStorage.setItem('liverylab-pref-motion','1');window.LLEffects.sync();});
    assert.equal(await page.evaluate(()=>window.LLEffects.impact(50,50)),false,'Reduced motion blocks halos');
    assert.equal(await page.evaluate(()=>document.body.classList.contains('ll-effects-ambient')),false,'Reduced motion stops background animation');
