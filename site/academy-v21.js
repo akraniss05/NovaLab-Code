@@ -21,7 +21,7 @@ function doneIds(){return new Set(s.progress.done||[]);}
 function watchedIds(){return new Set(s.progress.watched||[]);}
 // The Lua beginner path finishes at its existing final exam. Older extra lessons
 // stay in Supabase (and retain their IDs, drafts and XP) for existing deep links.
-function inMainPath(l){return l.course_id!=='lua'||/^lua-(0[1-9]|[12][0-9]|30)$/.test(l.id)||/^lua-path-\\d{3}$/.test(l.id);}
+function inMainPath(l){return l.course_id!=='lua'||/^lua-(0[1-9]|[12][0-9]|30)$/.test(l.id)||/^lua-path-[0-9]{3}$/.test(l.id);}
 function countDone(courseId){var d=doneIds();return lessonsOf(courseId).filter(function(l){return d.has(l.id);}).length;}
 function lessonsOf(id){return s.lessons.filter(function(l){return l.course_id===id&&inMainPath(l);}).sort(function(a,b){return a.position-b.position;});}
 function courseOf(id){return s.courses.find(function(c){return c.id===id;});}
@@ -724,6 +724,7 @@ function lessonPage(id){
  '<small class="micro" style="display:block">Deine eigene Bestätigung – die Videowiedergabe lässt sich nicht verlässlich messen.</small></span></label></section>'+
  '<section class="step-box" id="lesson-practice"><span class="eyebrow">SCHRITT 03 · SELBST AUSPROBIEREN</span><h2>'+(isBlender?'Dein Arbeitsschritt.':'Löse diese Aufgabe im Editor.')+'</h2>'+
  '<p>'+esc(p.task||'Setze die Erklärung eigenständig in einem Beispiel um.')+'</p>'+
+ (p.practice_mode==='guided'?'<p class="muted">Begleitete Praxis: Schreibe den eigenen Code oder deine konkreten Schritte auf und erkläre die Wirkung. Diese neue Übung wird noch nicht automatisch kompiliert oder fachlich bewertet; prüfe sie selbst in deiner Entwicklungsumgebung.</p>':'')+
  '<div class="practice-workspace'+(isPracticeDone?' is-complete':'')+'" id="practice-workspace"><div class="practice-title"><strong>'+(isBlender?'Deine Umsetzung':'Dein Code-Entwurf')+'</strong>'+
  '<span class="practice-status" id="practice-status">'+(isPracticeDone?'✓ Praxis erledigt':'Nur auf diesem Gerät gespeichert')+'</span></div>'+
  '<label class="micro" for="practice-input">'+(isBlender?'Beschreibe, was du in Blender umgesetzt hast:':'Datei: '+esc(p.filename||({lua:'client.lua',python:'main.py',javascript:'main.js'}[String(p.lang||'').toLowerCase()]||'lösung.txt')))+'</label>'+
@@ -786,9 +787,10 @@ async function completePractice(){
  try{
   if(value.length<5){showPracticeResult(false,'✕ Schreibe zuerst deine eigene Lösung.');box.focus();return;}
   const payload=s.lesson.payload||{},lang=String(payload.lang||'').toLowerCase();
-  const visual=lang==='blender'||lang==='text';
+  const guided=payload.practice_mode==='guided';
+  const visual=guided||lang==='blender'||lang==='text';
   let result=visual
-   ?{ok:value.length>=60,diagnostic:value.length>=60?'Deine Arbeitsschritte wurden dokumentiert. Prüfe dein Blender-Ergebnis selbst.':'Beschreibe mindestens 60 Zeichen mit konkreten Arbeitsschritten.'}
+   ?{ok:value.length>=(guided?80:60),diagnostic:value.length>=(guided?80:60)?(guided?'Dein Codeentwurf und deine Erklärung sind dokumentiert. Teste sie selbst in der passenden Entwicklungsumgebung.':'Deine Arbeitsschritte wurden dokumentiert. Prüfe dein Blender-Ergebnis selbst.'):(guided?'Schreibe mindestens 80 Zeichen: eigenen Code beziehungsweise Arbeitsschritte und eine verständliche Erklärung.':'Beschreibe mindestens 60 Zeichen mit konkreten Arbeitsschritten.')}
    :window.LLPractice.evaluate(value,payload);
   if(!visual&&window.LLRuntime&&['lua','python','py','javascript','js'].includes(lang)){
    const runtime=await window.LLRuntime.run(value,lang);
@@ -819,7 +821,7 @@ async function completePractice(){
     updateLessonControls();
     return;
    }
-   showPracticeResult(true,'✓ Richtig! Deine Lösung wurde gespeichert.');
+   showPracticeResult(true,payload.practice_mode==='guided'?'✓ Eigenständiger Lernschritt dokumentiert. Bitte überprüfe den Code selbst in der Entwicklungsumgebung.':'✓ Richtig! Deine Lösung wurde gespeichert.');
    const status=$('#practice-status');if(status)status.textContent='✓ Praxis erledigt';
    window.LLLearning?.mark?.(id,4);
   }else{
