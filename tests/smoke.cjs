@@ -5,7 +5,7 @@ const read=file=>fs.readFileSync(path.join(__dirname,'..',file),'utf8');
 const html=read('site/index.html'),js=read('site/academy-v21.js'),css=read('site/app-v21.css');
 for(const file of ['site/reference-data.js','site/app-v21.css','site/app-v12.css','site/config.js','site/auth-mfa-v15.js','site/academy-v21.js','site/privacy.html','site/manifest.webmanifest','site/icon.svg','supabase/functions/academy-signin/index.ts','supabase/functions/admin-users/index.ts'])
  assert(fs.existsSync(path.join(__dirname,'..',file)),file+' missing');
-for(const token of ['app-v21.css?build=20261107v31','academy-v21.js?build=20261108v48','auth-mfa-v15.js?build=20261107v31','config.js?build=20261107v31','LiveryLab Academy'])
+for(const token of ['app-v21.css?build=20261107v31','academy-v21.js?build=20261108v49','auth-mfa-v15.js?build=20261107v31','config.js?build=20261107v31','LiveryLab Academy'])
  assert(html.includes(token),'Versioned asset missing: '+token);
 for(const obsolete of ['styles.css','refined.css','music-studio.js','studio3d-v5.js'])
  assert(!html.includes(obsolete),'Old asset still linked: '+obsolete);
@@ -42,7 +42,7 @@ assert.equal(banner.subarray(8,12).toString(),'WEBP','LiveryLab banner invalid')
 for(const selector of ['.ll-home-shortcuts','.ll-home-brand-banner','.ll-streak-modal','.ll-streak-claim','.ll-streak-backdrop'])assert(css.includes(selector),'Missing v19 interface style: '+selector);
 assert(fs.existsSync(path.join(__dirname,'../site/v21.html')),'Physical uncached v20 entry missing');
 assert(read('site/v21.html').includes('academy-v21.js?build='),'Unique iOS entry must load new code');
-assert(read('site/v31.html').includes('academy-v21.js?build=20261108v48'),'Fresh entry must load current code');
+assert(read('site/v31.html').includes('academy-v21.js?build=20261108v49'),'Fresh entry must load current code');
 assert(read('site/manifest.webmanifest').includes('v31.html#home'),'Installed app must open fresh entry');
 assert(js.includes("root=document.createElement('div')"),'Old HTML popup fallback missing');
 assert(js.includes("s.streakModalOpen=true;"),'Daily popup must appear after every login');
@@ -61,7 +61,7 @@ for(const token of ['academy_service','supportPage','supportAdminSection','beta-
 assert(css.includes('.support-grid')&&css.includes('.beta-switch'),'Support styling missing');
 for(const token of ['friend-list-search','data-exam-filter','download-project'])assert(js.includes(token),'Missing v28 feature: '+token);
 assert(css.includes('.exam-filters')&&css.includes('.friend-toolbar'),'v28 layout missing');
-for(const token of ['academy_shop_discount','salePrice','shop-sale-admin','sale-old','sale-new','sale-badge','data-bookmark-course','data-pin-course','study-goal','data-timer-toggle','support-search','support-filter','reply-templates','support-admin-stats'])assert(js.includes(token),'Missing v29 feature: '+token);
+for(const token of ['academy_shop_discount','salePrice','shop-sale-admin','sale-old','sale-new','sale-badge','data-bookmark-course','data-pin-course','study-goal','data-timer-toggle','support-search','support-filter','ll-admin-ticket-list','support-admin-stats'])assert(js.includes(token),'Missing v29 feature: '+token);
 for(const token of ['.shop-sale-banner','.sale-old','.sale-new','.ll-home-tools','.support-faq','.support-controls','.support-admin-stats'])assert(css.includes(token),'Missing v29 styling: '+token);
 assert(read('supabase/migrations/20261107_v29_shop_discount.sql').includes('academy_private.is_admin()'),'Shop discount must be admin-protected');
 
@@ -78,8 +78,8 @@ assert(!js.includes('data-action="run-practice"'),'Run button must not render');
 assert(html.includes('class="focus-center"')&&html.includes('data-timer-open'),'Center timer missing');
 assert(js.includes('localStorage.setItem(timerStorageKey'),'Timer must persist beyond tab reload');
 const layoutRestore=read('site/academy-v31-layout.css');
-assert(html.includes('academy-v31-layout.css?build=20261108v47'),'v31 simplified CSS missing');
-assert(read('site/v31.html').includes('academy-v31-layout.css?build=20261108v47'),'PWA simple CSS missing');
+assert(html.includes('academy-v31-layout.css?build=20261108v49'),'v31 simplified CSS missing');
+assert(read('site/v31.html').includes('academy-v31-layout.css?build=20261108v49'),'PWA simple CSS missing');
 for(const selector of ['.ll-home-brand-banner','.topbar','.bottom-nav','.focus-center','.practice-actions-simple'])assert(layoutRestore.includes(selector),'Visual recovery missing '+selector);
 
 const curriculum=read('site/academy-curriculum.js');
@@ -112,7 +112,7 @@ for(const item of ['PRIMARY KEY (user_id, lesson_id)','ON CONFLICT (user_id,less
 const languageModule=read('site/academy-i18n.js');
 for(const file of ['site/index.html','site/v21.html','site/v31.html']){
  const contents=read(file);
- assert(contents.includes('academy-i18n.js?build=20261108v48'),file+' must load i18n before the main app');
+ assert(contents.includes('academy-i18n.js?build=20261108v49'),file+' must load i18n before the main app');
  assert(contents.includes('data-lang="de"')&&contents.includes('data-lang="en"'),file+' must display DE and EN in the topbar');
 }
 for(const token of ['liverylab-language','MutationObserver','setAccount','data-lang','data-no-translate','practice-input','document.documentElement.lang'])assert(languageModule.includes(token),'Language module missing '+token);
@@ -127,7 +127,7 @@ assert(currentI18n.includes('Welche praktische Aufgabe gehört zu'),'New questio
 assert(js.includes('lastSupportReceipt'),'Support must show persisted ticket reference');
 assert(js.includes('r.data?.ok!==true'),'Never claim a support request was sent without server confirmation');
 assert(js.includes('support-submit-status'),'Send errors must be shown inline');
-for(const entry of ['site/index.html','site/v21.html','site/v31.html'])assert(read(entry).includes('academy-v31-layout.css?build=20261108v47'),'Current support CSS missing '+entry);
+for(const entry of ['site/index.html','site/v21.html','site/v31.html'])assert(read(entry).includes('academy-v31-layout.css?build=20261108v49'),'Current support CSS missing '+entry);
 
 const effectsJs=read('site/academy-effects.js'),effectsCss=read('site/academy-effects.css');
 for(const page of ['site/index.html','site/v21.html','site/v31.html']){
@@ -140,3 +140,12 @@ for(const item of ['ll-tap-halo','ll-ambient-layer','ll-sound-volume','prefers-r
 for(const item of ['Animierter Hintergrund','Klickeffekte','Klicksounds','Lautstärke der Klicksounds'])assert(js.includes(item),'Missing appearance feature '+item);
 assert(js.includes("window.LLEffects?.sync?.()"),'App must re-apply effects after preference change');
 assert(js.includes("'animatedBackdrop','buttonEffects','uiSounds'"),'Appearance reset must restore effects to defaults');
+
+const chatSql=read('supabase/data/v49_support_conversations.sql');
+for(const token of ['academy_private.academy_ticket_messages','academy_private.ticket_chat','public.academy_ticket_chat','sender_role','auth.uid()','ON DELETE CASCADE','REVOKE ALL'])assert(chatSql.includes(token),'Secure message backend missing '+token);
+for(const token of ['data-chat-open','data-form="ticket-chat"','loadTicketThread','ticketChatPanel','ll-admin-tabs','ll-admin-hub','ll-member-summary','pollSupportInbox'])assert(js.includes(token),'Ticket chat/member control missing '+token);
+assert(js.includes("tab==='support'?supportAdminSection()"),'Chat must be in separate admin section');
+assert(js.includes("tab==='members'?requests+"),'Member management must only render inside its own section');
+assert(!js.includes('reply-templates'),'Legacy single-reply support form must be replaced by conversations');
+const newLayout=read('site/academy-v31-layout.css');
+for(const token of ['.ll-admin-hub','.ll-admin-tabs','.ll-chat-messages','.ll-member-compact'])assert(newLayout.includes(token),'Missing compact chat/member style '+token);
