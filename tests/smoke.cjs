@@ -78,12 +78,12 @@ assert(!js.includes('data-action="run-practice"'),'Run button must not render');
 assert(html.includes('class="focus-center"')&&html.includes('data-timer-open'),'Center timer missing');
 assert(js.includes('localStorage.setItem(timerStorageKey'),'Timer must persist beyond tab reload');
 const layoutRestore=read('site/academy-v31-layout.css');
-assert(html.includes('academy-v31-layout.css?build=20261107v44'),'v31 simplified CSS missing');
-assert(read('site/v31.html').includes('academy-v31-layout.css?build=20261107v44'),'PWA simple CSS missing');
+assert(html.includes('academy-v31-layout.css?build=20261108v45'),'v31 simplified CSS missing');
+assert(read('site/v31.html').includes('academy-v31-layout.css?build=20261108v45'),'PWA simple CSS missing');
 for(const selector of ['.ll-home-brand-banner','.topbar','.bottom-nav','.focus-center','.practice-actions-simple'])assert(layoutRestore.includes(selector),'Visual recovery missing '+selector);
 
 const curriculum=read('site/academy-curriculum.js');
-for(const file of ['site/index.html','site/v21.html','site/v31.html'])assert(read(file).includes('academy-curriculum.js?build=20261107v43'),file+' must include curriculum');
+for(const file of ['site/index.html','site/v21.html','site/v31.html'])assert(read(file).includes('academy-curriculum.js?build=20261108v45'),file+' must include curriculum');
 for(const token of ['sections','quiz_items','LLCurriculum','data-lesson-part','quizProgress','quiz-meter-fill'])assert(js.includes(token)||curriculum.includes(token),'Missing expanded curriculum '+token);
 for(const token of ['data-plan-action="extend"','data-plan-action="reduce"','data-plan-action="end"','membershipRemainingText','memberExpiry'])assert(js.includes(token),'Missing subscription admin '+token);
 const adminEdge=read('supabase/functions/admin-users/index.ts');
