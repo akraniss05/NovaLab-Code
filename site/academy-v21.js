@@ -7,7 +7,7 @@
 'use strict';
 var cfg=window.LL_CONFIG||{}, $=function(q,root){return (root||document).querySelector(q);};
 var content=$('#content'), sidebar=$('#sidebar'), bottom=$('#bottom-nav'), toastNode=$('#toast');
-var api=null, s={shopDiscount:0,service:{beta_open:true,mine:[],admin:[]},lastSupportReceipt:null,supportBusy:false,streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],xpAwards:[],xpClaimBusy:false,progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,quizStep:0,quizPassed:false,sectionIndex:0,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},memberExpiry:{},adminPage:1,adminFilter:'all',adminSearch:'',catalogLimit:9,practiceChecked:false,draft:'',lessonStep:1,hintStage:0,prefs:null,projectTab:0,projectSource:'',projectLoading:false};
+var api=null, s={shopDiscount:0,service:{beta_open:true,mine:[],admin:[]},lastSupportReceipt:null,supportBusy:false,chatTicketId:null,chatMessages:[],chatBusy:false,chatLoading:false,streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],xpAwards:[],xpClaimBusy:false,progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,quizStep:0,quizPassed:false,sectionIndex:0,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},memberExpiry:{},adminPage:1,adminFilter:'all',adminSearch:'',catalogLimit:9,practiceChecked:false,draft:'',lessonStep:1,hintStage:0,prefs:null,projectTab:0,projectSource:'',projectLoading:false};
 var plans={free:'Free',pro:'Plus',ultimate:'Ultimate'};
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];});}
 function safeLink(url){return /^https:\/\/[^\s<>"]+$/i.test(String(url||''))?esc(url):'#';}
@@ -854,6 +854,41 @@ async function refreshService(){
  if(!r.data||!Array.isArray(r.data.mine))throw Error('Support-Posteingang konnte nicht geladen werden.');
  s.service=r.data;return s.service;
 }
+async function loadTicketThread(id){
+ const r=await api.rpc('academy_ticket_chat',{p_action:'thread',p_ticket:id,p_body:null});
+ if(r.error)throw r.error;
+ if(!r.data?.ok||!Array.isArray(r.data.messages))throw Error('Nachrichtenverlauf konnte nicht geladen werden.');
+ s.chatTicketId=id;s.chatMessages=r.data.messages;
+ return r.data;
+}
+function ticketChatPanel(isAdmin){
+ const entries=isAdmin?s.service?.admin:s.service?.mine;
+ const ticket=Array.isArray(entries)?entries.find(x=>x.id===s.chatTicketId):null;
+ if(!ticket)return '';
+ const messages=(s.chatMessages||[]).map(msg=>{
+  const own=(isAdmin?msg.role==='admin':msg.role==='member');
+  const d=new Date(msg.at||0);
+  const when=Number.isNaN(d.getTime())?'':d.toLocaleString('de-DE',{dateStyle:'short',timeStyle:'short'});
+  return '<div class="ll-chat-message '+(own?'is-mine':'is-other')+'"><span class="ll-chat-sender">'+esc(msg.role==='admin'?'LiveryLab Team':'Mitglied')+'</span>'+
+  '<p>'+esc(msg.body||'')+'</p><small>'+esc(when)+'</small></div>';
+ }).join('');
+ const approval=isAdmin&&ticket.category==='plan'&&ticket.status!=='approved';
+ const management=isAdmin?'<form data-form="support-reply" data-ticket-id="'+esc(ticket.id)+'" class="ll-chat-status">'+
+  '<label>Status <select class="select" name="status"><option value="answered">Beantwortet</option><option value="closed">Schließen</option><option value="rejected">Ablehnen</option>'+
+  (approval?'<option value="approved">Mitgliedschaft freigeben</option>':'')+'</select></label>'+
+  (approval?'<label>Laufzeit (Tage) <input class="input" name="days" type="number" min="1" max="3650" value="30"></label>':'')+
+  '<button type="submit" class="btn small">Status speichern</button></form>':'';
+ return '<section class="panel ll-chat-panel" id="academy-chat-panel"><div class="ll-chat-heading"><div><span class="eyebrow">SUPPORT · GESPRÄCH</span>'+
+  '<h3>'+esc(isAdmin?(ticket.username||'Mitglied'):'Deine Unterhaltung')+'</h3><small>'+esc(ticket.category)+' · '+esc(ticket.status)+' · #'+esc(ticket.id.slice(0,8))+'</small></div>'+
+  '<button type="button" class="btn small" data-chat-close>Schließen ×</button></div>'+
+  '<div class="ll-chat-messages" role="log" aria-live="polite" aria-label="Nachrichtenverlauf">'+
+  (s.chatLoading?'<p class="muted">Nachrichten werden geladen …</p>':messages||'<p class="muted">Noch keine Nachrichten.</p>')+'</div>'+
+  '<form data-form="ticket-chat" data-ticket-id="'+esc(ticket.id)+'" class="ll-chat-compose">'+
+  '<label class="form-label" for="chat-message">Nachricht an '+(isAdmin?'das Mitglied':'das Team')+'</label>'+
+  '<textarea id="chat-message" class="input" name="body" rows="3" required maxlength="2000" placeholder="Deine Nachricht …"></textarea>'+
+  '<div class="ll-chat-compose-footer"><small>Im Supportticket gespeichert.</small>'+
+  '<button class="btn primary" type="submit" '+(s.chatBusy?'disabled':'')+'>Nachricht senden →</button></div></form>'+management+'</section>';
+}
 function supportPage(){
  const data=s.service||{},mine=Array.isArray(data.mine)?data.mine:[];
  const names={support:'Allgemeine Hilfe',bug:'Fehlerbericht',beta:'Beta-Feedback',plan:'Mitgliedschaft'};
@@ -865,8 +900,10 @@ function supportPage(){
  (data.beta_open?'<div class="form-group support-plan-field" hidden><label class="form-label">Gewünschter Tarif</label><select class="select" name="tier"><option value="pro">Plus · 1,99 €</option><option value="ultimate">Ultimate · 5,99 €</option></select><small>Freigabe erfolgt manuell durch das Team. Keine automatische Zahlung.</small></div>':'')+
  '<div class="form-group"><label class="form-label" for="support-message">Deine Nachricht</label><textarea class="input" id="support-message" name="message" minlength="10" maxlength="2000" rows="6" required placeholder="Beschreibe dein Anliegen möglichst genau …"></textarea></div><p class="support-submit-status" id="support-submit-status" role="status" aria-live="polite">'+(s.lastSupportReceipt?'✓ Anfrage gespeichert · Ticket '+esc(s.lastSupportReceipt.slice(0,8)):'Deine Nachricht wird im Support-Posteingang gespeichert.')+'</p><button class="btn primary block" type="submit" '+(s.supportBusy?'disabled':'')+'>'+(s.supportBusy?'Wird gesendet …':'Anfrage senden →')+'</button></form><p class="micro">Bis zu fünf Anfragen innerhalb von 24 Stunden. Bitte sende keine Passwörter.</p></section>'+
  '<section class="panel support-history"><div class="support-faq"><strong>Schnelle Hilfe</strong><details><summary>Wie erhalte ich Plus oder Ultimate?</summary><p>Eröffne während der Beta eine Tarif-Anfrage. Das Team gibt sie manuell frei.</p></details><details><summary>Wo sehe ich die Antwort?</summary><p>Hier in deinem Posteingang. Lade die App bei Bedarf neu.</p></details><details><summary>Wie melde ich einen Fehler?</summary><p>Wähle Fehler melden und beschreibe Gerät und Schritte.</p></details></div><span class="eyebrow">[ ◷ ] DEIN POSTEINGANG</span><h2>Deine Anfragen</h2><div class="support-controls"><input class="input" type="search" id="support-search" placeholder="Anfragen suchen …" aria-label="Anfragen suchen"><select class="select" id="support-filter"><option value="all">Alle Status</option><option value="open">Offen</option><option value="answered">Beantwortet</option><option value="approved">Genehmigt</option><option value="closed">Geschlossen</option></select></div>'+
- (mine.length?mine.map(t=>'<article class="support-ticket" data-ticket-status="'+esc(t.status||'open')+'"><div><strong>'+esc(names[t.category]||'Anfrage')+'</strong><span class="chip '+(t.status==='approved'?'free':'plus')+'">'+esc(t.status||'open')+'</span></div><small>'+new Date(t.created_at).toLocaleString('de-DE')+'</small><p>'+esc(t.message)+'</p>'+(t.reply?'<blockquote>'+esc(t.reply)+'</blockquote>':'')+'</article>').join(''):'<p class="muted">Noch keine Anfragen. Deine Antwort erscheint später hier.</p>')+
- '</section></div>';
+ (mine.length?mine.map(t=>'<article class="support-ticket" data-ticket-status="'+esc(t.status||'open')+'"><div><strong>'+esc(names[t.category]||'Anfrage')+'</strong><span class="chip '+(t.status==='approved'?'free':'plus')+'">'+esc(t.status||'open')+'</span></div>'+
+ '<small>'+new Date(t.updated_at||t.created_at).toLocaleString('de-DE')+'</small><p>'+esc((t.reply||t.message||'').slice(0,175))+'</p>'+
+ '<button type="button" class="btn small" data-chat-open="'+esc(t.id)+'">Gespräch öffnen →</button></article>').join(''):'<p class="muted">Noch keine Anfragen. Deine Antwort erscheint später hier.</p>')+
+ '</section>'+ticketChatPanel(false)+'</div>';
 }
 async function fetchVouchers(){
  if(s.profile?.role!=='admin')return;
