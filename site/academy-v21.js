@@ -389,7 +389,7 @@ async function navigateCurrent(){
       try{s.sectionIndex=Math.min(count-1,Math.max(0,Number(localStorage.getItem(lessonLocalKey('part',route.id)))||0));}catch(_){s.sectionIndex=0;}
       s.progress.lastLesson={id:route.id,step:s.lessonStep,at:new Date().toISOString()};void saveProgress().catch(()=>{});if(s.daily){s.daily.used_today=result.data.used;s.daily.remaining_today=result.data.remaining;}}else{s.lessonGate=result.data||{reason:'error'};}}
  }
- if(route.page==='admin'&&s.profile?.role==='admin'){try{await Promise.all([fetchMembers(),fetchVouchers()]);}catch(e){notice('Adminliste: '+formatError(e));}}
+ if(route.page==='admin'&&s.profile?.role==='admin'){try{await Promise.all([fetchMembers(),fetchVouchers(),fetchRegistrationPolicy(true)]);}catch(e){notice('Administration: '+formatError(e));}}
  if(route.page==='support'||route.page==='admin'||route.page==='plans'){try{await refreshService();}catch(e){notice('Support: '+formatError(e));}}
  if(route.page==='script'&&hasScript()){await loadProjectTab();}
  if(route.page==='reference'&&fullAccess()&&!s.referenceData){const ref=await api.rpc('academy_reference_get');if(!ref.error)s.referenceData=ref.data||{};}
@@ -1588,12 +1588,106 @@ function updateMembershipClocks(){
  });
 }
 if(typeof setInterval==='function')setInterval(updateMembershipClocks,30000);
+
+function adminRegistrationSection(pendingCount){
+ const mode=s.registrationPolicy?.mode||'approval',ready=s.registrationPolicy?.loaded===true;
+ const open=mode==='open';
+ return '<section class="section ll-registration-admin"><div class="ll-admin-section-header">'+
+  '<span class="eyebrow">[ ◎ ] REGISTRIERUNG & FREIGABEN</span>'+
+  '<h2>Wer darf die Academy benutzen?</h2><p>Entscheide, ob neue Konten sofort freigeschaltet werden oder sich zuerst bewerben müssen.</p></div>'+
+  '<div class="ll-registration-current"><span class="ll-registration-status '+(open?'is-open':'is-approval')+'">'+
+   (open?'● Freie Registrierung aktiv':'● Bewerbung & Freigabe aktiv')+'</span>'+
+   '<span>'+(ready?'Diese Einstellung gilt für alle neuen Registrierungen.':'Einstellung wird gelesen – bis dahin wird nichts automatisch freigeschaltet.')+'</span></div>'+
+  '<div class="ll-registration-mode-grid">'+
+   '<button type="button" class="ll-registration-mode '+(!open?'is-current':'')+'" data-registration-mode="approval" aria-pressed="'+String(!open)+'" '+(!s.isOwner||!ready?'disabled':'')+'>'+
+    '<span class="ll-registration-mode-icon">◷</span><strong>Bewerbung mit Freigabe</strong>'+
+    '<small>Neue Personen senden eine Registrierungsanfrage. Erst nachdem du sie angenommen hast, dürfen sie die Academy nutzen.</small>'+
+    '<span class="ll-registration-mode-foot">'+(!open?'✓ Ausgewählt':'Modus auswählen →')+'</span></button>'+
+   '<button type="button" class="ll-registration-mode '+(open?'is-current':'')+'" data-registration-mode="open" aria-pressed="'+String(open)+'" '+(!s.isOwner||!ready?'disabled':'')+'>'+
+    '<span class="ll-registration-mode-icon">✦</span><strong>Freie Registrierung</strong>'+
+    '<small>Neue Personen können direkt ein Free-Konto erstellen und sofort loslernen, ohne dass du sie einzeln genehmigen musst.</small>'+
+    '<span class="ll-registration-mode-foot">'+(open?'✓ Ausgewählt':'Modus auswählen →')+'</span></button>'+
+  '</div><p class="ll-registration-notice"><strong>Wichtig:</strong> Bereits vorhandene Konten und wartende Anfragen ändern ihren Status beim Umschalten nicht. Die E-Mail-Adressen werden bei dieser Registrierung nicht automatisch auf Besitz geprüft. '+'Die Änderung wirkt nur für neue Anmeldungen.</p>'+
+  (!s.isOwner?'<p class="ll-registration-notice">Nur der Projekteigentümer darf den Registrierungsmodus ändern. Teamadmins können ihn ansehen.</p>':'')+
+  '<div class="ll-registration-pending"><div><strong>'+pendingCount+' offene '+(pendingCount===1?'Bewerbung':'Bewerbungen')+'</strong>'+
+   '<span>Bestehende Anträge kannst du weiterhin einzeln prüfen.</span></div>'+
+   '<button type="button" class="btn small" data-go="admin/members">Anträge öffnen →</button></div>'+
+  '<button class="btn small" type="button" data-registration-refresh>Aktuellen Modus laden ↻</button></section>';
+}
+function filteredAdminCourseProgress(){
+ const entries=Array.isArray(s.adminLearner?.courses)?s.adminLearner.courses:[];
+ const term=String(s.adminProgressSearch||'').trim().toLocaleLowerCase('de');
+ return entries.filter(c=>{
+  const started=c.completed>0||!!c.last_opened,finished=c.total>0&&c.completed===c.total;
+  if(s.adminProgressFilter==='started'&&!started)return false;
+  if(s.adminProgressFilter==='finished'&&!finished)return false;
+  if(term&&!String(c.name+' '+c.category+' '+(c.current?.title||'')+' '+(c.next?.title||'')+' '+(c.last_opened?.title||'')).toLocaleLowerCase('de').includes(term))return false;
+  return true;
+ });
+}
+function renderAdminCourseProgress(){
+ const courses=filteredAdminCourseProgress();
+ return '<div class="ll-admin-course-progress-list">'+
+  (courses.map(course=>{
+   const done=Math.max(0,Number(course.completed)||0),total=Math.max(0,Number(course.total)||0);
+   const pct=Math.max(0,Math.min(100,Number(course.percent)||0));
+   const latest=course.last_opened||null,next=course.next||null;
+   return '<details class="ll-admin-course-progress-card"><summary><div class="ll-admin-course-progress-title">'+
+    '<span class="ll-admin-course-icon">'+esc((course.name||'?').slice(0,1).toUpperCase())+'</span>'+
+    '<div><strong>'+esc(course.name)+'</strong><small>'+esc(course.category||'Kurs')+
+    (latest?' · Zuletzt geöffnet: '+esc(latest.title):'')+'</small></div></div>'+
+    '<div class="ll-admin-course-progress-count"><strong>'+done+' / '+total+'</strong><small>'+pct+' %</small></div>'+
+    '<span class="ll-admin-course-chevron">⌄</span></summary>'+
+    '<div class="ll-admin-course-progress-body"><div class="ll-admin-course-progress-track" role="progressbar" aria-valuenow="'+pct+'" aria-valuemin="0" aria-valuemax="100" aria-label="Kursfortschritt '+esc(course.name)+'"><span style="width:'+pct+'%"></span></div>'+
+    (latest?'<p><span>Zuletzt geöffnete Lektion</span><strong>'+esc(latest.title)+'</strong><small>'+esc(latest.chapter||'')+'</small></p>':'')+
+    (next?'<p><span>Nächste offene Lektion</span><strong>'+esc(next.title)+'</strong><small>'+esc(next.chapter||'')+'</small></p>':'<p><strong>Alle Lektionen dieses Lernpfads abgeschlossen.</strong></p>')+
+    '</div></details>';
+  }).join('')||'<div class="empty"><strong>Keine passenden Kurse.</strong><p>Ändere den Suchbegriff oder die Auswahl.</p></div>')+
+  '</div><p class="micro">'+courses.length+' von '+(s.adminLearner?.courses?.length||0)+' Kursen angezeigt</p>';
+}
+function adminStudentProgressPanel(){
+ const data=s.adminLearner;if(!data?.student)return '';
+ const who=data.student.username||data.student.display_name||'Mitglied',sum=data.progress||{};
+ const updated=sum.updated_at?new Date(sum.updated_at):null;
+ const when=updated&&!Number.isNaN(updated.getTime())?new Intl.DateTimeFormat('de-DE',{dateStyle:'medium',timeStyle:'short',timeZone:'Europe/Berlin'}).format(updated):'Noch kein gespeicherter Fortschritt';
+ return '<section class="ll-admin-progress-panel" role="region" aria-label="Kursfortschritt von '+esc(who)+'" id="admin-progress-detail">'+
+  '<div class="ll-admin-progress-head"><div><span class="eyebrow">[ ◉ ] LERNFORTSCHRITT · MITGLIEDERANSICHT</span>'+
+   '<h2>'+esc(who)+'</h2><p>Fortschritt aller Kurse und einzelne Lektionen · '+esc(when)+'</p></div>'+
+   '<button class="btn small" data-close-admin-progress type="button">Schließen ✕</button></div>'+
+  '<div class="ll-admin-progress-metrics">'+
+  '<div><strong>'+Number(sum.completed||0)+'</strong><span>Lektionen erledigt</span></div>'+
+  '<div><strong>'+Number(sum.total||0)+'</strong><span>Lektionen insgesamt</span></div>'+
+  '<div><strong>'+Number(sum.started_courses||0)+'</strong><span>Kurse begonnen</span></div>'+
+  '<div><strong>'+Number(sum.finished_courses||0)+'</strong><span>Kurse abgeschlossen</span></div></div>'+
+  (sum.last_opened?'<div class="ll-admin-current-lesson"><span>Zuletzt geöffnete Lektion</span><strong>'+esc(sum.last_opened.title)+'</strong><small>'+esc(s.adminLearner?.courses?.find(c=>c.id===sum.last_opened.course_id)?.name||'')+' · '+esc(sum.last_opened.chapter||'')+'</small></div>':'')+
+  '<div class="ll-admin-progress-controls"><label for="admin-progress-search">Kurs oder Lektion suchen<input id="admin-progress-search" class="input" type="search" value="'+esc(s.adminProgressSearch||'')+'" placeholder="z. B. Lua, HTML, Variablen …"></label>'+
+  '<label for="admin-progress-filter">Kursstatus<select class="select" id="admin-progress-filter">'+
+  [['all','Alle 52 Kurse'],['started','Begonnen'],['finished','Abgeschlossen']].map(([value,label])=>'<option value="'+value+'" '+(s.adminProgressFilter===value?'selected':'')+'>'+label+'</option>').join('')+
+  '</select></label></div>'+
+  '<div id="admin-progress-course-results">'+renderAdminCourseProgress()+'</div>'+
+  '<p class="ll-admin-progress-private">Es werden ausschließlich die mit Supabase synchronisierten Lernstände angezeigt. Private Notizen, Code-Entwürfe und nur lokal gespeicherte Daten bleiben verborgen.</p></section>';
+}
+async function loadAdminStudentProgress(userId){
+ if(s.profile?.role!=='admin')return;
+ if(!/^[0-9a-f-]{36}$/i.test(String(userId||'')))return;
+ s.adminProgressBusy=true;s.adminLearner=null;s.adminProgressSearch='';s.adminProgressFilter='all';
+ render();
+ try{
+  const data=await adminCall({action:'studentProgress',userId});
+  if(!data.ok||!Array.isArray(data.courses))throw Error('Lernfortschritt konnte nicht geladen werden.');
+  s.adminLearner=data;
+ }catch(error){s.adminLearner=null;notice('Lernfortschritt: '+formatError(error));}
+ finally{s.adminProgressBusy=false;render();
+  const panel=$('#admin-learner-progress');if(panel?.scrollIntoView)panel.scrollIntoView({behavior:'smooth',block:'start'});
+ }
+}
+
 function adminPage(){
  if(s.profile?.role!=='admin')return '<section class="locked-panel"><h2>Nur für Administratoren.</h2></section>';
  const people=s.members||[],pending=people.filter(u=>u.access_status==='pending'),query=String(s.adminSearch||'').toLowerCase(),rest=people.filter(u=>u.access_status!=='pending').filter(u=>(s.adminFilter==='all'||(s.adminFilter==='active'&&u.active)||(s.adminFilter==='blocked'&&!u.active)||(s.adminFilter==='admin'&&u.role==='admin'))&&(!query||String(u.username||'').toLowerCase().includes(query)||String(u.email||'').toLowerCase().includes(query))),active=people.filter(u=>u.active).length,blocked=people.filter(u=>!u.active&&u.access_status!=='pending').length;
  const requests='<section class="section approval-section"><div class="section-heading"><div><span class="eyebrow">[ ! ] ANTRÄGE</span>'+
  '<h2>Registrierungsanfragen <span class="pending-bubble">'+pending.length+'</span></h2>'+
- '<p>Nur du kannst neue Konten genehmigen. Ohne deine Bestätigung bleiben die Kurse gesperrt.</p></div>'+
+ '<p>'+((s.registrationPolicy?.mode==='open')?'Bestehende Bewerbungen können hier weiter geprüft werden. Neue Registrierungen werden momentan direkt freigeschaltet.':'Neue Registrierungen werden erst nach deiner Freigabe aktiviert.')+'</p></div>'+
  '<button class="btn small" type="button" data-action="refresh-admin">Aktualisieren</button></div>'+
  (pending.length?'<div class="pending-list">'+pending.map(u=>
  '<article class="approval-card"><span class="approval-avatar">'+esc((u.username||u.email||'U').slice(0,1).toUpperCase())+'</span>'+
@@ -1611,7 +1705,7 @@ function adminPage(){
   '<div class="member-avatar">'+esc((u.username||u.email||'?').slice(0,1).toUpperCase())+'</div>'+
   '<div class="member-identity"><strong>'+esc(u.username||u.email||'Mitglied')+'</strong>'+
   '<small>'+esc(u.email||'')+'</small></div>'+status(u)+'</div><span class="ll-member-expand">Details ansehen ⌄</span></summary>'+
-  '<div class="member-management"><div><label class="form-label">Mitgliedschaft</label>'+
+  '<div class="member-management"><div class="ll-admin-user-progress-action"><button type="button" class="btn small ll-progress-open" data-view-progress="'+esc(u.id)+'">◉ Kurs- & Lektionsfortschritt ansehen →</button></div><div><label class="form-label">Mitgliedschaft</label>'+
    (owner?'<span class="member-admin-tier">Administrator · Vollzugriff</span>':
    '<select class="select" data-admin-tier="'+esc(u.id)+'" aria-label="Mitgliedschaft ändern für '+esc(u.username||u.email||'Mitglied')+'">'+
    '<option value="free" '+(tier==='free'?'selected':'')+'>Free · 3/Tag</option>'+
@@ -1631,9 +1725,9 @@ function adminPage(){
    (u.active?'Zugriff sperren':'Zugriff erlauben')+'</button>'+
    '<button class="btn small danger" data-delete-user="'+esc(u.id)+'" '+(owner?'disabled':'')+'>Löschen</button></div>'+(s.isOwner&&!u.is_owner?'<div class="admin-role-select"><label class="form-label">Teamrolle</label><select class="select" data-admin-role="'+esc(u.id)+'" aria-label="Teamrolle von '+esc(u.username||'')+'"><option value="student" '+(u.role==='student'?'selected':'')+'>Mitglied</option><option value="admin" '+(u.role==='admin'?'selected':'')+'>Administrator · Team verwalten</option></select></div>':'')+'</div></details>';
  }).join('');
- const tab=['members','support','vouchers'].includes(parseRoute().id)?parseRoute().id:'overview';
+ const tab=['members','support','vouchers','registration'].includes(parseRoute().id)?parseRoute().id:'overview';
  const tabs='<nav class="ll-admin-tabs" aria-label="Administration">'+[
-   ['overview','Übersicht'],['support','Support & Chat'],['members','Mitglieder'],['vouchers','Gutscheine']
+   ['overview','Übersicht'],['support','Support & Chat'],['members','Mitglieder'],['registration','Registrierung'],['vouchers','Gutscheine']
  ].map(([key,label])=>'<button type="button" class="btn small '+(key===tab?'primary':'')+'" data-go="'+(key==='overview'?'admin':'admin/'+key)+'" aria-current="'+(key===tab?'page':'false')+'">'+label+'</button>').join('')+'</nav>';
  const summary='<section class="admin-overview"><article><span>◷</span><strong>'+pending.length+'</strong><small>Registrierungen</small></article>'+
  '<article><span>✉</span><strong>'+(s.service?.admin||[]).filter(t=>t.status==='open').length+'</strong><small>Offene Tickets</small></article>'+
@@ -1642,16 +1736,18 @@ function adminPage(){
  const hub='<div class="ll-admin-hub">'+[
   ['admin/support','✉','Support & Nachrichten','Alle Anfragen und Gespräche mit Mitgliedern'],
   ['admin/members','◉','Mitgliederverwaltung','Nutzer, Tarife, Rollen und Anträge'],
+  ['admin/registration','◎','Registrierungsmodus','Frei anmelden oder Bewerbungspflicht'],
   ['admin/vouchers','%','Gutscheine & Shop','Gutscheincodes und Shopaktionen']
  ].map(([path,icon,title,subtitle])=>
   '<button type="button" class="ll-admin-hub-card" data-go="'+path+'"><span>'+icon+'</span><strong>'+title+'</strong><small>'+subtitle+'</small><b>Öffnen →</b></button>'
  ).join('')+'</div>';
  return pageHeading('ADMINISTRATION','Dein <span class="gradient">Control Center.</span>',
  'Support, Mitglieder und Gutscheine übersichtlich getrennt verwalten.')+tabs+
- (tab==='overview'?summary+hub:tab==='support'?supportAdminSection():tab==='members'?requests+
+ (tab==='overview'?summary+hub:tab==='support'?supportAdminSection():tab==='registration'?adminRegistrationSection(pending.length):tab==='members'?requests+
  '<section class="section"><div class="section-heading"><div><span class="eyebrow">[ 02 ] MITGLIEDER</span>'+
  '<h2>Deine Teamkonten</h2><p>Tarifänderungen werden über den geschützten Administrationsserver gespeichert. Administratoren haben immer Vollzugriff.</p></div></div>'+
  '<div class="admin-tools"><input class="input" id="admin-search" type="search" placeholder="Benutzername oder E-Mail suchen …" value="'+esc(s.adminSearch)+'"><div class="admin-filter" role="group" aria-label="Konten filtern">'+[['all','Alle'],['active','Aktiv'],['blocked','Gesperrt'],['admin','Admins']].map(([value,label])=>'<button type="button" class="'+(s.adminFilter===value?'active':'')+'" data-admin-filter="'+value+'">'+label+'</button>').join('')+'</div></div>'+
+ '<div id="admin-learner-progress">'+(s.adminProgressBusy?'<section class="ll-admin-progress-panel"><div class="spinner"></div><p>Lernfortschritt wird geschützt geladen …</p></section>':adminStudentProgressPanel())+'</div>'+
  '<div class="member-list">'+(cards||'<div class="empty">Keine passenden Mitglieder gefunden.</div>')+'</div>'+
  '<div class="admin-pagination"><button class="btn small" data-action="admin-prev" '+(s.adminPage===1?'disabled':'')+'>← Vorherige</button>'+
  '<span>Seite '+s.adminPage+'</span><button class="btn small" data-action="admin-next" '+(people.length<100?'disabled':'')+'>Nächste →</button></div></section>'+
@@ -1687,7 +1783,7 @@ async function updateTier(uid,tier){
 }
 async function adminAction(action,node){
  try{
-  if(action==='refresh-admin'){await Promise.all([fetchMembers(),fetchVouchers()]);render();return;}
+  if(action==='refresh-admin'){await Promise.all([fetchMembers(),fetchVouchers(),fetchRegistrationPolicy(true)]);render();return;}
   if(action==='admin-prev'||action==='admin-next'){s.adminPage=Math.max(1,s.adminPage+(action==='admin-next'?1:-1));await fetchMembers();render();return;}
   if(node.hasAttribute('data-reset-user')){
     var pwd=prompt('Neues vorläufiges Passwort (mindestens 14 Zeichen):');if(pwd===null)return;
