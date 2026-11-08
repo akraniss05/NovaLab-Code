@@ -7,7 +7,7 @@ const path=require('node:path');
 
 const edgeSource=fs.readFileSync(path.join(__dirname,'../supabase/functions/admin-users/index.ts'),'utf8');
 const javascript=edgeSource
- .replace(/^import \{ createClient \} from 'npm:@supabase\/supabase-js@2(?:\\.\\d+)*';\\s*/m,'')
+ .replace(/^import[^\n]+;\s*/m,'')
  .replace('const headers: Record<string,string> =','const headers =')
  .replace('const reply=(status:number,data:unknown)=>','const reply=(status,data)=>')
  .replace('const env=(n:string)=>','const env=(n)=>')
