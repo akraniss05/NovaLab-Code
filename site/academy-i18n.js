@@ -541,6 +541,10 @@ function queue(){
 function updateControls(){
  if(typeof document==='undefined')return;
  document.documentElement.lang=current;
+ document.querySelectorAll('a[href="./privacy.html"],a[href="./privacy.en.html"]').forEach(link=>{
+  const wanted=current==='en'?'./privacy.en.html':'./privacy.html';
+  if(link.getAttribute('href')!==wanted)link.setAttribute('href',wanted);
+ });
  document.querySelectorAll('[data-lang]').forEach(button=>{
   const selected=button.dataset.lang===current;
   button.classList.toggle('active',selected);
