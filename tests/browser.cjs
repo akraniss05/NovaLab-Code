@@ -194,7 +194,7 @@ if(name.startsWith('streak')){assert.ok(actual.modalWidth>200&&actual.modalWidth
 if(name==='focus-timer'){assert.ok(actual.focusBounds.width>220&&actual.focusBounds.width<=width,'Focus popup exceeds screen width');assert.ok(actual.focusBounds.height<=850,'Focus modal too tall');assert.ok(actual.focusBounds.top>=0,'Focus modal cut off above viewport');}
 if(name==='admin-members'){assert.equal(actual.planManagementWidth,0,'Member details should stay collapsed by default');}
 if(width<820){assert.equal(actual.navRows,1,'Five bottom nav tabs must stay on ONE ROW: '+actual.navRows);}
-if(name==='track'){assert.equal(actual.cardDisplay,'grid');assert.ok(actual.titleBelow,'Lesson title/description collision');}
+if(name==='track'){assert.equal(actual.cardDisplay,'flex','Roadmap lesson cards use flex inside a grid timeline');assert.ok(actual.titleBelow,'Lesson title/description collision');}
 if(name==='lesson'){assert.equal(actual.stepsDisplay,'grid');assert.equal(actual.stepChildren,4);assert.equal(actual.partCount,2,'Lesson navigation must have exactly two tabs');assert.ok(actual.videoRatio>1.65&&actual.videoRatio<1.9,'Video aspect ratio');}
 assert.equal(actual.navDisplay,width<820?'grid':'none');
 if(width===390)await page.screenshot({path:path.join(root,'test-results',name+'.png'),fullPage:true});
