@@ -35,6 +35,8 @@ function paywall(feature,tier,description){return '<section class="feature-gate"
 function badge(t){return '<span class="chip '+esc(t)+'">'+tierLabel(t)+'</span>';}
 function levelText(l){var x=String(l||'beginner').toLowerCase();return /beginner|anfänger/.test(x)?'Anfänger':/intermediate|mittelstufe/.test(x)?'Aufbau':'Fortgeschritten';}
 
+function difficultyBadge(course){return window.LLDifficulty?.badge?.(course)||'';}
+function difficultyDescription(){return window.LLDifficulty?.description?.()||'Schwierigkeit des gesamten Kurses.';}
 function lessonLocalKey(kind,id){return 'liverylab-'+kind+'-'+(s.user?.id||'guest')+'-'+id;}
 function readDraft(id){try{return localStorage.getItem(lessonLocalKey('draft',id))||'';}catch(_){return '';}}
 function saveDraft(id,value){try{localStorage.setItem(lessonLocalKey('draft',id),String(value).slice(0,10000));}catch(_){}}
@@ -309,7 +311,7 @@ async function loadXpAwardPages(){
 }
 async function loadData(){
  var all=await Promise.all([
- api.from('ll_courses').select('id,name,category,level,icon,source_url'),
+ api.from('ll_courses').select('id,name,category,level,icon,source_url,difficulty'),
  loadLessonIndexPages(),
  api.from('academy_plans').select('tier,expires_at').eq('user_id',s.user.id).maybeSingle(),
  api.from('academy_progress').select('payload').eq('user_id',s.user.id).eq('key','liverylab-v10').maybeSingle(),
@@ -446,7 +448,7 @@ function courseCard(c){
  var lessons=lessonsOf(c.id),done=countDone(c.id),complete=lessons.length>0&&done===lessons.length,free=lessons.some(l=>l.required_plan==='free');
  return '<article class="course-card'+(complete?' is-complete':'')+'">'+
  '<div class="course-head"><span class="course-icon">'+esc(courseAccent(c))+'</span><span class="chip '+(complete||free?'free':'plus')+'">'+(complete?'✓ Abgeschlossen':free?'Einstieg frei':'Aufbaukurs')+'</span></div>'+
- '<div><span class="micro">'+esc(c.category)+' · '+levelText(c.level)+'</span><h3>'+esc(c.name)+'</h3></div>'+
+ '<div><span class="micro">'+esc(c.category)+' · Einstieg: '+levelText(c.level)+'</span><h3>'+esc(c.name)+'</h3>'+difficultyBadge(c)+'</div>'+
  '<p>'+lessons.length+' Lektionen · Verständliche Schritte, Tutorials und Praxis.</p>'+
  '<div class="progress" role="progressbar" aria-valuenow="'+done+'" aria-valuemin="0" aria-valuemax="'+lessons.length+'" aria-label="Kursfortschritt"><span style="width:'+pct(done,lessons.length)+'%"></span></div>'+
  '<div class="meta-line"><span>'+done+' / '+lessons.length+' abgeschlossen</span><span>'+pct(done,lessons.length)+'%</span></div>'+
@@ -586,6 +588,7 @@ function homePage(){
  '<section class="ll-home-continue"><div class="ll-continue-icon">'+llIcon('code')+'</div>'+
  '<div class="ll-continue-copy"><span class="eyebrow">WEITERLERNEN</span>'+
  '<h2>'+esc(nextCourse?.name||'Deine Lernreise beginnt hier')+'</h2>'+
+ (nextCourse?difficultyBadge(nextCourse):'')+
  '<p>'+esc(next?.title||'Wähle deinen ersten Kurs und starte mit dem Programmieren.')+'</p>'+
  '<div class="ll-continue-progress"><div class="ll-level-bar"><span style="width:'+progress+'%"></span></div><strong>'+progress+' %</strong></div></div>'+
  '<button type="button" class="btn primary ll-continue-button" data-go="'+(next?'lesson/'+esc(next.id):'courses')+'">Jetzt fortsetzen '+llIcon('arrow')+'</button></section>'+
@@ -625,7 +628,7 @@ function catalogItems(){
 function coursesPage(){
  var cats=['Alle','Merkliste','Programmieren','Sprachen','FiveM','Frameworks','Webentwicklung','3D & Blender','Backend','Tools','Profi-Wissen'].filter(c=>c==='Alle'||c==='Merkliste'||s.courses.some(x=>x.category===c));
  return pageHeading('KURSBIBLIOTHEK','Dein Weg zum <span class="gradient">Developer.</span>',
- 'Finde deinen Schwerpunkt. Wir zeigen zunächst die wichtigsten Lernpfade statt einer endlosen Liste.')+
+ 'Finde deinen Schwerpunkt. Die Schwierigkeit jedes Kurses ist zusätzlich zum Einstiegsniveau angegeben.')+
  '<section class="ll-catalog-intro"><div class="ll-catalog-spotlight"><span class="eyebrow">✦ NEU IM LERNSTUDIO</span><h2>Blender lernen mit <em>Video & Quiz.</em></h2><p>Schau dir die Grundlagen direkt in den Lektionen an, prüfe dein Wissen und baue deine Fähigkeiten Schritt für Schritt auf.</p><button class="btn primary" type="button" data-go="track/blender-fundamentals">Blender-Lernpfad öffnen →</button></div><div class="ll-catalog-steps"><span>01 <strong>Lektion ansehen</strong></span><span>02 <strong>Praxis ausprobieren</strong></span><span>03 <strong>Quiz bestehen</strong></span><span>04 <strong>Prüfung starten</strong></span></div></section>'+
  '<section class="section"><div class="catalog-toolbar"><input class="input searchbar" id="course-search" type="search" placeholder="Kurse durchsuchen …" value="'+esc(s.search)+'" aria-label="Kurse durchsuchen"><span class="chip">'+s.courses.length+' Lernpfade</span></div>'+
  '<div class="catalog-tags">'+cats.map(c=>'<button class="pill'+(s.filter===c?' active':'')+'" data-filter="'+esc(c)+'">'+esc(c)+'</button>').join('')+'</div>'+
@@ -641,6 +644,7 @@ function trackPage(id){
  let out='<a class="back" href="#courses">← Alle Kurse</a>'+
  '<section class="track-top"><div class="track-actions"><button class="btn small" type="button" data-pin-course="'+esc(id)+'">'+(getChoicePreference(pinKey(),'')===id?'✓ Angeheftet':'⌁ Auf Startseite anheften')+'</button><button class="btn small" type="button" data-bookmark-course="'+esc(id)+'">'+(bookmarks().includes(id)?'★ Gemerkt':'☆ Kurs merken')+'</button></div><span class="eyebrow">[ 00 ] LERNPFAD · '+all.length+' LEKTIONEN</span>'+
  '<h1>'+esc(course.name)+' <em>lernen.</em></h1>'+
+ '<div class="ll-difficulty-explain">'+difficultyBadge(course)+'<small>'+esc(difficultyDescription())+'</small></div>'+
  '<p class="lede">Jede Lektion erklärt ein Konzept. Danach schaust du ein passendes Tutorial an, löst eine Praxisaufgabe und überprüfst dein Wissen.</p></section>'+
  '<div class="stats-grid track-stats"><div class="stat-card"><strong>'+done+'/'+all.length+'</strong><small>LEKTIONEN</small></div>'+
  '<div class="stat-card"><strong>'+xpFromCourse(id)+'</strong><small>XP</small></div>'+
@@ -688,7 +692,7 @@ function lessonPage(id){
  var c=courseOf(l.course_id),all=lessonsOf(l.course_id),index=all.findIndex(x=>x.id===id);
  var back='<a class="back" href="#track/'+esc(l.course_id)+'">← '+esc(c?.name||'Lernpfad')+'</a>';
  if(!allowed(l))return back+'<section class="panel locked-panel"><div class="lock-icon">🔒</div><span class="eyebrow">KURSINHALT GESCHÜTZT</span>'+
- '<h1>'+esc(l.title)+'</h1><p class="lede" style="margin:auto">'+esc(l.summary)+'</p>'+
+ '<h1>'+esc(l.title)+'</h1>'+difficultyBadge(c)+'<p class="lede" style="margin:auto">'+esc(l.summary)+'</p>'+
  '<p>Diese Lektion ist mit <strong>'+tierLabel(l.required_plan)+'</strong> freigeschaltet.</p>'+
  '<div class="hero-actions" style="justify-content:center"><button class="btn primary" data-go="plans">Stufen vergleichen</button>'+
  '<a class="btn discord" rel="noopener noreferrer" target="_blank" href="https://discord.gg/livery-lab">Freischaltung anfragen</a></div></section>';
@@ -699,7 +703,7 @@ function lessonPage(id){
  var next=all[index+1],d=esc(s.draft),isPracticeDone=s.practiceChecked||finished;
  return '<article class="lesson-article">'+back+
  '<header><span class="eyebrow">'+esc(c.name)+' · '+esc(l.chapter)+'</span><h1>'+esc(l.title)+'</h1>'+
- '<p>'+esc(p.goal||l.summary)+'</p><div class="chips"><span class="chip">'+(index+1)+' von '+all.length+'</span><span class="chip">'+l.minutes+' Minuten</span>'+
+ '<p>'+esc(p.goal||l.summary)+'</p><div class="chips"><span class="chip">'+(index+1)+' von '+all.length+'</span><span class="chip">'+l.minutes+' Minuten</span>'+difficultyBadge(c)+
  '<span class="chip '+(finished?'free':'')+'">'+(finished?'✓ Abgeschlossen':rewarded?'✓ 30 XP bereits erhalten':'30 XP möglich')+'</span></div>'+
  '<div class="lesson-steps"><div class="lesson-step done"><span class="step-index">01</span>Verstehen</div>'+
  '<div class="lesson-step '+(s.videoChecked?'done':'')+'"><span class="step-index">02</span>Video</div>'+
@@ -1004,7 +1008,7 @@ function examsPage(){
  '<div class="exam-quota"><strong>✦ '+(cap<0?'Unbegrenzt':Math.max(0,cap-used)+' von '+cap)+' Prüfungen heute übrig</strong><small>Free: 2 · Plus: 4 · Ultimate: unbegrenzt. Reset um Mitternacht (Berlin).</small><button class="btn small" data-go="plans">Tarife →</button></div>'+
  '<section class="section"><div class="section-heading"><div><span class="eyebrow">DEINE KURSE</span><h2>'+suitable.length+' passende Prüfungen</h2></div></div><div class="exam-filters" role="group" aria-label="Prüfungen filtern">'+[['all','Alle'],['ready','Bereit'],['learning','Noch lernen'],['passed','Bestanden']].map(([key,label])=>'<button class="pill'+(s.examFilter===key?' active':'')+'" type="button" data-exam-filter="'+key+'">'+label+'</button>').join('')+'</div><div class="course-grid">'+(filtered.map(c=>{
   const ls=lessonsOf(c.id),count=countDone(c.id),ready=count===ls.length,passed=!!s.progress.exams?.[c.id];
-  return '<article class="course-card '+(passed?'is-complete':'')+'"><div class="course-head"><span class="course-icon">'+esc(courseAccent(c))+'</span><span class="chip '+(passed?'free':'plus')+'">'+(passed?'✓ Bestanden':ready?'Bereit':'Noch gesperrt')+'</span></div><span class="micro">'+esc(c.category)+'</span><h3>'+esc(c.name)+'</h3><p>'+count+' / '+ls.length+' Lektionen abgeschlossen</p><div class="progress"><span style="width:'+pct(count,ls.length)+'%"></span></div><button class="btn block" data-go="'+(ready?'exam/':'track/')+esc(c.id)+'">'+(ready?'Prüfung öffnen →':'Kurs fortsetzen →')+'</button></article>';
+  return '<article class="course-card '+(passed?'is-complete':'')+'"><div class="course-head"><span class="course-icon">'+esc(courseAccent(c))+'</span><span class="chip '+(passed?'free':'plus')+'">'+(passed?'✓ Bestanden':ready?'Bereit':'Noch gesperrt')+'</span></div><span class="micro">'+esc(c.category)+'</span><h3>'+esc(c.name)+'</h3>'+difficultyBadge(c)+'<p>'+count+' / '+ls.length+' Lektionen abgeschlossen</p><div class="progress"><span style="width:'+pct(count,ls.length)+'%"></span></div><button class="btn block" data-go="'+(ready?'exam/':'track/')+esc(c.id)+'">'+(ready?'Prüfung öffnen →':'Kurs fortsetzen →')+'</button></article>';
  }).join('')||'<div class="empty">Hier sind gerade keine passenden Prüfungen.</div>')+'</div></section>';
 }
 async function loadExam(id){
@@ -1041,7 +1045,7 @@ function examPage(id){
  const all=lessonsOf(id),done=countDone(id),ready=done===all.length;
  const back='<a class="back" href="#exams">← Prüfungen</a>';
  if(!ready)return back+'<section class="exam-intro"><span class="eyebrow">[ ★ ] ABSCHLUSS</span>'+
- '<h1>Abschlussprüfung</h1><p class="lede">'+esc(course.name)+' · 20 Fragen maximal, bestanden ab 80 %.</p>'+
+ '<h1>Abschlussprüfung</h1>'+difficultyBadge(course)+'<p class="lede">'+esc(course.name)+' · 20 Fragen maximal, bestanden ab 80 %.</p>'+
  '<div class="progress-pill">'+done+'/'+all.length+' Lektionen</div>'+
  '<div class="project-message"><strong>Dein Lernpfad ist noch nicht vollständig.</strong>'+
  '<p>Schließe zuerst alle '+all.length+' Lektionen ab, um die Abschlussprüfung zu starten.</p></div>'+
