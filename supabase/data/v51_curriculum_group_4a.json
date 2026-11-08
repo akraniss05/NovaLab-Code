@@ -1,0 +1,654 @@
+{
+  "version": 51,
+  "group": "4a",
+  "topics": [
+    {
+      "course": "elixir",
+      "ordinal": 1,
+      "title": "Pattern Matching",
+      "theory": "Mit = prüft Elixir, ob ein Wert zu einem Muster passt. Eine unpassende Bindung löst einen MatchError aus.",
+      "example": "{:ok,wert}={:ok,3}",
+      "example_note": "wert erhält 3, weil die Tupelform passt.",
+      "task": "Entpacke ein erfolgreiches Tupel."
+    },
+    {
+      "course": "elixir",
+      "ordinal": 2,
+      "title": "Unveränderliche Werte",
+      "theory": "Elixir-Daten sind unveränderlich. Eine erneute Bindung mit demselben Namen erzeugt einen neuen Bezug auf einen Wert.",
+      "example": "x=3\nx=x+1",
+      "example_note": "Nach der zweiten Bindung ist x gleich 4, ohne den ursprünglichen Integer zu verändern.",
+      "task": "Verändere einen Zähler durch Neuzuweisung."
+    },
+    {
+      "course": "elixir",
+      "ordinal": 3,
+      "title": "Tupel",
+      "theory": "Tupel enthalten eine feste Anzahl von Elementen und eignen sich häufig für Rückgaben mit Statuskennzeichen.",
+      "example": "antwort={:ok,\"fertig\"}",
+      "example_note": "Das erste Element signalisiert Erfolg, das zweite enthält den Wert.",
+      "task": "Entwirf eine Fehlerantwort als Tupel."
+    },
+    {
+      "course": "elixir",
+      "ordinal": 4,
+      "title": "Listen",
+      "theory": "Listen sind in Elixir einfach verkettete Folgen. Vorne anzufügen ist günstig, der Zugriff per Index nicht.",
+      "example": "liste=[1,2]\nneu=[0|liste]",
+      "example_note": "neu enthält 0,1,2 und die ursprüngliche Liste bleibt unverändert.",
+      "task": "Füge ein Element am Listenanfang ein."
+    },
+    {
+      "course": "elixir",
+      "ordinal": 5,
+      "title": "Maps",
+      "theory": "Maps enthalten Schlüssel und Werte. Atom-Schlüssel lassen sich oft mit Punktnotation lesen.",
+      "example": "nutzer=%{name:\"Alex\",level:3}",
+      "example_note": "nutzer.name liefert Alex.",
+      "task": "Erstelle eine Map mit drei Feldern."
+    },
+    {
+      "course": "elixir",
+      "ordinal": 6,
+      "title": "Pipe Operator",
+      "theory": "|> übergibt das vorherige Ergebnis als erstes Argument an die nächste Funktion.",
+      "example": "[1,2,3] |> Enum.map(&(&1*2)) |> Enum.sum()",
+      "example_note": "Die Zahlen werden verdoppelt und anschließend summiert; das Ergebnis ist 12.",
+      "task": "Verknüpfe zwei Verarbeitungsschritte."
+    },
+    {
+      "course": "elixir",
+      "ordinal": 7,
+      "title": "Enum.filter",
+      "theory": "Enum.filter wählt aus einem Enumerable die Elemente aus, die ein Prädikat erfüllen.",
+      "example": "Enum.filter([1,2,3],fn x->x>1 end)",
+      "example_note": "Nur die Werte 2 und 3 bleiben erhalten.",
+      "task": "Filtere Zahlen unter einer Grenze."
+    },
+    {
+      "course": "elixir",
+      "ordinal": 8,
+      "title": "Enum.reduce",
+      "theory": "Enum.reduce verarbeitet eine Sammlung zu einem Akkumulatorwert.",
+      "example": "Enum.reduce([1,2,3],0,fn x,sum->sum+x end)",
+      "example_note": "Die Werte werden zu 6 addiert.",
+      "task": "Summiere vier Preise."
+    },
+    {
+      "course": "elixir",
+      "ordinal": 9,
+      "title": "Funktionen mit Guards",
+      "theory": "Ein Guard schränkt Funktionsklauseln durch erlaubte Prüfungen ein.",
+      "example": "def status(n) when is_integer(n), do: :ok",
+      "example_note": "Nur ganze Zahlen passen zu dieser Klausel.",
+      "task": "Verwende einen Guard für nichtnegative Zahlen."
+    },
+    {
+      "course": "elixir",
+      "ordinal": 10,
+      "title": "Rekursion",
+      "theory": "Eine rekursive Elixir-Funktion ruft sich auf einem kleineren Problem erneut auf und braucht einen Basisfall.",
+      "example": "def laenge([]),do:0\ndef laenge([_|rest]),do:1+laenge(rest)",
+      "example_note": "Die Liste wird elementweise bis zum leeren Fall abgebaut.",
+      "task": "Erstelle eine einfache rekursive Summenfunktion."
+    },
+    {
+      "course": "elixir",
+      "ordinal": 11,
+      "title": "GenServer",
+      "theory": "GenServer ist ein OTP-Baustein für zustandsbehaftete Serverprozesse mit Nachrichtenbehandlung.",
+      "example": "use GenServer",
+      "example_note": "Das Modul kann danach passende Callback-Funktionen implementieren.",
+      "task": "Beschreibe einen Zähler als GenServer."
+    },
+    {
+      "course": "elixir",
+      "ordinal": 12,
+      "title": "ExUnit",
+      "theory": "ExUnit stellt Testfälle und Assertions für Elixir bereit.",
+      "example": "test \"addition\" do\n assert 2+3==5\nend",
+      "example_note": "Der Test meldet Abweichungen beim erwarteten Ergebnis.",
+      "task": "Ergänze einen negativen Testfall."
+    },
+    {
+      "course": "julia",
+      "ordinal": 1,
+      "title": "Typen mit typeof",
+      "theory": "Julia ordnet Werten konkrete Typen zu. typeof ermittelt den Typ des jeweiligen Ausdrucks.",
+      "example": "typeof(3)",
+      "example_note": "Die Ausgabe bezeichnet den Ganzzahltyp des Werts.",
+      "task": "Vergleiche Zahl und Text."
+    },
+    {
+      "course": "julia",
+      "ordinal": 2,
+      "title": "Vektoren",
+      "theory": "Ein Julia-Vektor enthält geordnete Elemente; der erste Index ist 1.",
+      "example": "werte=[10,20,30]\nprintln(werte[2])",
+      "example_note": "Der zweite Wert 20 wird ausgegeben.",
+      "task": "Lies den letzten Eintrag einer Liste."
+    },
+    {
+      "course": "julia",
+      "ordinal": 3,
+      "title": "Broadcasting",
+      "theory": "Ein Punkt vor einer Operation oder einem Funktionsaufruf wendet sie elementweise auf eine Sammlung an.",
+      "example": "werte=[1,2,3]\nwerte .+ 2",
+      "example_note": "Das Ergebnis ist [3,4,5].",
+      "task": "Verdopple jeden Eintrag eines Vektors."
+    },
+    {
+      "course": "julia",
+      "ordinal": 4,
+      "title": "Comprehensions",
+      "theory": "Eine Comprehension erzeugt aus einer Iteration eine neue Sammlung über einen Ausdruck.",
+      "example": "quadrate=[n^2 for n in 1:4]",
+      "example_note": "Die Liste enthält die Quadratzahlen 1,4,9,16.",
+      "task": "Erstelle die Kubikzahlen der ersten vier Zahlen."
+    },
+    {
+      "course": "julia",
+      "ordinal": 5,
+      "title": "Dict",
+      "theory": "Dict ist eine veränderbare Zuordnung von Schlüsseln zu Werten.",
+      "example": "preise=Dict(\"brot\"=>3,\"wasser\"=>1)",
+      "example_note": "preise[\"brot\"] liefert 3.",
+      "task": "Lege drei Produktpreise an."
+    },
+    {
+      "course": "julia",
+      "ordinal": 6,
+      "title": "Funktionen",
+      "theory": "Eine Julia-Funktion kann mit function/end oder kurzer Zuweisung deklariert werden.",
+      "example": "doppelt(x)=x*2",
+      "example_note": "doppelt(3) liefert 6.",
+      "task": "Schreibe eine eigene Berechnungsfunktion."
+    },
+    {
+      "course": "julia",
+      "ordinal": 7,
+      "title": "Multiple Dispatch",
+      "theory": "Julia wählt Methoden nach den Typen aller Argumente aus, nicht nur nach einem Empfängerobjekt.",
+      "example": "f(x::Int)=x+1\nf(x::String)=length(x)",
+      "example_note": "Der Funktionsname f hat unterschiedliche Methoden für Int und String.",
+      "task": "Definiere zwei Methoden für unterschiedliche Typen."
+    },
+    {
+      "course": "julia",
+      "ordinal": 8,
+      "title": "Structs",
+      "theory": "Ein struct fasst typisierte Felder zu einem eigenen Datentyp zusammen.",
+      "example": "struct Punkt\n x::Int\n y::Int\nend",
+      "example_note": "Punkt(2,3) erstellt einen Datensatz mit zwei Feldern.",
+      "task": "Erstelle eine Struktur für einen Spieler."
+    },
+    {
+      "course": "julia",
+      "ordinal": 9,
+      "title": "Mutability",
+      "theory": "mutable struct erlaubt das nachträgliche Ändern von Feldern, während normale struct-Werte unveränderlich sind.",
+      "example": "mutable struct Zustand\n punkte::Int\nend",
+      "example_note": "Ein Zustand-Objekt darf seinen Punktewert später ändern.",
+      "task": "Vergleiche mutable und normale Structs."
+    },
+    {
+      "course": "julia",
+      "ordinal": 10,
+      "title": "Missing Values",
+      "theory": "missing steht in Julia für einen fehlenden Wert, der sich bei vielen Berechnungen fortpflanzt.",
+      "example": "ismissing(missing)",
+      "example_note": "Das Ergebnis ist true.",
+      "task": "Behandle fehlende Messwerte."
+    },
+    {
+      "course": "julia",
+      "ordinal": 11,
+      "title": "DataFrames",
+      "theory": "Ein DataFrame speichert tabellarische Daten in benannten Spalten.",
+      "example": "using DataFrames\ndf=DataFrame(name=[\"A\",\"B\"],score=[3,5])",
+      "example_note": "Es entsteht eine Tabelle mit zwei Zeilen.",
+      "task": "Erzeuge eine Spalte mit berechneten Werten."
+    },
+    {
+      "course": "julia",
+      "ordinal": 12,
+      "title": "Test-Modul",
+      "theory": "Das Test-Modul stellt @test bereit, um erwartete Ergebnisse automatisch zu prüfen.",
+      "example": "using Test\n@test 2+3==5",
+      "example_note": "Der Test gilt nur bei wahrer Bedingung als erfolgreich.",
+      "task": "Ergänze einen Grenzwert-Test."
+    },
+    {
+      "course": "powershell",
+      "ordinal": 1,
+      "title": "Get-Help",
+      "theory": "Get-Help zeigt Syntax, Beschreibungen und Beispiele zu PowerShell-Befehlen.",
+      "example": "Get-Help Get-Process -Examples",
+      "example_note": "Du erhältst Anwendungsbeispiele des Cmdlets.",
+      "task": "Finde die Hilfe zu Get-Service."
+    },
+    {
+      "course": "powershell",
+      "ordinal": 2,
+      "title": "Get-Member",
+      "theory": "Get-Member zeigt Eigenschaften und Methoden von Pipelineobjekten.",
+      "example": "Get-Process | Get-Member",
+      "example_note": "Du erkennst den Objekttyp und seine verfügbaren Mitglieder.",
+      "task": "Untersuche ein Prozessobjekt."
+    },
+    {
+      "course": "powershell",
+      "ordinal": 3,
+      "title": "Pipelineobjekte",
+      "theory": "Die PowerShell-Pipeline überträgt meist strukturierte Objekte statt bloßen Text.",
+      "example": "Get-Process | Select-Object -First 3",
+      "example_note": "Es werden die ersten drei Prozessobjekte ausgewählt.",
+      "task": "Gib nur zwei Prozesse aus."
+    },
+    {
+      "course": "powershell",
+      "ordinal": 4,
+      "title": "Where-Object",
+      "theory": "Where-Object filtert Pipelineobjekte anhand ihrer Eigenschaften.",
+      "example": "Get-Process | Where-Object {$_.CPU -gt 10}",
+      "example_note": "Es bleiben Prozesse mit CPU-Zeit über 10 übrig, sofern die Eigenschaft vorhanden ist.",
+      "task": "Filtere Dateien nach ihrer Länge."
+    },
+    {
+      "course": "powershell",
+      "ordinal": 5,
+      "title": "Select-Object",
+      "theory": "Select-Object wählt Eigenschaften eines Objekts für die Ausgabe oder weitere Verarbeitung aus.",
+      "example": "Get-Process | Select-Object Name,Id",
+      "example_note": "Die Ausgabe enthält nur Name und Id.",
+      "task": "Zeige zwei Eigenschaften einer Datei."
+    },
+    {
+      "course": "powershell",
+      "ordinal": 6,
+      "title": "ForEach-Object",
+      "theory": "ForEach-Object verarbeitet jedes Pipelineobjekt einzeln.",
+      "example": "1..3 | ForEach-Object {$_ * 2}",
+      "example_note": "Die Ausgabe lautet 2,4,6.",
+      "task": "Verdopple fünf Zahlen über die Pipeline."
+    },
+    {
+      "course": "powershell",
+      "ordinal": 7,
+      "title": "Arrays",
+      "theory": "PowerShell-Arrays bündeln mehrere Werte. Indizes beginnen bei 0.",
+      "example": "$werte=@(10,20,30)\n$werte[1]",
+      "example_note": "Der zweite Eintrag hat den Wert 20.",
+      "task": "Lies das letzte Element."
+    },
+    {
+      "course": "powershell",
+      "ordinal": 8,
+      "title": "Hashtables",
+      "theory": "Eine Hashtable ordnet Schlüsseln Werte zu und eignet sich für Konfigurationen.",
+      "example": "$config=@{Name='Academy';Port=3000}",
+      "example_note": "$config.Port ergibt 3000.",
+      "task": "Erstelle drei benannte Einstellungen."
+    },
+    {
+      "course": "powershell",
+      "ordinal": 9,
+      "title": "Funktionen",
+      "theory": "function definiert einen wiederverwendbaren Scriptblock mit einem Funktionsnamen.",
+      "example": "function Double($n){$n*2}",
+      "example_note": "Double 3 liefert den Wert 6.",
+      "task": "Erstelle eine kleine Prüffunktion."
+    },
+    {
+      "course": "powershell",
+      "ordinal": 10,
+      "title": "Parameter",
+      "theory": "param definiert benannte Parameter mit Typen, Standardwerten und Validierungsattributen.",
+      "example": "param([int]$Port=3000)",
+      "example_note": "Ohne Argument wird Port 3000 verwendet.",
+      "task": "Lege einen benannten Pflichtparameter an."
+    },
+    {
+      "course": "powershell",
+      "ordinal": 11,
+      "title": "try catch",
+      "theory": "try/catch behandelt terminierende Fehler. -ErrorAction Stop kann bestimmte Cmdlet-Fehler terminierend machen.",
+      "example": "try{Get-Item 'nicht-da' -ErrorAction Stop}catch{Write-Output 'Fehler'}",
+      "example_note": "Eine fehlende Datei wird in der catch-Verzweigung behandelt.",
+      "task": "Fange eine bewusst ungültige Pfadangabe ab."
+    },
+    {
+      "course": "powershell",
+      "ordinal": 12,
+      "title": "Pester",
+      "theory": "Pester ist ein Testframework für PowerShell-Skripte mit Describe/It-Blöcken und Erwartungen.",
+      "example": "1+2 | Should -Be 3",
+      "example_note": "Die Assertion prüft ein konkretes Ergebnis, wenn Pester geladen ist.",
+      "task": "Schreibe einen Test für eine eigene Funktion."
+    },
+    {
+      "course": "r",
+      "ordinal": 1,
+      "title": "Vektoren",
+      "theory": "Ein R-Vektor enthält Elemente eines gemeinsamen Grundtyps. Bei gemischten Werten erfolgt gegebenenfalls Typumwandlung.",
+      "example": "werte <- c(1,2,3)\nwerte[1]",
+      "example_note": "Der erste Index in R ist 1; Ergebnis ist 1.",
+      "task": "Lies den letzten Wert eines Vektors."
+    },
+    {
+      "course": "r",
+      "ordinal": 2,
+      "title": "NA Werte",
+      "theory": "NA kennzeichnet fehlende Daten. Viele Berechnungen geben NA zurück, bis fehlende Werte bewusst behandelt werden.",
+      "example": "mean(c(1,NA,3),na.rm=TRUE)",
+      "example_note": "na.rm entfernt fehlende Werte vor dem Mittelwert; Ergebnis ist 2.",
+      "task": "Berechne den Durchschnitt mit einem fehlenden Wert."
+    },
+    {
+      "course": "r",
+      "ordinal": 3,
+      "title": "data.frame",
+      "theory": "Ein data.frame speichert tabellarische Werte in gleich langen Spalten.",
+      "example": "df <- data.frame(name=c(\"A\",\"B\"),score=c(2,5))",
+      "example_note": "Die Tabelle enthält zwei Zeilen und zwei Spalten.",
+      "task": "Erstelle eine Tabelle mit drei Personen."
+    },
+    {
+      "course": "r",
+      "ordinal": 4,
+      "title": "Spaltenzugriff",
+      "theory": "Mit $ greifst du auf eine benannte Spalte eines data.frame zu.",
+      "example": "df$score",
+      "example_note": "Die Ausgabe ist der Vektor der Punktzahlen.",
+      "task": "Berechne die Summe einer Spalte."
+    },
+    {
+      "course": "r",
+      "ordinal": 5,
+      "title": "Logische Filter",
+      "theory": "Eine logische Bedingung wählt die passenden Zeilen oder Werte aus.",
+      "example": "df[df$score>3,]",
+      "example_note": "Es bleiben nur Zeilen mit Punktzahl über 3.",
+      "task": "Filtere Datensätze mit einer Grenze."
+    },
+    {
+      "course": "r",
+      "ordinal": 6,
+      "title": "Funktionen",
+      "theory": "function erzeugt in R eine Funktion. Der letzte Ausdruck kann als Ergebnis zurückgegeben werden.",
+      "example": "doppelt <- function(x){x*2}",
+      "example_note": "doppelt(3) liefert 6.",
+      "task": "Schreibe eine Funktion für einen Prozentwert."
+    },
+    {
+      "course": "r",
+      "ordinal": 7,
+      "title": "apply",
+      "theory": "apply führt eine Funktion entlang der Zeilen oder Spalten einer Matrix aus.",
+      "example": "apply(matrix(1:6,nrow=2),2,sum)",
+      "example_note": "Die Spaltensummen werden berechnet.",
+      "task": "Berechne Summen über Matrixzeilen."
+    },
+    {
+      "course": "r",
+      "ordinal": 8,
+      "title": "lapply",
+      "theory": "lapply wendet eine Funktion auf jedes Listenelement an und liefert eine Liste zurück.",
+      "example": "lapply(list(1,2,3),function(x)x*2)",
+      "example_note": "Jeder Wert wird verdoppelt und als Listenelement zurückgegeben.",
+      "task": "Transformiere eine Liste."
+    },
+    {
+      "course": "r",
+      "ordinal": 9,
+      "title": "factor",
+      "theory": "factor modelliert kategoriale Daten mit definierten Levels.",
+      "example": "f <- factor(c(\"rot\",\"blau\",\"rot\"))",
+      "example_note": "Die verschiedenen Kategorien werden als Levels erfasst.",
+      "task": "Lege die Reihenfolge von Kategorien fest."
+    },
+    {
+      "course": "r",
+      "ordinal": 10,
+      "title": "ggplot2",
+      "theory": "ggplot2 baut Diagramme aus Daten, ästhetischen Zuordnungen und grafischen Ebenen auf.",
+      "example": "ggplot(df,aes(x=name,y=score))+geom_col()",
+      "example_note": "Es entsteht ein Balkendiagramm der Punktzahlen nach Namen.",
+      "task": "Erstelle eine Visualisierung mit Achsenbeschriftungen."
+    },
+    {
+      "course": "r",
+      "ordinal": 11,
+      "title": "read.csv",
+      "theory": "read.csv liest eine CSV-Datei in einen data.frame. Datentypen und fehlende Werte sollten geprüft werden.",
+      "example": "df <- read.csv(\"punkte.csv\")",
+      "example_note": "Die Zeilen und Spalten aus der Datei werden eingelesen.",
+      "task": "Importiere eine kleine Beispiel-CSV."
+    },
+    {
+      "course": "r",
+      "ordinal": 12,
+      "title": "testthat",
+      "theory": "testthat prüft R-Funktionen automatisiert mit konkreten Erwartungen.",
+      "example": "testthat::expect_equal(2+3,5)",
+      "example_note": "Der Test ist erfolgreich, wenn der berechnete Wert 5 ist.",
+      "task": "Ergänze einen Test für eine eigene Funktion."
+    },
+    {
+      "course": "zig",
+      "ordinal": 1,
+      "title": "const und var",
+      "theory": "In Zig deklariert const eine unveränderliche Bindung, var eine veränderbare. Explizite Typen fördern klare Grenzen.",
+      "example": "const name = \"Alex\";\nvar level: i32 = 3;",
+      "example_note": "level darf verändert werden; name nicht neu zugewiesen.",
+      "task": "Unterscheide feste und veränderliche Daten."
+    },
+    {
+      "course": "zig",
+      "ordinal": 2,
+      "title": "Ganzzahltypen",
+      "theory": "Zig verwendet ausdrücklich große Ganzzahltypen wie u8 oder i32, um Breite und Vorzeichen zu kennzeichnen.",
+      "example": "const port: u16 = 8080;",
+      "example_note": "Die Zahl wird als vorzeichenlose 16-Bit-Ganzzahl gespeichert.",
+      "task": "Wähle einen Typ für einen kleinen Zähler."
+    },
+    {
+      "course": "zig",
+      "ordinal": 3,
+      "title": "Arrays",
+      "theory": "Ein Array in Zig besitzt eine feste Länge, die Teil seines Typs ist.",
+      "example": "const zahlen = [_]i32{1,2,3};",
+      "example_note": "Die Länge wird aus den drei Elementen erschlossen.",
+      "task": "Lege ein Array mit vier Zahlen an."
+    },
+    {
+      "course": "zig",
+      "ordinal": 4,
+      "title": "Slices",
+      "theory": "Ein Slice referenziert einen zusammenhängenden Bereich und speichert zusätzlich dessen Länge.",
+      "example": "const teil = zahlen[1..3];",
+      "example_note": "Der Bereich enthält den zweiten und dritten Wert.",
+      "task": "Lies einen Teilbereich aus einem Array."
+    },
+    {
+      "course": "zig",
+      "ordinal": 5,
+      "title": "Optional",
+      "theory": "Ein optionaler Typ ?T kann einen Wert von T oder null enthalten. Vor dem Nutzen muss der Wert behandelt werden.",
+      "example": "const wert: ?i32 = null;",
+      "example_note": "Der Wert fehlt; if oder orelse können damit umgehen.",
+      "task": "Erstelle einen optionalen Konfigurationswert."
+    },
+    {
+      "course": "zig",
+      "ordinal": 6,
+      "title": "orelse",
+      "theory": "orelse liefert einen Ersatz, wenn ein Optional null ist.",
+      "example": "const n: ?i32 = null;\nconst x = n orelse 0;",
+      "example_note": "x enthält den Defaultwert 0.",
+      "task": "Wähle einen Fallback für einen fehlenden Wert."
+    },
+    {
+      "course": "zig",
+      "ordinal": 7,
+      "title": "Error Union",
+      "theory": "Ein Fehlertyp !T kann entweder den Wert T oder einen Fehler enthalten. Der Aufrufer muss Fehler behandeln.",
+      "example": "fn pruefe() !u8 { return 3; }",
+      "example_note": "Die Funktion darf eine Zahl oder einen Fehler zurückgeben.",
+      "task": "Modelliere einen Fall mit Fehler."
+    },
+    {
+      "course": "zig",
+      "ordinal": 8,
+      "title": "try",
+      "theory": "try gibt bei einem Fehler aus der aktuellen Funktion zurück, andernfalls entpackt es den Erfolgswert.",
+      "example": "const daten = try datei.readToEndAlloc(allocator,max_size);",
+      "example_note": "Bei Fehlern wird die Ausführung verlassen; ansonsten stehen die geladenen Bytes bereit.",
+      "task": "Beschreibe einen propagierten Dateifehler."
+    },
+    {
+      "course": "zig",
+      "ordinal": 9,
+      "title": "Structs",
+      "theory": "Ein struct gruppiert zusammengehörige Datenfelder in einem eigenen Typ.",
+      "example": "const Player = struct { name: []const u8, level: u32 };",
+      "example_note": "Ein Player enthält Text und einen ganzzahligen Levelwert.",
+      "task": "Erstelle einen einfachen Datenrecord."
+    },
+    {
+      "course": "zig",
+      "ordinal": 10,
+      "title": "Defer",
+      "theory": "defer führt eine Anweisung beim Verlassen des Gültigkeitsbereichs aus und eignet sich für Cleanup.",
+      "example": "defer allocator.free(buffer);",
+      "example_note": "Der zuvor reservierte Puffer wird am Scope-Ende freigegeben.",
+      "task": "Beschreibe den Cleanup eines Puffers."
+    },
+    {
+      "course": "zig",
+      "ordinal": 11,
+      "title": "Allocator",
+      "theory": "Zig verwendet häufig explizite Allocators für dynamischen Speicher. Dadurch wird der Speicherbesitz deutlicher.",
+      "example": "const slice = try allocator.alloc(u8, 100);",
+      "example_note": "Der Aufruf reserviert 100 Bytes oder liefert einen Fehler; später muss freigegeben werden.",
+      "task": "Erkläre die Speicherfreigabe."
+    },
+    {
+      "course": "zig",
+      "ordinal": 12,
+      "title": "zig test",
+      "theory": "zig test kompiliert und führt Testblöcke einer Zig-Datei aus.",
+      "example": "test \"summe\" { try std.testing.expectEqual(@as(i32,5), 2+3); }",
+      "example_note": "Die Assertion prüft die erwartete Zahl 5.",
+      "task": "Schreibe einen Test für eine einfache Berechnung."
+    },
+    {
+      "course": "bash",
+      "ordinal": 1,
+      "title": "pwd",
+      "theory": "pwd zeigt das aktuelle Arbeitsverzeichnis einer Shell. Relative Pfade beziehen sich auf dieses Verzeichnis.",
+      "example": "pwd",
+      "example_note": "Du siehst, an welcher Stelle im Dateisystem du arbeitest.",
+      "task": "Prüfe das Verzeichnis vor einer Dateioperation."
+    },
+    {
+      "course": "bash",
+      "ordinal": 2,
+      "title": "cd",
+      "theory": "cd wechselt das aktuelle Arbeitsverzeichnis. Mit .. wechselst du zum übergeordneten Ordner.",
+      "example": "cd ~/projekte",
+      "example_note": "Nach dem Befehl beziehen sich relative Pfade auf den Projektordner.",
+      "task": "Wechsle in einen Projektordner und zurück."
+    },
+    {
+      "course": "bash",
+      "ordinal": 3,
+      "title": "ls -la",
+      "theory": "ls zeigt Verzeichnisinhalte. -a schließt versteckte Einträge ein, -l zeigt weitere Metadaten.",
+      "example": "ls -la",
+      "example_note": "Versteckte Dateien wie .gitignore werden sichtbar.",
+      "task": "Finde eine versteckte Konfigurationsdatei."
+    },
+    {
+      "course": "bash",
+      "ordinal": 4,
+      "title": "grep",
+      "theory": "grep sucht Zeilen, deren Text zu einem Muster passt. Mit -n erscheinen die Zeilennummern.",
+      "example": "grep -n \"TODO\" main.sh",
+      "example_note": "Gefundene Zeilen mit TODO werden mitsamt Zeilennummer angezeigt.",
+      "task": "Suche nach einer Markierung in einer Testdatei."
+    },
+    {
+      "course": "bash",
+      "ordinal": 5,
+      "title": "find",
+      "theory": "find durchsucht Ordner nach Bedingungen wie Dateiname oder Typ.",
+      "example": "find . -name '*.json'",
+      "example_note": "Alle passenden JSON-Dateien unter dem aktuellen Verzeichnis werden gelistet.",
+      "task": "Suche Konfigurationsdateien."
+    },
+    {
+      "course": "bash",
+      "ordinal": 6,
+      "title": "Pipes",
+      "theory": "Das Zeichen | verbindet Standardausgabe eines Befehls mit der Standardeingabe eines anderen Befehls.",
+      "example": "printf 'a\nb\n' | wc -l",
+      "example_note": "wc zählt zwei Zeilen aus der Ausgabe von printf.",
+      "task": "Zähle die Zeilen einer Testausgabe."
+    },
+    {
+      "course": "bash",
+      "ordinal": 7,
+      "title": "Quoting",
+      "theory": "Doppelte Anführungszeichen lassen Variablen expandieren, halten aber Leerzeichen zusammen. Einfache Quotes verhindern Expansion.",
+      "example": "name='Livery Lab'\nprintf '%s\n' \"$name\"",
+      "example_note": "Der ganze Name wird als ein Argument ausgegeben.",
+      "task": "Vergleiche einfache und doppelte Anführungszeichen."
+    },
+    {
+      "course": "bash",
+      "ordinal": 8,
+      "title": "Exit-Codes",
+      "theory": "Ein Prozess meldet mit Exit-Code 0 meist Erfolg, mit einem anderen Code einen Fehler. $? enthält den letzten Status.",
+      "example": "true\necho $?",
+      "example_note": "Nach true ist der Exit-Code 0.",
+      "task": "Teste einen absichtlich fehlgeschlagenen Befehl."
+    },
+    {
+      "course": "bash",
+      "ordinal": 9,
+      "title": "set -euo pipefail",
+      "theory": "Diese Optionen erkennen häufige Skriptfehler früher. Sie sind hilfreich, erfordern aber Verständnis der Ausnahmen.",
+      "example": "set -euo pipefail",
+      "example_note": "Nicht gesetzte Variablen und bestimmte Pipe-Fehler werden nicht still übersehen.",
+      "task": "Schreibe ein Testskript mit einer fehlenden Variablen."
+    },
+    {
+      "course": "bash",
+      "ordinal": 10,
+      "title": "Funktionen",
+      "theory": "Eine Bash-Funktion bündelt Befehle und kann mit Parametern aus $1 usw. aufgerufen werden.",
+      "example": "gruss(){ printf 'Hallo %s\n' \"$1\"; }",
+      "example_note": "gruss Alex führt eine Begrüßung mit einem Argument aus.",
+      "task": "Schreibe eine Funktion mit zwei Parametern."
+    },
+    {
+      "course": "bash",
+      "ordinal": 11,
+      "title": "chmod",
+      "theory": "chmod verändert Zugriffsrechte von Dateien. Ausführungsrecht ist für direkt startbare Skripte wichtig.",
+      "example": "chmod u+x script.sh",
+      "example_note": "Der Eigentümer erhält das Ausführungsrecht.",
+      "task": "Prüfe die Rechte eines Testskripts."
+    },
+    {
+      "course": "bash",
+      "ordinal": 12,
+      "title": "trap",
+      "theory": "trap registriert Reaktionen auf Signale oder auf den Exit eines Skripts. Das hilft beim Aufräumen temporärer Dateien.",
+      "example": "trap 'rm -f temp.txt' EXIT",
+      "example_note": "Beim Beenden wird die temporäre Datei entfernt.",
+      "task": "Entwirf ein Cleanup für eine Testdatei."
+    }
+  ]
+}
