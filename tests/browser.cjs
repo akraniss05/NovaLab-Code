@@ -78,6 +78,23 @@ fs.mkdirSync(path.join(root,'test-results'),{recursive:true});
 const scenes=[
  ['home',app.homePage(),['.ll-home-brand-banner img','.ll-home-shortcuts','.ll-home-continue','.ll-streak-shortcut']],
  ['courses',app.coursesPage(),['.ll-difficulty-dashboard','.ll-difficulty-chart','.ll-difficulty-tile','#course-difficulty-select','#course-search','.course-grid']],
+ ['admin-registration',(()=>{const old=context.location.hash,oldRole=s.profile.role,oldOwner=s.isOwner,oldPolicy=s.registrationPolicy;
+  context.location.hash='#admin/registration';s.profile.role='admin';s.isOwner=true;
+  s.registrationPolicy={mode:'approval',loaded:true};const html=app.adminPage();
+  context.location.hash=old;s.profile.role=oldRole;s.isOwner=oldOwner;s.registrationPolicy=oldPolicy;
+  return html;})(),['.ll-registration-admin','.ll-registration-mode-grid','[data-registration-mode="approval"]','[data-registration-mode="open"]']],
+ ['admin-progress',(()=>{const old=context.location.hash,oldRole=s.profile.role,oldMembers=s.members,oldLearner=s.adminLearner,oldPolicy=s.registrationPolicy;
+  context.location.hash='#admin/members';s.profile.role='admin';
+  s.registrationPolicy={mode:'approval',loaded:true};
+  s.members=[{id:'22222222-2222-4222-8222-222222222222',username:'Learner',email:'learner@example.com',role:'student',active:true,access_status:'approved'}];
+  s.adminLearner={student:{id:s.members[0].id,username:'Learner'},
+    progress:{completed:1,total:3,started_courses:1,finished_courses:0,updated_at:'2030-01-01T12:00:00Z'},
+    courses:[{id:'python',name:'Python',category:'Sprachen',total:3,completed:1,percent:33,
+      next:{id:'python-02',title:'Schleifen',chapter:'Grundlagen'}}]};
+  const html=app.adminPage();
+  context.location.hash=old;s.profile.role=oldRole;s.members=oldMembers;s.adminLearner=oldLearner;s.registrationPolicy=oldPolicy;
+  return html;})(),['.ll-admin-progress-panel','.ll-admin-course-progress-card','#admin-progress-search','#admin-progress-filter','[data-view-progress]']],
+
  ['track',app.trackPage('fivem'),['.lesson-card','.lesson-main strong','.lesson-summary','.status-ring']],
  ['lesson',app.lessonPage('fivem-01'),['.lesson-steps','.lesson-step','.step-box','.video-frame','.quiz-choice','.exercise-textarea','.code-editor','#code-lines','.ll-part-selector-two','[data-lesson-part="0"]','[data-lesson-part="1"]','[data-action="reset-lesson"]']],
  ['script',app.scriptPage(),['.file-tree','.file-tabs','.file-preview']],
