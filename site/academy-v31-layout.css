@@ -416,3 +416,10 @@ body:not(.is-auth) .topbar > .top-right{position:relative;z-index:4}
 @media(max-width:820px){
  body:not(.is-auth) .topbar > .top-right{justify-self:end}
 }
+
+
+/* v47: support receipt and errors without changing the main menu. */
+.support-submit-status{font-size:12px;line-height:1.5;color:#bdf1da;background:#18352a;border:1px solid #367a5d;border-radius:11px;padding:11px 12px;margin:11px 0}
+.support-submit-status.error{color:#ffd7e2;background:#442332;border-color:#ad5071}
+.support-compose button[type="submit"][disabled]{opacity:.7;cursor:wait}
+@media(max-width:480px){.support-submit-status{font-size:12px;padding:10px}}
