@@ -7,7 +7,7 @@
 'use strict';
 var cfg=window.LL_CONFIG||{}, $=function(q,root){return (root||document).querySelector(q);};
 var content=$('#content'), sidebar=$('#sidebar'), bottom=$('#bottom-nav'), toastNode=$('#toast');
-var api=null, s={shopDiscount:0,service:{beta_open:true,mine:[],admin:[]},lastSupportReceipt:null,supportBusy:false,chatTicketId:null,chatMessages:[],chatBusy:false,chatLoading:false,streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],xpAwards:[],xpClaimBusy:false,progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',difficultyFilter:'all',lesson:null,choice:null,quizStep:0,quizPassed:false,sectionIndex:0,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},memberExpiry:{},adminPage:1,adminFilter:'all',adminSearch:'',catalogLimit:9,practiceChecked:false,draft:'',lessonStep:1,hintStage:0,prefs:null,projectTab:0,projectSource:'',projectLoading:false};
+var api=null, s={shopDiscount:0,service:{beta_open:true,mine:[],admin:[]},lastSupportReceipt:null,supportBusy:false,chatTicketId:null,chatMessages:[],chatBusy:false,chatLoading:false,streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],xpAwards:[],xpClaimBusy:false,progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',difficultyFilter:'all',lesson:null,choice:null,quizStep:0,quizPassed:false,sectionIndex:0,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},memberExpiry:{},adminPage:1,adminFilter:'all',adminSearch:'',registrationPolicy:{mode:'approval',loaded:false},registrationManual:true,adminLearner:null,adminProgressBusy:false,adminProgressSearch:'',adminProgressFilter:'all',catalogLimit:9,practiceChecked:false,draft:'',lessonStep:1,hintStage:0,prefs:null,projectTab:0,projectSource:'',projectLoading:false};
 var plans={free:'Free',pro:'Plus',ultimate:'Ultimate'};
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];});}
 function safeLink(url){return /^https:\/\/[^\s<>"]+$/i.test(String(url||''))?esc(url):'#';}
@@ -133,8 +133,8 @@ function login(){
  const brand='<img class="ll-login-banner" src="./liverylab-banner.webp" alt="Livery-Lab Premium FiveM Systems Banner"><div class="brandmark"><img class="ll-brand-symbol" src="./liverylab-symbol.svg" alt=""><span>LiveryLab <span class="gradient">Academy</span></span></div><div class="ll-auth-release">'+(s.service?.beta_open===false?'ACADEMY':'PRIVATE BETA')+' <span>NEUE ACADEMY · V28</span></div>';
  if(s.authScreen==='register'){
  content.innerHTML='<div class="auth-layout auth-login-layout"><aside class="auth-showcase"><span class="eyebrow">'+betaLabel+'</span><h2>Baue echte Skills.<br><em>Schritt für Schritt.</em></h2><p>Programmierung, FiveM und Blender in klaren Lernpfaden – mit Videos, Praxis, Quizzen und Abschlussprüfungen.</p><div class="auth-feature-grid"><span>▶ Video-Lektionen</span><span>✓ Praxisaufgaben</span><span>✦ XP & Titel</span><span>★ Kursprüfungen</span></div><small>Made with 💙 from NyxAtheris (LiveryLab Studios)</small></aside><section class="auth-card">'+brand+
- '<span class="eyebrow">[ + ] BEWERBUNG</span><h1>Dein Weg in die <span class="gradient">Academy.</span></h1>'+
- '<p class="lede">Erstelle dein Konto. Nach der Freigabe durch NyxAtheris erhältst du Zugang. Mitgliedschaften kannst du nach der Anmeldung direkt in der App anfragen.</p>'+
+ '<span class="eyebrow">'+(s.registrationPolicy?.mode==='open'?'[ + ] FREIE REGISTRIERUNG':'[ + ] BEWERBUNG')+'</span><h1>Dein Weg in die <span class="gradient">Academy.</span></h1>'+
+ '<p class="lede">'+(s.registrationPolicy?.mode==='open'?'Erstelle ein Konto und starte direkt mit den Free-Kursen. Dafür ist keine Freigabe durch das Team erforderlich.':'Erstelle ein Konto und sende deine Bewerbung. Erst nach der Freigabe durch das Team erhältst du Zugang.')+'</p>'+
  '<form data-form="register"><div class="form-group"><label class="form-label" for="reg-email">E-Mail-Adresse</label>'+
  '<input class="input" type="email" id="reg-email" name="email" autocomplete="email" required maxlength="254" placeholder="du@beispiel.de"></div>'+
  '<div class="form-group"><label class="form-label" for="reg-user">Benutzername</label>'+
@@ -143,16 +143,16 @@ function login(){
  '<input class="input" type="password" id="reg-pass" name="password" autocomplete="new-password" minlength="14" maxlength="256" required></div>'+
  '<div class="form-group"><label class="form-label" for="reg-confirm">Passwort wiederholen</label>'+
  '<input class="input" type="password" id="reg-confirm" name="confirm_password" autocomplete="new-password" minlength="14" required></div>'+
- '<button class="btn primary block" type="submit">Registrierungsanfrage senden →</button></form>'+
- '<p class="micro">Dein Passwort wird sicher über Supabase Auth verarbeitet. Deine Anmeldung wird vom Team geprüft; ohne Genehmigung erhältst du keinen Zugriff.</p>'+
+ '<button class="btn primary block" type="submit">'+(s.registrationPolicy?.mode==='open'?'Konto erstellen →':'Registrierungsanfrage senden →')+'</button></form>'+
+ '<p class="micro">Dein Passwort wird sicher über Supabase Auth verarbeitet. Die E-Mail-Adresse wird bei diesem Registrierungsweg nicht automatisch auf Besitz geprüft. '+(s.registrationPolicy?.mode==='open'?'Mit der kostenlosen Mitgliedschaft kannst du dich nach der Registrierung anmelden.':'Ohne Annahme deiner Bewerbung bleibt das Konto gesperrt.')+'</p>'+
  '<button type="button" class="btn ghost block" data-action="show-login">← Bereits registriert? Anmelden</button>'+
  '<p class="smallprint" style="text-align:center;margin-top:18px">Made with 💙 from NyxAtheris (LiveryLab Studios)</p></section></div>';return;
  }
  if(s.authScreen==='sent'){
  content.innerHTML='<div class="auth-layout"><section class="auth-card auth-success">'+brand+
- '<span class="auth-check">✓</span><span class="eyebrow">ANFRAGE VERSENDET</span>'+
+ '<span class="auth-check">✓</span><span class="eyebrow">'+(s.registrationManual?'ANFRAGE VERSENDET':'KONTO ERSTELLT')+'</span>'+
  '<h1>Registrierung <span class="gradient">eingegangen.</span></h1>'+
- '<p class="lede">'+(s.registrationManual?'Deine Registrierungsanfrage ist eingegangen. NyxAtheris muss deinen Zugang zunächst genehmigen. Deine Kontakt-E-Mail wurde bei dieser Anmeldung nicht automatisch überprüft.':'Deine Registrierungsanfrage wurde gesendet. Bestätige deine E-Mail-Adresse über den Link, den Supabase dir sendet. Erst nach der Freigabe kannst du die Academy benutzen.')+'</p>'+
+ '<p class="lede">'+(s.registrationManual?'Deine Bewerbung ist eingegangen. Du kannst die Academy erst benutzen, nachdem ein Administrator dich freigeschaltet hat. Die Kontakt-E-Mail wurde nicht automatisch geprüft.':'Dein Konto ist sofort als Free-Mitglied freigeschaltet. Melde dich jetzt mit Benutzernamen und Passwort an. Die Kontakt-E-Mail wurde nicht automatisch überprüft.')+'</p>'+
  '<button class="btn primary block" type="button" data-action="show-login">Zur Anmeldung →</button>'+
  '<a class="btn ghost block" style="margin-top:10px" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord-Support</a></section></div>';return;
  }
@@ -165,9 +165,25 @@ function login(){
  '<input class="input" type="password" id="password" name="password" autocomplete="current-password" required placeholder="Dein Passwort"></div>'+
  '<button class="btn primary block" type="submit">Anmelden →</button></form>'+
  '<div class="auth-secondary"><span>Noch kein Konto?</span><button type="button" class="btn" data-action="show-register">Jetzt registrieren →</button></div>'+
- '<p class="micro">Dein Konto muss vom Team freigegeben werden. Nach der Anmeldung kannst du Supportanfragen direkt in der Academy stellen.</p>'+
+ '<p class="micro">'+(s.registrationPolicy?.mode==='open'?'Neue Konten sind derzeit ohne Freigabe möglich.':'Neue Registrierungen müssen derzeit vom Team angenommen werden.')+'</p>'+
  '<a class="btn discord block discord-block" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord beitreten</a>'+
  '<p class="smallprint" style="text-align:center;margin-top:19px">Sicherer Zugang über LiveryLab Academy</p></section></div>';
+}
+async function fetchRegistrationPolicy(adminView){
+ try{
+  const response=adminView
+   ?await adminCall({action:'getRegistrationMode'})
+   :(await api.functions.invoke('academy-register',{body:{action:'policy'}})).data;
+  if(!response?.ok||!['approval','open'].includes(response.mode))throw Error('Registrierungsmodus nicht erreichbar.');
+  s.registrationPolicy={mode:response.mode,loaded:true,updated_at:response.updated_at||null};
+  // Never replace an access-denied screen with the anonymous registration form.
+  if(!s.ready&&!s.user&&s.authScreen!=='sent')login();
+  return s.registrationPolicy;
+ }catch(error){
+  // Fail closed: if the service cannot be reached, never promise open access.
+  s.registrationPolicy={mode:'approval',loaded:false};
+  throw error;
+ }
 }
 async function registerAccount(fd){
  const email=String(fd.get('email')||'').trim().toLowerCase();
@@ -177,36 +193,19 @@ async function registerAccount(fd){
  if(!/^[a-z][a-z0-9_]{2,23}$/.test(username))throw Error('Benutzername: 3–24 Zeichen, Buchstaben, Zahlen und Unterstrich.');
  if(password.length<14||password.length>256)throw Error('Das Passwort muss 14–256 Zeichen lang sein.');
  if(password!==String(fd.get('confirm_password')||''))throw Error('Die beiden Passwörter stimmen nicht überein.');
- // Prefer the ordinary Supabase signup, including true email confirmation,
- // when public signups have been enabled by the project administrator.
- const normal=await api.auth.signUp({email,password,options:{
-  data:{username,name:username},
-  emailRedirectTo:new URL('./',window.location.href).href
- }});
- let manual=false;
- if(normal.error){
-  const message=String(normal.error.message||'').toLowerCase();
-  const code=String(normal.error.code||'').toLowerCase();
-  if(code!=='signup_disabled'&&!message.includes('signups not allowed for this instance')){
-   throw normal.error;
-  }
-  // If Supabase public signups are disabled, a server-only Edge Function
-  // creates a pending account. NO service-role credential goes to the browser.
-  const fallback=await api.functions.invoke('academy-register',{
-   body:{email,username,password}
-  });
-  if(fallback.error){
-   let detail='';
-   try{detail=(await fallback.error.context?.json())?.error||'';}catch(_){}
-   throw Error(detail||'Registrierung derzeit nicht erreichbar. Versuche es später noch einmal.');
-  }
-  if(!fallback.data?.ok||fallback.data?.requires_approval!==true)
-   throw Error(fallback.data?.error||'Registrierung konnte nicht abgeschlossen werden.');
-  manual=true;
- }else if(normal.data?.session){
-  await api.auth.signOut({scope:'local'});
+ // One secure registration route for both modes. The server, never browser
+ // parameters or Supabase Auth's public signUp, decides the access status.
+ const created=await api.functions.invoke('academy-register',{
+  body:{email,username,password}
+ });
+ if(created.error){
+  let detail='';
+  try{detail=(await created.error.context?.json())?.error||'';}catch(_){}
+  throw Error(detail||'Registrierung derzeit nicht erreichbar. Versuche es später noch einmal.');
  }
- s.registrationManual=manual;
+ if(!created.data?.ok||typeof created.data?.requires_approval!=='boolean')
+  throw Error(created.data?.error||'Registrierung konnte nicht abgeschlossen werden.');
+ s.registrationManual=created.data.requires_approval;
  s.authScreen='sent';
  login();
 }
@@ -217,7 +216,7 @@ function waitingApproval(status){
  content.innerHTML='<div class="auth-layout"><section class="auth-card auth-success"><span class="auth-check">'+(pending?'◷':'⛔')+'</span>'+
  '<span class="eyebrow">'+(pending?'ANFRAGE IN PRÜFUNG':'ZUGRIFF GESPERRT')+'</span>'+
  '<h1>'+(pending?'Warte auf deine <span class="gradient">Freigabe.</span>':'Dein Zugang ist <span class="gradient">gesperrt.</span>')+'</h1>'+
- '<p class="lede">'+(pending?'Dein Konto ist angelegt. Der Administrator muss deine Registrierungsanfrage zuerst genehmigen. Bitte kontrolliere außerdem, ob du deine E-Mail-Adresse bestätigt hast.':'Der Administrator hat den Zugriff auf dieses Konto gesperrt. Du kannst derzeit keine Lektionen, Prüfungen oder Projektdaten abrufen.')+'</p>'+
+ '<p class="lede">'+(pending?'Dein Konto ist angelegt und wartet auf die Genehmigung durch einen Administrator. Bis zur Freigabe bleiben die Kurse gesperrt.':'Der Administrator hat den Zugriff auf dieses Konto gesperrt. Du kannst derzeit keine Lektionen, Prüfungen oder Projektdaten abrufen.')+'</p>'+
  '<button class="btn primary block" type="button" data-action="retry-access">Freigabe erneut prüfen →</button>'+
  '<button class="btn ghost block" style="margin-top:9px" type="button" data-action="logout">Abmelden</button>'+
  '<a class="btn discord block" style="margin-top:9px" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Support auf Discord</a></section></div>';
@@ -1877,7 +1876,7 @@ document.addEventListener('click',async function(e){
  if(action){
   var name=action.dataset.action;
   if(name==='logout'){await logout();return;}
-  if(name==='show-register'){s.authScreen='register';login();return;}
+  if(name==='show-register'){s.authScreen='register';login();void fetchRegistrationPolicy(false).catch(()=>{});return;}
   if(name==='show-login'){s.authScreen='login';login();return;}
   if(name==='retry-access'){await boot();return;}
   if(name==='more-courses'){
@@ -2337,6 +2336,7 @@ async function init(){
  document.head.insertAdjacentHTML('beforeend','<style>.is-auth .sidebar,.is-auth .bottom-nav{display:none}.is-auth .topbar{background:#0d0a19}.is-auth .content{max-width:1100px}.is-auth .app-column{width:100%}</style>');
  if(!window.supabase||!cfg.supabaseUrl||!cfg.supabasePublishableKey){content.innerHTML='<div class="auth-layout panel"><h2>Verbindung nicht verfügbar</h2><p>Supabase konnte nicht geladen werden. Bitte lade die Seite erneut oder überprüfe deine Verbindung.</p></div>';return;}
  try{api=window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+  void fetchRegistrationPolicy(false).catch(()=>{});
   void api.rpc('academy_shop_discount').then(res=>{if(!res.error){s.shopDiscount=Number(res.data)||0;if(s.ready&&['plans','admin'].includes(parseRoute().page))render();}}).catch(()=>{});
   void api.rpc('academy_beta_status').then(beta=>{if(!beta.error){s.service.beta_open=beta.data===true;if(!s.ready)login();}}).catch(()=>{});
   window.LLLearning?.attach?.({state:()=>s,client:()=>api,notice,onStep:(id,step)=>{s.lessonStep=step;if(s.progress.lastLesson?.id===id){s.progress.lastLesson.step=step;void saveProgress().catch(()=>{});}}});await boot();}
