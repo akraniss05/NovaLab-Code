@@ -36,6 +36,7 @@ jobs:
           node tests/smoke.cjs
           node tests/practice.cjs
           node tests/simple-academy.cjs
+          node tests/support-submit.cjs
           node tests/admin-plans.cjs
           node tests/xp-rewards.cjs
           node tests/render.cjs
