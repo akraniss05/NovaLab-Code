@@ -798,39 +798,95 @@ function coursesPage(){
  '<div id="catalog-container">'+catalogItems()+'</div></section></div>';
 }
 
+function roadmapLessonSymbol(lesson,course){
+ if(String(course?.category||'').includes('Blender'))return '✧';
+ const title=String(lesson?.title||'').toLocaleLowerCase('de');
+ if(/kommentar|notiz|dokument/.test(title))return '//';
+ if(/variable|wert|zuweisung/.test(title))return 'x';
+ if(/typ|string|boolean|number/.test(title))return '▱';
+ if(/funktion|methode/.test(title))return 'ƒ';
+ if(/schleif|loop|iterat/.test(title))return '↻';
+ if(/beding|vergleich|operator/.test(title))return '◇';
+ if(/datenbank|sql|query/.test(title))return '▤';
+ if(/web|html|css|dom/.test(title))return '⟨/⟩';
+ if(/event|trigger|callback/.test(title))return '⌁';
+ if(/projekt|abschluss|test/.test(title))return '⚑';
+ return '⌘';
+}
 function trackPage(id){
  const course=courseOf(id);if(!course)return notFound();
- const all=lessonsOf(id),completed=doneIds(),done=countDone(id),next=all.find(l=>!completed.has(l.id)&&allowed(l));
+ const all=lessonsOf(id),completed=doneIds(),done=countDone(id);
+ const next=all.find(l=>!completed.has(l.id)&&allowed(l));
  const chapters=[];
  for(const l of all){const last=chapters.at(-1);if(last?.title===l.chapter)last.items.push(l);else chapters.push({title:l.chapter,items:[l]});}
- let out='<a class="back" href="#courses">← Alle Kurse</a>'+
- '<section class="track-top"><div class="track-actions"><button class="btn small" type="button" data-pin-course="'+esc(id)+'">'+(getChoicePreference(pinKey(),'')===id?'✓ Angeheftet':'⌁ Auf Startseite anheften')+'</button><button class="btn small" type="button" data-bookmark-course="'+esc(id)+'">'+(bookmarks().includes(id)?'★ Gemerkt':'☆ Kurs merken')+'</button></div><span class="eyebrow">[ 00 ] LERNPFAD · '+all.length+' LEKTIONEN</span>'+
- '<h1>'+esc(course.name)+' <em>lernen.</em></h1>'+
- '<div class="ll-difficulty-explain">'+difficultyBadge(course)+'<small>'+esc(difficultyDescription())+'</small></div>'+
- '<p class="lede">Jede Lektion erklärt ein Konzept. Danach schaust du ein passendes Tutorial an, löst eine Praxisaufgabe und überprüfst dein Wissen.</p></section>'+
- '<div class="stats-grid track-stats"><div class="stat-card"><strong>'+done+'/'+all.length+'</strong><small>LEKTIONEN</small></div>'+
- '<div class="stat-card"><strong>'+xpFromCourse(id)+'</strong><small>XP</small></div>'+
- '<div class="stat-card"><strong>'+pct(done,all.length)+'%</strong><small>FORTSCHRITT</small></div>'+
- '<div class="stat-card"><strong>'+((s.progress.exams||{})[id]?'✓':'–')+'</strong><small>PRÜFUNG</small></div></div>';
- if(next)out+='<div class="next-lesson"><span class="eyebrow">NÄCHSTE LEKTION</span><h3>'+esc(next.title)+'</h3>'+
- '<p>'+esc(next.summary)+'</p><button class="btn primary" data-go="lesson/'+esc(next.id)+'">Jetzt starten →</button></div>';
+ const chapterDone=chapters.filter(ch=>ch.items.length&&ch.items.every(l=>completed.has(l.id))).length;
+ const currentChapter=next?chapters.findIndex(ch=>ch.items.some(l=>l.id===next.id)):0;
+ const percentage=pct(done,all.length);
+ let out='<div class="ll-roadmap-course">'+
+ '<header class="ll-roadmap-track-hero"><div class="ll-roadmap-hero-bg" aria-hidden="true"></div>'+
+ '<div class="ll-track-header-row"><a class="back ll-track-back" href="#courses" aria-label="'+catalogText('Zurück zu allen Kursen','Back to all courses')+'">←</a>'+
+ '<div class="ll-track-heading"><span class="eyebrow">'+catalogText('DEIN GEFÜHRTER LERNPFAD','YOUR GUIDED LEARNING PATH')+'</span>'+
+ '<h1>'+esc(course.name)+' <em>Roadmap</em></h1>'+
+ '<p>'+catalogText('Schritt für Schritt zum eigenen Projekt.','Step by step toward your own project.')+'</p></div>'+
+ '<span class="ll-track-floating-icon" aria-hidden="true">'+esc(roadmapCourseGlyph(course))+'</span></div>'+
+ '<div class="ll-track-summary"><span class="ll-track-summary-emblem" aria-hidden="true">'+esc(roadmapCourseGlyph(course))+'</span>'+
+ '<div class="ll-track-summary-body"><div class="ll-track-summary-head"><div><strong>'+esc(course.name)+'</strong>'+
+ '<small>'+catalogText('Kursfortschritt','Course progress')+'</small></div>'+
+ '<span class="ll-track-chapter-total">'+chapterDone+' / '+chapters.length+' '+catalogText('Kapitel','chapters')+'</span>'+
+ '<span class="ll-track-percent">'+percentage+'%</span></div>'+
+ '<div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="'+all.length+'" aria-valuenow="'+done+'" aria-label="'+catalogText('Abgeschlossene Lektionen','Lessons completed')+'"><span style="width:'+percentage+'%"></span></div>'+
+ '<div class="ll-track-summary-foot"><span>'+done+' / '+all.length+' '+catalogText('Lektionen abgeschlossen','lessons completed')+'</span>'+
+ '<span>'+xpFromCourse(id)+' XP</span></div></div></div>'+
+ '<div class="ll-track-bottom-actions"><div>'+difficultyBadge(course)+
+ '<span class="ll-track-level">'+catalogText('Einstieg','Entry')+': '+levelText(course.level)+'</span></div>'+
+ '<div class="ll-track-quick-actions"><button class="btn small" type="button" data-pin-course="'+esc(id)+'">'+
+ (getChoicePreference(pinKey(),'')===id?'✓ '+catalogText('Angeheftet','Pinned'):'⌁ '+catalogText('Anheften','Pin'))+'</button>'+
+ '<button class="btn small" type="button" data-bookmark-course="'+esc(id)+'">'+
+ (bookmarks().includes(id)?'★ '+catalogText('Gemerkt','Saved'):'☆ '+catalogText('Merken','Save'))+'</button></div></div></header>';
+ if(next)out+='<div class="next-lesson ll-next-roadmap"><div><span class="eyebrow">'+catalogText('ALS NÄCHSTES','UP NEXT')+'</span>'+
+  '<strong>'+esc(next.title)+'</strong><small>'+esc(next.chapter)+'</small></div>'+
+  '<button type="button" class="btn primary" data-go="lesson/'+esc(next.id)+'">'+catalogText('Weiterlernen →','Continue →')+'</button></div>';
  chapters.forEach((chapter,ci)=>{
-  const complete=chapter.items.filter(l=>completed.has(l.id)).length;
-  out+='<section class="chapter"><div class="chapter-title"><span>[ '+String(ci+1).padStart(2,'0')+' ] '+esc(chapter.title)+'</span>'+
-   '<span class="chapter-count">'+complete+'/'+chapter.items.length+'</span></div><div class="lesson-list">'+
+  const number=String(ci+1).padStart(2,'0');
+  const doneInChapter=chapter.items.filter(l=>completed.has(l.id)).length;
+  const complete=doneInChapter===chapter.items.length;
+  const isActive=ci===currentChapter;
+  // Keep every chapter's lessons in the DOM for keyboard navigation, chapter
+  // expansion, and legacy progress/lesson-count regression tests.
+  const isOpen=isActive||(!next&&ci===0)||chapters.length===1;
+  out+='<section class="chapter ll-roadmap-chapter'+(complete?' is-complete':'')+'">'+
+   '<details class="ll-map-chapter-details" '+(isOpen?'open':'')+'>'+
+   '<summary class="chapter-title"><span class="ll-chapter-label">[ '+number+' ] '+esc(chapter.title)+'</span>'+
+   '<span class="ll-chapter-rule" aria-hidden="true"></span>'+
+   '<span class="chapter-count">'+doneInChapter+'/'+chapter.items.length+'</span>'+
+   '<span class="ll-chapter-chevron" aria-hidden="true">⌄</span></summary>'+
+   '<p class="ll-chapter-description">'+catalogText('Lerne die Themen dieses Kapitels in einzelnen, verständlichen Schritten.','Learn each topic in this chapter in clear, focused steps.')+'</p>'+
+   '<div class="lesson-list ll-roadmap-lesson-list">'+
    chapter.items.map((l,i)=>{
-     const ok=completed.has(l.id),unlocked=allowed(l);
-     return '<button type="button" class="lesson-card '+(ok?'is-complete ':'')+(!unlocked?'locked':'')+
-      '" data-go="lesson/'+esc(l.id)+'" aria-label="'+esc(l.title)+(ok?', abgeschlossen':!unlocked?', gesperrt':'')+'">'+
-      '<span class="lesson-num">'+String(i+1).padStart(2,'0')+'</span><span class="lesson-main"><strong>'+esc(l.title)+'</strong>'+
-      '<span class="lesson-summary">'+esc(l.summary)+'</span>'+
-      '<span class="lesson-meta">'+l.minutes+' MIN · PRAXIS + QUIZ'+(!unlocked?' · '+tierLabel(l.required_plan).toUpperCase():'')+'</span></span>'+
-      '<span class="status-ring">'+(ok?'✓':!unlocked?'⌑':'')+'</span></button>';
-   }).join('')+'</div></section>';
+    const ok=completed.has(l.id),unlocked=allowed(l),current=next?.id===l.id;
+    const state=ok?'is-complete':!unlocked?'locked':current?'is-current':'is-upcoming';
+    const status=ok?catalogText('Abgeschlossen','Completed'):!unlocked?tierLabel(l.required_plan):current?catalogText('Als Nächstes','Up next'):catalogText('Noch offen','Not started');
+    const symbol=ok?'✓':!unlocked?'⌑':current?'▶':'○';
+    return '<div class="ll-map-entry '+state+'">'+
+     '<span class="ll-map-timeline-node" aria-hidden="true">'+symbol+'</span>'+
+     '<button class="lesson-card '+state+'" type="button" data-go="lesson/'+esc(l.id)+'" aria-label="'+
+       esc(l.title+', '+status)+'">'+
+      '<span class="lesson-main"><span class="ll-lesson-title-line"><span class="lesson-num">'+String(i+1).padStart(2,'0')+
+      '</span><strong>'+esc(l.title)+'</strong></span>'+
+      '<span class="lesson-summary">'+esc(l.summary||'Lerne das Thema an einem einfachen Beispiel.')+'</span>'+
+      '<span class="lesson-meta"><span>◷ '+l.minutes+' MIN</span><span class="ll-meta-separator" aria-hidden="true"></span>'+
+      '<span>◇ '+catalogText('PRAXIS + QUIZ','PRACTICE + QUIZ')+'</span></span></span>'+
+      '<span class="ll-lesson-right"><span class="ll-lesson-status-pill '+state+'">'+
+         (ok?'✓ ':!unlocked?'⌑ ':current?'▷ ':'○ ')+esc(status)+'</span>'+
+      '<span class="ll-lesson-illustration" aria-hidden="true">'+esc(roadmapLessonSymbol(l,course))+'</span></span>'+
+      '<span class="status-ring" aria-hidden="true">'+symbol+'</span>'+
+      '</button></div>';
+   }).join('')+'</div></details></section>';
  });
- out+='<section class="section exam-callout"><span class="eyebrow">[ ★ ] ABSCHLUSS</span>'+
- '<h2>Bereit für die Prüfung?</h2><p>Trainiere dein Wissen mit Fragen aus diesem Kurs.</p>'+
- '<button class="btn primary" data-go="exam/'+esc(id)+'">Prüfung ansehen →</button></section>';
+ out+='<section class="section exam-callout ll-roadmap-finale"><span class="eyebrow">[ ★ ] '+catalogText('ABSCHLUSS','FINISH')+'</span>'+
+  '<h2>'+catalogText('Bereit für die Prüfung?','Ready for the final exam?')+'</h2>'+
+  '<p>'+catalogText('Wiederhole das Wichtigste aus diesem Kurs und zeig, was du gelernt hast.','Review key topics and show what you have learned.')+'</p>'+
+  '<button class="btn primary" type="button" data-go="exam/'+esc(id)+'">'+catalogText('Prüfung ansehen →','View exam →')+'</button></section></div>';
  return out;
 }
 
