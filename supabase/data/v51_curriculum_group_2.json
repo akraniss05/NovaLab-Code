@@ -1,0 +1,816 @@
+{
+  "version": 51,
+  "group": 2,
+  "topics": [
+    {
+      "course": "typescript",
+      "ordinal": 1,
+      "title": "Literal Types",
+      "theory": "Literal Types beschränken einen Wert auf genau bestimmte Zeichenketten oder Zahlen, nicht nur den allgemeinen Typ string oder number.",
+      "example": "type Status=\"open\"|\"closed\";",
+      "example_note": "Status erlaubt ausschließlich die beiden genannten Texte.",
+      "task": "Deklariere drei mögliche Bestellzustände."
+    },
+    {
+      "course": "typescript",
+      "ordinal": 2,
+      "title": "Type Narrowing",
+      "theory": "Mit typeof oder anderen Prüfungen verengt TypeScript einen Uniontyp innerhalb eines Codeblocks.",
+      "example": "function len(x:string|number){if(typeof x===\"string\")return x.length;return x;}",
+      "example_note": "Innerhalb des if-Zweigs weiß der Typechecker, dass x Text ist.",
+      "task": "Unterscheide Zahlen und Texte in einer Funktion."
+    },
+    {
+      "course": "typescript",
+      "ordinal": 3,
+      "title": "Readonly",
+      "theory": "readonly verbietet nachträgliche Zuweisungen an eine Eigenschaft bei der Typprüfung; es friert Objekte zur Laufzeit nicht tief ein.",
+      "example": "interface User{readonly id:number}",
+      "example_note": "Ein späterer Versuch, id zu überschreiben, erzeugt einen TypeScript-Fehler.",
+      "task": "Markiere einen Datenbankschlüssel als readonly."
+    },
+    {
+      "course": "typescript",
+      "ordinal": 4,
+      "title": "Generics",
+      "theory": "Generics bewahren den Zusammenhang zwischen Eingabe- und Ausgabetyp, ohne den unsicheren Typ any zu verwenden.",
+      "example": "function identisch<T>(wert:T):T{return wert;}",
+      "example_note": "Der Ausgabetyp entspricht dem Eingabetyp T.",
+      "task": "Schreibe eine generische Funktion für ein Array."
+    },
+    {
+      "course": "typescript",
+      "ordinal": 5,
+      "title": "keyof",
+      "theory": "keyof erzeugt einen Typ aus den erlaubten Schlüsseln eines Objekttyps.",
+      "example": "type User={id:number;name:string};\ntype Key=keyof User;",
+      "example_note": "Key erlaubt id und name, aber keinen unbekannten Schlüssel.",
+      "task": "Begrenze einen Parameter auf vorhandene Objektschlüssel."
+    },
+    {
+      "course": "typescript",
+      "ordinal": 6,
+      "title": "Pick",
+      "theory": "Pick<T,K> bildet aus einem vorhandenen Typ einen kleineren Typ mit ausgewählten Eigenschaften.",
+      "example": "type PublicUser=Pick<User,\"id\"|\"name\">;",
+      "example_note": "Andere Felder aus User sind im neuen Typ nicht enthalten.",
+      "task": "Entferne geheime Eigenschaften aus einem öffentlichen DTO-Typ."
+    },
+    {
+      "course": "typescript",
+      "ordinal": 7,
+      "title": "Partial",
+      "theory": "Partial<T> macht alle Eigenschaften eines bestehenden Typs optional.",
+      "example": "type Update=Partial<User>;",
+      "example_note": "Ein partielles Profilupdate darf nur einzelne Felder enthalten.",
+      "task": "Definiere einen Typ für Teilupdates."
+    },
+    {
+      "course": "typescript",
+      "ordinal": 8,
+      "title": "Discriminated Unions",
+      "theory": "Ein gemeinsames Kennzeichenfeld ermöglicht es, unterschiedliche Ergebnisvarianten sicher auseinanderzuhalten.",
+      "example": "type Result={ok:true;data:string}|{ok:false;error:string};",
+      "example_note": "Nach der Prüfung von ok kannst du auf das jeweils passende Feld zugreifen.",
+      "task": "Modelliere einen Erfolg und einen Fehler als Union."
+    },
+    {
+      "course": "typescript",
+      "ordinal": 9,
+      "title": "unknown",
+      "theory": "unknown zwingt dich zu einer Typprüfung, bevor du mit einem unbestimmten Wert arbeitest; any umgeht diesen Schutz.",
+      "example": "function lese(x:unknown){if(typeof x===\"string\")return x.length;}",
+      "example_note": "Erst nach typeof darf length sicher verwendet werden.",
+      "task": "Prüfe einen unbekannten API-Wert."
+    },
+    {
+      "course": "typescript",
+      "ordinal": 10,
+      "title": "Eventtypen",
+      "theory": "Ein Handler kann den passenden Ereignistyp annehmen, um Eigenschaften zur Entwicklungszeit zu prüfen.",
+      "example": "function klick(e:MouseEvent){console.log(e.clientX);}",
+      "example_note": "clientX ist eine Eigenschaft von MouseEvent.",
+      "task": "Typisiere einen Tastatur-Handler."
+    },
+    {
+      "course": "typescript",
+      "ordinal": 11,
+      "title": "Promises typisieren",
+      "theory": "Eine async-Funktion liefert ein Promise; Promise<T> beschreibt den später enthaltenen Wert.",
+      "example": "async function laden():Promise<number>{return 3;}",
+      "example_note": "Der Aufrufer erhält Promise<number>, nicht sofort eine nackte Zahl.",
+      "task": "Schreibe eine async-Funktion mit String-Rückgabe."
+    },
+    {
+      "course": "typescript",
+      "ordinal": 12,
+      "title": "Typecheck im Build",
+      "theory": "Der Compiler prüft TypeScript-Typen und kann mit noEmit ohne Ausgabe arbeiten.",
+      "example": "npx tsc --noEmit",
+      "example_note": "Es wird nur geprüft, ob Typfehler vorliegen; keine neuen JS-Dateien entstehen.",
+      "task": "Prüfe ein kleines Projekt mit strict-Einstellung."
+    },
+    {
+      "course": "html",
+      "ordinal": 1,
+      "title": "viewport-Metadaten",
+      "theory": "Mit dem viewport-Eintrag nutzt eine mobile Seite die tatsächliche Gerätebreite statt einer simulierten Desktopfläche.",
+      "example": "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">",
+      "example_note": "Layoutregeln reagieren auf die physische Ansicht des Nutzers.",
+      "task": "Ergänze einen viewport-Eintrag in ein Grundgerüst."
+    },
+    {
+      "course": "html",
+      "ordinal": 2,
+      "title": "main-Element",
+      "theory": "main kennzeichnet den zentralen Seiteninhalt, den Hilfstechnologien direkt ansteuern können.",
+      "example": "<main><h1>Kursübersicht</h1></main>",
+      "example_note": "Die Hauptüberschrift steht innerhalb des zentralen Inhaltsbereichs.",
+      "task": "Trenne Hauptinhalt und Navigationsleiste."
+    },
+    {
+      "course": "html",
+      "ordinal": 3,
+      "title": "article",
+      "theory": "article steht für einen abgeschlossenen Inhalt, der auch allein sinnvoll gelesen werden könnte.",
+      "example": "<article><h2>Python</h2><p>Ein Kurs</p></article>",
+      "example_note": "Die Kurskarte hat eine eigene Überschrift und einen Beschreibungstext.",
+      "task": "Baue eine eigenständige Kurskarte."
+    },
+    {
+      "course": "html",
+      "ordinal": 4,
+      "title": "figure",
+      "theory": "figure gruppiert ein Bild oder Diagramm mit seinem fachlichen Zusammenhang.",
+      "example": "<figure><img src=\"bild.png\" alt=\"Modell\"><figcaption>Erstes Modell</figcaption></figure>",
+      "example_note": "figcaption ist der zugehörige Untertitel der Abbildung.",
+      "task": "Beschrifte einen Screenshot sinnvoll."
+    },
+    {
+      "course": "html",
+      "ordinal": 5,
+      "title": "Labels verbinden",
+      "theory": "Mit for und id verknüpfst du eine sichtbare Beschriftung fest mit einem Formularelement.",
+      "example": "<label for=\"name\">Name</label><input id=\"name\" name=\"name\">",
+      "example_note": "Ein Klick auf die Beschriftung fokussiert das Eingabefeld.",
+      "task": "Verbinde zwei Eingaben mit ihren Labels."
+    },
+    {
+      "course": "html",
+      "ordinal": 6,
+      "title": "Eingabepflicht",
+      "theory": "required und minlength ermöglichen einfache Browserprüfungen von Formularfeldern. Serverseitige Prüfung ist trotzdem nötig.",
+      "example": "<input name=\"user\" required minlength=\"3\">",
+      "example_note": "Das Feld darf beim regulären Absenden nicht leer oder zu kurz sein.",
+      "task": "Teste leere und kurze Benutzernamen."
+    },
+    {
+      "course": "html",
+      "ordinal": 7,
+      "title": "Button-Typen",
+      "theory": "Ein Button im Formular sendet standardmäßig das Formular. type=\"button\" ist für eigenständige Aktionen gedacht.",
+      "example": "<button type=\"button\">Vorschau</button>",
+      "example_note": "Der Button löst ohne eigenen Handler keine Formularübertragung aus.",
+      "task": "Baue je einen Vorschau- und einen Senden-Button."
+    },
+    {
+      "course": "html",
+      "ordinal": 8,
+      "title": "fieldset",
+      "theory": "fieldset gruppiert zusammengehörige Formularelemente; legend beschreibt den Inhalt der gesamten Auswahlgruppe.",
+      "example": "<fieldset><legend>Sprache</legend><input type=\"radio\" name=\"sprache\"></fieldset>",
+      "example_note": "Die Gruppe besitzt eine fachliche Überschrift.",
+      "task": "Baue eine Wahl zwischen zwei Sprachen."
+    },
+    {
+      "course": "html",
+      "ordinal": 9,
+      "title": "details",
+      "theory": "details mit summary lässt sich ohne JavaScript öffnen und schließen.",
+      "example": "<details><summary>Hilfe</summary><p>Erklärung</p></details>",
+      "example_note": "Die Hilfe ist zunächst einklappbar und wird beim Öffnen sichtbar.",
+      "task": "Baue zwei FAQ-Antworten."
+    },
+    {
+      "course": "html",
+      "ordinal": 10,
+      "title": "Tabellenüberschriften",
+      "theory": "th und scope definieren, welche Tabellenzellen Überschriften sind und für welche Richtung sie gelten.",
+      "example": "<table><tr><th scope=\"col\">Kurs</th><th scope=\"col\">XP</th></tr></table>",
+      "example_note": "Die beiden Spalten erhalten verständliche Überschriften.",
+      "task": "Erstelle eine kleine Datentabelle."
+    },
+    {
+      "course": "html",
+      "ordinal": 11,
+      "title": "Lazy Loading",
+      "theory": "loading=\"lazy\" kann Bilder außerhalb des sichtbaren Bereichs verzögert laden.",
+      "example": "<img src=\"szene.png\" alt=\"3D-Szene\" loading=\"lazy\">",
+      "example_note": "Ein Bild muss nicht sofort geladen werden, wenn es noch nicht sichtbar ist.",
+      "task": "Markiere Galeriebilder zum verzögerten Laden."
+    },
+    {
+      "course": "html",
+      "ordinal": 12,
+      "title": "dialog",
+      "theory": "Das dialog-Element ist eine HTML-Grundlage für modale Fenster. JavaScript kann es per showModal öffnen.",
+      "example": "<dialog id=\"info\"><p>Gespeichert</p></dialog>",
+      "example_note": "Die Dialogstruktur ist vorhanden, aber erst der Aufruf showModal macht sie modal sichtbar.",
+      "task": "Erstelle ein kurzes Bestätigungsfenster."
+    },
+    {
+      "course": "css",
+      "ordinal": 1,
+      "title": "CSS Custom Properties",
+      "theory": "Eine eigene CSS-Variable speichert einen Wert und kann mit var an vielen Stellen gelesen werden.",
+      "example": ":root{--accent:#8958f3}\nbutton{background:var(--accent)}",
+      "example_note": "Beide Regeln sind über den gemeinsamen Wert verbunden.",
+      "task": "Verwende eine Akzentfarbe für zwei Komponenten."
+    },
+    {
+      "course": "css",
+      "ordinal": 2,
+      "title": "Spezifität",
+      "theory": "Bei konkurrierenden CSS-Regeln beeinflusst die Spezifität, welcher Wert gewinnt. Klassenselektoren zählen stärker als einfache Elementselektoren.",
+      "example": "button{color:blue}\n.primary{color:purple}",
+      "example_note": "Ein Button mit der Klasse primary erscheint bei gleicher Kaskadenlage lila.",
+      "task": "Vergleiche Element- und Klassenregel."
+    },
+    {
+      "course": "css",
+      "ordinal": 3,
+      "title": "hover",
+      "theory": ":hover wendet Styles an, während ein Mauszeiger ein Element trifft; Touchgeräte haben andere Interaktionsmöglichkeiten.",
+      "example": "button:hover{transform:translateY(-2px)}",
+      "example_note": "Der Button verschiebt sich bei Mausberührung optisch nach oben.",
+      "task": "Erstelle einen Hovereffekt ohne versteckte Pflichtinformationen."
+    },
+    {
+      "course": "css",
+      "ordinal": 4,
+      "title": "focus-visible",
+      "theory": ":focus-visible macht Tastaturfokus deutlich erkennbar und verbessert die Bedienbarkeit.",
+      "example": "button:focus-visible{outline:3px solid orange}",
+      "example_note": "Tastaturnutzer sehen einen klaren Fokusrahmen.",
+      "task": "Gestalte einen Kontrast-reichen Fokuszustand."
+    },
+    {
+      "course": "css",
+      "ordinal": 5,
+      "title": "position relative",
+      "theory": "relative verschiebt die Darstellung ausgehend vom normalen Layoutplatz, ohne diesen Platz freizugeben.",
+      "example": ".chip{position:relative;top:4px}",
+      "example_note": "Das Element wird vier Pixel tiefer gezeichnet.",
+      "task": "Verschiebe eine kleine Badge relativ."
+    },
+    {
+      "course": "css",
+      "ordinal": 6,
+      "title": "position absolute",
+      "theory": "absolute positioniert ein Element relativ zum nächsten geeigneten positionierten Vorfahren.",
+      "example": ".card{position:relative}\n.badge{position:absolute;top:8px;right:8px}",
+      "example_note": "Die Badge sitzt im oberen rechten Bereich der Karte.",
+      "task": "Positioniere eine Badge in einer Karte."
+    },
+    {
+      "course": "css",
+      "ordinal": 7,
+      "title": "z-index",
+      "theory": "z-index steuert das Stapeln innerhalb eines Stacking Contexts. Sehr hohe Werte helfen nicht über alle Kontexte hinweg.",
+      "example": ".popup{position:fixed;z-index:10}",
+      "example_note": "Der Popup-Layer erhält einen Stapelwert innerhalb seines Kontextes.",
+      "task": "Ordne zwei überlappende Elemente."
+    },
+    {
+      "course": "css",
+      "ordinal": 8,
+      "title": "clamp",
+      "theory": "clamp begrenzt einen flexiblen Wert zwischen Minimum und Maximum.",
+      "example": "h1{font-size:clamp(1.5rem,4vw,3rem)}",
+      "example_note": "Die Schrift wächst mit der Bildschirmbreite bis zu den festen Grenzen.",
+      "task": "Erstelle eine flüssige Überschrift."
+    },
+    {
+      "course": "css",
+      "ordinal": 9,
+      "title": "minmax",
+      "theory": "minmax definiert für Grid-Spalten eine Mindest- und Höchstgröße.",
+      "example": ".grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}",
+      "example_note": "Die beiden Spalten dürfen flexibel schrumpfen und teilen den Platz.",
+      "task": "Baue eine zweispaltige Ansicht."
+    },
+    {
+      "course": "css",
+      "ordinal": 10,
+      "title": "auto-fit",
+      "theory": "auto-fit füllt ein Grid mit so vielen Spalten, wie bei der Mindestbreite möglich sind.",
+      "example": ".cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}",
+      "example_note": "Bei mehr Platz erscheinen automatisch weitere Spalten.",
+      "task": "Erstelle responsive Kurskarten."
+    },
+    {
+      "course": "css",
+      "ordinal": 11,
+      "title": "aspect-ratio",
+      "theory": "aspect-ratio hält das Größenverhältnis einer Box nach den geltenden Größenregeln stabil.",
+      "example": ".preview{width:100%;aspect-ratio:16/9}",
+      "example_note": "Die Höhe folgt der Breite im Verhältnis 16 zu 9.",
+      "task": "Baue eine Videovorschau."
+    },
+    {
+      "course": "css",
+      "ordinal": 12,
+      "title": "object-fit",
+      "theory": "object-fit:cover füllt den angegebenen Rahmen und schneidet bei Bedarf Bildränder ab.",
+      "example": "img{width:100%;height:160px;object-fit:cover}",
+      "example_note": "Bilder mit verschiedenen Formaten haben eine einheitliche Kartenhöhe.",
+      "task": "Vergleiche cover mit contain."
+    },
+    {
+      "course": "css",
+      "ordinal": 13,
+      "title": "Transitions",
+      "theory": "transition steuert das zeitliche Verhalten beim Wechsel eines CSS-Wertes.",
+      "example": "button{transition:background .2s ease}",
+      "example_note": "Hintergrundfarben wechseln weich statt sofort.",
+      "task": "Füge eine Hovertransition hinzu."
+    },
+    {
+      "course": "css",
+      "ordinal": 14,
+      "title": "Reduced Motion",
+      "theory": "prefers-reduced-motion erkennt den Wunsch nach weniger Animation und ermöglicht eine ruhigere Darstellung.",
+      "example": "@media(prefers-reduced-motion:reduce){*{animation:none!important}}",
+      "example_note": "Die Animation wird für entsprechend eingestellte Nutzer deaktiviert.",
+      "task": "Ergänze eine reduzierte Animation."
+    },
+    {
+      "course": "css",
+      "ordinal": 15,
+      "title": "Container Queries",
+      "theory": "Container Queries reagieren auf die Breite einer Komponente, unabhängig von der gesamten Viewportbreite.",
+      "example": ".wrap{container-type:inline-size}\n@container(min-width:500px){.item{display:flex}}",
+      "example_note": "Die Darstellung ändert sich, sobald der umgebende Container breit genug ist.",
+      "task": "Erstelle ein kartenbasiertes responsives Bauteil."
+    },
+    {
+      "course": "sql",
+      "ordinal": 1,
+      "title": "DISTINCT",
+      "theory": "DISTINCT entfernt doppelte Werte aus dem ausgewählten SQL-Ergebnis, ohne die Tabelle zu verändern.",
+      "example": "SELECT DISTINCT status FROM orders;",
+      "example_note": "Jeder verschiedene Status erscheint einmal in der Ausgabe.",
+      "task": "Zeige einmalige Kategorien."
+    },
+    {
+      "course": "sql",
+      "ordinal": 2,
+      "title": "COUNT",
+      "theory": "COUNT(*) zählt alle Ergebniszeilen, COUNT(spalte) dagegen nur Zeilen mit einem Wert in der Spalte.",
+      "example": "SELECT COUNT(*) FROM orders;",
+      "example_note": "Die Ausgabe ist die Anzahl der Bestellzeilen.",
+      "task": "Vergleiche COUNT mit einer NULL-Spalte."
+    },
+    {
+      "course": "sql",
+      "ordinal": 3,
+      "title": "GROUP BY",
+      "theory": "GROUP BY sammelt Zeilen mit gleichem Schlüssel zu Gruppen, auf die Aggregatfunktionen angewendet werden können.",
+      "example": "SELECT status,COUNT(*) FROM orders GROUP BY status;",
+      "example_note": "Jeder Status erscheint mit der Anzahl seiner Bestellungen.",
+      "task": "Zähle Bestellungen pro Status."
+    },
+    {
+      "course": "sql",
+      "ordinal": 4,
+      "title": "HAVING",
+      "theory": "HAVING filtert Gruppen nach der Aggregation, anders als WHERE für einzelne Zeilen davor.",
+      "example": "SELECT status,COUNT(*) FROM orders GROUP BY status HAVING COUNT(*)>3;",
+      "example_note": "Nur Gruppen mit mehr als drei Bestellungen bleiben sichtbar.",
+      "task": "Filtere Gruppen mit mindestens zwei Einträgen."
+    },
+    {
+      "course": "sql",
+      "ordinal": 5,
+      "title": "COALESCE",
+      "theory": "COALESCE wählt den ersten Wert, der nicht NULL ist. Das eignet sich für fehlende optionale Angaben.",
+      "example": "SELECT COALESCE(nickname,name) FROM users;",
+      "example_note": "Fehlende Spitznamen werden durch den Benutzernamen ersetzt.",
+      "task": "Zeige einen Ersatztext bei NULL."
+    },
+    {
+      "course": "sql",
+      "ordinal": 6,
+      "title": "CASE",
+      "theory": "CASE prüft Bedingungen innerhalb eines SQL-Ausdrucks und gibt passende Werte zurück.",
+      "example": "SELECT CASE WHEN score>=80 THEN 'bestanden' ELSE 'offen' END FROM exams;",
+      "example_note": "Jede Prüfungszeile erhält abhängig vom Score einen Status.",
+      "task": "Ordne Zahlen in drei Stufen ein."
+    },
+    {
+      "course": "sql",
+      "ordinal": 7,
+      "title": "UNIQUE",
+      "theory": "Eine UNIQUE-Einschränkung verhindert doppelte Werte in einer oder mehreren Spalten gemäß den Datenbankregeln.",
+      "example": "CREATE TABLE tags(id int PRIMARY KEY,slug text UNIQUE);",
+      "example_note": "Ein identischer slug kann nicht mehrfach als eindeutiger Wert gespeichert werden.",
+      "task": "Lege eine eindeutige Kurskennung an."
+    },
+    {
+      "course": "sql",
+      "ordinal": 8,
+      "title": "Fremdschlüssel",
+      "theory": "Ein Foreign Key verweist auf gültige Werte eines Schlüssels in einer anderen Tabelle.",
+      "example": "CREATE TABLE posts(id int PRIMARY KEY,user_id int REFERENCES users(id));",
+      "example_note": "Jeder gespeicherte user_id-Wert muss einen passenden Benutzer referenzieren.",
+      "task": "Verbinde zwei Tabellen per Fremdschlüssel."
+    },
+    {
+      "course": "sql",
+      "ordinal": 9,
+      "title": "Unterabfragen",
+      "theory": "Eine Unterabfrage liefert eine Teilmenge für die äußere SQL-Abfrage.",
+      "example": "SELECT name FROM users WHERE id IN(SELECT user_id FROM posts);",
+      "example_note": "Nur Benutzer mit passender ID in posts erscheinen.",
+      "task": "Baue eine IN-Unterabfrage."
+    },
+    {
+      "course": "sql",
+      "ordinal": 10,
+      "title": "CTEs",
+      "theory": "WITH benennt ein Zwischenergebnis, auf das die folgende SELECT-Abfrage zugreifen kann.",
+      "example": "WITH aktiv AS(SELECT * FROM users WHERE active=true) SELECT COUNT(*) FROM aktiv;",
+      "example_note": "Es werden nur aktive Nutzer gezählt.",
+      "task": "Teile eine komplexe Abfrage in zwei Schritte."
+    },
+    {
+      "course": "sql",
+      "ordinal": 11,
+      "title": "ROW_NUMBER",
+      "theory": "ROW_NUMBER nummeriert Ergebniszeilen innerhalb eines durch OVER definierten Fensters.",
+      "example": "SELECT name,ROW_NUMBER() OVER(ORDER BY score DESC) AS rang FROM users;",
+      "example_note": "Die Ausgabe erhält eine laufende Nummer nach Score.",
+      "task": "Erstelle eine Rangliste."
+    },
+    {
+      "course": "sql",
+      "ordinal": 12,
+      "title": "LEFT JOIN ohne Treffer",
+      "theory": "Ein LEFT JOIN behält Zeilen der linken Tabelle ohne passenden Partner. Die rechten Felder sind dann NULL.",
+      "example": "SELECT u.name,p.id FROM users u LEFT JOIN posts p ON p.user_id=u.id;",
+      "example_note": "Auch Benutzer ohne Beiträge werden aufgelistet.",
+      "task": "Zeige Benutzer ohne zugehörigen Beitrag."
+    },
+    {
+      "course": "sql",
+      "ordinal": 13,
+      "title": "ROLLBACK",
+      "theory": "ROLLBACK verwirft Änderungen einer noch offenen Transaktion und stellt den Stand vor ihr wieder her.",
+      "example": "BEGIN;\nUPDATE konto SET saldo=saldo-10 WHERE id=1;\nROLLBACK;",
+      "example_note": "Die Abbuchung wird nicht dauerhaft übernommen.",
+      "task": "Mache eine Teständerung rückgängig."
+    },
+    {
+      "course": "sql",
+      "ordinal": 14,
+      "title": "EXPLAIN",
+      "theory": "EXPLAIN zeigt den geplanten Ausführungsweg. EXPLAIN ANALYZE misst zusätzlich nach echter Ausführung.",
+      "example": "EXPLAIN SELECT * FROM users WHERE id=2;",
+      "example_note": "Du siehst, ob die Datenbank eine Indexsuche oder einen Tabellenscan vorsieht.",
+      "task": "Vergleiche zwei Query-Pläne."
+    },
+    {
+      "course": "sql",
+      "ordinal": 15,
+      "title": "Indizes",
+      "theory": "Ein Index beschleunigt bestimmte Suchen, kostet aber Platz und zusätzlichen Aufwand bei Schreibzugriffen.",
+      "example": "CREATE INDEX idx_posts_user ON posts(user_id);",
+      "example_note": "Eine Suche nach user_id kann den Index nutzen, wenn er für die Abfrage geeignet ist.",
+      "task": "Begründe einen Index für eine häufige Suche."
+    },
+    {
+      "course": "java",
+      "ordinal": 1,
+      "title": "Primitive int",
+      "theory": "int speichert ganzzahlige Werte innerhalb eines festen Wertebereichs. Java unterscheidet primitive Werte von Objekt-Referenzen.",
+      "example": "int level=5;\nSystem.out.println(level);",
+      "example_note": "Die Konsole zeigt die Zahl 5.",
+      "task": "Ändere einen ganzzahligen Wert."
+    },
+    {
+      "course": "java",
+      "ordinal": 2,
+      "title": "Strings vergleichen",
+      "theory": "In Java prüft equals den Textinhalt von Strings. == prüft bei Referenztypen die Referenzidentität.",
+      "example": "String name=\"Alex\";\nSystem.out.println(name.equals(\"Alex\"));",
+      "example_note": "equals ergibt true bei gleichem Textinhalt.",
+      "task": "Vergleiche zwei Namen sicher."
+    },
+    {
+      "course": "java",
+      "ordinal": 3,
+      "title": "Arrays",
+      "theory": "Ein Java-Array hat nach dem Erzeugen eine feste Länge. Die Elemente werden ab Index 0 angesprochen.",
+      "example": "int[] zahlen={2,4,6};\nSystem.out.println(zahlen[1]);",
+      "example_note": "Der zweite Eintrag hat den Wert 4.",
+      "task": "Gib das letzte Element eines Arrays aus."
+    },
+    {
+      "course": "java",
+      "ordinal": 4,
+      "title": "ArrayList",
+      "theory": "ArrayList ist eine veränderbare Liste, die Einträge hinzufügen und entfernen kann.",
+      "example": "List<String> namen=new ArrayList<>();\nnamen.add(\"Alex\");",
+      "example_note": "Ein Name wird in die zunächst leere Liste eingefügt.",
+      "task": "Lege drei Namen in einer ArrayList ab."
+    },
+    {
+      "course": "java",
+      "ordinal": 5,
+      "title": "for-each",
+      "theory": "Die erweiterte for-Schleife besucht nacheinander die Elemente einer Sammlung.",
+      "example": "for(String name:namen){System.out.println(name);}",
+      "example_note": "Jeder Eintrag wird einmal als name verarbeitet.",
+      "task": "Gib alle Listeneinträge aus."
+    },
+    {
+      "course": "java",
+      "ordinal": 6,
+      "title": "Methodenüberladung",
+      "theory": "Mehrere Methoden können denselben Namen haben, solange sich ihre Parameterlisten unterscheiden.",
+      "example": "int add(int a,int b){return a+b;}",
+      "example_note": "Ein anderer add-Aufruf kann eine getrennte Variante für andere Parametertypen besitzen.",
+      "task": "Beschreibe zwei Methodensignaturen mit verschiedenem Parameterumfang."
+    },
+    {
+      "course": "java",
+      "ordinal": 7,
+      "title": "Konstruktoren",
+      "theory": "Ein Konstruktor legt beim Erzeugen eines Objekts dessen Anfangszustand fest.",
+      "example": "class Car{String marke;Car(String m){marke=m;}}",
+      "example_note": "new Car(\"Volvo\") übergibt Volvo an den Konstruktor.",
+      "task": "Erstelle zwei Instanzen mit verschiedenen Werten."
+    },
+    {
+      "course": "java",
+      "ordinal": 8,
+      "title": "Interfaces",
+      "theory": "Ein Interface beschreibt Methodenverträge, die implementierende Klassen bereitstellen müssen.",
+      "example": "interface Fahrbar{void fahren();}",
+      "example_note": "Eine passende Klasse muss die Methode fahren implementieren.",
+      "task": "Definiere einen Vertrag mit einer Methode."
+    },
+    {
+      "course": "java",
+      "ordinal": 9,
+      "title": "Optional",
+      "theory": "Optional<T> macht einen möglicherweise fehlenden Rückgabewert sichtbar und bietet Methoden für die Behandlung.",
+      "example": "Optional<String> name=Optional.empty();",
+      "example_note": "Es gibt aktuell keinen Wert; orElse kann später einen Ersatz liefern.",
+      "task": "Verwende orElse bei fehlendem Namen."
+    },
+    {
+      "course": "java",
+      "ordinal": 10,
+      "title": "Streams",
+      "theory": "Ein Stream verarbeitet eine Wertefolge über Operationen wie filter und map.",
+      "example": "var top=zahlen.stream().filter(n->n>3).toList();",
+      "example_note": "Es bleiben nur Werte größer 3 übrig.",
+      "task": "Filtere eine Liste mit Stream."
+    },
+    {
+      "course": "java",
+      "ordinal": 11,
+      "title": "Exceptions gezielt behandeln",
+      "theory": "catch behandelt Ausnahmen bestimmter Typen. Allgemeines Verschlucken aller Fehler macht Ursachen unsichtbar.",
+      "example": "try{Integer.parseInt(\"x\");}catch(NumberFormatException e){System.out.println(\"Zahl ungültig\");}",
+      "example_note": "Eine ungültige Zahl wird als NumberFormatException behandelt.",
+      "task": "Fange einen fehlerhaften Zahlentext ab."
+    },
+    {
+      "course": "java",
+      "ordinal": 12,
+      "title": "JUnit-Test",
+      "theory": "JUnit vergleicht erwartete mit tatsächlichen Funktionswerten über Assertions.",
+      "example": "assertEquals(5,add(2,3));",
+      "example_note": "Die Assertion scheitert, wenn die Summe nicht 5 ergibt.",
+      "task": "Schreibe zwei Tests für eine Berechnung."
+    },
+    {
+      "course": "git",
+      "ordinal": 1,
+      "title": "git status",
+      "theory": "git status zeigt Änderungen, neue Dateien und den aktuellen Branch, bevor du Daten festhältst.",
+      "example": "git status",
+      "example_note": "Du erkennst, welche Dateien vorgemerkt oder noch nicht erfasst sind.",
+      "task": "Unterscheide untracked und modified."
+    },
+    {
+      "course": "git",
+      "ordinal": 2,
+      "title": "git diff",
+      "theory": "git diff zeigt Unterschiede nicht vorgemerkter Dateien gegenüber dem Index.",
+      "example": "git diff",
+      "example_note": "Du siehst geänderte Zeilen, bevor du sie übernimmst.",
+      "task": "Finde eine versehentlich gelöschte Zeile im Diff."
+    },
+    {
+      "course": "git",
+      "ordinal": 3,
+      "title": "Staging",
+      "theory": "git add nimmt ausgewählte Dateiinhalte in den Index auf; erst git commit speichert daraus einen Commit.",
+      "example": "git add src/main.js",
+      "example_note": "Die Datei wird vorgemerkt, aber noch nicht dauerhaft committed.",
+      "task": "Füge nur eine von zwei geänderten Dateien hinzu."
+    },
+    {
+      "course": "git",
+      "ordinal": 4,
+      "title": "git log",
+      "theory": "git log zeigt die gespeicherte Commit-Historie samt Nachrichten und IDs.",
+      "example": "git log --oneline",
+      "example_note": "Jeder Commit erscheint kompakt mit Kurz-SHA und Nachricht.",
+      "task": "Finde die letzte Änderung einer Datei."
+    },
+    {
+      "course": "git",
+      "ordinal": 5,
+      "title": "git restore",
+      "theory": "git restore kann nicht vorgemerkte lokale Änderungen zurücksetzen. Das kann Arbeit unwiderruflich verwerfen.",
+      "example": "git restore -- datei.txt",
+      "example_note": "Die Arbeitsdatei erhält ihren Stand aus dem Index zurück.",
+      "task": "Beschreibe, wann ein Restore gefährlich wäre."
+    },
+    {
+      "course": "git",
+      "ordinal": 6,
+      "title": "git switch",
+      "theory": "git switch wechselt den aktiven Branch und kann mit -c einen neuen erstellen.",
+      "example": "git switch -c feature/login",
+      "example_note": "Es entsteht ein eigener Arbeitsbranch für ein Feature.",
+      "task": "Erstelle einen Branch für einen Button-Fix."
+    },
+    {
+      "course": "git",
+      "ordinal": 7,
+      "title": "Mergekonflikte",
+      "theory": "Ein Konflikt entsteht, wenn Git konkurrierende Änderungen nicht automatisch zusammenführen kann.",
+      "example": "git merge feature/login",
+      "example_note": "Ein konflikthafter Merge muss in betroffenen Dateien aufgelöst und abgeschlossen werden.",
+      "task": "Erkläre die Konfliktmarker."
+    },
+    {
+      "course": "git",
+      "ordinal": 8,
+      "title": "Remote hinzufügen",
+      "theory": "Ein Remote ist eine gespeicherte Adresse zu einem entfernten Git-Repository.",
+      "example": "git remote -v",
+      "example_note": "Der Befehl zeigt vorhandene Remote-Namen und ihre Adressen.",
+      "task": "Prüfe einen bestehenden origin."
+    },
+    {
+      "course": "git",
+      "ordinal": 9,
+      "title": "git fetch",
+      "theory": "fetch lädt neue Referenzen und Commits vom Remote, ohne den aktuellen Arbeitsbranch direkt zu verändern.",
+      "example": "git fetch origin",
+      "example_note": "Neue Remote-Informationen stehen lokal zum Vergleichen bereit.",
+      "task": "Vergleiche einen Branch mit origin/main."
+    },
+    {
+      "course": "git",
+      "ordinal": 10,
+      "title": "Pull Request",
+      "theory": "Ein Pull Request bündelt Änderungsvorschläge für Review und Tests vor dem Zusammenführen.",
+      "example": "git push -u origin feature/login",
+      "example_note": "Nach dem Push kann ein PR von feature/login nach main erstellt werden.",
+      "task": "Beschreibe die Schritte von Branch bis Review."
+    },
+    {
+      "course": "git",
+      "ordinal": 11,
+      "title": "Tags",
+      "theory": "Ein Git-Tag markiert einen bestimmten Commit, etwa für die Version 1.0.",
+      "example": "git tag v1.0.0",
+      "example_note": "Die Versionsmarke verweist auf den aktuellen Commit.",
+      "task": "Markiere einen fiktiven Release."
+    },
+    {
+      "course": "git",
+      "ordinal": 12,
+      "title": "Revert",
+      "theory": "git revert erstellt einen neuen Commit, der die Wirkung eines früheren Commits rückgängig macht, ohne die Historie umzuschreiben.",
+      "example": "git revert HEAD",
+      "example_note": "Es entsteht ein Umkehr-Commit für den letzten Commit.",
+      "task": "Erkläre revert gegenüber reset."
+    },
+    {
+      "course": "c",
+      "ordinal": 1,
+      "title": "printf-Platzhalter",
+      "theory": "printf nutzt Formatangaben wie %d für ganze Zahlen und %s für Zeichenketten. Der übergebene Wert muss dazu passen.",
+      "example": "printf(\"%d\",42);",
+      "example_note": "%d gibt die Ganzzahl 42 aus.",
+      "task": "Gib eine Zahl und einen Text mit passenden Formaten aus."
+    },
+    {
+      "course": "c",
+      "ordinal": 2,
+      "title": "scanf-Rückgabewert",
+      "theory": "scanf liefert die Anzahl erfolgreich gelesener und zugewiesener Felder zurück. Prüfe sie vor der Verwendung.",
+      "example": "int x;\nif(scanf(\"%d\",&x)==1){printf(\"%d\",x);}",
+      "example_note": "Nur bei erfolgreichem Lesen wird x ausgegeben.",
+      "task": "Behandle eine ungültige Zahleneingabe."
+    },
+    {
+      "course": "c",
+      "ordinal": 3,
+      "title": "sizeof",
+      "theory": "sizeof liefert den Speicherbedarf eines Typs oder Ausdrucks als size_t.",
+      "example": "printf(\"%zu\",sizeof(int));",
+      "example_note": "Die tatsächliche Byteanzahl hängt von der Plattform ab.",
+      "task": "Vergleiche sizeof(char) und sizeof(long)."
+    },
+    {
+      "course": "c",
+      "ordinal": 4,
+      "title": "Arrays",
+      "theory": "C-Arrays speichern mehrere Werte zusammenhängend und besitzen feste Grenzen, die du selbst beachten musst.",
+      "example": "int a[3]={2,4,6};\nprintf(\"%d\",a[1]);",
+      "example_note": "Der zweite Wert ist 4; ein ungültiger Index wäre nicht sicher.",
+      "task": "Lies das letzte gültige Arrayelement."
+    },
+    {
+      "course": "c",
+      "ordinal": 5,
+      "title": "Pointer",
+      "theory": "Ein Pointer speichert eine Speicheradresse. Mit & erhältst du eine Adresse und * greifst du über sie auf den Zielwert zu.",
+      "example": "int x=3;\nint *p=&x;\nprintf(\"%d\",*p);",
+      "example_note": "p zeigt auf x und *p liefert dessen Wert 3.",
+      "task": "Verändere einen Wert über einen Pointer."
+    },
+    {
+      "course": "c",
+      "ordinal": 6,
+      "title": "const",
+      "theory": "const verhindert in bestimmten Deklarationen, dass ein Objekt über diesen Namen geändert wird.",
+      "example": "const int max=10;",
+      "example_note": "max kann nach seiner Initialisierung nicht neu zugewiesen werden.",
+      "task": "Lege eine feste Obergrenze fest."
+    },
+    {
+      "course": "c",
+      "ordinal": 7,
+      "title": "struct",
+      "theory": "Eine struct bündelt benannte Felder zu einem eigenen Datentyp.",
+      "example": "struct Punkt{int x;int y;};",
+      "example_note": "Ein Punkt besitzt zwei getrennt benannte Ganzzahlfelder.",
+      "task": "Definiere eine Struktur für eine Spielfigur."
+    },
+    {
+      "course": "c",
+      "ordinal": 8,
+      "title": "malloc",
+      "theory": "malloc reserviert Speicher dynamisch und kann NULL zurückgeben. Der aufrufende Code muss die erfolgreiche Reservierung prüfen.",
+      "example": "int *p=malloc(sizeof *p);",
+      "example_note": "Der Pointer zeigt bei Erfolg auf reservierten Speicher.",
+      "task": "Beschreibe eine sichere NULL-Prüfung nach malloc."
+    },
+    {
+      "course": "c",
+      "ordinal": 9,
+      "title": "free",
+      "theory": "Dynamisch reservierter Speicher muss nach der Nutzung mit free freigegeben werden. Danach darf der alte Pointer nicht weiter dereferenziert werden.",
+      "example": "free(p);\np=NULL;",
+      "example_note": "Der Speicher wird freigegeben und der Pointer bewusst ungültig gesetzt.",
+      "task": "Erkläre die Gefahr eines Use-after-free."
+    },
+    {
+      "course": "c",
+      "ordinal": 10,
+      "title": "Header-Dateien",
+      "theory": "Header deklarieren Schnittstellen, während Quelldateien deren Implementierung enthalten können.",
+      "example": "#include <stdio.h>",
+      "example_note": "Der Compiler kennt durch den Header Deklarationen von Standardfunktionen.",
+      "task": "Trenne Deklaration und Definition einer kleinen Funktion."
+    },
+    {
+      "course": "c",
+      "ordinal": 11,
+      "title": "Dateien lesen",
+      "theory": "fopen öffnet eine Datei, fgets kann eine Zeile sicher mit angegebener Puffergröße lesen.",
+      "example": "char buf[100];\nif(fgets(buf,sizeof buf,stdin)){puts(buf);}",
+      "example_note": "Es werden höchstens die vorgesehenen Bytes in den Puffer gelesen.",
+      "task": "Lies eine Zeile und prüfe den Rückgabewert."
+    },
+    {
+      "course": "c",
+      "ordinal": 12,
+      "title": "Sanitizer",
+      "theory": "Compiler-Sanitizer erkennen viele Speicherfehler während Testläufen; sie ersetzen keine vollständige Sicherheitsprüfung.",
+      "example": "cc -fsanitize=address,undefined main.c",
+      "example_note": "Ein unterstützter Compiler instrumentiert den Code für Laufzeitprüfungen.",
+      "task": "Teste einen fehlerhaften Indexzugriff nur in einer isolierten Testumgebung."
+    }
+  ]
+}
