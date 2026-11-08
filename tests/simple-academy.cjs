@@ -20,6 +20,8 @@ vm.runInContext(exposed,sandbox,{filename:'academy-v21.js'});
 const app=window.__appTest,s=app.s;
 assert.equal(app.quizQuestions({quiz:'Richtig?',options:['Ja','Nein'],correct:0}).length,1,'No fabricated extra quiz questions');
 assert.equal(app.quizQuestions({quiz:'Defekt',options:['A'],correct:3}).length,0,'Bad quiz data not accepted');
+assert.equal(app.quizQuestions({quiz:'Wofür?',options:['A','B'],correct:0,quiz_version:2,goal:'Lernziel verstehen.',task:'Erstelle eine konkrete Übung und kontrolliere die Ausgabe.'}).length,2,'Older lessons without a mistake still have two relevant questions');
+assert.equal(app.quizQuestions({quiz:'Wofür?',options:['A','B'],correct:0,quiz_version:3,quiz_items:Array.from({length:8},(_,i)=>({question:'Welche Aussage gehört zu Lektion '+i+'?',options:['A','B'],correct:0}))}).length,3,'Curated banks never overwhelm a lesson');
 assert.equal(source.includes('data-action="run-practice"'),false,'Visible terminal action removed');
 assert.equal(source.includes('practice-console'),false,'Terminal UI removed');
 assert.equal(app.quizQuestions({quiz:'Richtig?',options:['Ja','Nein'],correct:0})[0].correct,0);
@@ -65,34 +67,37 @@ async function click(selector,node){for(const fn of callbacks.click||[])await fn
  assert.equal(s.quizPassed,true,'Correct quiz answer passes');
  assert.equal(elements.get('#answer-result').classList.contains('quiz-correct'),true,'Correct quiz is green');
  assert.equal(elements.get('#mark-lesson').disabled,false,'Correct video + code + quiz unlocks completion');
- // A lesson with exactly two compact chapters and six stored topic questions.
+ // Generated banks yield two or three lesson-specific questions.
  const chapters=Array.from({length:2},(_,i)=>({title:'Lernteil '+(i+1),paragraphs:['Ausführliche Erklärung zu Teil '+(i+1)+'.'],bullets:['Wichtiger Begriff'],exercise:'Aufgabe ausführen.'}));
  const questions=Array.from({length:6},(_,i)=>({question:'Wissensfrage '+(i+1)+' zum Thema Lua?',options:['Antwort A','Antwort B','Antwort C'],correct:i%3,explanation:'Prüfe die Erklärung im Lernteil.'}));
- s.lesson.payload={...s.lesson.payload,sections:chapters,quiz_items:questions,quiz_version:2};
+ s.lesson.payload={...s.lesson.payload,sections:chapters,quiz_items:questions,quiz_version:2,
+  title:'Erste Lua-Ausgabe',goal:'Eine Lua-Ausgabe verstehen und testen.',task:'Gib mit print den Text Hello im Terminal aus.',
+  mistake:'Ein nicht geschlossener String führt zu einem Syntaxfehler.',hint:'Setze den auszugebenden Text zwischen Anführungszeichen.'};
  s.quizStep=0;s.choice=null;s.quizPassed=false;
- assert.equal(app.quizQuestions(s.lesson.payload).length,6,'Six distinct, stored quiz questions');
+ assert.equal(app.quizQuestions(s.lesson.payload).length,3,'Three lesson-specific quiz questions');
  await click('[data-lesson-part]',{dataset:{lessonPart:'1'}});
  assert.equal(s.sectionIndex,1,'Reader switches to the second part');
  assert.match(elements.get('#lesson-explanation').innerHTML,/LERNTEIL 2 VON 2/);
  assert.equal(saved.get('liverylab-part-'+s.user.id+'-lua-01'),'1','Current part saved locally per user');
- for(let i=0;i<6;i++){
+ const correctAnswers=[0,2,0];
+ for(let i=0;i<3;i++){
   assert.equal(s.quizStep,i,'Quiz starts at the required question');
-  await click('[data-answer]',{dataset:{answer:String((i+1)%3)}});
+  await click('[data-answer]',{dataset:{answer:String((correctAnswers[i]+1)%3)}});
   assert.equal(s.quizStep,i,'Incorrect answer never advances');
   assert.equal(s.quizPassed,false,'Incorrect answer never completes the quiz');
-  await click('[data-answer]',{dataset:{answer:String(i%3)}});
-  assert.equal(s.quizStep,i===5?5:i+1,'Correct answer advances exactly one question');
-  assert.equal(s.quizPassed,i===5,'Quiz completion only after all six correct answers');
+  await click('[data-answer]',{dataset:{answer:String(correctAnswers[i])}});
+  assert.equal(s.quizStep,i===2?2:i+1,'Correct answer advances exactly one question');
+  assert.equal(s.quizPassed,i===2,'Quiz completion only after all three correct answers');
  }
  const localQuiz=JSON.parse(saved.get('liverylab-quiz-'+s.user.id+'-lua-01'));
- assert.equal(localQuiz.total,6,'Browser checkpoint records quiz length');
+ assert.equal(localQuiz.total,3,'Browser checkpoint records quiz length');
  assert.equal(localQuiz.passed,true,'Quiz completion stored locally');
  assert.equal(s.progress.quizProgress,undefined,'Quiz in-progress data is not sent to account progress');
- assert.match(elements.get('#quiz-progress').textContent,/Frage 6 von 6/);
+ assert.match(elements.get('#quiz-progress').textContent,/Frage 3 von 3/);
  assert.equal(elements.get('#mark-lesson').disabled,false,'All quiz questions unlock lesson completion');
  // The redesigned timer keeps the old controls and adds presets/ring.
  assert.match(elements.get('#timer-portal').innerHTML,/ll-focus-ring/,'Streak-style circular countdown present');
  assert.match(elements.get('#timer-portal').innerHTML,/data-timer-preset="25"/,'Quick preset controls present');
- console.log('PASS: Focus timer, green/red code check, two learning parts and six sequential quiz questions saved locally.');
+ console.log('PASS: Focus timer, green/red code check, two learning parts and three relevant quiz questions saved locally.');
 
 })().catch(err=>{console.error(err);process.exitCode=1});
