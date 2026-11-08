@@ -34,7 +34,7 @@ assert.equal((app.trackPage('lua').match(/class="lesson-card/g)||[]).length,30,'
 assert(app.courseCard(state.courses[0]).includes('30 Lektionen'),'Lua course card should show 30 lessons');
 assert.equal(state.lessons.length,70,'Historic lesson data stays available');
 state.courses=originalCourses;state.lessons=originalLessons;
-assert(app.homePage().includes('Developer Academy'),'Neon dashboard home rendered');
+assert(app.homePage().includes('Willkommen zurück')&&app.homePage().includes('ll-neon-custom-hero')&&app.homePage().includes('data-go="menu"'),'Neon dashboard home and new functional main menu rendered');
 assert(app.homePage().includes('liverylab-banner.webp'),'Original site banner displayed');
 assert(app.homePage().includes('ll-home-shortcuts'),'Dashboard menu displayed');
 assert(/kursbibliothek/i.test(app.coursesPage()),'Catalog rendered');
