@@ -229,7 +229,6 @@ body:not(.is-auth) .bottom-nav .bottom-item.active svg{filter:drop-shadow(0 0 6p
 .ll-neon-reference .ref-copy{border:1px solid #68d4a5;background:#21473b;color:#adffe0;border-radius:10px}
 .ll-neon-reference .ref-official{display:inline-flex;align-items:center;margin-top:15px;color:#91ffd0}
 /* Existing real membership tiers, prices and voucher redemption */
-.ll-neon-plans .membership-stack{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:stretch}
 .ll-neon-plans .membership-card{padding:19px 15px;gap:10px;border-color:#a373d1;background:radial-gradient(ellipse at top,#60338387,transparent 68%),#20132d}
 .ll-neon-plans .membership-card.tier-ultimate{border-color:#c890fa;box-shadow:0 0 24px #b462ea56,inset 0 0 11px #b268ef3d}
 .ll-neon-plans .membership-card.tier-pro{border-color:#8fefc0;box-shadow:0 0 14px #4cb98a3b}
@@ -321,9 +320,6 @@ body:not(.is-auth) .bottom-nav .bottom-item.active svg{filter:drop-shadow(0 0 6p
 /* Orientation and text protection on phones */
 @media(max-width:900px){
  .ll-neon-screen .ll-neon-stat-row{grid-template-columns:repeat(2,minmax(0,1fr))}
- .ll-neon-plans .membership-stack{grid-template-columns:repeat(3,minmax(204px,1fr));overflow-x:auto;scroll-snap-type:x mandatory;
- padding:7px 3px 15px;scrollbar-width:thin}
- .ll-neon-plans .membership-card{scroll-snap-align:start}
  .ll-neon-admin .admin-overview{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(max-width:620px){

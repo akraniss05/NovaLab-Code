@@ -63,6 +63,6 @@ for(const cls of ['.ll-neon-page-heading','.ll-neon-menu-tile','.ll-neon-exams',
  assert(css.includes(cls),'Missing consistent neon page style '+cls);
 for(const filename of ['index.html','v21.html','v31.html']){
  const html=fs.readFileSync(path.join(root,'site',filename),'utf8');
- assert(html.includes('academy-neon-ui.css?build=20261108v62'),filename+' must load new design');
+ assert(html.includes('academy-neon-ui.css?build=20261108v66'),filename+' must load new design');
 }
 console.log('Neon UI: all ten pages, main menu, real exam data, original forms, access and price invariants verified.');

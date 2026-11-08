@@ -123,6 +123,9 @@ const scenes=[
  ['paywall-script',app.paywall('Script','Plus','Gesperrt für Free'),['.feature-gate','.feature-gate-actions']],
  ['paywall-reference',app.paywall('Referenzen','Pro / Ultimate','Gesperrt für Plus'),['.feature-gate','.feature-gate-actions']]
 ];
+s.shopDiscount=25;
+scenes.push(['neon-plans-sale',neonWrap('plans',app.plansPage()),['.sale-old','.sale-new','.sale-badge','#voucher-code']]);
+s.shopDiscount=0;
 const initial=s.loginStreak;
 s.loginStreak={current:13,best:14,claimable:true};
 s.streakModalOpen=true;
@@ -166,7 +169,7 @@ scenes.push(['focus-timer',
 s.ready=false;s.authScreen='register';app.login();
 scenes.push(['registration',fakeNodes['#content'].innerHTML,['form[data-form="register"]','.auth-card']]);
 s.ready=true;s.profile.role='student';
-for(const width of [390,430,1280]){
+for(const width of [320,390,430,768,1280]){
 const page=await browser.newPage({viewport:{width,height:850},deviceScaleFactor:1});
 for(const [name,markup,selectors] of scenes){
 await page.setContent(capture(markup),{waitUntil:'load'});
@@ -175,6 +178,19 @@ const get=selector=>document.querySelector(selector),main=get('.content'),steps=
 return {
  overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,
  missing:names.filter(name=>!get(name)),
+ shopLayout:Array.from(document.querySelectorAll('.ll-neon-plans .membership-card'),card=>{
+  const title=card.querySelector('h2'),price=card.querySelector('.membership-price');
+  const bounds=card.getBoundingClientRect(),row=title.parentElement.getBoundingClientRect();
+  const text=document.createRange();text.selectNodeContents(title);
+  const stack=card.parentElement;
+  return {
+   x:bounds.left,y:bounds.top,width:bounds.width,
+   fits:bounds.left>=0&&bounds.right<=innerWidth+1&&card.scrollWidth<=card.clientWidth+1,
+   stackFits:stack.scrollWidth<=stack.clientWidth+1,
+   titleLines:text.getClientRects().length,
+   priceBelow:price.getBoundingClientRect().top>=row.bottom
+  };
+ }),
  cardDisplay:card?getComputedStyle(card).display:null,
  stepsDisplay:steps?getComputedStyle(steps).display:null,
  stepChildren:steps?steps.children.length:0,
@@ -201,10 +217,18 @@ return {
 assert.equal(actual.missing.length,0,name+' @'+width+' missing '+actual.missing.join(','));
 assert.ok(actual.overflow<=2,name+' @'+width+' horizontal overflow '+actual.overflow+'px');
 assert.ok(actual.mainWidth<=width,name+' @'+width+' content too wide');
+if(name.startsWith('neon-plans')){
+ assert.equal(actual.shopLayout.length,3);
+ assert.ok(actual.shopLayout.every(card=>card.fits&&card.stackFits&&card.titleLines===1&&card.priceBelow),JSON.stringify(actual.shopLayout));
+ if(width<=430){
+  assert.ok(actual.shopLayout.every(card=>card.x===actual.shopLayout[0].x));
+  assert.equal(new Set(actual.shopLayout.map(card=>card.y)).size,3,'Mobile plans must stack vertically');
+ }
+}
 assert.ok(actual.iconWidths.every(v=>v===0||(v>=1&&v<=48)),name+' @'+width+' icon HUGE: '+JSON.stringify(actual.iconWidths));
 assert.equal(actual.timerVisible,true,name+' @'+width+' centered timer must be visible');
 assert.ok(actual.timerCenterOffset<3,name+' @'+width+' timer not centered: '+actual.timerCenterOffset+'px');
-if(name==='home'){console.log('BANNER GEOMETRY '+width+' '+JSON.stringify(actual.bannerDebug));assert.equal(actual.shortcutDisplay,'grid','Home shortcuts must be a grid');assert.equal(actual.continueDisplay,'flex','Continue card must be styled');const bannerRatioOk=actual.bannerRatio>2.5&&actual.bannerRatio<2.75;assert.ok(bannerRatioOk,'Banner aspect broken: '+actual.bannerRatio);if(width<820){assert.ok(actual.bannerHeight<191,'iPhone banner is too tall: '+actual.bannerHeight);assert.ok(actual.headerHeight<=75,'Mobile header became multi-row: '+actual.headerHeight)}}
+if(name==='home'){console.log('BANNER GEOMETRY '+width+' '+JSON.stringify(actual.bannerDebug));assert.equal(actual.shortcutDisplay,'grid','Home shortcuts must be a grid');assert.equal(actual.continueDisplay,'flex','Continue card must be styled');const bannerRatioOk=actual.bannerRatio>2.5&&(actual.bannerRatio<2.75||(width<820&&Math.abs(actual.bannerHeight-190)<1));assert.ok(bannerRatioOk,'Banner aspect broken: '+actual.bannerRatio);if(width<820){assert.ok(actual.bannerHeight<191,'iPhone banner is too tall: '+actual.bannerHeight);assert.ok(actual.headerHeight<=75,'Mobile header became multi-row: '+actual.headerHeight)}}
 if(name.startsWith('streak')){assert.ok(actual.modalWidth>200&&actual.modalWidth<=width,'Daily popup size broken');}
 if(name==='focus-timer'){assert.ok(actual.focusBounds.width>220&&actual.focusBounds.width<=width,'Focus popup exceeds screen width');assert.ok(actual.focusBounds.height<=850,'Focus modal too tall');assert.ok(actual.focusBounds.top>=0,'Focus modal cut off above viewport');}
 if(name==='admin-members'){assert.equal(actual.planManagementWidth,0,'Member details should stay collapsed by default');}

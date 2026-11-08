@@ -63,5 +63,5 @@ for(const selector of ['.ll-atelier-scene','.ll-atelier-cube','.ll-atelier-cours
 '@media(max-width:490px)','prefers-reduced-motion'])
  assert(css.includes(selector),'Atelier missing '+selector);
 for(const page of ['index.html','v21.html','v31.html'])
- assert(file('site/'+page).includes('academy-atelier.css?build=20261108v65'),page+' stylesheet missing');
+ assert(file('site/'+page).includes('academy-atelier.css?build=20261108v66'),page+' stylesheet missing');
 console.log('Atelier: all 11 real pages, permissions, progress, 2FA, support, script unlock, vouchers and navigation retained.');
