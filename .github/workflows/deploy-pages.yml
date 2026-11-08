@@ -29,6 +29,7 @@ jobs:
           node --check site/academy-v21.js
           node --check site/academy-curriculum.js
           node --check site/academy-i18n.js
+          node --check site/academy-effects.js
           node --check site/academy-studio.js
           node --check site/academy-runtime.js
           node --check site/auth-mfa-v15.js
@@ -58,6 +59,8 @@ jobs:
           test -s site/vendor/pyodide/python_stdlib.zip
       - name: Validate language switch, state persistence and mobile header
         run: node tests/i18n-browser.cjs
+      - name: Validate button effects, click sound preferences and reduced motion
+        run: node tests/effects-browser.cjs
       - name: Validate mobile layouts in Chrome
         run: node tests/browser.cjs
       - name: Test real logged-in Daily Streak popup and claim
