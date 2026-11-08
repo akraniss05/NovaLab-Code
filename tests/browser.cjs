@@ -78,7 +78,15 @@ s.members=[
 ];
 s.memberPlans={'member-test':'pro'};s.memberExpiry={'member-test':new Date(Date.now()+17*86400000).toISOString()};
 s.vouchers=[{code:'NYXATHERIS5',kind:'gift',tier:'pro',days:7,uses:0,max_uses:1,active:true,expires_at:'2028-06-01T00:00:00Z'}];
-scenes.push(['admin',app.adminPage(),['.approval-card','.member-card','.member-management','[data-admin-tier]','[data-plan-clock]','[data-plan-action="extend"]','[data-plan-action="reduce"]','[data-plan-action="end"]','.voucher-maker','[data-voucher-delete]']]);
+context.location.hash='#admin/members';
+scenes.push(['admin-members',app.adminPage(),['.approval-card','.member-card','.ll-member-summary','.member-management','[data-admin-tier]','[data-plan-clock]','[data-plan-action="extend"]','[data-plan-action="reduce"]','[data-plan-action="end"]']]);
+context.location.hash='#admin/support';
+s.service={beta_open:true,mine:[],admin:[{id:'11111111-1111-4111-8111-111111111111',username:'SupportNutzer',category:'bug',status:'open',message:'Bei einer Lektion fehlt der Hinweis',created_at:'2026-11-08T12:00:00Z'}]};
+scenes.push(['admin-support',app.adminPage(),['.ll-admin-inbox','.ll-admin-ticket-list','[data-chat-open]']]);
+context.location.hash='#admin/vouchers';
+scenes.push(['admin-vouchers',app.adminPage(),['.voucher-maker','[data-voucher-delete]']]);
+context.location.hash='#admin';
+scenes.push(['admin-dashboard',app.adminPage(),['.ll-admin-hub','.ll-admin-tabs','.admin-overview']]);
 
 scenes.push(['focus-timer',
  '<div class="timer-backdrop ll-focus-backdrop"></div><section class="timer-dialog ll-focus-modal" role="dialog">'+
@@ -136,7 +144,7 @@ assert.ok(actual.timerCenterOffset<3,name+' @'+width+' timer not centered: '+act
 if(name==='home'){console.log('BANNER GEOMETRY '+width+' '+JSON.stringify(actual.bannerDebug));assert.equal(actual.shortcutDisplay,'grid','Home shortcuts must be a grid');assert.equal(actual.continueDisplay,'flex','Continue card must be styled');const bannerRatioOk=actual.bannerRatio>2.5&&actual.bannerRatio<2.75;assert.ok(bannerRatioOk,'Banner aspect broken: '+actual.bannerRatio);if(width<820){assert.ok(actual.bannerHeight<191,'iPhone banner is too tall: '+actual.bannerHeight);assert.ok(actual.headerHeight<=75,'Mobile header became multi-row: '+actual.headerHeight)}}
 if(name.startsWith('streak')){assert.ok(actual.modalWidth>200&&actual.modalWidth<=width,'Daily popup size broken');}
 if(name==='focus-timer'){assert.ok(actual.focusBounds.width>220&&actual.focusBounds.width<=width,'Focus popup exceeds screen width');assert.ok(actual.focusBounds.height<=850,'Focus modal too tall');assert.ok(actual.focusBounds.top>=0,'Focus modal cut off above viewport');}
-if(name==='admin'){assert.ok(actual.planManagementWidth>120&&actual.planManagementWidth<=actual.mainWidth,'Subscription admin panel overflows content');}
+if(name==='admin-members'){assert.equal(actual.planManagementWidth,0,'Member details should stay collapsed by default');}
 if(width<820){assert.equal(actual.navRows,1,'Five bottom nav tabs must stay on ONE ROW: '+actual.navRows);}
 if(name==='track'){assert.equal(actual.cardDisplay,'grid');assert.ok(actual.titleBelow,'Lesson title/description collision');}
 if(name==='lesson'){assert.equal(actual.stepsDisplay,'grid');assert.equal(actual.stepChildren,4);assert.equal(actual.partCount,2,'Lesson navigation must have exactly two tabs');assert.ok(actual.videoRatio>1.65&&actual.videoRatio<1.9,'Video aspect ratio');}
