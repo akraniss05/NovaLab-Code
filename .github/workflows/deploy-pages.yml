@@ -38,6 +38,7 @@ jobs:
           node tests/practice.cjs
           node tests/simple-academy.cjs
           node tests/support-submit.cjs
+          node tests/support-conversations.cjs
           node tests/admin-plans.cjs
           node tests/xp-rewards.cjs
           node tests/render.cjs
