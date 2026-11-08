@@ -17,5 +17,24 @@ function badge(course){
  '<span class="ll-difficulty-active">'+('●'.repeat(n))+'</span>'+('○'.repeat(5-n))+'</span><small>'+n+'/5</small></span>';
 }
 function description(){return language()==='en'?'Difficulty estimates the entire language or field. Beginner lessons within the course can still be easier.':'Die Schwierigkeit bezieht sich auf die gesamte Sprache bzw. das Fachgebiet. Die ersten Lektionen können deutlich leichter sein.';}
-root.LLDifficulty=Object.freeze({ratings,score,label,badge,description});
+const detailTexts={
+ de:['',
+ 'Ideal für den Einstieg: einfache Bausteine und schnelle Erfolgserlebnisse.',
+ 'Gut zugängliche Grundlagen. Erste eigene Skripte und kleine Projekte.',
+ 'Mehr Logik und Kombinationen. Du baust größere Anwendungen und Systeme.',
+ 'Komplexe Abläufe mit Architektur, Debugging und anspruchsvoller Praxis.',
+ 'Tiefe technische Konzepte, Präzision und Expertenprojekte.'],
+ en:['',
+ 'Perfect for beginners: simple building blocks and quick wins.',
+ 'Approachable fundamentals. Build your first scripts and smaller projects.',
+ 'More logic and connected concepts. Build larger apps and systems.',
+ 'Complex workflows, architecture, debugging and demanding practice.',
+ 'Deep technical concepts, precision and expert-level projects.']
+};
+function levelDescription(n){return detailTexts[language()][Number(n)]||'';}
+function searchTerms(course){
+ const n=score(course);
+ return [labels.de[n],labels.en[n],n+'/5','stufe '+n,'level '+n,'schwierigkeit '+n,'difficulty '+n].join(' ');
+}
+root.LLDifficulty=Object.freeze({ratings,score,label,badge,description,levelDescription,searchTerms});
 })(typeof window==='undefined'?globalThis:window);

@@ -7,7 +7,7 @@
 'use strict';
 var cfg=window.LL_CONFIG||{}, $=function(q,root){return (root||document).querySelector(q);};
 var content=$('#content'), sidebar=$('#sidebar'), bottom=$('#bottom-nav'), toastNode=$('#toast');
-var api=null, s={shopDiscount:0,service:{beta_open:true,mine:[],admin:[]},lastSupportReceipt:null,supportBusy:false,chatTicketId:null,chatMessages:[],chatBusy:false,chatLoading:false,streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],xpAwards:[],xpClaimBusy:false,progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',lesson:null,choice:null,quizStep:0,quizPassed:false,sectionIndex:0,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},memberExpiry:{},adminPage:1,adminFilter:'all',adminSearch:'',catalogLimit:9,practiceChecked:false,draft:'',lessonStep:1,hintStage:0,prefs:null,projectTab:0,projectSource:'',projectLoading:false};
+var api=null, s={shopDiscount:0,service:{beta_open:true,mine:[],admin:[]},lastSupportReceipt:null,supportBusy:false,chatTicketId:null,chatMessages:[],chatBusy:false,chatLoading:false,streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],xpAwards:[],xpClaimBusy:false,progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',difficultyFilter:'all',lesson:null,choice:null,quizStep:0,quizPassed:false,sectionIndex:0,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},memberExpiry:{},adminPage:1,adminFilter:'all',adminSearch:'',catalogLimit:9,practiceChecked:false,draft:'',lessonStep:1,hintStage:0,prefs:null,projectTab:0,projectSource:'',projectLoading:false};
 var plans={free:'Free',pro:'Plus',ultimate:'Ultimate'};
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];});}
 function safeLink(url){return /^https:\/\/[^\s<>"]+$/i.test(String(url||''))?esc(url):'#';}
@@ -615,24 +615,78 @@ function homePage(){
  membershipHelp()+'</div>';
 }
 
-function filteredCourses(){
- return s.courses.filter(function(c){return (s.filter==='Alle'||(s.filter==='Merkliste'?bookmarks().includes(c.id):c.category===s.filter))&&(!s.search||(c.name+' '+c.category).toLowerCase().includes(s.search.toLowerCase()));}).sort(function(a,b){var aP=['coding-basics','lua','python','javascript','html','css','blender-fundamentals','fivem'].indexOf(a.id),bP=['coding-basics','lua','python','javascript','html','css','blender-fundamentals','fivem'].indexOf(b.id);if(aP>=0||bP>=0)return (aP<0?99:aP)-(bP<0?99:bP);return a.name.localeCompare(b.name,'de');});
+function catalogEnglish(){return window.LLI18n?.language?.()==='en';}
+function catalogText(de,en){return catalogEnglish()?en:de;}
+function courseDifficulty(course){return window.LLDifficulty?.score?.(course)||3;}
+function filteredCourses(ignoreDifficulty){
+ const term=String(s.search||'').trim().toLocaleLowerCase('de');
+ return s.courses.filter(function(c){
+  const category=s.filter==='Alle'||(s.filter==='Merkliste'?bookmarks().includes(c.id):c.category===s.filter);
+  const difficulty=ignoreDifficulty||s.difficultyFilter==='all'||courseDifficulty(c)===Number(s.difficultyFilter);
+  const haystack=[c.name,c.category,levelText(c.level),window.LLDifficulty?.searchTerms?.(c)||''].join(' ').toLocaleLowerCase('de');
+  return category&&difficulty&&(!term||haystack.includes(term));
+ }).sort(function(a,b){var aP=['coding-basics','lua','python','javascript','html','css','blender-fundamentals','fivem'].indexOf(a.id),bP=['coding-basics','lua','python','javascript','html','css','blender-fundamentals','fivem'].indexOf(b.id);if(aP>=0||bP>=0)return (aP<0?99:aP)-(bP<0?99:bP);return a.name.localeCompare(b.name,'de');});
+}
+function courseFiltersActive(){return s.difficultyFilter!=='all'||s.filter!=='Alle'||!!String(s.search||'').trim();}
+function difficultyDiagram(){
+ const courses=filteredCourses(true),levels=[1,2,3,4,5],counts=levels.map(n=>courses.filter(c=>courseDifficulty(c)===n).length);
+ const maximum=Math.max(1,...counts),english=catalogEnglish();
+ return '<section class="ll-difficulty-dashboard" aria-labelledby="ll-difficulty-title">'+
+ '<div class="ll-difficulty-dashboard-header"><div><span class="eyebrow">'+catalogText('DEIN SCHWIERIGKEITS-RADAR','YOUR DIFFICULTY RADAR')+'</span>'+
+ '<h2 id="ll-difficulty-title">'+catalogText('Wie anspruchsvoll ist dein nächster Kurs?','How challenging is your next course?')+'</h2>'+
+ '<p>'+catalogText('Fünf Stufen vom Einstieg bis zum Experten. Tippe auf eine Säule, um die passenden Kurse zu entdecken.','Five levels from first steps to expert topics. Select a bar to find matching courses.')+'</p></div>'+
+ '<div class="ll-difficulty-overview-total"><strong>'+courses.length+'</strong><small>'+catalogText('Kurse im Diagramm','courses in chart')+'</small></div></div>'+
+ '<div class="ll-difficulty-chart" role="group" aria-label="'+catalogText('Kurse nach Schwierigkeit filtern','Filter courses by difficulty')+'">'+
+ levels.map((n,i)=>{
+  const active=s.difficultyFilter===n,count=counts[i],label=window.LLDifficulty?.label?.(n)||String(n);
+  const desc=window.LLDifficulty?.levelDescription?.(n)||'';
+  const height=count?Math.max(10,Math.round(count/maximum*100)):0;
+  return '<button type="button" class="ll-difficulty-tile ll-difficulty-tile-'+n+(active?' is-selected':'')+'" data-difficulty-filter="'+n+'" aria-pressed="'+String(active)+'" aria-label="'+esc(label)+' · '+n+'/5 · '+count+' '+catalogText('Kurse','courses')+'" title="'+catalogText('Nach dieser Schwierigkeit filtern','Filter this difficulty')+'">'+
+  '<span class="ll-difficulty-tile-top"><span>'+String(n).padStart(2,'0')+' / 05</span><span>'+count+' '+catalogText('Kurse','courses')+'</span></span>'+
+  '<span class="ll-difficulty-bar-track" aria-hidden="true"><span class="ll-difficulty-bar" style="height:'+height+'%"><span class="ll-difficulty-bar-glow"></span></span></span>'+
+  '<strong class="ll-difficulty-tile-name">'+esc(label)+'</strong>'+
+  '<span class="ll-difficulty-tile-description">'+esc(desc)+'</span>'+
+  '<span class="ll-difficulty-tile-cta">'+(active?catalogText('✓ Ausgewählt','✓ Selected'):catalogText('Kurse entdecken ↗','Explore courses ↗'))+'</span></button>';
+ }).join('')+'</div>'+
+ '<div class="ll-difficulty-chart-footer"><span>✦ '+catalogText('Schwierigkeit bedeutet: Wie aufwendig ist das gesamte Fachgebiet? Auch schwere Sprachen beginnen hier mit einfachen Lektionen.','Difficulty means how challenging the full subject is. Even hard languages start with simple lessons here.')+'</span>'+
+ (s.difficultyFilter!=='all'?'<button class="ll-difficulty-clear" type="button" data-difficulty-filter="all">'+catalogText('Alle Stufen zeigen','Show all levels')+'</button>':'')+
+ '</div></section>';
+}
+function updateCatalogResults(){
+ const list=$('#catalog-container'),count=$('#course-count'),diagram=$('#ll-difficulty-dashboard');
+ if(list)list.innerHTML=catalogItems();
+ if(count)count.textContent=filteredCourses().length+' '+catalogText('Ergebnisse','results')+' · '+catalogText('Schritt für Schritt','step by step');
+ if(diagram)diagram.innerHTML=difficultyDiagram();
+ const reset=$('#course-filter-reset');if(reset)reset.disabled=!courseFiltersActive();
+ window.LLI18n?.apply?.();
 }
 function catalogItems(){
  var all=filteredCourses();
  return '<div id="catalog-list" class="course-grid">'+
- (all.slice(0,s.catalogLimit).map(courseCard).join('')||'<div class="empty">Keine passenden Kurse gefunden.</div>')+
+ (all.slice(0,s.catalogLimit).map(courseCard).join('')||'<div class="empty"><h3>'+catalogText('Keine passenden Kurse','No matching courses')+'</h3><p>'+catalogText('Versuche eine andere Schwierigkeitsstufe oder einen anderen Suchbegriff.','Try another difficulty level or search term.')+'</p><button type="button" class="btn small" data-course-filter-reset>'+catalogText('Filter zurücksetzen','Reset filters')+'</button></div>')+
  '</div><div class="catalog-footer" id="catalog-footer">'+(all.length>s.catalogLimit?
  '<button class="btn" type="button" data-action="more-courses">Weitere '+Math.min(9,all.length-s.catalogLimit)+' Kurse anzeigen ↓</button><p class="micro">'+s.catalogLimit+' von '+all.length+' Kursen angezeigt</p>':'<p class="micro">'+all.length+' Kurse angezeigt</p>')+'</div>';
 }
 function coursesPage(){
- var cats=['Alle','Merkliste','Programmieren','Sprachen','FiveM','Frameworks','Webentwicklung','3D & Blender','Backend','Tools','Profi-Wissen'].filter(c=>c==='Alle'||c==='Merkliste'||s.courses.some(x=>x.category===c));
+ const cats=['Alle','Merkliste','Programmieren','Sprachen','FiveM','Frameworks','Webentwicklung','3D & Blender','Backend','Tools','Profi-Wissen'].filter(c=>c==='Alle'||c==='Merkliste'||s.courses.some(x=>x.category===c));
+ const levels=[1,2,3,4,5];
+ const selected=s.difficultyFilter==='all'?'all':String(s.difficultyFilter);
  return pageHeading('KURSBIBLIOTHEK','Dein Weg zum <span class="gradient">Developer.</span>',
  'Finde deinen Schwerpunkt. Die Schwierigkeit jedes Kurses ist zusätzlich zum Einstiegsniveau angegeben.')+
- '<section class="ll-catalog-intro"><div class="ll-catalog-spotlight"><span class="eyebrow">✦ NEU IM LERNSTUDIO</span><h2>Blender lernen mit <em>Video & Quiz.</em></h2><p>Schau dir die Grundlagen direkt in den Lektionen an, prüfe dein Wissen und baue deine Fähigkeiten Schritt für Schritt auf.</p><button class="btn primary" type="button" data-go="track/blender-fundamentals">Blender-Lernpfad öffnen →</button></div><div class="ll-catalog-steps"><span>01 <strong>Lektion ansehen</strong></span><span>02 <strong>Praxis ausprobieren</strong></span><span>03 <strong>Quiz bestehen</strong></span><span>04 <strong>Prüfung starten</strong></span></div></section>'+
- '<section class="section"><div class="catalog-toolbar"><input class="input searchbar" id="course-search" type="search" placeholder="Kurse durchsuchen …" value="'+esc(s.search)+'" aria-label="Kurse durchsuchen"><span class="chip">'+s.courses.length+' Lernpfade</span></div>'+
- '<div class="catalog-tags">'+cats.map(c=>'<button class="pill'+(s.filter===c?' active':'')+'" data-filter="'+esc(c)+'">'+esc(c)+'</button>').join('')+'</div>'+
- '<div class="section-heading" style="margin-top:22px"><div><h2>Passende Kurse</h2><p id="course-count">'+filteredCourses().length+' Ergebnisse · Schritt für Schritt</p></div></div>'+
+ '<div id="ll-difficulty-dashboard">'+difficultyDiagram()+'</div>'+
+ '<section class="section ll-catalog-search-section" aria-labelledby="ll-course-filter-heading">'+
+ '<div class="ll-course-filter-heading"><div><span class="eyebrow">'+catalogText('KURSFINDER','COURSE FINDER')+'</span><h2 id="ll-course-filter-heading">'+catalogText('Finde genau deinen Schwierigkeitsgrad.','Find your ideal difficulty level.')+'</h2>'+
+ '<p>'+catalogText('Suche nach Python, Rust, „leicht“, „schwer“ oder direkt nach „3/5“.','Search for Python, Rust, “easy”, “hard”, or a score like “3/5”.')+'</p></div>'+
+ '<button type="button" class="btn small ll-course-reset" id="course-filter-reset" data-course-filter-reset '+(courseFiltersActive()?'':'disabled')+'>'+catalogText('Filter zurücksetzen','Reset filters')+'</button></div>'+
+ '<div class="ll-course-filter-controls"><label class="ll-course-search-label" for="course-search">'+catalogText('Kurs oder Schwierigkeit suchen','Search course or difficulty')+
+ '<input class="input searchbar" id="course-search" type="search" placeholder="'+catalogText('z. B. Lua, mittel, 4/5 …','e.g. Lua, medium, 4/5 …')+'" value="'+esc(s.search)+'" autocomplete="off"></label>'+
+ '<label class="ll-course-difficulty-select-label" for="course-difficulty-select">'+catalogText('Schwierigkeitsgrad','Difficulty level')+
+ '<select id="course-difficulty-select" class="select" aria-label="'+catalogText('Schwierigkeitsgrad auswählen','Select difficulty level')+'"><option value="all" '+(selected==='all'?'selected':'')+'>'+catalogText('Alle Schwierigkeiten','All difficulties')+'</option>'+
+ levels.map(n=>'<option value="'+n+'" '+(selected===String(n)?'selected':'')+'>'+n+'/5 · '+esc(window.LLDifficulty?.label?.(n)||n)+'</option>').join('')+'</select></label></div>'+
+ '<div class="catalog-tags" role="group" aria-label="'+catalogText('Kurskategorie','Course category')+'">'+cats.map(c=>'<button class="pill'+(s.filter===c?' active':'')+'" data-filter="'+esc(c)+'" aria-pressed="'+String(s.filter===c)+'">'+esc(c)+'</button>').join('')+'</div>'+
+ '<div class="section-heading ll-course-results-heading"><div><span class="eyebrow">'+catalogText('DEINE AUSWAHL','YOUR SELECTION')+'</span><h2>'+catalogText('Passende Kurse','Matching courses')+'</h2>'+
+ '<p id="course-count" aria-live="polite">'+filteredCourses().length+' '+catalogText('Ergebnisse','results')+' · '+catalogText('Schritt für Schritt','step by step')+'</p></div>'+
+ '<span class="ll-course-results-icon" aria-hidden="true">⌕</span></div>'+
  '<div id="catalog-container">'+catalogItems()+'</div></section>';
 }
 
@@ -1760,6 +1814,7 @@ async function pollSupportInbox(){
 if(typeof setInterval==='function')setInterval(pollSupportInbox,20000);
 function filterSupportTickets(){const query=String($('#support-search')?.value||'').toLocaleLowerCase('de'),status=$('#support-filter')?.value||'all';document.querySelectorAll('.support-history .support-ticket').forEach(el=>{el.hidden=!!query&&!el.textContent.toLocaleLowerCase('de').includes(query)||status!=='all'&&el.dataset.ticketStatus!==status;});}
 document.addEventListener('click',async function(e){
+ if(e.target.closest('[data-lang]')&&parseRoute().page==='courses'){Promise.resolve().then(render);return;}
  if(e.target.closest('[data-timer-open]')){openTimer();return;}
  if(e.target.closest('[data-timer-close]')){closeTimer();return;}
  if(e.target.closest('[data-timer-set]')){const minutes=Number($('#timer-minutes')?.value);if(!Number.isInteger(minutes)||minutes<1||minutes>240){notice('Bitte 1 bis 240 Minuten wählen.');return;}focusSeconds=minutes*60;focusTotalSeconds=focusSeconds;if(focusRunning)focusEnd=Date.now()+focusSeconds*1000;saveTimer();paintTimer();notice('Fokuszeit auf '+minutes+' Minuten eingestellt.');return;}
@@ -1933,6 +1988,16 @@ document.addEventListener('click',async function(e){
  }else{updateLessonControls();}
  return;}
  var exam=e.target.closest('[data-exam-answer]');if(exam){await submitExamAnswer(Number(exam.dataset.examAnswer));return;}
+ var difficultyTile=e.target.closest('[data-difficulty-filter]');
+ if(difficultyTile){
+  const value=difficultyTile.dataset.difficultyFilter,level=Number(value);
+  if(value!=='all'&&(!Number.isInteger(level)||level<1||level>5))return;
+  s.difficultyFilter=value==='all'?'all':(s.difficultyFilter===level?'all':level);
+  s.catalogLimit=9;render();return;
+ }
+ if(e.target.closest('[data-course-filter-reset]')){
+  s.search='';s.filter='Alle';s.difficultyFilter='all';s.catalogLimit=9;render();return;
+ }
  var filter=e.target.closest('[data-filter]');if(filter){s.filter=filter.dataset.filter;s.catalogLimit=9;render();return;}
  var examFilter=e.target.closest('[data-exam-filter]');if(examFilter){s.examFilter=examFilter.dataset.examFilter;render();return;}
 
@@ -2041,10 +2106,7 @@ document.addEventListener('input',function(e){if(e.target.id==='support-search')
   return;
  }
  if(e.target.id==='course-search'){
-  s.search=e.target.value;s.catalogLimit=9;
-  var list=$('#catalog-container'),count=$('#course-count');
-  if(list)list.innerHTML=catalogItems();
-  if(count)count.textContent=filteredCourses().length+' Ergebnisse · Schritt für Schritt';
+  s.search=e.target.value;s.catalogLimit=9;updateCatalogResults();return;
  }
  if(e.target.id==='practice-input'){
   s.draft=e.target.value;saveDraft(parseRoute().id,s.draft);window.LLLearning?.queue?.(parseRoute().id,s.draft,3);
@@ -2056,6 +2118,11 @@ document.addEventListener('input',function(e){if(e.target.id==='support-search')
 });
 document.addEventListener('scroll',function(e){if(e.target.id==='practice-input'){const gutter=$('#code-lines');if(gutter)gutter.scrollTop=e.target.scrollTop;}},true);
 document.addEventListener('change',async function(e){
+ if(e.target.id==='course-difficulty-select'){
+  const value=e.target.value,level=Number(value);
+  s.difficultyFilter=value==='all'?'all':(Number.isInteger(level)&&level>=1&&level<=5?level:'all');
+  s.catalogLimit=9;render();return;
+ }
  if(e.target.hasAttribute('data-social-upload')){
   const kind=e.target.dataset.socialUpload,file=e.target.files?.[0];if(!file)return;
   e.target.disabled=true;
