@@ -86,7 +86,7 @@
 .ll-neon-hero-art{position:absolute;right:31px;top:38px;width:94px;height:87px;display:grid;place-items:center;transform:rotate(12deg);z-index:0;
  border-radius:20px;border:1px solid #daafff;background:linear-gradient(145deg,#7e3fad,#422561 59%,#24173e);
  box-shadow:inset 0 2px 11px #d9acff73,0 0 22px #ae4bf6d1,11px 14px 0 -6px #277459,14px 18px 22px #54eaae59;color:#f5dfff}
-.ll-neon-hero-art svg{width:45px!important;height:45px!important;filter:drop-shadow(0 0 7px #e5b5ff)}
+.ll-neon-hero-art svg{width:36px!important;height:36px!important;filter:drop-shadow(0 0 7px #e5b5ff)}
 .ll-neon-hero-art:after{content:"";position:absolute;inset:auto -12px -27px -11px;height:34px;
  background:linear-gradient(125deg,transparent 10%,#74379f70,#39b68a85,transparent 90%);
  clip-path:polygon(0% 88%,21% 12%,40% 65%,55% 0%,80% 60%,100% 30%,100% 100%,0 100%);z-index:-1}
@@ -107,7 +107,7 @@
 .ll-neon-feature-icon{display:grid;place-items:center;width:96px;height:96px;flex:0 0 96px;border-radius:22px;
  transform:rotate(8deg);border:1px solid #b884f6;color:#efcfff;background:linear-gradient(135deg,#7d43b2,#321947);
  box-shadow:0 0 24px #b15cf6b3,9px 10px 0 -5px #278a69,inset 0 2px 12px #e3b5ff64}
-.ll-neon-feature-icon svg{width:49px!important;height:49px!important}
+.ll-neon-feature-icon svg{width:38px!important;height:38px!important}
 .ll-neon-screen .ll-neon-stat-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin:16px 0 18px}
 .ll-neon-stat{display:flex;flex-direction:column;align-items:center;text-align:center;justify-content:center;gap:7px;min-width:0;padding:16px 9px;
  border:1px solid #9361bd;border-radius:15px;background:linear-gradient(155deg,#301d43,#191024);box-shadow:var(--ll-card-shadow)}
