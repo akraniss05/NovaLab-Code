@@ -55,7 +55,7 @@ const html='<!doctype html><html lang="de"><head><meta name="viewport" content="
    await page.evaluate(()=>{localStorage.setItem('liverylab-pref-uiSounds','1');window.LLEffects.sync();});
    await page.locator('#tap').click();
    assert.equal(await page.evaluate(()=>window.__plays),1,'Enabled audio plays once after user gesture');
-   await page.locator('[data-sound-volume]').fill('60');
+   await page.evaluate(()=>{const input=document.querySelector('[data-sound-volume]');input.value='60';input.dispatchEvent(new Event('input',{bubbles:true}));});
    assert.equal(await page.locator('[data-sound-volume-label]').textContent(),'60%');
    assert.equal(await page.evaluate(()=>localStorage.getItem('liverylab-choice-soundVolume')),'60');
    await page.evaluate(()=>{localStorage.setItem('liverylab-pref-buttonEffects','0');window.LLEffects.sync();});
