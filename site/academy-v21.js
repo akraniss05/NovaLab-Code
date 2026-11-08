@@ -494,13 +494,16 @@ function roadmapCourseGlyph(course){
  return courseAccent(course);
 }
 function roadmapCoursePreview(course,done,total){
- const milestones=[0,.20,.45,.70,.95],icons=['▶','⟨/⟩','⬡','⌁','⚑'];
- const idx=milestones.map(f=>Math.min(Math.max(0,total-1),Math.floor(f*total)));
- const finished=total>0&&done>=total;
+ // Milestones are real progress thresholds. Beginning a long course marks
+ // the first node complete, while the second stays active until ~20% mastery.
+ const thresholds=[1,.20,.45,.75,1].map((v,i)=>
+  i===0?1:Math.max(1,Math.ceil(v*Math.max(1,total))));
+ const active=thresholds.findIndex(t=>done<t),icons=['▷','⟨/⟩','⬡','>_','⚑'];
  return '<div class="ll-mini-road" aria-label="'+esc('Fortschrittsvorschau: '+done+' von '+total+' Lektionen abgeschlossen')+'">'+
-  milestones.map((f,i)=>{
-   const step=idx[i],state=finished||done>step?'is-done':done===step?'is-active':'is-future';
-   return '<span class="ll-mini-stop '+state+'" aria-hidden="true"><span>'+ (state==='is-done'?'✓':icons[i])+'</span></span>';
+  thresholds.map((threshold,i)=>{
+   const state=total>0&&done>=threshold?'is-done':i===active?'is-active':'is-future';
+   return '<span class="ll-mini-stop '+state+'" aria-hidden="true"><span>'+
+    (state==='is-done'?'✓':icons[i])+'</span></span>';
   }).join('')+'</div>';
 }
 function roadmapJourney(){
@@ -510,7 +513,7 @@ function roadmapJourney(){
   ['✓','Einstieg','abschließen'],['⟨/⟩','Grundlagen','lernen'],
   ['⌘','Scripting','vertiefen'],['⬡','Projekte','umsetzen'],['⚑','Experte','werden']
  ];
- const progressThresholds=[1,10,35,65,100],active=Math.max(0,progressThresholds.findIndex(p=>percent<p));
+ const progressThresholds=[3,20,45,75,100],active=progressThresholds.findIndex(p=>percent<p);
  return '<section class="ll-journey" aria-label="'+catalogText('Deine Lernreise','Your learning journey')+'">'+
   '<div class="ll-journey-head"><div><span class="ll-journey-flag">⚑</span><h2>'+catalogText('Deine Lernreise','Your learning journey')+'</h2></div>'+
   '<span class="ll-journey-percent">'+catalogText('Gesamtfortschritt','Total progress')+' <strong>'+percent+'%</strong></span></div>'+
@@ -521,7 +524,7 @@ function roadmapJourney(){
       ['Build','projects'],['Become','an expert']
     ][i]:[step[1],step[2]];
     return '<div class="ll-journey-step '+(reached?'is-done':current?'is-active':'is-future')+'">'+
-     '<span class="ll-journey-node" aria-hidden="true">'+(reached?'✓':step[0])+'</span>'+
+     '<span class="ll-journey-node" aria-hidden="true">'+(reached?'✓':!current&&(i===2||i===3)?roadmapLockIcon():step[0])+'</span>'+
      '<span class="ll-journey-label">'+esc(name[0])+'<br>'+esc(name[1])+'</span></div>';
   }).join('')+'</div>'+
   '<div class="ll-journey-foot"><span>'+done+' / '+total+' '+catalogText('Lektionen abgeschlossen','lessons completed')+'</span>'+
@@ -798,6 +801,52 @@ function coursesPage(){
  '<div id="catalog-container">'+catalogItems()+'</div></section></div>';
 }
 
+function roadmapLockIcon(){
+ return '<svg class="ll-roadmap-lock-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15" r="1" fill="currentColor" stroke="none"/></svg>';
+}
+function roadmapLessonArtwork(lesson,course){
+ // Original inline illustrations: a CSS/SVG equivalent to the glowing
+ // concept artwork. Never insert course content into raw SVG attributes.
+ const title=String(lesson?.title||'').toLocaleLowerCase('de');
+ const blender=String(course?.category||'').includes('Blender');
+ const isComment=/kommentar|notiz|dokument/.test(title);
+ const isType=/datentyp|number|string|boolean|nil|primitive/.test(title);
+ const isVariable=/variable|wert|zuweisung/.test(title);
+ const isProject=/projekt|abschluss/.test(title);
+ const isFunction=/funktion|methode|callback/.test(title);
+ const scene=blender?'blender':isType?'types':isComment?'comment':isVariable?'variable':isProject?'project':isFunction?'function':'code';
+ const base='<svg class="ll-art-svg ll-art-'+scene+'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 108" aria-hidden="true" focusable="false">'+
+ '<defs><linearGradient id="ll-art-tile" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#8856c8"/><stop offset=".5" stop-color="#45216c"/><stop offset="1" stop-color="#1c183e"/></linearGradient>'+
+ '<linearGradient id="ll-art-floor" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#543d82" stop-opacity=".8"/><stop offset="1" stop-color="#153b39" stop-opacity=".36"/></linearGradient></defs>'+
+ '<path d="M12 81 61 61 110 82 62 103Z" fill="url(#ll-art-floor)" stroke="#63eeb4" stroke-width="1.5" opacity=".86"/>'+
+ '<path d="M18 83 61 65 103 83" fill="none" stroke="#a2ffdf" stroke-width="1" opacity=".45"/>';
+ let foreground='';
+ if(scene==='types'){
+   foreground=[['nil',82],['boolean',64],['string',46],['number',28]].map(([word,y])=>
+    '<g transform="translate(0 '+(Number(y)-28)+')"><path d="M34 33 78 16 102 26 58 43Z" fill="url(#ll-art-tile)" stroke="#be8bff" stroke-width="1.5"/>'+
+    '<text x="66" y="31" fill="#f4d9ff" font-size="10" font-weight="800" text-anchor="middle" transform="rotate(13 66 31)">'+word+'</text></g>').join('');
+ } else if(scene==='variable'||scene==='blender'){
+   foreground='<path d="M37 37 74 23 95 37 56 51Z" fill="#7142af" fill-opacity=".72" stroke="#bf92ff" stroke-width="1.5"/>'+
+    '<path d="M37 37 56 51 56 88 37 73Z" fill="#271c53" stroke="#be96ff" stroke-width="1.5"/>'+
+    '<path d="M56 51 95 37 95 74 56 88Z" fill="url(#ll-art-tile)" stroke="#bc8bfa" stroke-width="1.5"/>'+
+    (scene==='blender'?'<path d="M47 56 77 44 87 64 57 78Z" fill="none" stroke="#95f0d1" stroke-width="2"/>'+
+       '<circle cx="77" cy="44" r="4" fill="#d7b1ff"/><circle cx="57" cy="78" r="4" fill="#8df0c0"/>':
+       '<text x="71" y="70" fill="#f2d5ff" text-anchor="middle" font-size="27" font-weight="850">x</text>');
+ } else if(scene==='comment'){
+   foreground='<path d="M32 30 Q32 20 42 19 L91 23 Q100 23 100 33 L94 69 Q93 77 83 78 L63 76 47 91 48 74 36 73 Q27 72 28 62Z" fill="url(#ll-art-tile)" stroke="#c598ff" stroke-width="2"/>'+
+      '<path d="M57 38 45 61 M77 37 64 62" stroke="#ead3ff" stroke-width="6" stroke-linecap="round"/>';
+ } else if(scene==='project'){
+   foreground='<path d="M61 25 61 85" stroke="#d4b2ff" stroke-width="3" stroke-linecap="round"/>'+
+    '<path d="M62 25 Q80 17 96 30 L91 59 Q75 52 61 63Z" fill="url(#ll-art-tile)" stroke="#d1a5ff" stroke-width="2"/>';
+ } else if(scene==='function'){
+   foreground='<path d="M34 24 88 24 Q94 24 94 31 L91 78 Q91 85 84 85 L35 80 Q28 80 29 73 L29 33 Q29 24 34 24Z" fill="url(#ll-art-tile)" stroke="#be8fff" stroke-width="2"/>'+
+      '<text x="61" y="65" text-anchor="middle" fill="#f0d6ff" font-size="39" font-style="italic" font-weight="750">ƒ</text>';
+ } else {
+   foreground='<path d="M35 27 89 21 Q98 20 97 29 L93 77 Q92 86 84 85 L33 79 Q27 78 28 70 L29 36 Q29 29 35 27Z" fill="url(#ll-art-tile)" stroke="#be8dff" stroke-width="2"/>'+
+      '<path d="M52 43 43 51 51 58 M70 40 78 49 69 58 M65 37 58 63" fill="none" stroke="#ebd5ff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>';
+ }
+ return base+foreground+'</svg>';
+}
 function roadmapLessonSymbol(lesson,course){
  if(String(course?.category||'').includes('Blender'))return '✧';
  const title=String(lesson?.title||'').toLocaleLowerCase('de');
@@ -842,10 +891,11 @@ function trackPage(id){
  '<div class="ll-track-quick-actions"><button class="btn small" type="button" data-pin-course="'+esc(id)+'">'+
  (getChoicePreference(pinKey(),'')===id?'✓ '+catalogText('Angeheftet','Pinned'):'⌁ '+catalogText('Anheften','Pin'))+'</button>'+
  '<button class="btn small" type="button" data-bookmark-course="'+esc(id)+'">'+
- (bookmarks().includes(id)?'★ '+catalogText('Gemerkt','Saved'):'☆ '+catalogText('Merken','Save'))+'</button></div></div></header>';
- if(next)out+='<div class="next-lesson ll-next-roadmap"><div><span class="eyebrow">'+catalogText('ALS NÄCHSTES','UP NEXT')+'</span>'+
-  '<strong>'+esc(next.title)+'</strong><small>'+esc(next.chapter)+'</small></div>'+
-  '<button type="button" class="btn primary" data-go="lesson/'+esc(next.id)+'">'+catalogText('Weiterlernen →','Continue →')+'</button></div>';
+ (bookmarks().includes(id)?'★ '+catalogText('Gemerkt','Saved'):'☆ '+catalogText('Merken','Save'))+'</button>'+
+ (next?'<button class="btn small ll-track-continue" type="button" data-go="lesson/'+esc(next.id)+'">'+
+ catalogText('▶ Weiterlernen','▶ Continue')+'</button>':'')+
+ '</div></div></header>';
+
  chapters.forEach((chapter,ci)=>{
   const number=String(ci+1).padStart(2,'0');
   const chapterName=String(chapter.title||'').replace(/^\s*\d{1,2}\s*[·.\-]\s*/,'');
@@ -879,7 +929,7 @@ function trackPage(id){
       '<span>◇ '+catalogText('PRAXIS + QUIZ','PRACTICE + QUIZ')+'</span></span></span>'+
       '<span class="ll-lesson-right"><span class="ll-lesson-status-pill '+state+'">'+
          (ok?'✓ ':!unlocked?'⌑ ':current?'▷ ':'○ ')+esc(status)+'</span>'+
-      '<span class="ll-lesson-illustration" aria-hidden="true">'+esc(roadmapLessonSymbol(l,course))+'</span></span>'+
+      '<span class="ll-lesson-illustration" aria-hidden="true">'+roadmapLessonArtwork(l,course)+'</span></span>'+
       '<span class="status-ring" aria-hidden="true">'+symbol+'</span>'+
       '</button></div>';
    }).join('')+'</div></details></section>';
