@@ -32,8 +32,11 @@ const html='<!doctype html><html lang="de"><head><meta name="viewport" content="
    await page.goto('https://liverylab-academy.dev/i18n-test',{waitUntil:'load'});
    await page.waitForFunction(()=>document.querySelector('#learn')?.textContent==='Lernen');
    assert.equal(await page.locator('[data-lang=de]').getAttribute('aria-pressed'),'true');
+   page.on('pageerror',error=>console.error('I18N_PAGEERROR '+error.message));
    await page.locator('[data-lang=en]').click();
-   await page.waitForFunction(()=>document.querySelector('#learn')?.textContent==='Learn');
+   const debug=await page.evaluate(()=>({present:!!window.LLI18n,locale:window.LLI18n?.language?.(),direct:window.LLI18n?.translate?.('Lernen'),displayed:document.querySelector('#learn')?.textContent,pressed:document.querySelector('[data-lang=en]')?.getAttribute('aria-pressed')}));
+   console.log('I18N_CLICK_DEBUG '+JSON.stringify(debug));
+   await page.waitForFunction(()=>document.querySelector('#learn')?.textContent==='Learn',{timeout:5000});
    assert.equal(await page.locator('#heading').textContent(),'Settings');
    assert.equal(await page.locator('#dynamic').textContent(),'Question 1 of 3');
    assert.match(await page.locator('#description').textContent(),/Each lesson awards 30 XP only once/);
