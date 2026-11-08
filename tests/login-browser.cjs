@@ -51,6 +51,7 @@ for(const width of [390,430,1280]){
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.setContent(html,{waitUntil:'domcontentloaded'});
  await page.addScriptTag({content:stub});
+ await page.addScriptTag({content:read('site/academy-difficulty.js')});
  const bootStart=Date.now();
  await page.addScriptTag({content:js});
  await page.locator('#streak-overlay').waitFor({state:'visible',timeout:6000});

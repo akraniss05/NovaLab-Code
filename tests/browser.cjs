@@ -19,6 +19,7 @@ const context={
 vm.createContext(context);
 vm.runInContext(fs.readFileSync(path.join(root,'site/reference-data.js'),'utf8'),context,{filename:'reference-data.js'});
 vm.runInContext(fs.readFileSync(path.join(root,'site/academy-curriculum.js'),'utf8'),context,{filename:'academy-curriculum.js'});
+vm.runInContext(fs.readFileSync(path.join(root,'site/academy-difficulty.js'),'utf8'),context,{filename:'academy-difficulty.js'});
 vm.runInContext(rewritten,context,{filename:'academy.js'});
 const app=context.window.__views,s=app.s;
 s.ready=true;s.profile={display_name:'Developer',username:'developer',role:'student',active:true};s.referenceData=context.window.LL_REFERENCE_DATA;s.social={profile:{username:'developer',display_name:'Developer',bio:'Lerne FiveM und Python',avatar_style:'violet',banner_style:'nebula',name_style:'gradient',title:'Developer',lessons:1,awards:0},friends:[],requests:[],titles:['Developer']};
