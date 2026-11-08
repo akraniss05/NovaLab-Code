@@ -8,12 +8,17 @@ function parts(p){
  if(!p || (!String(p.theory||'').trim()&&!String(p.example||'').trim()&&!String(p.goal||p.title||'').trim()&&!(Array.isArray(p.sections)&&p.sections.length)))return [];
  return [{title:'Thema verstehen'},{title:'Beispiel nachvollziehen'}];
 }
+function validAnswerIndex(value,count){
+ if(typeof value!=='number'&&(typeof value!=='string'||!/^\d+$/.test(value)))return false;
+ const index=Number(value);
+ return Number.isInteger(index)&&index>=0&&index<count;
+}
 function questions(p){
  const originalOptions=Array.isArray(p?.options)?p.options.map(String):[];
  const originalCorrect=Number(p?.correct);
  const original=originalOptions.length>=2&&
   originalOptions.every(x=>x.trim().length>0)&&
-  Number.isInteger(originalCorrect)&&originalCorrect>=0&&originalCorrect<originalOptions.length?
+  validAnswerIndex(p?.correct,originalOptions.length)?
   [{question:String(p.quiz||'Welche Aussage ist richtig?'),options:originalOptions,
     correct:originalCorrect,explanation:''}]:[];
  const bank=Array.isArray(p?.quiz_items)?p.quiz_items:[];
@@ -21,10 +26,10 @@ function questions(p){
   Array.isArray(q.options)&&q.options.length>=2&&q.options.length<=6&&
   q.options.every(x=>typeof x==='string'&&x.trim().length>0)&&
   new Set(q.options.map(x=>x.trim().toLocaleLowerCase())).size===q.options.length&&
-  Number.isInteger(Number(q.correct))&&Number(q.correct)>=0&&Number(q.correct)<q.options.length
+  validAnswerIndex(q.correct,q.options.length)
  ).map(q=>({question:String(q.question),options:q.options.map(String),
    correct:Number(q.correct),explanation:String(q.explanation||'')}));
- if(Number(p?.quiz_version)>=3&&valid.length>=2&&valid.length===bank.length)return valid.slice(0,3);
+ if(Number(p?.quiz_version)>=3&&valid.length>=2)return valid.slice(0,3);
  return original;
 }
 function safeNotes(value,max){

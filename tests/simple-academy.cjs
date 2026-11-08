@@ -4,7 +4,7 @@ const assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('nod
 const source=fs.readFileSync(path.join(__dirname,'../site/academy-v21.js'),'utf8');
 const end=/\ninit\(\);\n\}\)\(\);\s*$/;
 assert.match(source,end);
-const exposed=source.replace(end,"\nwindow.__appTest={s,quizQuestions,paintTimer,openTimer,toggleFocusTimer,completePractice,updateLessonControls,setApi(value){api=value}};\n})();");
+const exposed=source.replace(end,"\nwindow.__appTest={s,quizQuestions,paintTimer,openTimer,toggleFocusTimer,completePractice,updateLessonControls,navigateCurrent,parseRoute,setApi(value){api=value}};\n})();");
 const saved=new Map(),callbacks={},elements=new Map();
 function classList(){const set=new Set();return {add(...names){names.forEach(n=>set.add(n))},remove(...names){names.forEach(n=>set.delete(n))},toggle(name,state){if(state===undefined)state=!set.has(name);state?set.add(name):set.delete(name)},contains(name){return set.has(name)}};}
 const fake=()=>({innerHTML:'',textContent:'',hidden:false,disabled:false,value:'',dataset:{},style:{width:'',setProperty(){}},classList:classList(),setAttribute(){},focus(){},querySelector(){return null},replaceChildren(){},isConnected:true});
@@ -98,6 +98,24 @@ async function click(selector,node){for(const fn of callbacks.click||[])await fn
  // The redesigned timer keeps the old controls and adds presets/ring.
  assert.match(elements.get('#timer-portal').innerHTML,/ll-focus-ring/,'Streak-style circular countdown present');
  assert.match(elements.get('#timer-portal').innerHTML,/data-timer-preset="25"/,'Quick preset controls present');
+ // A slow lesson response must never replace the newer lesson or its draft.
+ s.lessons.push({...s.lessons[0],id:'lua-02',position:2});
+ let releaseFirst;
+ const first=new Promise(resolve=>{releaseFirst=resolve});
+ const secondLesson={allowed:true,payload:{quiz:'Zweite Frage?',options:['A','B'],correct:0}};
+ window.scrollTo=()=>{};
+ app.setApi({
+  rpc(_name,{p_lesson}){return p_lesson==='lua-01'?first:Promise.resolve({data:secondLesson})},
+  from(){return {upsert:async()=>({error:null})}}
+ });
+ const pending=app.navigateCurrent();
+ sandbox.location.hash='#lesson/lua-02';
+ await app.navigateCurrent();
+ releaseFirst({data:{allowed:true,payload:{quiz:'Erste Frage?'}}});
+ await pending;
+ assert.equal(s.lesson,secondLesson,'A late response cannot overwrite the active lesson');
+ sandbox.location.hash='#lesson/%E0%A4';
+ assert.equal(app.parseRoute().id,'%E0%A4','Malformed URL encoding cannot crash routing');
  console.log('PASS: Focus timer, green/red code check, two learning parts and three relevant quiz questions saved locally.');
 
 })().catch(err=>{console.error(err);process.exitCode=1});

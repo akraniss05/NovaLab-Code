@@ -23,4 +23,7 @@ for(const text of [a,b]){
  assert.doesNotMatch(text,/Erledige eine Aufgabe/);
 }
 assert.equal(LLCurriculum.questions({quiz:'A?',options:['A','B'],correct:1}).length,1);
+assert.equal(LLCurriculum.questions({quiz:'Ungültig?',options:['A','B'],correct:null}).length,0);
+const valid={question:'Welche Aussage stimmt?',options:['A','B'],correct:0};
+assert.equal(LLCurriculum.questions({quiz_version:4,quiz_items:[valid,{...valid,correct:null},{...valid,question:'Welche Ausgabe ist richtig?'}]}).length,2);
 console.log('PASS: Specific explanations and examples without generic exercises.');

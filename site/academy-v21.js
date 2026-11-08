@@ -565,16 +565,30 @@ async function saveProgress(){
  if(res.error)throw res.error;frame();
 }
 function go(path){var h='#'+path;if(location.hash===h){navigateCurrent();}else{location.hash=h;}sidebar.classList.remove('open');syncBackdrop();}
-function parseRoute(){var raw=decodeURIComponent((location.hash||'#home').replace(/^#/,'')).split('/');return {page:raw[0]||'home',id:raw[1]||''};}
+function parseRoute(){
+ const parts=(location.hash||'#home').slice(1).split('/');
+ const decode=part=>{try{return decodeURIComponent(part||'');}catch(_){return part||'';}};
+ return {page:decode(parts[0])||'home',id:decode(parts[1])};
+}
+let navigationId=0;
 async function navigateCurrent(){
  if(!s.ready)return;
+ const request=++navigationId,hash=location.hash;
+ const isCurrent=()=>s.ready&&request===navigationId&&hash===location.hash;
  var route=parseRoute();s.route=route.page;
  if(route.page==='lesson'){
    s.choice=null;s.quizStep=0;s.quizPassed=false;s.sectionIndex=0;s.hintStage=0;s.lessonStep=1;s.videoChecked=watchedIds().has(route.id);s.practiceChecked=(s.progress.verifiedPractice||[]).includes(route.id);s.draft=readDraft(route.id);s.videoLoaded=false;s.lesson=null;s.lessonGate=null;
    frame();content.innerHTML='<div class="center-screen"><div class="spinner"></div><p>Geschützte Lektion wird geladen …</p></div>';
    var meta=s.lessons.find(function(l){return l.id===route.id;});
-   if(meta&&allowed(meta)){var result=await api.rpc('academy_open_lesson',{p_lesson:route.id});if(result.error){s.lessonGate={reason:'error',error:formatError(result.error)};notice(formatError(result.error));}else if(result.data?.allowed){s.lesson=result.data;
-      if(window.LLLearning){const cloud=await window.LLLearning.load(route.id);if(parseRoute().id!==route.id)return;s.draft=cloud.content;s.lessonStep=cloud.step;}
+   if(meta&&allowed(meta)){
+    const result=await api.rpc('academy_open_lesson',{p_lesson:route.id});
+    if(!isCurrent())return;
+    if(result.error){s.lessonGate={reason:'error',error:formatError(result.error)};notice(formatError(result.error));}
+    else if(result.data?.allowed){
+      const cloud=await window.LLLearning?.load?.(route.id);
+      if(!isCurrent())return;
+      s.lesson=result.data;
+      if(cloud){s.draft=cloud.content;s.lessonStep=cloud.step;}
       const quiz=s.lesson.payload||{},bank=quizQuestions(quiz),savedLocal=readQuizLocal(route.id),old=s.progress.quizProgress?.[route.id];
       const savedQuiz=savedLocal||old; // One-time import of previous account quiz state into this browser.
       if(doneIds().has(route.id)){s.quizPassed=true;s.quizStep=Math.max(0,bank.length-1);}
@@ -592,6 +606,7 @@ async function navigateCurrent(){
  if(route.page==='reference'&&fullAccess()&&!s.referenceData){const ref=await api.rpc('academy_reference_get');if(!ref.error)s.referenceData=ref.data||{};}
  if(route.page==='friends'||route.page==='profile'){try{const r=await api.rpc('academy_social_list');if(!r.error)s.social=r.data;}catch(_){}}
  if(route.page==='exam'&&route.id){await loadExam(route.id);}
+ if(!isCurrent())return;
  render();window.scrollTo({top:0,behavior:'instant'});
  if(route.page==='lesson'&&s.lesson)window.LLLearning?.restore?.(route.id,s.lessonStep);
 }
@@ -619,6 +634,7 @@ function render(){
  paintStreakModal();
  paintTimer();
  paintEditorLines();
+ if(r.page==='lesson'&&s.lesson)updateLessonControls();
  window.LLI18n?.apply?.();
 }
 function htmlCssPreview(code,lang){
@@ -1168,8 +1184,8 @@ function lessonPage(id){
  '<div class="hero-actions" style="justify-content:center"><button class="btn primary" data-go="plans">Stufen vergleichen</button>'+
  '<a class="btn discord" rel="noopener noreferrer" target="_blank" href="https://discord.gg/livery-lab">Freischaltung anfragen</a></div></section>';
  if(!s.lesson){const daily=s.lessonGate?.reason==='daily_limit';return back+'<section class="lesson-gate"><span class="gate-icon">'+(daily?'◷':'🔒')+'</span><span class="eyebrow">'+(daily?'TAGESLIMIT ERREICHT':'LEKTION NICHT VERFÜGBAR')+'</span><h2>'+(daily?'Für heute geschafft.':'Lektion nicht geladen')+'</h2><p>'+(daily?'Du hast heute alle '+safeNumber(s.daily?.daily_limit)+' neuen Lernstationen geöffnet. Morgen geht es weiter. Bereits geöffnete Stationen bleiben zugänglich.':esc(s.lessonGate?.error||'Prüfe deine Freischaltung und Verbindung.'))+'</p><div class="actions-pair"><button class="btn" data-go="track/'+esc(l.course_id)+'">← Lernpfad</button><button class="btn primary" data-go="plans">Tarife ansehen →</button></div></section>';}
- var p=s.lesson.payload||{},video=s.lesson.video_id||p.videoId,info=videoInfo(video),qs=quizQuestions(p),activeQuiz=qs[Math.min(s.quizStep,qs.length-1)],options=activeQuiz?.options||[],finished=doneIds().has(id),rewarded=xpAwarded(id),isBlender=c?.category==='3D & Blender';
- var videoStart=Math.max(0,Number(s.lesson.video_start||p.videoStart)||0),validVideo=video&&/^[a-zA-Z0-9_-]{11}$/.test(video),url=validVideo?'https://www.youtube.com/watch?v='+video+'&t='+videoStart+'s':null;
+ var p=s.lesson.payload||{},video=s.lesson.video_id||p.videoId,info=p.video_guide||videoInfo(video),qs=quizQuestions(p),activeQuiz=qs[Math.min(s.quizStep,qs.length-1)],options=activeQuiz?.options||[],finished=doneIds().has(id),rewarded=xpAwarded(id),isBlender=c?.category==='3D & Blender';
+ var videoStart=Math.max(0,Math.floor(safeNumber(s.lesson.video_start??p.videoStart))),validVideo=video&&/^[a-zA-Z0-9_-]{11}$/.test(video),url=validVideo?'https://www.youtube.com/watch?v='+video+'&t='+videoStart+'s':null;
  var search='https://www.youtube.com/results?search_query='+encodeURIComponent(c.name+' '+l.title+' Anleitung Tutorial deutsch');
  var next=all[index+1],d=esc(s.draft),isPracticeDone=s.practiceChecked||finished;
  return '<article class="lesson-article ll-roadmap-lesson">'+back+
@@ -1197,12 +1213,12 @@ function lessonPage(id){
  '</section>'+
  '<section id="lesson-video" class="step-box '+(isBlender?'blender-video-step':'')+'"><span class="eyebrow">SCHRITT 02 · '+(isBlender?'BLENDER VIDEO-TRAINING':'VIDEO-TUTORIAL')+'</span><h2>'+(isBlender?'Im Interface mitmachen.':'Erklärung ansehen.')+'</h2>'+
  (validVideo?
- '<p class="muted">Passender Videoguide: <strong>'+esc(info.name)+'</strong>. Wenn das Video länger ist, konzentriere dich auf das Kapitel zu dieser Lektion.</p>'+
+ '<p class="muted">Videoguide: <strong>'+esc(info.name)+'</strong>. '+esc(info.focus||'Achte auf das Thema dieser Lektion.')+'</p>'+
  '<div class="video-frame" id="video-frame"><div class="video-placeholder"><div class="play">▶</div><strong>'+esc(info.name)+'</strong>'+
  '<small>'+esc(info.author)+' · '+esc(info.language)+' · YouTube</small>'+
  '<button type="button" class="btn primary" data-action="load-video">Video abspielen →</button>'+
  '<small>Der externe Player wird erst auf deinen Klick geladen.</small></div></div>'+
- '<div class="video-source"><p class="micro">Quelle: '+esc(info.author)+' · Start ab passendem Kapitel</p><a href="'+url+'" target="_blank" rel="noopener noreferrer">Auf YouTube öffnen ↗</a></div>':
+ '<div class="video-source"><p class="micro">Quelle: '+esc(info.author)+(videoStart?' · Einstieg bei '+Math.floor(videoStart/60)+':'+String(videoStart%60).padStart(2,'0'):'')+'</p><a href="'+url+'" target="_blank" rel="noopener noreferrer">Auf YouTube öffnen ↗</a></div>':
  '<p class="muted">Für dieses Spezialthema gibt es noch keinen einzeln geprüften Videoguide. Öffne eine gezielte Suche, wähle ein Tutorial und arbeite das passende Thema durch.</p>'+
  '<div class="video-frame"><div class="video-placeholder"><div class="play">▷</div><strong>Ein Tutorial zum Thema finden</strong>'+
  '<small>'+esc(c.name)+' · '+esc(l.title)+'</small><a href="'+search+'" class="btn primary" target="_blank" rel="noopener noreferrer">Passendes Lernvideo suchen ↗</a></div></div>')+
@@ -2506,7 +2522,7 @@ document.addEventListener('click',async function(e){
   if(name==='load-video'){
    var video=s.lesson?.video_id||s.lesson?.payload?.videoId;if(!/^[a-zA-Z0-9_-]{11}$/.test(String(video||'')))return;
    var frame=$('#video-frame');
-   if(frame){var iframe=document.createElement('iframe');iframe.src='https://www.youtube-nocookie.com/embed/'+video+'?rel=0&start='+Math.max(0,safeNumber(s.lesson.video_start||s.lesson?.payload?.videoStart));
+   if(frame){var iframe=document.createElement('iframe');iframe.src='https://www.youtube-nocookie.com/embed/'+video+'?rel=0&start='+Math.max(0,safeNumber(s.lesson.video_start??s.lesson?.payload?.videoStart));
     iframe.title='Externes Video-Tutorial von YouTube';iframe.loading='lazy';iframe.referrerPolicy='strict-origin-when-cross-origin';
     iframe.allow='accelerometer; encrypted-media; gyroscope; picture-in-picture; web-share';iframe.allowFullscreen=true;frame.replaceChildren(iframe);s.videoLoaded=true;}
    return;
