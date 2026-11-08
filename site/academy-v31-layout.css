@@ -494,3 +494,12 @@ body:not(.is-auth) .topbar > .top-right{position:relative;z-index:4}
  .ll-chat-status{align-items:stretch}
  .ll-chat-status label,.ll-chat-status button{flex:1 0 100%}
 }
+
+/* Academy v1.5 · difficulty labels with text, score and accessible contrast */
+.ll-course-difficulty{--difficulty-color:#cfb9dd;display:inline-flex;align-items:center;flex-wrap:wrap;gap:6px;max-width:100%;min-height:28px;margin:0;padding:5px 9px;border:1px solid var(--difficulty-color);border-radius:9px;background:#261c32;color:#f7efff;font-size:12px;font-weight:600;line-height:1.4;vertical-align:middle}
+.ll-course-difficulty-1{--difficulty-color:#8de7c3}.ll-course-difficulty-2{--difficulty-color:#afe1a2}.ll-course-difficulty-3{--difficulty-color:#f0d58e}.ll-course-difficulty-4{--difficulty-color:#f5ac85}.ll-course-difficulty-5{--difficulty-color:#f1a3ba}
+.ll-course-difficulty strong,.ll-course-difficulty .ll-difficulty-active{color:var(--difficulty-color);font-weight:800}
+.ll-difficulty-points{font-size:11px;letter-spacing:1px;color:#bdafc9;white-space:nowrap}.ll-course-difficulty small{font-size:11px;color:#dbcee8}
+.ll-difficulty-explain{display:flex;flex-wrap:wrap;align-items:center;gap:9px 12px;margin:12px 0 15px}.ll-difficulty-explain>small{color:#c4b4d5;line-height:1.5}
+.course-card .ll-course-difficulty{margin:9px 0 3px}.ll-home-continue .ll-course-difficulty{margin:5px 0 8px}.lesson-article .chips .ll-course-difficulty{margin:2px 0}.exam-intro .ll-course-difficulty,.locked-panel .ll-course-difficulty{margin:12px 0}
+@media(max-width:560px){.ll-course-difficulty{font-size:11px;padding:5px 7px}.ll-difficulty-explain{align-items:flex-start;flex-direction:column}}
