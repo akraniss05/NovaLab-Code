@@ -45,7 +45,7 @@ function saveQuizLocal(id,value){
  try{localStorage.setItem(lessonLocalKey('quiz',id),JSON.stringify(value));}catch(_){notice('Quiz-Zwischenstand konnte in diesem Browser nicht gespeichert werden.');}
 }
 function setPreference(key,value){try{localStorage.setItem('liverylab-pref-'+key,value?'1':'0')}catch(_){}applyPreferences()}
-function getPreference(key){try{return localStorage.getItem('liverylab-pref-'+key)==='1'}catch(_){return false}}
+function getPreference(key){const defaultOn=key==='animatedBackdrop'||key==='buttonEffects';try{const saved=localStorage.getItem('liverylab-pref-'+key);return saved===null?defaultOn:saved==='1'}catch(_){return defaultOn}}
 function getChoicePreference(key,fallback){
  try{return localStorage.getItem('liverylab-choice-'+key)||fallback;}catch(_){return fallback;}
 }
@@ -68,6 +68,7 @@ function applyPreferences(){
   document.documentElement.dataset.theme=['violet','midnight','ocean','forest','rose','ember'].includes(theme)?theme:'violet';
   document.documentElement.dataset.accent=['lavender','sky','mint','pink','amber','white'].includes(accent)?accent:'lavender';
  }
+ window.LLEffects?.sync?.();
 }
 function syncBackdrop(){var b=$('#nav-backdrop');if(b)b.classList.toggle('visible',sidebar.classList.contains('open'))}
 function pageHeading(label,title,description){return '<header class="page-heading"><span class="eyebrow">'+esc(label)+'</span><h1>'+title+'</h1><p class="lede">'+esc(description)+'</p></header>'}
@@ -1334,7 +1335,13 @@ function settingsPage(){
  toggle('largeTypography','Größere Schrift','Texte und Bedienelemente besser lesen.')+
  toggle('contrast','Hoher Kontrast','Konturen und Texte deutlicher hervorheben.')+
  toggle('motion','Weniger Bewegung','Animationen und Übergänge reduzieren.')+
- '</div><button class="btn ghost settings-reset" data-action="reset-appearance">↺ Standarddarstellung wiederherstellen</button></div></section>'+
+ '</div><h3>Interaktionen & Atmosphäre</h3><div class="settings-list">'+
+ toggle('animatedBackdrop','Animierter Hintergrund','Sanfte, langsam bewegte Lichtakzente im Hintergrund.')+
+ toggle('buttonEffects','Klickeffekte','Kleine Lichtkreise beim Drücken von Buttons anzeigen.')+
+ toggle('uiSounds','Klicksounds','Leise Rückmeldung bei Button-Klicks. Standardmäßig ausgeschaltet.')+
+ '</div><div class="ll-sound-volume"><label for="ll-sound-volume">Lautstärke der Klicksounds</label>'+
+ '<input id="ll-sound-volume" data-sound-volume type="range" min="0" max="100" step="5" value="'+esc(window.LLEffects?.volume?.()??25)+'" aria-label="Lautstärke der Klicksounds">'+
+ '<output data-sound-volume-label for="ll-sound-volume">'+esc(window.LLEffects?.volume?.()??25)+'%</output><p>Sounds spielen erst nach dem Aktivieren und deiner nächsten Berührung. Die Auswahl wird auf diesem Gerät gespeichert.</p></div><button class="btn ghost settings-reset" data-action="reset-appearance">↺ Standarddarstellung wiederherstellen</button></div></section>'+
  '<section class="setting-section"><span class="eyebrow">02 · DEIN ACCOUNT</span><h2>Anmeldedaten</h2>'+
  '<div class="account-settings-grid"><div class="panel"><h3>Zugangsdaten</h3>'+
  '<div class="settings-row"><div><strong>E-Mail-Adresse</strong><p>'+esc(email)+'</p></div><span class="chip free">Hinterlegt</span></div>'+
@@ -1734,9 +1741,9 @@ document.addEventListener('click',async function(e){
    return;
   }
   if(name==='reset-appearance'){
-    for(const key of ['compact','motion','largeTypography','contrast','softCorners','backgroundArt'])
+    for(const key of ['compact','motion','largeTypography','contrast','softCorners','backgroundArt','animatedBackdrop','buttonEffects','uiSounds'])
      try{localStorage.removeItem('liverylab-pref-'+key);}catch(_){}
-    for(const key of ['theme','accent'])
+    for(const key of ['theme','accent','soundVolume'])
      try{localStorage.removeItem('liverylab-choice-'+key);}catch(_){}
     applyPreferences();render();notice('Standarddesign wiederhergestellt.');return;
   }
