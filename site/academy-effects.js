@@ -84,7 +84,6 @@ function trigger(event){
  if(event.type==='pointerdown'&&event.button!==0)return;
  if(event.type==='keydown'&&!['Enter',' '].includes(event.key))return;
  if(event.type==='keydown'&&event.repeat)return;
- if(event.type==='pointerdown'&&event.pointerType==='mouse'&&event.detail===0)return;
  let x=event.clientX,y=event.clientY;
  if(event.type==='keydown'||!Number.isFinite(x)||!Number.isFinite(y)){
   const r=target.getBoundingClientRect();x=r.left+r.width/2;y=r.top+r.height/2;
