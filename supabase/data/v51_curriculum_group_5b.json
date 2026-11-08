@@ -1,0 +1,438 @@
+{
+  "version": 51,
+  "group": "5b",
+  "topics": [
+    {
+      "course": "esx",
+      "ordinal": 1,
+      "title": "ESX Import",
+      "theory": "Aktuelle ESX-Versionen stellen häufig einen Import für das Frameworkobjekt bereit. Die konkrete Einbindung hängt von der installierten Version ab.",
+      "example": "shared_script '@es_extended/imports.lua'",
+      "example_note": "Die Resource kann danach die bereitgestellten ESX-Funktionen nutzen, wenn das Framework korrekt gestartet ist.",
+      "task": "Prüfe die Imports für deine ESX-Version."
+    },
+    {
+      "course": "esx",
+      "ordinal": 2,
+      "title": "xPlayer ermitteln",
+      "theory": "Der Server kann über die Spieler-ID ein ESX-Spielerobjekt beziehen. Bei Disconnects kann es fehlen.",
+      "example": "local xPlayer=ESX.GetPlayerFromId(source)",
+      "example_note": "Das Objekt liefert geprüfte serverseitige Spielerdaten, sofern der Spieler verbunden ist.",
+      "task": "Beschreibe den Umgang mit nil beim Abruf."
+    },
+    {
+      "course": "esx",
+      "ordinal": 3,
+      "title": "Job prüfen",
+      "theory": "ESX-Jobs enthalten einen Namen und häufig einen Grade. Der Server muss beides vor geschützten Aktionen prüfen.",
+      "example": "if xPlayer.job.name ~= \"police\" then return end",
+      "example_note": "Nicht berechtigte Jobs beenden die Aktion sofort.",
+      "task": "Ergänze eine Grade-Mindestprüfung."
+    },
+    {
+      "course": "esx",
+      "ordinal": 4,
+      "title": "Kontostand lesen",
+      "theory": "Geld kann in ESX als Account abgelegt sein. Eine Kaufentscheidung muss den aktuellen Wert serverseitig lesen.",
+      "example": "local account=xPlayer.getAccount(\"bank\")",
+      "example_note": "Das Kontoobjekt beschreibt den Bankstand; die Integration muss den Rückgabewert validieren.",
+      "task": "Prüfe einen fehlenden Account."
+    },
+    {
+      "course": "esx",
+      "ordinal": 5,
+      "title": "Server-Callbacks",
+      "theory": "ESX.ServerCallback erlaubt eine Anfrage mit späterer Antwort. Der Server entscheidet über die zurückgegebenen Daten.",
+      "example": "ESX.RegisterServerCallback(\"garage:list\",function(source,cb) cb({}) end)",
+      "example_note": "Der Callback liefert eine leere Liste an den anfragenden Client.",
+      "task": "Baue einen Callback mit einer serverseitigen Datenprüfung."
+    },
+    {
+      "course": "esx",
+      "ordinal": 6,
+      "title": "Frameworkadapter",
+      "theory": "Ein Adapter kapselt Unterschiede zwischen Frameworks, statt überall ESX-spezifische Methoden zu verteilen.",
+      "example": "Framework.getPlayer=function(src) return ESX.GetPlayerFromId(src) end",
+      "example_note": "Die Fachlogik nutzt getPlayer, nicht direkte ESX-Zugriffe an jeder Stelle.",
+      "task": "Entwerfe einen Adapter für Spielerabfragen."
+    },
+    {
+      "course": "fivem",
+      "ordinal": 1,
+      "title": "Resource-Dependencies",
+      "theory": "Das fxmanifest kann Abhängigkeiten deklarieren. Dadurch wird sichtbar, welche anderen Resources vor dem Einsatz benötigt werden.",
+      "example": "dependency 'ox_lib'",
+      "example_note": "Die Resource deklariert, dass ox_lib vorhanden sein muss.",
+      "task": "Definiere eine Abhängigkeit zu einer Bibliothek."
+    },
+    {
+      "course": "fivem",
+      "ordinal": 2,
+      "title": "Client Event",
+      "theory": "Ein Clienthandler verarbeitet lokale Events. Nicht jede lokale Aktion erfordert einen Netzwerkrundweg.",
+      "example": "AddEventHandler(\"garage:open\",function() print(\"Garage\") end)",
+      "example_note": "Beim Auslösen des lokalen Events läuft der registrierte Handler.",
+      "task": "Erstelle einen lokalen Öffnen-Event."
+    },
+    {
+      "course": "fivem",
+      "ordinal": 3,
+      "title": "Server Event",
+      "theory": "Ein Server-Netzwerkevent kann vom Client ausgelöst werden. Quellspieler und übergebene Werte müssen auf dem Server validiert werden.",
+      "example": "RegisterNetEvent(\"garage:request\",function(id) local src=source end)",
+      "example_note": "source bezeichnet den Auslöser; id ist nicht automatisch vertrauenswürdig.",
+      "task": "Prüfe ID und Berechtigung vor einer Aktion."
+    },
+    {
+      "course": "fivem",
+      "ordinal": 4,
+      "title": "exports verwenden",
+      "theory": "Ein Export bietet anderen Resources eine klar benannte Funktion. Er eignet sich für stabile APIs zwischen unabhängigen Skripten.",
+      "example": "exports(\"getStatus\",function() return \"ok\" end)",
+      "example_note": "Andere Resources können die veröffentlichte Funktion aufrufen.",
+      "task": "Veröffentliche einen lesenden Status-Export."
+    },
+    {
+      "course": "fivem",
+      "ordinal": 5,
+      "title": "Resource Stop Event",
+      "theory": "Beim Stop einer Resource sollten temporäre Objekte, Zustände und Fokusfreigaben aufgeräumt werden.",
+      "example": "AddEventHandler(\"onResourceStop\",function(name) if name~=GetCurrentResourceName() then return end end)",
+      "example_note": "Der Handler erkennt nur den Stop der eigenen Resource.",
+      "task": "Plane Cleanup für ein offenes NUI-Fenster."
+    },
+    {
+      "course": "fivem",
+      "ordinal": 6,
+      "title": "Profiler und Resmon",
+      "theory": "Resmon zeigt den Ressourcenverbrauch einzelner FiveM-Resources. Wiederholte Wait(0)-Schleifen sollten auf ihren echten Bedarf geprüft werden.",
+      "example": "resmon 1",
+      "example_note": "In unterstützten Clientumgebungen zeigt der Befehl laufende Resource-Metriken.",
+      "task": "Finde eine unnötig häufige Positionsprüfung."
+    },
+    {
+      "course": "fivemadmin",
+      "ordinal": 1,
+      "title": "ACE-Prüfung",
+      "theory": "ACE-Berechtigungen werden serverseitig geprüft. Der Client darf Rechte nur anzeigen, nicht selbst vergeben.",
+      "example": "IsPlayerAceAllowed(source,\"admin.kick\")",
+      "example_note": "Die Funktion prüft ein konkretes Recht für den auslösenden Spieler.",
+      "task": "Sichere eine Kick-Aktion ab."
+    },
+    {
+      "course": "fivemadmin",
+      "ordinal": 2,
+      "title": "Ziel-ID validieren",
+      "theory": "Eine Adminaktion braucht eine gültige Ziel-ID. Spieler können zwischen Anzeigen und Ausführen den Server verlassen.",
+      "example": "local target=tonumber(targetId)\nif not target or not GetPlayerName(target) then return end",
+      "example_note": "Ungültige oder nicht verbundene Spieler werden nicht bearbeitet.",
+      "task": "Prüfe String, negative ID und getrennten Spieler."
+    },
+    {
+      "course": "fivemadmin",
+      "ordinal": 3,
+      "title": "Server-Snapshot",
+      "theory": "Die Spielerliste wird serverseitig erzeugt. Browserdaten werden nicht als Quelle für Rollen und IDs vertraut.",
+      "example": "for _,id in ipairs(GetPlayers()) do print(id) end",
+      "example_note": "Der Server durchläuft die tatsächlich verbundenen Spieler.",
+      "task": "Baue eine Liste mit ID und Namen."
+    },
+    {
+      "course": "fivemadmin",
+      "ordinal": 4,
+      "title": "NUI-Fokus",
+      "theory": "SetNuiFocus steuert, ob Tastatur- und Mausinteraktionen an die NUI gehen. Beim Schließen muss der Fokus freigegeben werden.",
+      "example": "SetNuiFocus(true,true)",
+      "example_note": "Die UI erhält Fokus, bis sie mit false,false wieder freigegeben wird.",
+      "task": "Schreibe den Schließen-Ablauf."
+    },
+    {
+      "course": "fivemadmin",
+      "ordinal": 5,
+      "title": "Audit-Logs",
+      "theory": "Ein Audit-Log hält nachvollziehbar fest, wer wann welche geschützte Aktion auf welchem Ziel ausgeführt hat.",
+      "example": "{actor=source,action=\"kick\",target=target,at=os.time()}",
+      "example_note": "Der Datensatz enthält die minimalen Informationen zur Nachvollziehbarkeit.",
+      "task": "Entwerfe ein Logformat ohne unnötige private Daten."
+    },
+    {
+      "course": "fivemadmin",
+      "ordinal": 6,
+      "title": "Pagination in Adminlisten",
+      "theory": "Bei vielen Spielern oder Logzeilen sollten Daten in begrenzten Seiten geladen werden. Serverfilter verhindern unnötig große Antworten.",
+      "example": "GET /admin/logs?limit=20&cursor=...",
+      "example_note": "Der Client lädt maximal 20 Ergebnisse pro Anfrage.",
+      "task": "Füge eine Nächste-Seite-Interaktion hinzu."
+    },
+    {
+      "course": "lua-masterlab",
+      "ordinal": 1,
+      "title": "Service-Schichten",
+      "theory": "Eine Service-Schicht kapselt fachliche Entscheidungen unabhängig von FiveM-Netzwerkevents und Frameworkfunktionen.",
+      "example": "ShopService.buy(src,itemId)",
+      "example_note": "Die Funktion ist die zentrale Stelle für Kaufregeln und kann aus mehreren Handlern aufgerufen werden.",
+      "task": "Trenne Service- und Eventcode."
+    },
+    {
+      "course": "lua-masterlab",
+      "ordinal": 2,
+      "title": "Dependency Injection",
+      "theory": "Services können externe Abhängigkeiten als Parameter erhalten statt feste globale Objekte zu verwenden. Das erleichtert Tests.",
+      "example": "local function createShop(repository) return {load=repository.find} end",
+      "example_note": "Ein Test kann ein künstliches Repository übergeben.",
+      "task": "Baue einen kleinen Service mit austauschbarem Datenzugriff."
+    },
+    {
+      "course": "lua-masterlab",
+      "ordinal": 3,
+      "title": "Transaktionsgrenzen",
+      "theory": "Zusammenhängende Geld- und Inventaroperationen müssen konsistent sein. Ein Fehler nach der Abbuchung darf nicht zu einem verlorenen Gegenstand führen.",
+      "example": "BEGIN; UPDATE wallets ...; INSERT INTO inventory ...; COMMIT;",
+      "example_note": "Die Änderungen werden atomar bestätigt, sofern die Tabellen in derselben Transaktion liegen.",
+      "task": "Zeichne eine sichere Kaufsabfolge mit Rollback."
+    },
+    {
+      "course": "lua-masterlab",
+      "ordinal": 4,
+      "title": "Idempotency Keys",
+      "theory": "Eine eindeutige Anfragenummer schützt gegen doppelte Verarbeitung bei erneuter Zustellung eines Events. Die Prüfung muss dauerhaft und atomar sein.",
+      "example": "requestId=\"shop-12345\"",
+      "example_note": "Der Server kann anhand dieser ID erkennen, ob derselbe Kauf bereits verarbeitet wurde.",
+      "task": "Definiere eine dauerhaft gespeicherte Kauf-ID."
+    },
+    {
+      "course": "lua-masterlab",
+      "ordinal": 5,
+      "title": "Retry mit Backoff",
+      "theory": "Bei vorübergehenden Fehlern kann ein Wiederholungsversuch mit steigender Wartezeit sinnvoll sein. Unbegrenzte Retries verschlimmern Überlastung.",
+      "example": "waitMs=math.min(1000*2^attempt,8000)",
+      "example_note": "Die Wartezeit wächst bis maximal acht Sekunden.",
+      "task": "Plane maximal drei Wiederholungen mit Fehlerabbruch."
+    },
+    {
+      "course": "lua-masterlab",
+      "ordinal": 6,
+      "title": "Health Monitoring",
+      "theory": "Ein Healthcheck prüft Abhängigkeiten und Erreichbarkeit statt nur zu melden, dass ein Prozess läuft.",
+      "example": "status={database=\"ok\",resource=\"running\"}",
+      "example_note": "Die Meldung trennt Datenbankzustand und eigenen Resource-Status.",
+      "task": "Entwerfe drei Checks für eine FiveM-Resource."
+    },
+    {
+      "course": "nui",
+      "ordinal": 1,
+      "title": "NUI Page",
+      "theory": "ui_page legt fest, welche HTML-Datei als NUI-Oberfläche geladen wird. Die Dateien müssen für die Resource verfügbar sein.",
+      "example": "ui_page 'html/index.html'",
+      "example_note": "FiveM öffnet die angegebene Seite in seiner eingebetteten Browserumgebung.",
+      "task": "Definiere eine HTML-NUI im fxmanifest."
+    },
+    {
+      "course": "nui",
+      "ordinal": 2,
+      "title": "Lua sendet Browserdaten",
+      "theory": "SendNUIMessage überträgt ein Lua-Objekt an den Browser. Das Ereignis wird im JavaScript-message-Handler gelesen.",
+      "example": "SendNUIMessage({action=\"open\",visible=true})",
+      "example_note": "Der Browser erhält eine Nachricht mit action und visible.",
+      "task": "Sende eine Statusänderung an die UI."
+    },
+    {
+      "course": "nui",
+      "ordinal": 3,
+      "title": "Browser empfängt Nachricht",
+      "theory": "Im JavaScript-Event message prüft die Oberfläche den Typ eingehender Daten, bevor sie ihren Zustand ändert.",
+      "example": "addEventListener(\"message\",e=>{if(e.data?.action===\"open\")showUI();});",
+      "example_note": "Nur Nachrichten mit passender action lösen die UI-Aktion aus.",
+      "task": "Behandle einen unbekannten Nachrichtentyp."
+    },
+    {
+      "course": "nui",
+      "ordinal": 4,
+      "title": "NUI Callback",
+      "theory": "Ein NUI-Callback sendet Browserdaten zurück an die Lua-Resource. Die Verarbeitung muss eine Antwort geben und geschützte Aktionen serverseitig prüfen.",
+      "example": "RegisterNUICallback(\"close\",function(data,cb) SetNuiFocus(false,false);cb({ok=true}) end)",
+      "example_note": "Der Browser kann einen Schließvorgang auslösen und erhält eine Antwort.",
+      "task": "Implementiere einen sicheren Close-Callback."
+    },
+    {
+      "course": "nui",
+      "ordinal": 5,
+      "title": "ESC schließt UI",
+      "theory": "Die Escape-Taste ist ein wichtiger Schließweg. Sowohl die Sichtbarkeit als auch der FiveM-Fokus müssen zurückgesetzt werden.",
+      "example": "if(e.key===\"Escape\")closeMenu();",
+      "example_note": "Die JavaScript-Seite reagiert auf die Escape-Taste.",
+      "task": "Erstelle einen einzigen zentralen Schließen-Handler."
+    },
+    {
+      "course": "nui",
+      "ordinal": 6,
+      "title": "NUI Daten validieren",
+      "theory": "Browserdaten sind für die serverseitige Logik nicht vertrauenswürdig. Artikelpreise und Rechte dürfen nicht von der NUI festgelegt werden.",
+      "example": "fetch(\"https://\"+GetParentResourceName()+\"/buy\",{method:\"POST\",body:JSON.stringify({itemId})})",
+      "example_note": "Die NUI sendet nur eine Artikel-ID; der Server ermittelt den echten Preis selbst.",
+      "task": "Sichere eine UI-Kaufanfrage gegen einen manipulierten Preis."
+    },
+    {
+      "course": "ox",
+      "ordinal": 1,
+      "title": "ox_lib Notify",
+      "theory": "Eine benachrichtigende UI-Funktion zeigt Rückmeldungen lokal an. Sie ist keine Berechtigungsprüfung.",
+      "example": "lib.notify({title=\"Garage\",description=\"Geöffnet\",type=\"success\"})",
+      "example_note": "Der Client erhält eine sichtbare Erfolgsmeldung.",
+      "task": "Zeige eine Warnung und eine Erfolgsmeldung."
+    },
+    {
+      "course": "ox",
+      "ordinal": 2,
+      "title": "ox_lib Input Dialog",
+      "theory": "Ein Input-Dialog sammelt strukturierte Nutzereingaben. Servercode muss die Werte später erneut validieren.",
+      "example": "local input=lib.inputDialog(\"Preis\",{{type=\"number\",label=\"Betrag\"}})",
+      "example_note": "Die Rückgabe enthält die eingegebenen Formwerte oder nil beim Abbruch.",
+      "task": "Prüfe eine fehlende Dialogeingabe."
+    },
+    {
+      "course": "ox",
+      "ordinal": 3,
+      "title": "ox_lib Context",
+      "theory": "Ein Context Menu stellt Auswahlaktionen strukturiert dar. Die eigentliche geschützte Aktion gehört in einen sicheren Handler.",
+      "example": "lib.registerContext({id=\"garage\",title=\"Garage\",options={{title=\"Öffnen\"}}})",
+      "example_note": "Das Menü wird registriert und kann später per showContext geöffnet werden.",
+      "task": "Ergänze einen Eintrag mit einem Handler."
+    },
+    {
+      "course": "ox",
+      "ordinal": 4,
+      "title": "ox_target Zone",
+      "theory": "ox_target kann räumliche Interaktionszonen für Spieler bereitstellen. Serverrechte werden dadurch nicht ersetzt.",
+      "example": "exports.ox_target:addBoxZone({coords=vector3(0,0,0),size=vec3(2,2,2),options={}})",
+      "example_note": "Es entsteht eine Boxzone mit definiertem Mittelpunkt und Größe.",
+      "task": "Lege eine passende Interaktionszone an."
+    },
+    {
+      "course": "ox",
+      "ordinal": 5,
+      "title": "ox_inventory Items",
+      "theory": "Ein Inventar-Item hat eine festgelegte ID und typisierte Metadaten. Der Server entscheidet über Besitz und Verbrauch.",
+      "example": "exports.ox_inventory:GetItemCount(source,\"repairkit\")",
+      "example_note": "Der Server kann die vorhandene Itemanzahl lesen.",
+      "task": "Prüfe vor einer Aktion den Bestand."
+    },
+    {
+      "course": "ox",
+      "ordinal": 6,
+      "title": "oxmysql Parameter",
+      "theory": "Bei SQL-Anfragen über oxmysql sollten Nutzereingaben als Parameter gebunden werden. Das verhindert unkontrollierte SQL-Verkettung.",
+      "example": "local rows=MySQL.query.await(\"SELECT * FROM cars WHERE owner=?\", {citizenid})",
+      "example_note": "Die Besitzer-ID wird als Wert an die Datenbank übergeben.",
+      "task": "Lade Fahrzeuge eines Besitzers sicher."
+    },
+    {
+      "course": "qbcore",
+      "ordinal": 1,
+      "title": "Job Grade lesen",
+      "theory": "QBCore-Jobs können einen Grad enthalten. Servercode muss den aktuellen Job und Grade aus verlässlichen Spielerobjekten lesen.",
+      "example": "local Player=QBCore.Functions.GetPlayer(source)\nlocal grade=Player.PlayerData.job.grade.level",
+      "example_note": "Die Gradstufe kann für eine serverseitige Mindestprüfung genutzt werden.",
+      "task": "Verweigere eine Aktion unter einem Mindestgrade."
+    },
+    {
+      "course": "qbcore",
+      "ordinal": 2,
+      "title": "Metadata ändern",
+      "theory": "Metadaten sollten über die dokumentierten Player-Methoden auf Serverseite verändert werden. Daten dürfen nicht allein aus Clientangaben stammen.",
+      "example": "Player.Functions.SetMetaData(\"stress\",10)",
+      "example_note": "Der Stresswert des serverseitigen Spielers wird auf 10 gesetzt.",
+      "task": "Plane eine serverseitige Metadata-Aktualisierung."
+    },
+    {
+      "course": "qbcore",
+      "ordinal": 3,
+      "title": "RegisterCallback",
+      "theory": "Ein Servercallback liefert Daten an eine Clientanfrage zurück. Die Identität des Anfragenden kommt aus source.",
+      "example": "QBCore.Functions.CreateCallback(\"garage:list\",function(source,cb) cb({}) end)",
+      "example_note": "Die Anfrage erhält eine leere Liste als Antwort.",
+      "task": "Baue einen Callback mit Datenbankabfrage."
+    },
+    {
+      "course": "qbcore",
+      "ordinal": 4,
+      "title": "Useable Item",
+      "theory": "Ein Useable Item löst beim Verwenden eine registrierte Serverfunktion aus. Besitz und Spielerobjekt müssen geprüft werden.",
+      "example": "QBCore.Functions.CreateUseableItem(\"repairkit\",function(source,item) end)",
+      "example_note": "Der Handler wird bei Nutzung eines registrierten Items aufgerufen.",
+      "task": "Entwirf eine Prüfung vor Verbrauch eines Items."
+    },
+    {
+      "course": "qbcore",
+      "ordinal": 5,
+      "title": "Money Transactions",
+      "theory": "Ein serverseitiger Geldtransfer darf keinen negativen Betrag akzeptieren und muss den tatsächlichen Kontostand berücksichtigen.",
+      "example": "if type(amount)~=\"number\" or amount<=0 then return end",
+      "example_note": "Ungültige Beträge werden noch vor der Geldoperation abgelehnt.",
+      "task": "Prüfe ganzzahlige und maximale Beträge."
+    },
+    {
+      "course": "qbcore",
+      "ordinal": 6,
+      "title": "Framework Resource Restart",
+      "theory": "Beim Neustart einer Resource verschwinden lokale Variablen. Persistente Zustände müssen aus einer Datenbank oder autoritativen Quelle wiederhergestellt werden.",
+      "example": "AddEventHandler(\"onResourceStart\",function(resource) if resource==GetCurrentResourceName() then print(\"Start\") end end)",
+      "example_note": "Der Handler erkennt den Neustart der eigenen Resource.",
+      "task": "Plane das Laden von Fahrzeugzuständen."
+    },
+    {
+      "course": "security",
+      "ordinal": 1,
+      "title": "Trust Boundary",
+      "theory": "Eine Trust Boundary trennt Bereiche mit unterschiedlichen Berechtigungen. Browser und FiveM-Client sind nicht dieselbe Vertrauensstufe wie der Server.",
+      "example": "Client > Server: request itemId",
+      "example_note": "Der Server darf aus itemId nicht ungeprüft Geld oder Rollen ableiten.",
+      "task": "Markiere drei Vertrauensgrenzen in einer Anwendung."
+    },
+    {
+      "course": "security",
+      "ordinal": 2,
+      "title": "Input Validation",
+      "theory": "Eine Eingabeprüfung kontrolliert Typ, Format und erlaubten Wertebereich vor einer Verarbeitung. Escape und Autorisierung sind getrennte Sicherheitsmaßnahmen.",
+      "example": "if type(price)~=\"number\" or price<0 then return end",
+      "example_note": "Nichtnumerische oder negative Preise werden abgelehnt.",
+      "task": "Entwerfe eine Validierung für einen Kaufbetrag."
+    },
+    {
+      "course": "security",
+      "ordinal": 3,
+      "title": "Replay-Angriffe",
+      "theory": "Ein bereits gültiger Eventaufruf kann mehrfach wiederholt werden. Doppelschutz braucht eine serverseitige Auftragskennung oder Zustandsprüfung.",
+      "example": "requestId=\"pay-2026-001\"",
+      "example_note": "Eine bereits verarbeitete ID muss erneutes Abbuchen verhindern.",
+      "task": "Schreibe eine Wiederholungssperre als Pseudocode."
+    },
+    {
+      "course": "security",
+      "ordinal": 4,
+      "title": "Least Privilege",
+      "theory": "Eine Komponente soll nur die Rechte besitzen, die sie tatsächlich benötigt. Weniger Rechte begrenzen die Folgen eines Fehlers.",
+      "example": "service_role nur auf dem Server, nie im Browser.",
+      "example_note": "Der öffentliche Client erhält keinen Schlüssel für administrative Datenbankaktionen.",
+      "task": "Prüfe die benötigten Rechte zweier API-Endpunkte."
+    },
+    {
+      "course": "security",
+      "ordinal": 5,
+      "title": "Rate Limiting",
+      "theory": "Ein Rate Limit begrenzt Aktionen innerhalb eines Zeitfensters. Verteilte Server benötigen häufig gemeinsamen Zustand statt einzelner Prozessvariablen.",
+      "example": "maximal 5 Kaufversuche je Konto und Minute",
+      "example_note": "Nach Überschreiten der Grenze wird die Aktion bis zum nächsten Fenster abgelehnt.",
+      "task": "Definiere Grenzen für Loginversuche."
+    },
+    {
+      "course": "security",
+      "ordinal": 6,
+      "title": "Security Logging",
+      "theory": "Sicherheitslogs halten Ereignisse und Entscheidungen fest, ohne Passwörter, Sessiontokens oder andere Geheimnisse zu speichern.",
+      "example": "{actor:123,action:\"kick\",allowed:false}",
+      "example_note": "Das Log zeigt eine abgelehnte Aktion ohne geheime Zugangsdaten.",
+      "task": "Entwerfe ein minimalistisches Ereignisschema."
+    }
+  ]
+}
