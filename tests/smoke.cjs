@@ -83,7 +83,7 @@ assert(read('site/v31.html').includes('academy-v31-layout.css?build=20261108v49'
 for(const selector of ['.ll-home-brand-banner','.topbar','.bottom-nav','.focus-center','.practice-actions-simple'])assert(layoutRestore.includes(selector),'Visual recovery missing '+selector);
 
 const curriculum=read('site/academy-curriculum.js');
-for(const file of ['site/index.html','site/v21.html','site/v31.html'])assert(read(file).includes('academy-curriculum.js?build=20261108v47'),file+' must include curriculum');
+for(const file of ['site/index.html','site/v21.html','site/v31.html'])assert(read(file).includes('academy-curriculum.js?build=20261108v50'),file+' must include curriculum');
 for(const token of ['sections','quiz_items','LLCurriculum','data-lesson-part','quizProgress','quiz-meter-fill'])assert(js.includes(token)||curriculum.includes(token),'Missing expanded curriculum '+token);
 for(const token of ['data-plan-action="extend"','data-plan-action="reduce"','data-plan-action="end"','membershipRemainingText','memberExpiry'])assert(js.includes(token),'Missing subscription admin '+token);
 const adminEdge=read('supabase/functions/admin-users/index.ts');

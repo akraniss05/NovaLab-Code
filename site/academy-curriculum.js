@@ -1,14 +1,12 @@
-/* LiveryLab Academy · Curriculum reader
- * This module displays lesson-specific sections and vetted quiz questions;
- * it does not alter the main menu or the simple code checker.
+/* LiveryLab Academy · Focused lesson reader
+ * Teach the subject first. Exercises remain in the separate practice step.
  * Made with 💙 by NyxAtheris (LiveryLab Studios)
  */
 (function(root){
 'use strict';
 function parts(p){
- return (Array.isArray(p?.sections)?p.sections:[]).filter(x=>
-  x&&typeof x.title==='string'&&x.title.trim()&&
-  Array.isArray(x.paragraphs)&&x.paragraphs.some(t=>typeof t==='string'&&t.trim())).slice(0,2);
+ if(!p || (!String(p.theory||'').trim()&&!String(p.example||'').trim()))return [];
+ return [{title:'Thema verstehen'},{title:'Beispiel nachvollziehen'}];
 }
 function questions(p){
  const originalOptions=Array.isArray(p?.options)?p.options.map(String):[];
@@ -26,40 +24,43 @@ function questions(p){
   Number.isInteger(Number(q.correct))&&Number(q.correct)>=0&&Number(q.correct)<q.options.length
  ).map(q=>({question:String(q.question),options:q.options.map(String),
    correct:Number(q.correct),explanation:String(q.explanation||'')}));
- // Never invent alternatives by mixing unrelated task, goal and mistake fields.
- // V3 is reviewed context-by-context; older V2 generated banks are unreliable.
- if(Number(p?.quiz_version)>=3&&valid.length>=2&&valid.length===bank.length){
-  return valid.slice(0,3);
- }
+ if(Number(p?.quiz_version)>=3&&valid.length>=2&&valid.length===bank.length)return valid.slice(0,3);
  return original;
 }
+function safeNotes(value,max){
+ return (Array.isArray(value)?value:[]).filter(x=>typeof x==='string'&&x.trim()).slice(0,max);
+}
 function render(p,index,escapeHtml,safeLink){
- const a=parts(p),esc=escapeHtml;
- if(!a.length){
-  return '<h2>Die Idee dahinter.</h2><p>'+esc(p.theory||p.goal||'')+'</p>'+
-   (Array.isArray(p.keyPoints)?'<ul>'+p.keyPoints.slice(0,4).map(t=>'<li>'+esc(t)+'</li>').join('')+'</ul>':'')+
-   (p.mistake?'<div class="note"><strong>Typischer Fehler:</strong> '+esc(p.mistake)+'</div>':'')+
-   (p.example?'<div class="codebox"><pre><code>'+esc(p.example)+'</code></pre></div>':'')+
-   (p.resource?'<p><a href="'+safeLink(p.resource)+'" rel="noopener noreferrer" target="_blank">Offizielle Dokumentation ↗</a></p>':'');
+ const esc=escapeHtml,sections=parts(p),at=Math.max(0,Math.min(sections.length-1,Number(index)||0));
+ if(!sections.length)return '<h2>Erklärung</h2><p>Für diese Lektion ist noch kein Erklärungstext hinterlegt.</p>';
+ const theory=String(p.theory||'').trim(),example=String(p.example||'').trim();
+ const title=String(p.title||'Das Thema').trim();
+ const intro=safeNotes(p.explanation_steps,5),notes=safeNotes(p.example_notes,5);
+ const isBlender=/blender|3d/i.test([p.courseId,p.category,p.lang].join(' '));
+ const doc=p.resource?'<p class="ll-resource-link"><a href="'+safeLink(p.resource)+'" rel="noopener noreferrer" target="_blank">Weiterführende Quelle ↗</a></p>':'';
+ const header='<div class="ll-part-heading"><div><span class="eyebrow">LERNTEIL '+(at+1)+' VON 2</span><h2>'+esc(sections[at].title)+'</h2></div></div>'+
+  '<nav class="ll-part-selector ll-part-selector-two" aria-label="Erklärung und Beispiel">'+
+  sections.map((s,i)=>'<button type="button" data-lesson-part="'+i+'" class="'+(i===at?'active':'')+'" aria-current="'+(i===at?'step':'false')+'" aria-label="Lernteil '+(i+1)+': '+esc(s.title)+'"><span class="ll-part-number">'+(i+1)+'</span><span>'+(i===0?'Erklärung':'Beispiel')+'</span></button>').join('')+'</nav>';
+ let body='';
+ if(at===0){
+  body='<div class="ll-part-body"><h3>'+esc(title)+'</h3>'+
+   (theory?'<p>'+esc(theory)+'</p>':'<p>Sieh dir im nächsten Lernteil das konkrete Beispiel an.</p>')+
+   (intro.length?'<h3>So funktioniert es</h3><ol class="ll-explanation-steps">'+intro.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol>':'')+
+   '</div>';
+ }else{
+  body='<div class="ll-part-body"><h3>Ein konkretes Beispiel</h3>'+
+   (example?(isBlender?'<div class="note ll-example-scene"><strong>In Blender:</strong> '+esc(example)+'</div>':
+    '<div class="codebox"><pre><code>'+esc(example)+'</code></pre></div>'):
+    '<p>Für dieses Thema ist noch kein Beispiel verfügbar.</p>')+
+   (notes.length?'<h3>Schritt für Schritt erklärt</h3><ol class="ll-explanation-steps">'+notes.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol>':'')+
+   ((typeof p.mistake==='string'&&p.mistake.trim()&&!/dokumentier|projektstruktur|regressionstest|lies den beispielcode/i.test(p.mistake))?
+     '<div class="note"><strong>Typischer Fehler:</strong> '+esc(p.mistake)+'</div>':'')+
+   '</div>';
  }
- const at=Math.max(0,Math.min(a.length-1,Number(index)||0));
- const t=a[at];
- return '<div class="ll-part-heading"><div><span class="eyebrow">LERNTEIL '+(at+1)+' VON '+a.length+'</span><h2>'+esc(t.title)+'</h2></div></div>'+
-  '<nav class="ll-part-selector ll-part-selector-two" aria-label="Lernteile">'+a.map((v,i)=>{
-   const short=i===0?'Verstehen':'Üben';
-   return '<button type="button" data-lesson-part="'+i+'" class="'+(i===at?'active':'')+'" aria-current="'+(i===at?'step':'false')+'" aria-label="Lernteil '+(i+1)+': '+esc(v.title)+'"><span class="ll-part-number">'+(i+1)+'</span><span>'+short+'</span></button>';
-  }).join('')+'</nav>'+
-  '<div class="ll-lesson-focus"><span>'+(at===0?'DEIN LERNZIEL':'DEINE KONKRETE AUFGABE')+'</span><strong>'+esc(at===0?p.goal||p.theory||'Verstehe das Beispiel.':p.task||t.exercise||'Wende das Gelernte an.')+'</strong></div>'+
-  '<div class="ll-part-body">'+
-  t.paragraphs.filter(x=>typeof x==='string'&&x.trim()).map(x=>'<p>'+esc(x)+'</p>').join('')+
-  (Array.isArray(t.bullets)&&t.bullets.length?'<ul>'+t.bullets.filter(x=>typeof x==='string'&&x.trim()).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+
-  (typeof t.code==='string'&&t.code.trim()?'<div class="codebox"><pre><code>'+esc(t.code)+'</code></pre></div>':'')+
-  (typeof t.exercise==='string'&&t.exercise.trim()?'<div class="note"><strong>Jetzt selbst ausprobieren:</strong> '+esc(t.exercise)+'</div>':'')+
-  '</div><div class="ll-part-controls">'+
-  (at===0?'<button type="button" class="btn primary" data-lesson-part="1">Zum Übungsteil →</button>':
-  '<button type="button" class="btn" data-lesson-part="0">← Zur Erklärung</button>')+
-  '</div>'+
-  (p.resource?'<p><a href="'+safeLink(p.resource)+'" rel="noopener noreferrer" target="_blank">Offizielle Dokumentation ↗</a></p>':'');
+ const controls='<div class="ll-part-controls">'+
+  (at===0?'<button type="button" class="btn primary" data-lesson-part="1">Beispiel ansehen →</button>':
+   '<button type="button" class="btn" data-lesson-part="0">← Zur Erklärung</button>')+'</div>';
+ return header+body+controls+doc;
 }
 root.LLCurriculum={parts,questions,render};
 })(typeof module!=='undefined'&&module.exports?module.exports:window);
