@@ -33,6 +33,10 @@ contains(menu,['ll-atelier-menu-lede','ll-atelier-scene','ll-atelier-tile-kicker
 for(const route of ['courses','script','exams','reference','plans','profile','friends','support','settings'])
  assert(menu.includes('data-go="'+route+'"'),'All original destinations must remain: '+route);
 assert(!menu.includes('data-go="admin"'),'No administrator tile for learners');
+assert.match(menu,/id="ll-menu-learn"[\s\S]*data-go="courses"[\s\S]*id="ll-menu-community"[\s\S]*data-go="friends"[\s\S]*id="ll-menu-account"[\s\S]*data-go="support"/);
+s.tier='free';
+assert.match(a.neonMenuPage(),/class="ll-neon-menu-tile is-locked" data-go="script"[\s\S]*Tarif erforderlich/);
+s.tier='ultimate';
 const script=a.scriptPage();
 contains(script,['ll-atelier-script-stats','ll-atelier-studio-shell','ll-atelier-studio-files','ll-atelier-studio-work',
 'file-tree','file-tabs','file-preview','data-project-tab','data-go="track/fivem"'],'Script');
@@ -59,5 +63,5 @@ for(const selector of ['.ll-atelier-scene','.ll-atelier-cube','.ll-atelier-cours
 '@media(max-width:490px)','prefers-reduced-motion'])
  assert(css.includes(selector),'Atelier missing '+selector);
 for(const page of ['index.html','v21.html','v31.html'])
- assert(file('site/'+page).includes('academy-atelier.css?build=20261108v64'),page+' stylesheet missing');
+ assert(file('site/'+page).includes('academy-atelier.css?build=20261108v65'),page+' stylesheet missing');
 console.log('Atelier: all 11 real pages, permissions, progress, 2FA, support, script unlock, vouchers and navigation retained.');

@@ -89,7 +89,7 @@ function pageHeading(label,title,description){
   '<div class="ll-neon-page-title"><span class="ll-neon-brand-text"><img src="./liverylab-symbol.svg" alt=""> LiveryLab <em>Academy</em></span>'+
   '<span class="eyebrow ll-neon-kicker">'+esc(label)+'</span><h1>'+esc(entry[0])+'</h1>'+
   '<p class="lede">'+esc(description)+'</p><span class="ll-neon-legacy-heading" aria-hidden="true">'+title+'</span></div>'+
-  '<span class="ll-neon-hero-art" aria-hidden="true"><span class="ll-neon-hero-glyph">'+atelierScene(entry[1],entry[0]==='Shop'?'shop':entry[0]==='Administration'?'admin':entry[0]==='Mein Profil'?'profile':'general')+'</span></span>'+
+  '<span class="ll-neon-hero-art" aria-hidden="true"><span class="ll-neon-hero-glyph">'+atelierScene(entry[1],label==='MITGLIEDSCHAFT'?'shop':label==='ADMINISTRATION'?'admin':entry[1])+'</span></span>'+
   '</header>';
 }
 function planCounts(){var f=s.lessons.filter(l=>l.required_plan==='free').length;var pl=s.lessons.filter(l=>l.required_plan==='plus').length;return {free:f,plus:f+pl,pro:s.lessons.length}}
@@ -244,27 +244,39 @@ function neonExamOverview(){
   '<div class="ll-neon-stat"><span>'+llIcon('xp')+'</span><strong>'+xpEarned()+'</strong><small>Gesammelte XP</small></div></div></section>';
 }
 function neonMenuPage(){
- const entries=[
-  ['courses','learn','Lernen','Kurse entdecken und Wissen aufbauen',false],
-  ['script','code','Scripts','Script-Projekt, Dateien und Codebeispiele',!hasScript()],
-  ['exams','exam','Prüfungen','Wissen testen und den Lernstand prüfen',false],
-  ['reference','book','Referenzen','Funktionen, Befehle und Dokumentation',!fullAccess()],
-  ['plans','xp','Shop','Free, Plus, Ultimate und Gutscheine',false],
-  ['profile','profile','Mein Profil','Lernfortschritte, XP und Erfolge',false],
-  ['friends','friends','Freunde','Gemeinsam lernen und Anfragen verwalten',false],
-  ['support','book','Support','Hilfe, Tickets und Antworten vom Team',false],
-  ['settings','settings','Einstellungen','Darstellung, Konto, Timer und Datenschutz',false]
+ const groups=[
+  ['learn','Lernen & Entwickeln',[
+   ['courses','learn','Lernen','Kurse entdecken und Wissen aufbauen',false],
+   ['script','code','Scripts','Script-Projekt, Dateien und Codebeispiele',!hasScript()],
+   ['exams','exam','Prüfungen','Wissen testen und den Lernstand prüfen',false],
+   ['reference','book','Referenzen','Funktionen, Befehle und Dokumentation',!fullAccess()]
+  ]],
+  ['community','Profil & Community',[
+   ['profile','profile','Mein Profil','Lernfortschritte, XP und Erfolge',false],
+   ['friends','friends','Freunde','Gemeinsam lernen und Anfragen verwalten',false]
+  ]],
+  ['account','Konto & Hilfe',[
+   ['plans','xp','Shop','Free, Plus, Ultimate und Gutscheine',false],
+   ['support','book','Support','Hilfe, Tickets und Antworten vom Team',false],
+   ['settings','settings','Einstellungen','Darstellung, Konto, Timer und Datenschutz',false]
+  ]]
  ];
- if(s.profile?.role==='admin')entries.push(['admin','settings','Administration','Nutzer, Freigaben und Academy verwalten',false]);
- return pageHeading('HAUPTMENÜ','Alle Bereiche der Academy','Alle Funktionen an einem Ort – mit deinen bisherigen Freigaben und Einstellungen.')+
- '<div class="ll-atelier-menu-lede"><span class="eyebrow">[ ✦ ] DEIN WORKSPACE</span><h2>Alles, was du zum Bauen brauchst.</h2><p>Ein Klick öffnet den gleichen Bereich wie bisher – mit all deinen Daten.</p></div>'+atelierMissionStrip()+
- '<div class="ll-neon-menu-grid">'+entries.map(([route,icon,label,description,locked],i)=>
-  '<button type="button" class="ll-neon-menu-tile'+(locked?' is-locked':'')+'" data-go="'+esc(route)+'">'+
-  '<span class="ll-neon-menu-art" aria-hidden="true">'+atelierScene(icon,route)+'</span>'+
-  '<span class="ll-atelier-tile-kicker">0'+(i+1)+' · '+(locked?'TARIF ERFORDERLICH':route==='courses'?'DEIN LERNPFAD':'ACADEMY')+'</span>'+
- '<span class="ll-neon-menu-label"><strong>'+esc(label)+(locked?' <span aria-label="Tarif erforderlich">⌑</span>':'')+
-  '</strong><small>'+esc(description)+'</small></span><span class="ll-neon-tile-arrow" aria-hidden="true">→</span></button>'
- ).join('')+'</div>'+
+ if(s.profile?.role==='admin')groups.push(['manage','Verwaltung',[
+  ['admin','settings','Administration','Nutzer, Freigaben und Academy verwalten',false]
+ ]]);
+ return pageHeading('HAUPTMENÜ','Alle Bereiche der Academy','Deine Kurse, Projekte und Werkzeuge auf einen Blick.')+
+ '<div class="ll-atelier-menu-lede"><h2>Dein Lernstand</h2></div>'+atelierMissionStrip()+
+ groups.map(([key,heading,entries])=>
+  '<section class="ll-menu-group ll-menu-group-'+key+'" aria-labelledby="ll-menu-'+key+'">'+
+  '<h2 id="ll-menu-'+key+'">'+esc(heading)+'</h2><div class="ll-neon-menu-grid">'+
+  entries.map(([route,icon,label,description,locked])=>
+   '<button type="button" class="ll-neon-menu-tile'+(locked?' is-locked':'')+'" data-go="'+esc(route)+'">'+
+   '<span class="ll-neon-menu-art" aria-hidden="true">'+atelierScene(icon,route)+'</span>'+
+   '<span class="ll-atelier-tile-kicker">'+(locked?'Tarif erforderlich':route==='courses'?'Dein Lernpfad':'Academy')+'</span>'+
+   '<span class="ll-neon-menu-label"><strong>'+esc(label)+'</strong><small>'+esc(description)+'</small></span>'+
+   '<span class="ll-neon-tile-arrow" aria-hidden="true">→</span></button>'
+  ).join('')+'</div></section>'
+ ).join('')+
  '<section class="ll-neon-menu-footer"><span>'+llIcon('fire')+' '+Number(s.loginStreak?.current||0)+' Tage Lernstreak</span>'+
  '<span>'+llIcon('xp')+' '+xpEarned()+' XP</span>'+
  '<button class="btn small" type="button" data-go="home">← Zur Startseite</button></section>';
@@ -278,7 +290,7 @@ function navHTML(route){
  ];
  if(s.profile?.role==='admin')items.push(['admin','♢','Administration']);
  return items.map(([id,icon,label])=>{
-  const active=route===id||((route==='track'||route==='lesson')&&id==='home')||(route==='exam'&&id==='exams');
+  const active=route===id||((route==='track'||route==='lesson')&&id==='courses')||(route==='exam'&&id==='exams');
   return '<button type="button" class="side-link'+(active?' active':'')+'" data-go="'+id+'">'+
    '<span class="side-icon" aria-hidden="true">'+icon+'</span><span>'+label+'</span></button>';
  }).join('');
