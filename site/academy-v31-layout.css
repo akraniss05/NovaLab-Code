@@ -546,3 +546,71 @@ body:not(.is-auth) .topbar > .top-right{position:relative;z-index:4}
 @media(max-width:970px){.ll-difficulty-chart{grid-template-columns:repeat(3,minmax(0,1fr))}.ll-difficulty-tile{min-height:273px}.ll-difficulty-bar-track{height:86px}}
 @media(max-width:620px){.ll-difficulty-dashboard{padding:16px 12px;border-radius:18px}.ll-difficulty-dashboard-header{align-items:flex-start}.ll-difficulty-overview-total{flex:0 0 75px;min-height:77px}.ll-difficulty-overview-total strong{font-size:25px}.ll-difficulty-overview-total small{font-size:9px}.ll-difficulty-chart{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.ll-difficulty-tile{padding:11px 10px;min-height:240px;gap:6px}.ll-difficulty-bar-track{height:67px}.ll-difficulty-bar{width:42px}.ll-difficulty-tile-5:last-child{grid-column:1/-1;min-height:185px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:10px;align-items:start}.ll-difficulty-tile-5:last-child .ll-difficulty-bar-track{grid-column:2;grid-row:1/5;height:100px}.ll-difficulty-tile-5:last-child .ll-difficulty-tile-top,.ll-difficulty-tile-5:last-child .ll-difficulty-tile-name,.ll-difficulty-tile-5:last-child .ll-difficulty-tile-description,.ll-difficulty-tile-5:last-child .ll-difficulty-tile-cta{grid-column:1}.ll-course-filter-controls{grid-template-columns:1fr}.ll-course-results-icon{display:none}}
 @media(prefers-reduced-motion:reduce){.ll-difficulty-tile,.ll-difficulty-bar{transition:none}.ll-difficulty-tile:hover{transform:none}}
+
+
+/* Administration v1.5 · Owner registration gate and course progress dashboard. */
+.ll-registration-admin{padding:24px;border-radius:20px;border:1px solid #766195;background:linear-gradient(145deg,#291b3a,#161223)}
+.ll-admin-section-header h2{margin:5px 0 9px;font-size:clamp(21px,3vw,28px);color:#fff}
+.ll-admin-section-header p{max-width:700px;margin:0;color:#cbbedb;font-size:13px;line-height:1.6}
+.ll-registration-current{display:flex;flex-wrap:wrap;gap:9px 13px;align-items:center;margin:20px 0 16px;color:#d4c1e4;font-size:12px}
+.ll-registration-status{display:inline-flex;align-items:center;padding:7px 11px;border:1px solid #9169b6;border-radius:99px;background:#3c2855;color:#f0d8ff;font-weight:800}
+.ll-registration-status.is-open{border-color:#79c9a6;background:#203b33;color:#bdffdf}
+.ll-registration-mode-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:12px 0}
+.ll-registration-mode{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:11px;padding:21px 19px;min-height:230px;background:#24192f;border:1px solid #6c577c;border-radius:17px;color:#f8f0ff;cursor:pointer;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.ll-registration-mode:not(:disabled):hover{transform:translateY(-2px);border-color:#ce9dff}
+.ll-registration-mode:focus-visible{outline:3px solid #d7a0ff;outline-offset:3px}
+.ll-registration-mode:disabled{cursor:not-allowed;opacity:.7}
+.ll-registration-mode.is-current{border-color:#ba89fc;box-shadow:inset 0 0 0 1px #a576e7,0 8px 27px #b16dcb22;background:linear-gradient(155deg,#3b2754,#221630)}
+.ll-registration-mode-icon{display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:#553575;color:#f1d6ff;font-size:23px}
+.ll-registration-mode strong{font-size:18px;line-height:1.25}
+.ll-registration-mode small{flex:1;line-height:1.65;color:#cfbfdf;font-size:12px}
+.ll-registration-mode-foot{display:block;width:100%;padding-top:11px;border-top:1px solid #745b8c;color:#eac9ff;font-weight:800;font-size:12px}
+.ll-registration-notice{padding:12px 14px;border-left:3px solid #b18be6;border-radius:5px;background:#3224439e;color:#dbcce9;font-size:12px;line-height:1.7}
+.ll-registration-pending{display:flex;justify-content:space-between;align-items:center;gap:13px;flex-wrap:wrap;margin:18px 0;padding:15px;border:1px solid #755c8b;border-radius:15px;background:#251c32}
+.ll-registration-pending div{display:flex;flex-direction:column;gap:5px}
+.ll-registration-pending strong{color:#f3e8ff}
+.ll-registration-pending span{font-size:12px;color:#c4b4d4}
+.ll-admin-user-progress-action{grid-column:1/-1;margin-bottom:10px}
+.ll-progress-open{min-height:39px!important;border-color:#a784d7!important;background:#38254e!important;color:#f0d6ff!important}
+.ll-progress-open:hover{background:#51346b!important}
+.ll-admin-progress-panel{margin:0 0 22px;padding:22px;border:1px solid #9070b6;border-radius:21px;background:radial-gradient(ellipse at top left,#4a286e85,transparent 58%),linear-gradient(145deg,#20162d,#141120);box-shadow:0 15px 34px #0a05162a}
+.ll-admin-progress-head{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin:0 0 17px}
+.ll-admin-progress-head h2{margin:5px 0 6px;font-size:clamp(22px,3vw,28px);overflow-wrap:anywhere;color:#fff}
+.ll-admin-progress-head p{color:#c3b1d4;font-size:12px;line-height:1.6;margin:0}
+.ll-admin-progress-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:15px 0}
+.ll-admin-progress-metrics>div{display:flex;flex-direction:column;gap:4px;border-radius:13px;border:1px solid #694c85;background:#2a1d3b;padding:14px;min-width:0}
+.ll-admin-progress-metrics strong{font-size:clamp(19px,2.7vw,28px);color:#e6c3ff;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.ll-admin-progress-metrics span{font-size:11px;color:#c7b4d8;line-height:1.4}
+.ll-admin-current-lesson{display:flex;flex-direction:column;gap:5px;margin:14px 0;padding:14px 16px;border:1px solid #6b5387;border-radius:13px;background:#2d2040}
+.ll-admin-current-lesson span{color:#ceb3e7;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+.ll-admin-current-lesson strong{font-size:15px;color:#fff}
+.ll-admin-current-lesson small{font-size:11px;color:#c7afd7}
+.ll-admin-progress-controls{display:grid;grid-template-columns:minmax(0,2fr) minmax(155px,1fr);gap:12px;margin:17px 0}
+.ll-admin-progress-controls label{display:flex;flex-direction:column;gap:8px;min-width:0;color:#e8d8f4;font-size:12px;font-weight:750}
+.ll-admin-progress-controls .input,.ll-admin-progress-controls .select{width:100%;max-width:none;min-width:0;box-sizing:border-box;min-height:44px;background:#24182f;border:1px solid #805ba1;color:#fff}
+.ll-admin-course-progress-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;max-height:660px;overflow:auto;padding:3px 5px 3px 2px;overscroll-behavior:contain}
+.ll-admin-course-progress-card{border:1px solid #6b547e;background:#24192f;border-radius:13px;min-width:0}
+.ll-admin-course-progress-card[open]{border-color:#ae7ad9;background:#2d2042}
+.ll-admin-course-progress-card summary{display:flex;align-items:center;gap:9px;padding:12px;cursor:pointer;list-style:none;min-height:64px}
+.ll-admin-course-progress-card summary::-webkit-details-marker{display:none}
+.ll-admin-course-progress-card summary:focus-visible{outline:2px solid #d1a4ff;outline-offset:-2px;border-radius:12px}
+.ll-admin-course-progress-title{display:flex;align-items:center;gap:9px;flex:1;min-width:0}
+.ll-admin-course-progress-title>div{min-width:0;display:flex;flex-direction:column;gap:5px}
+.ll-admin-course-progress-title strong{font-size:12px;color:#f6ecff;overflow-wrap:anywhere}
+.ll-admin-course-progress-title small{color:#bfaed0;font-size:10px;line-height:1.4;overflow-wrap:anywhere}
+.ll-admin-course-icon{flex:0 0 34px;display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:#5a367d;color:#f8deff;font-size:17px;font-weight:800}
+.ll-admin-course-progress-count{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:0 0 auto}
+.ll-admin-course-progress-count strong{font-size:12px;color:#d9afff;font-variant-numeric:tabular-nums}
+.ll-admin-course-progress-count small{font-size:11px;color:#c4b3d3}
+.ll-admin-course-chevron{color:#d1b4e5;font-size:16px}
+.ll-admin-course-progress-card[open] .ll-admin-course-chevron{transform:rotate(180deg)}
+.ll-admin-course-progress-body{padding:0 13px 13px;display:flex;flex-direction:column;gap:10px}
+.ll-admin-course-progress-track{height:7px;border-radius:99px;background:#594267;overflow:hidden}
+.ll-admin-course-progress-track>span{height:100%;display:block;border-radius:inherit;background:linear-gradient(90deg,#8f65d8,#c2a0fa)}
+.ll-admin-course-progress-body p{display:flex;flex-direction:column;gap:4px;margin:0;color:#f0e4fa;font-size:12px;line-height:1.4;overflow-wrap:anywhere}
+.ll-admin-course-progress-body p span{color:#b7a5c9;font-size:10px;text-transform:uppercase}
+.ll-admin-course-progress-body p small{color:#bfaacf;font-size:10px}
+.ll-admin-progress-private{margin-top:15px;padding:12px 14px;background:#241b34;border-radius:12px;color:#cbb8d9;font-size:11px;line-height:1.7}
+@media(max-width:850px){.ll-admin-course-progress-list{grid-template-columns:1fr}.ll-admin-progress-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.ll-admin-progress-controls{grid-template-columns:1fr 160px}}
+@media(max-width:620px){.ll-registration-admin,.ll-admin-progress-panel{padding:15px;border-radius:16px}.ll-registration-mode-grid{grid-template-columns:1fr}.ll-registration-mode{min-height:176px;padding:16px}.ll-admin-progress-head{align-items:flex-start}.ll-admin-progress-controls{grid-template-columns:1fr}.ll-admin-course-progress-list{max-height:530px}.ll-admin-progress-metrics>div{padding:11px}.ll-progress-open{width:100%;white-space:normal}}
+@media(prefers-reduced-motion:reduce){.ll-registration-mode{transition:none}.ll-registration-mode:hover{transform:none}}
