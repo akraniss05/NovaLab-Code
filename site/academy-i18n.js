@@ -199,7 +199,8 @@ function updateControls(){
   const selected=button.dataset.lang===current;
   button.classList.toggle('active',selected);
   button.setAttribute('aria-pressed',String(selected));
-  button.setAttribute('aria-label',button.dataset.lang.toUpperCase()+(selected?' selected':''));
+  const name=button.dataset.lang.toUpperCase()+(selected?' selected':'');
+  if(button.getAttribute('aria-label')!==name)button.setAttribute('aria-label',name);
  });
 }
 function setLanguage(lang){
