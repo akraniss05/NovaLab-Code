@@ -443,17 +443,112 @@ function stats(){
   '</div>';
 }
 
-function courseCard(c){
- var lessons=lessonsOf(c.id),done=countDone(c.id),complete=lessons.length>0&&done===lessons.length,free=lessons.some(l=>l.required_plan==='free');
- return '<article class="course-card'+(complete?' is-complete':'')+'">'+
- '<div class="course-head"><span class="course-icon">'+esc(courseAccent(c))+'</span><span class="chip '+(complete||free?'free':'plus')+'">'+(complete?'✓ Abgeschlossen':free?'Einstieg frei':'Aufbaukurs')+'</span></div>'+
- '<div><span class="micro">'+esc(c.category)+' · Einstieg: '+levelText(c.level)+'</span><h3>'+esc(c.name)+'</h3>'+difficultyBadge(c)+'</div>'+
- '<p>'+lessons.length+' Lektionen · Verständliche Schritte, Tutorials und Praxis.</p>'+
- '<div class="progress" role="progressbar" aria-valuenow="'+done+'" aria-valuemin="0" aria-valuemax="'+lessons.length+'" aria-label="Kursfortschritt"><span style="width:'+pct(done,lessons.length)+'%"></span></div>'+
- '<div class="meta-line"><span>'+done+' / '+lessons.length+' abgeschlossen</span><span>'+pct(done,lessons.length)+'%</span></div>'+
- '<button class="btn block" type="button" data-go="track/'+esc(c.id)+'">'+(complete?'Kurs ansehen ✓':done?'Weiterlernen →':'Lernpfad öffnen →')+'</button></article>';
-}
 
+/* Roadmap v1.5: all visuals use real lesson metadata and saved progress. */
+function roadmapCourseDescription(course){
+ const copy={
+  'coding-basics':'Dein Einstieg ins Programmieren: verstehen, ausprobieren und eigenen Code schreiben.',
+  lua:'Die vielseitige Skriptsprache für Games, FiveM, Tools und eigene Projekte.',
+  python:'Von der ersten Variable bis zu Automatisierungen, APIs und eigenen Anwendungen.',
+  javascript:'Interaktive Websites, Browser-Apps und moderne JavaScript-Projekte entwickeln.',
+  typescript:'TypeScript sicher einsetzen: Typen, Architektur und große Anwendungen.',
+  html:'Baue den Inhalt echter Websites mit verständlichem, semantischem HTML.',
+  css:'Gestalte moderne Websites mit Layouts, Animationen und Responsive Design.',
+  sql:'Daten lesen, verbinden, verändern und professionelle Abfragen verstehen.',
+  react:'Erstelle interaktive React-Oberflächen Schritt für Schritt.',
+  nodejs:'Baue APIs und Backends mit modernen Node.js-Werkzeugen.',
+  fivem:'Schreibe eigene FiveM-Resources von den Lua-Grundlagen bis zum Projekt.',
+  qbcore:'Lerne professionelle QBCore-Scripts, Events, Daten und Framework-Architektur.',
+  esx:'Entwickle und verstehe ESX-Resources, Jobs und serverseitige Abläufe.',
+  'blender-fundamentals':'Modelliere deine ersten 3D-Objekte und gestalte komplette Szenen.',
+  'blender-animation':'Setze eigene 3D-Modelle mit Keyframes und Bewegung in Szene.',
+  'blender-technical':'Baue technische 3D-Workflows mit Geometry Nodes und Blender-Python.',
+  'blender-fivem-assets':'Von Blender zum optimierten, einsatzfähigen Game-Asset.',
+  rust:'Lerne sichere Systemprogrammierung mit Ownership, Traits und Projekten.',
+  cpp:'C++ meistern: moderne Sprachelemente, Speicherverwaltung und robuste Software.'
+ };
+ if(copy[course.id])return copy[course.id];
+ const cat=String(course.category||'').toLowerCase();
+ if(cat.includes('blender')||cat.includes('3d'))return 'Modelliere, gestalte und optimiere eigene 3D-Projekte – Schritt für Schritt.';
+ if(cat.includes('fivem')||cat.includes('framework'))return 'Baue eigene Scripts, verstehe Events und entwickle stabile Game-Systeme.';
+ if(cat.includes('web'))return 'Entwickle moderne Websites und Anwendungen von den Grundlagen bis zum Projekt.';
+ if(cat.includes('tool'))return 'Lerne die Werkzeuge und Arbeitsabläufe für professionelle Projekte kennen.';
+ if(cat.includes('backend'))return 'Verstehe Daten, Schnittstellen und den Aufbau zuverlässiger Anwendungen.';
+ return 'Starte mit kleinen Konzepten und arbeite dich zu eigenen anspruchsvollen Projekten vor.';
+}
+function roadmapCourseGlyph(course){
+ const id=String(course?.id||''),cat=String(course?.category||'');
+ if(id==='python')return 'Py';
+ if(id==='lua')return '⌘';
+ if(id==='javascript')return 'JS';
+ if(id==='typescript')return 'TS';
+ if(id==='html')return '⟨/⟩';
+ if(id==='css')return '#';
+ if(id==='rust')return 'Rs';
+ if(id==='cpp')return 'C++';
+ if(id==='csharp')return 'C#';
+ if(id==='sql')return '▤';
+ if(cat.includes('Blender')||cat.includes('3D'))return '✧';
+ if(cat==='FiveM'||cat==='Frameworks')return '⬡';
+ if(cat==='Webentwicklung')return '⟨/⟩';
+ return courseAccent(course);
+}
+function roadmapCoursePreview(course,done,total){
+ const milestones=[0,.20,.45,.70,.95],icons=['▶','⟨/⟩','⬡','⌁','⚑'];
+ const idx=milestones.map(f=>Math.min(Math.max(0,total-1),Math.floor(f*total)));
+ const finished=total>0&&done>=total;
+ return '<div class="ll-mini-road" aria-label="'+esc('Fortschrittsvorschau: '+done+' von '+total+' Lektionen abgeschlossen')+'">'+
+  milestones.map((f,i)=>{
+   const step=idx[i],state=finished||done>step?'is-done':done===step?'is-active':'is-future';
+   return '<span class="ll-mini-stop '+state+'" aria-hidden="true"><span>'+ (state==='is-done'?'✓':icons[i])+'</span></span>';
+  }).join('')+'</div>';
+}
+function roadmapJourney(){
+ const all=s.lessons.filter(inMainPath),completed=doneIds(),total=all.length;
+ const done=all.filter(l=>completed.has(l.id)).length;
+ const percent=pct(done,total),steps=[
+  ['✓','Einstieg','abschließen'],['⟨/⟩','Grundlagen','lernen'],
+  ['⌘','Scripting','vertiefen'],['⬡','Projekte','umsetzen'],['⚑','Experte','werden']
+ ];
+ const progressThresholds=[1,10,35,65,100],active=Math.max(0,progressThresholds.findIndex(p=>percent<p));
+ return '<section class="ll-journey" aria-label="'+catalogText('Deine Lernreise','Your learning journey')+'">'+
+  '<div class="ll-journey-head"><div><span class="ll-journey-flag">⚑</span><h2>'+catalogText('Deine Lernreise','Your learning journey')+'</h2></div>'+
+  '<span class="ll-journey-percent">'+catalogText('Gesamtfortschritt','Total progress')+' <strong>'+percent+'%</strong></span></div>'+
+  '<div class="ll-journey-steps">'+steps.map((step,i)=>{
+    const reached=percent>=progressThresholds[i],current=!reached&&i===active;
+    const name=catalogEnglish()?[
+      ['Finish','the basics'],['Learn','the essentials'],['Deepen','your coding'],
+      ['Build','projects'],['Become','an expert']
+    ][i]:[step[1],step[2]];
+    return '<div class="ll-journey-step '+(reached?'is-done':current?'is-active':'is-future')+'">'+
+     '<span class="ll-journey-node" aria-hidden="true">'+(reached?'✓':step[0])+'</span>'+
+     '<span class="ll-journey-label">'+esc(name[0])+'<br>'+esc(name[1])+'</span></div>';
+  }).join('')+'</div>'+
+  '<div class="ll-journey-foot"><span>'+done+' / '+total+' '+catalogText('Lektionen abgeschlossen','lessons completed')+'</span>'+
+  '<span>'+catalogText('Dein Fortschritt wird automatisch gespeichert.','Your progress is saved automatically.')+'</span></div></section>';
+}
+function courseCard(c){
+ const lessons=lessonsOf(c.id),done=countDone(c.id),total=lessons.length;
+ const complete=total>0&&done===total,free=lessons.some(l=>l.required_plan==='free');
+ const ratio=pct(done,total),blender=String(c.category||'').includes('Blender');
+ return '<article class="course-card ll-path-course'+(complete?' is-complete':'')+'" data-roadmap-course="'+esc(c.id)+'">'+
+  '<div class="ll-course-card-ambient" aria-hidden="true"></div>'+
+  '<div class="course-head ll-course-card-top">'+
+   '<span class="course-icon ll-course-emblem" aria-hidden="true">'+esc(roadmapCourseGlyph(c))+'</span>'+
+   '<span class="chip ll-entry-chip '+(complete||free?'free':'plus')+'">'+
+   (complete?'✓ '+catalogText('Geschafft','Completed'):free?'✧ '+catalogText('Einstieg frei','Free start'):'✦ '+catalogText('Aufbaukurs','Advanced'))+'</span></div>'+
+  '<div class="ll-course-title-row"><span class="micro ll-course-category">'+esc(c.category)+'</span>'+
+   '<h3>'+esc(c.name)+'</h3><p class="ll-course-description">'+esc(roadmapCourseDescription(c))+'</p></div>'+
+  '<div class="ll-path-chip-row"><span class="ll-path-chip"><span aria-hidden="true">▥</span>'+levelText(c.level)+'</span>'+
+   difficultyBadge(c)+'<span class="ll-path-chip ll-path-lesson-count"><span aria-hidden="true">▣</span> '+total+' '+catalogText('Lektionen','lessons')+'</span></div>'+
+  '<div class="ll-course-progress"><div class="meta-line"><span>'+done+' / '+total+' '+catalogText('abgeschlossen','completed')+'</span>'+
+   '<strong>'+ratio+'%</strong></div>'+
+  '<div class="progress" role="progressbar" aria-valuenow="'+done+'" aria-valuemin="0" aria-valuemax="'+total+'" aria-label="'+esc('Kursfortschritt '+c.name)+'"><span style="width:'+ratio+'%"></span></div></div>'+
+   roadmapCoursePreview(c,done,total)+
+  '<button class="btn block ll-course-cta'+(!done?' is-start':'')+'" type="button" data-go="track/'+esc(c.id)+'">'+
+   (complete?catalogText('Kurs ansehen ✓','Review course ✓'):done?catalogText('Lernpfad fortsetzen →','Continue learning →'):catalogText('Lernpfad öffnen →','Open learning path →'))+'</button>'+
+  '</article>';
+}
 
 function installCriticalStyles(){
  if(document.getElementById&&document.getElementById('liverylab-v20-critical'))return;
@@ -667,26 +762,40 @@ function catalogItems(){
  '<button class="btn" type="button" data-action="more-courses">Weitere '+Math.min(9,all.length-s.catalogLimit)+' Kurse anzeigen ↓</button><p class="micro">'+s.catalogLimit+' von '+all.length+' Kursen angezeigt</p>':'<p class="micro">'+all.length+' Kurse angezeigt</p>')+'</div>';
 }
 function coursesPage(){
- const cats=['Alle','Merkliste','Programmieren','Sprachen','FiveM','Frameworks','Webentwicklung','3D & Blender','Backend','Tools','Profi-Wissen'].filter(c=>c==='Alle'||c==='Merkliste'||s.courses.some(x=>x.category===c));
- const levels=[1,2,3,4,5];
- const selected=s.difficultyFilter==='all'?'all':String(s.difficultyFilter);
- return pageHeading('KURSBIBLIOTHEK','Dein Weg zum <span class="gradient">Developer.</span>',
- 'Finde deinen Schwerpunkt. Die Schwierigkeit jedes Kurses ist zusätzlich zum Einstiegsniveau angegeben.')+
- '<div id="ll-difficulty-dashboard">'+difficultyDiagram()+'</div>'+
- '<section class="section ll-catalog-search-section" aria-labelledby="ll-course-filter-heading">'+
- '<div class="ll-course-filter-heading"><div><span class="eyebrow">'+catalogText('KURSFINDER','COURSE FINDER')+'</span><h2 id="ll-course-filter-heading">'+catalogText('Finde genau deinen Schwierigkeitsgrad.','Find your ideal difficulty level.')+'</h2>'+
- '<p>'+catalogText('Suche nach Python, Rust, „leicht“, „schwer“ oder direkt nach „3/5“.','Search for Python, Rust, “easy”, “hard”, or a score like “3/5”.')+'</p></div>'+
- '<button type="button" class="btn small ll-course-reset" id="course-filter-reset" data-course-filter-reset '+(courseFiltersActive()?'':'disabled')+'>'+catalogText('Filter zurücksetzen','Reset filters')+'</button></div>'+
- '<div class="ll-course-filter-controls"><label class="ll-course-search-label" for="course-search">'+catalogText('Kurs oder Schwierigkeit suchen','Search course or difficulty')+
- '<input class="input searchbar" id="course-search" type="search" placeholder="'+catalogText('z. B. Lua, mittel, 4/5 …','e.g. Lua, medium, 4/5 …')+'" value="'+esc(s.search)+'" autocomplete="off"></label>'+
- '<label class="ll-course-difficulty-select-label" for="course-difficulty-select">'+catalogText('Schwierigkeitsgrad','Difficulty level')+
- '<select id="course-difficulty-select" class="select" aria-label="'+catalogText('Schwierigkeitsgrad auswählen','Select difficulty level')+'"><option value="all" '+(selected==='all'?'selected':'')+'>'+catalogText('Alle Schwierigkeiten','All difficulties')+'</option>'+
- levels.map(n=>'<option value="'+n+'" '+(selected===String(n)?'selected':'')+'>'+n+'/5 · '+esc(window.LLDifficulty?.label?.(n)||n)+'</option>').join('')+'</select></label></div>'+
- '<div class="catalog-tags" role="group" aria-label="'+catalogText('Kurskategorie','Course category')+'">'+cats.map(c=>'<button class="pill'+(s.filter===c?' active':'')+'" data-filter="'+esc(c)+'" aria-pressed="'+String(s.filter===c)+'">'+esc(c)+'</button>').join('')+'</div>'+
- '<div class="section-heading ll-course-results-heading"><div><span class="eyebrow">'+catalogText('DEINE AUSWAHL','YOUR SELECTION')+'</span><h2>'+catalogText('Passende Kurse','Matching courses')+'</h2>'+
+ const cats=['Alle','Merkliste','Programmieren','Sprachen','FiveM','Frameworks','Webentwicklung','3D & Blender','Backend','Tools','Profi-Wissen']
+  .filter(c=>c==='Alle'||c==='Merkliste'||s.courses.some(x=>x.category===c));
+ const levels=[1,2,3,4,5],selected=s.difficultyFilter==='all'?'all':String(s.difficultyFilter);
+ return '<div class="ll-roadmap-catalog">'+
+ '<header class="ll-learning-hero"><div class="ll-learning-brand"><img src="./liverylab-symbol.svg" alt="">'+
+ '<span>LiveryLab <strong>Academy</strong></span></div>'+
+ '<span class="ll-learning-eyebrow">'+catalogText('DEINE ACADEMY · DEIN LERNPFAD','YOUR ACADEMY · YOUR PATH')+'</span>'+
+ '<h1>'+catalogText('Lernen','Learn')+'</h1>'+
+ '<p>'+catalogText('Dein geführter Lernpfad für Scripting und Entwicklung.','Your guided path to scripting and software development.')+'</p>'+
+ '<span class="ll-learning-hero-art" aria-hidden="true"><span>⟨/⟩</span></span></header>'+
+ roadmapJourney()+
+ '<section class="ll-catalog-roadmap-section" aria-labelledby="ll-my-paths-title">'+
+ '<div class="ll-paths-title"><h2 id="ll-my-paths-title">'+catalogText('Mein Lernpfad','My learning paths')+'</h2>'+
+ '<span>'+catalogText('Alle Kurse','All courses')+' · '+filteredCourses().length+' '+catalogText('Ergebnisse','results')+'</span></div>'+
+ '<div class="catalog-tags ll-roadmap-categories" role="group" aria-label="'+catalogText('Kurskategorie','Course category')+'">'+
+ cats.map(c=>'<button class="pill'+(s.filter===c?' active':'')+'" type="button" data-filter="'+esc(c)+'" aria-pressed="'+String(s.filter===c)+'">'+
+  (c==='Alle'?'▦ ':c==='Merkliste'?'☆ ':c==='Programmieren'||c==='Sprachen'?'⟨/⟩ ':c.includes('Blender')?'✧ ':'⬡ ')+esc(c)+'</button>').join('')+'</div>'+
+ '<div class="ll-roadmap-search-panel"><div class="ll-roadmap-search-header"><span class="eyebrow">'+catalogText('KURSFINDER','COURSE FINDER')+'</span>'+
+ '<button class="ll-roadmap-reset" type="button" id="course-filter-reset" data-course-filter-reset '+(courseFiltersActive()?'':'disabled')+'>'+
+ catalogText('Filter zurücksetzen','Reset filters')+'</button></div>'+
+ '<div class="ll-course-filter-controls"><label class="ll-course-search-label" for="course-search">'+catalogText('Kurs suchen','Search courses')+
+ '<input class="input searchbar" id="course-search" type="search" placeholder="'+catalogText('z. B. Lua, Python, Rust …','e.g. Lua, Python, Rust …')+'" value="'+esc(s.search)+'" autocomplete="off"></label>'+
+ '<label class="ll-course-difficulty-select-label" for="course-difficulty-select">'+catalogText('Schwierigkeit','Difficulty')+
+ '<select class="select" id="course-difficulty-select" aria-label="'+catalogText('Schwierigkeitsgrad auswählen','Select difficulty level')+'">'+
+ '<option value="all" '+(selected==='all'?'selected':'')+'>'+catalogText('Alle Schwierigkeitsstufen','All difficulty levels')+'</option>'+
+ levels.map(n=>'<option value="'+n+'" '+(selected===String(n)?'selected':'')+'>'+n+'/5 · '+esc(window.LLDifficulty?.label?.(n)||n)+'</option>').join('')+
+ '</select></label></div></div>'+
+ '<details class="ll-difficulty-disclosure"><summary><span>◈ '+catalogText('Schwierigkeitsdiagramm & Erklärungen','Difficulty chart & descriptions')+'</span>'+
+ '<span>'+catalogText('5 Stufen ansehen','Explore 5 levels')+' ⌄</span></summary><div id="ll-difficulty-dashboard">'+difficultyDiagram()+'</div></details>'+
+ '<div class="section-heading ll-course-results-heading"><div><span class="eyebrow">'+catalogText('DEINE AUSWAHL','YOUR SELECTION')+'</span>'+
+ '<h2>'+catalogText('Passende Kurse','Matching courses')+'</h2>'+
  '<p id="course-count" aria-live="polite">'+filteredCourses().length+' '+catalogText('Ergebnisse','results')+' · '+catalogText('Schritt für Schritt','step by step')+'</p></div>'+
  '<span class="ll-course-results-icon" aria-hidden="true">⌕</span></div>'+
- '<div id="catalog-container">'+catalogItems()+'</div></section>';
+ '<div id="catalog-container">'+catalogItems()+'</div></section></div>';
 }
 
 function trackPage(id){
