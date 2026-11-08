@@ -1520,10 +1520,10 @@ function adminPage(){
  const cards=rest.map(u=>{
   const owner=u.role==='admin',tier=s.memberPlans[u.id]||'free',expiry=s.memberExpiry[u.id]||null;
   const subscription=tier==='free'?'free':!expiry?'unlimited':Date.parse(expiry)<=Date.now()?'expired':'active';
-  return '<article class="member-card"><div class="member-header">'+
+  return '<details class="member-card ll-member-compact" data-member-id="'+esc(u.id)+'"><summary class="ll-member-summary"><div class="member-header">'+
   '<div class="member-avatar">'+esc((u.username||u.email||'?').slice(0,1).toUpperCase())+'</div>'+
   '<div class="member-identity"><strong>'+esc(u.username||u.email||'Mitglied')+'</strong>'+
-  '<small>'+esc(u.email||'')+'</small></div>'+status(u)+'</div>'+
+  '<small>'+esc(u.email||'')+'</small></div>'+status(u)+'</div><span class="ll-member-expand">Details ansehen ⌄</span></summary>'+
   '<div class="member-management"><div><label class="form-label">Mitgliedschaft</label>'+
    (owner?'<span class="member-admin-tier">Administrator · Vollzugriff</span>':
    '<select class="select" data-admin-tier="'+esc(u.id)+'" aria-label="Mitgliedschaft ändern für '+esc(u.username||u.email||'Mitglied')+'">'+
@@ -1542,7 +1542,7 @@ function adminPage(){
    '<button class="btn small" data-reset-user="'+esc(u.id)+'" '+(owner?'disabled':'')+'>Passwort zurücksetzen</button>'+
    '<button class="btn small '+(u.active?'danger':'primary')+'" data-active-user="'+esc(u.id)+'" data-active-value="'+(!u.active)+'" '+(owner?'disabled':'')+'>'+
    (u.active?'Zugriff sperren':'Zugriff erlauben')+'</button>'+
-   '<button class="btn small danger" data-delete-user="'+esc(u.id)+'" '+(owner?'disabled':'')+'>Löschen</button></div>'+(s.isOwner&&!u.is_owner?'<div class="admin-role-select"><label class="form-label">Teamrolle</label><select class="select" data-admin-role="'+esc(u.id)+'" aria-label="Teamrolle von '+esc(u.username||'')+'"><option value="student" '+(u.role==='student'?'selected':'')+'>Mitglied</option><option value="admin" '+(u.role==='admin'?'selected':'')+'>Administrator · Team verwalten</option></select></div>':'')+'</div></article>';
+   '<button class="btn small danger" data-delete-user="'+esc(u.id)+'" '+(owner?'disabled':'')+'>Löschen</button></div>'+(s.isOwner&&!u.is_owner?'<div class="admin-role-select"><label class="form-label">Teamrolle</label><select class="select" data-admin-role="'+esc(u.id)+'" aria-label="Teamrolle von '+esc(u.username||'')+'"><option value="student" '+(u.role==='student'?'selected':'')+'>Mitglied</option><option value="admin" '+(u.role==='admin'?'selected':'')+'>Administrator · Team verwalten</option></select></div>':'')+'</div></details>';
  }).join('');
  return pageHeading('ADMINISTRATION','Dein <span class="gradient">Control Center.</span>',
  'Registrierungen, Mitgliedschaften, Teamrollen und Gutscheine sicher an einem Ort verwalten.')+
