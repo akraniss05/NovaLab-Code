@@ -87,6 +87,10 @@ const scenes=[
  ['neon-friends',neonWrap('friends',app.friendsPage()),['.ll-neon-page-heading','.ll-neon-feature','.friend-navigation']],
  ['neon-support',neonWrap('support',app.supportPage()),['.ll-neon-page-heading','.ll-neon-feature','.support-grid','[data-form="support-ticket"]']],
  ['neon-settings',neonWrap('settings',app.settingsPage()),['.ll-neon-page-heading','.appearance-picker','.settings-list','[data-form="password"]','#mfa-settings']],
+ ['neon-admin',(()=>{const oldRole=s.profile.role,oldIsOwner=s.isOwner,oldMembers=s.members;
+  s.profile.role='admin';s.isOwner=true;s.members=[];const html=neonWrap('admin',app.adminPage());
+  s.profile.role=oldRole;s.isOwner=oldIsOwner;s.members=oldMembers;return html;})(),
+ ['.ll-neon-page-heading','.ll-neon-feature','.ll-admin-tabs','.admin-overview','.ll-admin-hub']],
  ['home',app.homePage(),['.ll-home-brand-banner img','.ll-home-shortcuts','.ll-home-continue','.ll-streak-shortcut']],
  ['courses',app.coursesPage(),['.ll-learning-hero','.ll-journey','.ll-journey-step','.ll-difficulty-dashboard','.ll-difficulty-chart','.ll-difficulty-tile','#course-difficulty-select','#course-search','.course-grid','.ll-path-course','.ll-mini-road']],
  ['admin-registration',(()=>{const old=context.location.hash,oldRole=s.profile.role,oldOwner=s.isOwner,oldPolicy=s.registrationPolicy;
