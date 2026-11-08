@@ -5,7 +5,7 @@ const read=file=>fs.readFileSync(path.join(__dirname,'..',file),'utf8');
 const html=read('site/index.html'),js=read('site/academy-v21.js'),css=read('site/app-v21.css');
 for(const file of ['site/reference-data.js','site/app-v21.css','site/app-v12.css','site/config.js','site/auth-mfa-v15.js','site/academy-v21.js','site/privacy.html','site/manifest.webmanifest','site/icon.svg','supabase/functions/academy-signin/index.ts','supabase/functions/admin-users/index.ts'])
  assert(fs.existsSync(path.join(__dirname,'..',file)),file+' missing');
-for(const token of ['app-v21.css?build=20261107v31','academy-v21.js?build=20261108lua30','auth-mfa-v15.js?build=20261107v31','config.js?build=20261107v31','LiveryLab Academy'])
+for(const token of ['app-v21.css?build=20261107v31','academy-v21.js?build=20261108v47','auth-mfa-v15.js?build=20261107v31','config.js?build=20261107v31','LiveryLab Academy'])
  assert(html.includes(token),'Versioned asset missing: '+token);
 for(const obsolete of ['styles.css','refined.css','music-studio.js','studio3d-v5.js'])
  assert(!html.includes(obsolete),'Old asset still linked: '+obsolete);
@@ -42,7 +42,7 @@ assert.equal(banner.subarray(8,12).toString(),'WEBP','LiveryLab banner invalid')
 for(const selector of ['.ll-home-shortcuts','.ll-home-brand-banner','.ll-streak-modal','.ll-streak-claim','.ll-streak-backdrop'])assert(css.includes(selector),'Missing v19 interface style: '+selector);
 assert(fs.existsSync(path.join(__dirname,'../site/v21.html')),'Physical uncached v20 entry missing');
 assert(read('site/v21.html').includes('academy-v21.js?build='),'Unique iOS entry must load new code');
-assert(read('site/v31.html').includes('academy-v21.js?build=20261108lua30'),'Fresh entry must load current code');
+assert(read('site/v31.html').includes('academy-v21.js?build=20261108v47'),'Fresh entry must load current code');
 assert(read('site/manifest.webmanifest').includes('v31.html#home'),'Installed app must open fresh entry');
 assert(js.includes("root=document.createElement('div')"),'Old HTML popup fallback missing');
 assert(js.includes("s.streakModalOpen=true;"),'Daily popup must appear after every login');
@@ -83,7 +83,7 @@ assert(read('site/v31.html').includes('academy-v31-layout.css?build=20261108v45'
 for(const selector of ['.ll-home-brand-banner','.topbar','.bottom-nav','.focus-center','.practice-actions-simple'])assert(layoutRestore.includes(selector),'Visual recovery missing '+selector);
 
 const curriculum=read('site/academy-curriculum.js');
-for(const file of ['site/index.html','site/v21.html','site/v31.html'])assert(read(file).includes('academy-curriculum.js?build=20261108v45'),file+' must include curriculum');
+for(const file of ['site/index.html','site/v21.html','site/v31.html'])assert(read(file).includes('academy-curriculum.js?build=20261108v47'),file+' must include curriculum');
 for(const token of ['sections','quiz_items','LLCurriculum','data-lesson-part','quizProgress','quiz-meter-fill'])assert(js.includes(token)||curriculum.includes(token),'Missing expanded curriculum '+token);
 for(const token of ['data-plan-action="extend"','data-plan-action="reduce"','data-plan-action="end"','membershipRemainingText','memberExpiry'])assert(js.includes(token),'Missing subscription admin '+token);
 const adminEdge=read('supabase/functions/admin-users/index.ts');
@@ -112,9 +112,19 @@ for(const item of ['PRIMARY KEY (user_id, lesson_id)','ON CONFLICT (user_id,less
 const languageModule=read('site/academy-i18n.js');
 for(const file of ['site/index.html','site/v21.html','site/v31.html']){
  const contents=read(file);
- assert(contents.includes('academy-i18n.js?build=20261108v46'),file+' must load i18n before the main app');
+ assert(contents.includes('academy-i18n.js?build=20261108v47'),file+' must load i18n before the main app');
  assert(contents.includes('data-lang="de"')&&contents.includes('data-lang="en"'),file+' must display DE and EN in the topbar');
 }
 for(const token of ['liverylab-language','MutationObserver','setAccount','data-lang','data-no-translate','practice-input','document.documentElement.lang'])assert(languageModule.includes(token),'Language module missing '+token);
 assert(js.includes('LLI18n?.setAccount'),'Logged-in user language must be restored');
 assert(js.includes('LLI18n?.apply'),'Dynamic UI must get translated on rerenders');
+
+const currentCurriculum=read('site/academy-curriculum.js');
+assert(currentCurriculum.includes('Number(p?.quiz_version)>=3'),'Quiz must prefer context-specific v3 bank');
+assert(!currentCurriculum.includes("result.push({question:'Welche konkrete Aufgabe"),'Old mismatched auto-generated quiz questions must be gone');
+const currentI18n=read('site/academy-i18n.js');
+assert(currentI18n.includes('Welche praktische Aufgabe gehört zu'),'New question must be translatable to EN');
+assert(js.includes('lastSupportReceipt'),'Support must show persisted ticket reference');
+assert(js.includes('r.data?.ok!==true'),'Never claim a support request was sent without server confirmation');
+assert(js.includes('support-submit-status'),'Send errors must be shown inline');
+for(const entry of ['site/index.html','site/v21.html','site/v31.html'])assert(read(entry).includes('academy-v31-layout.css?build=20261108v47'),'Current support CSS missing '+entry);
