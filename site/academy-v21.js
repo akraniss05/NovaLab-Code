@@ -73,7 +73,25 @@ function applyPreferences(){
  window.LLEffects?.sync?.();
 }
 function syncBackdrop(){var b=$('#nav-backdrop');if(b)b.classList.toggle('visible',sidebar.classList.contains('open'))}
-function pageHeading(label,title,description){return '<header class="page-heading"><span class="eyebrow">'+esc(label)+'</span><h1>'+title+'</h1><p class="lede">'+esc(description)+'</p></header>'}
+function pageHeading(label,title,description){
+ const designs={
+  'HILFE & FEEDBACK':['Support','book'],
+  'MITGLIEDSCHAFT':['Shop','xp'],
+  'PRÜFUNGEN':['Prüfungen','exam'],
+  'LIVERYLAB COMMUNITY':['Freunde','friends'],
+  'DEIN PROFIL':['Mein Profil','profile'],
+  'EINSTELLUNGEN':['Einstellungen','settings'],
+  'ADMINISTRATION':['Administration','settings'],
+  'HAUPTMENÜ':['Hauptmenü','learn']
+ };
+ const entry=designs[label]||[label,'code'];
+ return '<header class="page-heading ll-neon-page-heading">'+
+  '<div class="ll-neon-page-title"><span class="ll-neon-brand-text"><img src="./liverylab-symbol.svg" alt=""> LiveryLab <em>Academy</em></span>'+
+  '<span class="eyebrow ll-neon-kicker">'+esc(label)+'</span><h1>'+esc(entry[0])+'</h1>'+
+  '<p class="lede">'+esc(description)+'</p><span class="ll-neon-legacy-heading" aria-hidden="true">'+title+'</span></div>'+
+  '<span class="ll-neon-hero-art" aria-hidden="true"><span class="ll-neon-hero-glyph">'+llIcon(entry[1])+'</span></span>'+
+  '</header>';
+}
 function planCounts(){var f=s.lessons.filter(l=>l.required_plan==='free').length;var pl=s.lessons.filter(l=>l.required_plan==='plus').length;return {free:f,plus:f+pl,pro:s.lessons.length}}
 function courseAccent(c){return c.category==='3D & Blender'?'✦':c.category==='FiveM'||c.category==='Frameworks'?'⬡':'⌘'}
 function videoInfo(id){var sources={
@@ -85,10 +103,77 @@ function videoInfo(id){var sources={
  'Ci3Has4L5W4':{name:'Blender Tutorial für Anfänger',author:'Kevin Stratvert',language:'Englisch'}
 };return sources[id]||{name:'Video-Tutorial',author:'YouTube',language:'Tutorial'}}
 
+/* v1.5 neon app design: presentation only; existing route/actions/forms are retained. */
+function neonHero(kind){
+ const info={
+  home:['Startseite','Deine Lernplattform für Scripting und Entwicklung.','code'],
+  script:['Scripts','Deine freigeschaltete Script-Werkstatt mit Dateien und Beispielen.','code'],
+  reference:['Referenzen','Funktionen, Befehle und Dokumentationen an einem Ort.','book']
+ }[kind];
+ if(!info)return '';
+ return '<header class="ll-neon-page-heading ll-neon-custom-hero" aria-label="'+esc(info[0])+'">'+
+  '<div class="ll-neon-page-title"><span class="ll-neon-brand-text"><img src="./liverylab-symbol.svg" alt=""> LiveryLab <em>Academy</em></span>'+
+  '<span class="eyebrow ll-neon-kicker">LIVERYLAB ACADEMY</span><h1>'+esc(info[0])+'</h1>'+
+  '<p class="lede">'+esc(info[1])+'</p></div>'+
+  '<span class="ll-neon-hero-art" aria-hidden="true"><span class="ll-neon-hero-glyph">'+llIcon(info[2])+'</span></span>'+
+  '</header>';
+}
+function neonBanner(title,description,icon,extra){
+ return '<section class="ll-neon-feature" aria-label="'+esc(title)+'"><div class="ll-neon-feature-copy">'+
+  '<span class="eyebrow">[ ✦ ] LIVERYLAB ACADEMY</span><h2>'+esc(title)+'</h2>'+
+  '<p>'+esc(description)+'</p>'+(extra||'')+'</div>'+
+  '<span class="ll-neon-feature-icon" aria-hidden="true">'+llIcon(icon||'code')+'</span></section>';
+}
+function neonExamOverview(){
+ const results=s.progress.exams||{};
+ const passed=Object.values(results).filter(v=>v&&v.passed).length;
+ const available=s.courses.filter(c=>{const l=lessonsOf(c.id);return l.length>0&&l.every(allowed);});
+ const ready=available.filter(c=>!results[c.id]&&lessonsOf(c.id).every(l=>doneIds().has(l.id)));
+ const next=ready[0]||available.find(c=>!results[c.id])||null;
+ const completedLessons=s.lessons.filter(l=>inMainPath(l)&&doneIds().has(l.id)).length;
+ return '<section class="ll-neon-exam-overview">'+
+  neonBanner(next?'Deine nächste Prüfung: '+next.name:'Lerne für deine nächste Prüfung',
+    next?'Dein Lernweg führt zur Kursprüfung. Schließe alle Lektionen ab, bevor du sie startest.':
+    'Alle bisherigen Erfolge bleiben gespeichert. Entdecke weitere Lernpfade, um neue Prüfungen freizuschalten.',
+    'exam',next?'<button class="btn primary small" type="button" data-go="'+
+    (ready.includes(next)?'exam/':'track/')+esc(next.id)+'">'+
+    (ready.includes(next)?'Prüfung öffnen →':'Kurs fortsetzen →')+'</button>':
+    '<button class="btn primary small" type="button" data-go="courses">Kurse entdecken →</button>')+
+  '<div class="ll-neon-stat-row">'+
+  '<div class="ll-neon-stat"><span>'+llIcon('exam')+'</span><strong>'+passed+'</strong><small>Prüfungen bestanden</small></div>'+
+  '<div class="ll-neon-stat"><span>'+llIcon('learn')+'</span><strong>'+ready.length+'</strong><small>Prüfungen bereit</small></div>'+
+  '<div class="ll-neon-stat"><span>'+llIcon('code')+'</span><strong>'+completedLessons+'</strong><small>Lektionen geschafft</small></div>'+
+  '<div class="ll-neon-stat"><span>'+llIcon('xp')+'</span><strong>'+xpEarned()+'</strong><small>Gesammelte XP</small></div></div></section>';
+}
+function neonMenuPage(){
+ const entries=[
+  ['courses','learn','Lernen','Kurse entdecken und Wissen aufbauen',false],
+  ['script','code','Scripts','Script-Projekt, Dateien und Codebeispiele',!hasScript()],
+  ['exams','exam','Prüfungen','Wissen testen und den Lernstand prüfen',false],
+  ['reference','book','Referenzen','Funktionen, Befehle und Dokumentation',!fullAccess()],
+  ['plans','xp','Shop','Free, Plus, Ultimate und Gutscheine',false],
+  ['profile','profile','Mein Profil','Lernfortschritte, XP und Erfolge',false],
+  ['friends','friends','Freunde','Gemeinsam lernen und Anfragen verwalten',false],
+  ['support','book','Support','Hilfe, Tickets und Antworten vom Team',false],
+  ['settings','settings','Einstellungen','Darstellung, Konto, Timer und Datenschutz',false]
+ ];
+ if(s.profile?.role==='admin')entries.push(['admin','settings','Administration','Nutzer, Freigaben und Academy verwalten',false]);
+ return pageHeading('HAUPTMENÜ','Alle Bereiche der Academy','Alle Funktionen an einem Ort – mit deinen bisherigen Freigaben und Einstellungen.')+
+ '<div class="ll-neon-menu-grid">'+entries.map(([route,icon,label,description,locked])=>
+  '<button type="button" class="ll-neon-menu-tile'+(locked?' is-locked':'')+'" data-go="'+esc(route)+'">'+
+  '<span class="ll-neon-menu-art" aria-hidden="true">'+llIcon(icon)+'</span>'+
+  '<span class="ll-neon-menu-label"><strong>'+esc(label)+(locked?' <span aria-label="Tarif erforderlich">⌑</span>':'')+
+  '</strong><small>'+esc(description)+'</small></span><span class="ll-neon-tile-arrow" aria-hidden="true">→</span></button>'
+ ).join('')+'</div>'+
+ '<section class="ll-neon-menu-footer"><span>'+llIcon('fire')+' '+Number(s.loginStreak?.current||0)+' Tage Lernstreak</span>'+
+ '<span>'+llIcon('xp')+' '+xpEarned()+' XP</span>'+
+ '<button class="btn small" type="button" data-go="home">← Zur Startseite</button></section>';
+}
+
 function navHTML(route){
  const items=[
-  ['home','⌂','Startseite'],['courses','▦','Lernen'],['script','⌘',hasScript()?'Script':'Script 🔒'],
-  ['exams','☆','Prüfung'],['reference','▤',fullAccess()?'Referenz':'Referenz 🔒'],['plans','✦','Free / Plus / Ultimate'],
+  ['home','⌂','Startseite'],['menu','▦','Hauptmenü'],['courses','▦','Lernen'],['script','⌘',hasScript()?'Script':'Script 🔒'],
+  ['exams','☆','Prüfung'],['reference','▤',fullAccess()?'Referenz':'Referenz 🔒'],['plans','✦','Shop · Free / Plus / Ultimate'],
   ['profile','◉','Mein Profil'],['friends','♡','Freunde'],['support','?','Support'],['settings','⚙','Einstellungen']
  ];
  if(s.profile?.role==='admin')items.push(['admin','♢','Administration']);
@@ -412,10 +497,12 @@ function renderMFA(){
 function render(){
  if(!s.ready){login();return;}
  frame();const r=parseRoute();
- const pages={home:homePage,courses:coursesPage,track:()=>trackPage(r.id),lesson:()=>lessonPage(r.id),
+ const pages={home:homePage,menu:neonMenuPage,courses:coursesPage,track:()=>trackPage(r.id),lesson:()=>lessonPage(r.id),
   script:()=>hasScript()?scriptPage():paywall('Script-Werkstatt','Plus','Codebeispiele sind ab Plus verfügbar.'),plans:plansPage,exams:examsPage,exam:()=>examPage(r.id),
   reference:()=>fullAccess()?referencePage():paywall('Code-Referenzen','Pro / Ultimate','Die vollständige Sprachbibliothek gehört zum höchsten Tarif.'),profile:profilePage,friends:friendsPage,support:supportPage,settings:settingsPage,admin:adminPage};
- content.innerHTML=(pages[r.page]||homePage)();
+ const html=(pages[r.page]||homePage)();
+ const decorative=['home','menu','script','plans','exams','reference','profile','friends','support','settings','admin'].includes(r.page);
+ content.innerHTML=decorative?'<div class="ll-neon-screen ll-neon-'+r.page+'">'+html+'</div>':html;
  if(r.page==='settings')renderMFA();
  paintStreakModal();
  paintTimer();
@@ -675,10 +762,10 @@ function homePage(){
  const nickname=s.profile?.display_name||s.profile?.username||'Developer';
  const streak=Number(s.loginStreak?.current||0),ready=!!s.loginStreak?.claimable;
  const picks=['coding-basics','lua','python','javascript'].map(courseOf).filter(Boolean);
- return '<div class="ll-home-dashboard">'+
+ return '<div class="ll-home-dashboard">'+neonHero('home')+
  '<section class="ll-home-brand-banner"><img src="./liverylab-banner.webp" alt="Livery-Lab – Premium FiveM Systems, violette Skyline" loading="eager" fetchpriority="high"></section>'+
- '<div class="ll-home-greeting"><div><span class="eyebrow">WILLKOMMEN ZURÜCK, '+esc(nickname.toUpperCase())+'</span>'+
- '<h1>Deine <span class="gradient">Developer Academy.</span></h1><p>Lerne programmieren, entwickle Projekte und erreiche deine nächsten Ziele.</p></div>'+
+ '<div class="ll-home-greeting"><div><span class="eyebrow">DEIN PERSÖNLICHES DASHBOARD</span>'+
+ '<h1>Willkommen zurück, <span class="gradient">'+esc(nickname)+'</span>!</h1><p>Lerne programmieren, entwickle Projekte und erreiche deine nächsten Ziele.</p></div>'+
  '<div class="ll-home-level"><div class="ll-level-top">'+llIcon('xp')+'<span>Level '+level+'</span></div>'+
  '<small>'+levelXp+' / 500 XP bis Level '+(level+1)+'</small><div class="ll-level-bar"><span style="width:'+(levelXp/5)+'%"></span></div></div></div>'+
  '<div class="ll-home-metrics"><div><span>✦</span><strong>'+xp+' XP</strong><small>Gesammelt</small></div><div><span>✓</span><strong>'+completed.size+'</strong><small>Lektionen geschafft</small></div><div><span>↗</span><strong>'+s.courses.length+'</strong><small>Lernpfade entdecken</small></div><div><span>🔥</span><strong>'+streak+' Tage</strong><small>Deine Streak</small></div></div>'+
@@ -702,6 +789,7 @@ function homePage(){
  homeShortcut('friends','Freunde','Vernetze dich und vergleiche Lernfortschritte.','friends',false,false)+
  homeShortcut('book','Support & Feedback','Fehler melden, Hilfe bekommen und Antworten lesen.','support',false,false)+
  homeShortcut('settings','Einstellungen','Account, Sicherheit und persönliches Design.','settings',false,true)+
+ homeShortcut('learn','Hauptmenü','Alle Bereiche der Academy auf einen Blick.','menu',false,false)+
  homeShortcut('profile','Mein Profil','Erfolge ansehen und freigeschalteten Titel wählen.','profile',false,false)+
  homeShortcut('xp','Mitgliedschaften','Free, Plus und Pro vergleichen.','plans',false,false)+
  (s.profile?.role==='admin'?homeShortcut('settings','Administration','Freigaben, Mitglieder und Gutscheine verwalten.','admin',false,true):'')+'</div>'+
@@ -1208,6 +1296,7 @@ function supportPage(){
  const names={support:'Allgemeine Hilfe',bug:'Fehlerbericht',beta:'Beta-Feedback',plan:'Mitgliedschaft'};
  return pageHeading('HILFE & FEEDBACK','Wir helfen dir <span class="gradient">direkt in der App.</span>',
  'Melde technische Fehler, schick uns Ideen oder frage während der Beta eine Mitgliedschaft an. Deine Anfragen bleiben hier sichtbar.')+
+ neonBanner('Brauchst du Hilfe?','Stelle eine Anfrage, melde einen Bug oder lies deine bisherigen Antworten. Dein Support-Ticket landet direkt beim Team.','book')+
  '<div class="support-grid"><section class="panel support-compose"><span class="eyebrow">[ + ] NEUE ANFRAGE</span><h2>Schreib dem Team</h2>'+
  '<form data-form="support-ticket"><div class="form-group"><label class="form-label" for="support-category">Worum geht es?</label><select class="select" id="support-category" name="category"><option value="support">Allgemeine Frage</option><option value="bug">Fehler melden</option>'+
  (data.beta_open?'<option value="beta">Beta-Feedback</option><option value="plan">Plus / Ultimate anfragen</option>':'')+'</select></div>'+
@@ -1258,6 +1347,7 @@ function plansPage(){
  const quote=s.discount;
  return pageHeading('MITGLIEDSCHAFT','Dein <span class="gradient">Lernzugang.</span>',
  'Wähle deinen Lernumfang. Free: 2 Prüfungen pro Tag, Plus: 4 Prüfungen und Script, Ultimate: alles unbegrenzt.')+
+ neonBanner('Dein Upgrade für mehr Lernfreiheit','Free, Plus und Ultimate – vergleiche die bestehenden Tarife und löse vorhandene Gutscheine ein.','xp')+
  dailyStrip()+
  (s.shopDiscount>0?'<div class="shop-sale-banner">✦ '+s.shopDiscount+' % Shoprabatt auf Plus und Ultimate · Der reduzierte Preis steht direkt beim Tarif.</div>':'')+
  '<div class="membership-stack">'+
@@ -1285,7 +1375,7 @@ function examsPage(){
  .sort((a,b)=>(countDone(a.id)===lessonsOf(a.id).length?0:1)-(countDone(b.id)===lessonsOf(b.id).length?0:1)||a.name.localeCompare(b.name,'de'));
  const filtered=suitable.filter(c=>{const done=countDone(c.id),total=lessonsOf(c.id).length,passed=!!s.progress.exams?.[c.id];return s.examFilter==='all'||(s.examFilter==='ready'&&done===total&&!passed)||(s.examFilter==='passed'&&passed)||(s.examFilter==='learning'&&done<total);});
  return pageHeading('PRÜFUNGEN','Deine <span class="gradient">Kursprüfungen.</span>','Jede Prüfung gehört zu genau einem freigeschalteten Kurs. Schließe zuerst dessen Lektionen ab.')+
- '<div class="exam-quota"><strong>✦ '+(cap<0?'Unbegrenzt':Math.max(0,cap-used)+' von '+cap)+' Prüfungen heute übrig</strong><small>Free: 2 · Plus: 4 · Ultimate: unbegrenzt. Reset um Mitternacht (Berlin).</small><button class="btn small" data-go="plans">Tarife →</button></div>'+
+ neonExamOverview()+'<div class="exam-quota"><strong>✦ '+(cap<0?'Unbegrenzt':Math.max(0,cap-used)+' von '+cap)+' Prüfungen heute übrig</strong><small>Free: 2 · Plus: 4 · Ultimate: unbegrenzt. Reset um Mitternacht (Berlin).</small><button class="btn small" data-go="plans">Tarife →</button></div>'+
  '<section class="section"><div class="section-heading"><div><span class="eyebrow">DEINE KURSE</span><h2>'+suitable.length+' passende Prüfungen</h2></div></div><div class="exam-filters" role="group" aria-label="Prüfungen filtern">'+[['all','Alle'],['ready','Bereit'],['learning','Noch lernen'],['passed','Bestanden']].map(([key,label])=>'<button class="pill'+(s.examFilter===key?' active':'')+'" type="button" data-exam-filter="'+key+'">'+label+'</button>').join('')+'</div><div class="course-grid">'+(filtered.map(c=>{
   const ls=lessonsOf(c.id),count=countDone(c.id),ready=count===ls.length,passed=!!s.progress.exams?.[c.id];
   return '<article class="course-card '+(passed?'is-complete':'')+'"><div class="course-head"><span class="course-icon">'+esc(courseAccent(c))+'</span><span class="chip '+(passed?'free':'plus')+'">'+(passed?'✓ Bestanden':ready?'Bereit':'Noch gesperrt')+'</span></div><span class="micro">'+esc(c.category)+'</span><h3>'+esc(c.name)+'</h3>'+difficultyBadge(c)+'<p>'+count+' / '+ls.length+' Lektionen abgeschlossen</p><div class="progress"><span style="width:'+pct(count,ls.length)+'%"></span></div><button class="btn block" data-go="'+(ready?'exam/':'track/')+esc(c.id)+'">'+(ready?'Prüfung öffnen →':'Kurs fortsetzen →')+'</button></article>';
@@ -1384,7 +1474,7 @@ async function loadProjectTab(){
 function scriptPage(){
  const all=projectLessons(),done=projectTotal(),file=PROJECT_FILES[s.projectTab]||PROJECT_FILES[0],
  unlocked=projectUnblocked(file),code=s.projectSource||'';
- return '<section class="track-top"><span class="eyebrow">[ ++ ] DEIN PROJEKT</span>'+
+ return neonHero('script')+'<section class="track-top"><span class="eyebrow">[ ++ ] DEIN PROJEKT</span>'+
  '<h1>sh_shop</h1><p class="lede">Ein FiveM-Lernprojekt, das mit deinen Lektionen wächst. Abgeschlossene Abschnitte schalten passende Codebeispiele frei.</p>'+
  '<span class="progress-pill">'+done+'/'+all.length+' Teile freigeschaltet</span></section>'+
  '<div class="file-tree"><div class="file-root">resources/[scripts]/<strong>sh_shop/</strong></div>'+
@@ -1433,7 +1523,7 @@ function referencePage(){
  const lib=referenceLibrary(),entry=lib[s.refLang]||lib.lua||Object.values(lib)[0];
  const langs=Object.keys(lib),groups=Object.keys(entry?.groups||{}),allCount=Object.values(lib).reduce((sum,v)=>sum+Object.values(v.groups||{}).reduce((a,arr)=>a+arr.length,0),0);
  const results=referenceResults();
- return '<section class="track-top"><span class="eyebrow">[ ≡ ] PROGRAMMIER-REFERENZ</span>'+
+ return neonHero('reference')+'<section class="track-top"><span class="eyebrow">[ ≡ ] PROGRAMMIER-REFERENZ</span>'+
  '<h1>Dein <em>Spickzettel.</em></h1>'+
  '<p class="lede">Alle wichtigen Grundlagen, Funktionen, Befehle und praktische Beispiele, nach Programmiersprache sortiert. Die komplette Sprachreferenz findest du zusätzlich in der offiziellen Dokumentation.</p>'+
  '<div class="ref-overview"><span>⌘ '+langs.length+' Sprachen & Tools</span><span>▦ '+allCount+' Referenzeinträge</span></div></section>'+
@@ -1537,6 +1627,8 @@ function friendsPage(){
  }
  return pageHeading('LIVERYLAB COMMUNITY','Deine Developer-<span class="gradient">Freunde.</span>',
  'Gemeinsam programmieren und Fortschritte teilen – ohne persönliche Daten anderer Mitglieder offenzulegen.')+
+ neonBanner('Gemeinsam besser lernen!','Du hast '+friends.length+' bestätigte Freunde und '+incoming.length+' offene Freundschaftsanfragen. Du bestimmst, welche Fortschritte du teilst.','friends',
+ '<button type="button" class="btn small primary" data-friend-tab="search">Freunde hinzufügen →</button>')+
  '<section class="friends-overview"><div class="friends-counter"><span>♡</span><strong>'+friends.length+'</strong><small>Freunde</small></div>'+
  '<div class="friends-counter"><span>✉</span><strong>'+incoming.length+'</strong><small>Neue Anfragen</small></div>'+
  '<div class="friends-counter"><span>✦</span><strong>'+outgoing.length+'</strong><small>Gesendet</small></div></section>'+
@@ -1969,7 +2061,8 @@ function adminPage(){
   '<button type="button" class="ll-admin-hub-card" data-go="'+path+'"><span>'+icon+'</span><strong>'+title+'</strong><small>'+subtitle+'</small><b>Öffnen →</b></button>'
  ).join('')+'</div>';
  return pageHeading('ADMINISTRATION','Dein <span class="gradient">Control Center.</span>',
- 'Support, Mitglieder und Gutscheine übersichtlich getrennt verwalten.')+tabs+
+ 'Support, Mitglieder und Gutscheine übersichtlich getrennt verwalten.')+
+ neonBanner('Admin-Dashboard','Hier steuerst du echte Registrierungen, Mitglieder, Tarife und Supportanfragen – ohne erfundene Statistiken.','settings')+tabs+
  (tab==='overview'?summary+hub:tab==='support'?supportAdminSection():tab==='registration'?adminRegistrationSection(pending.length):tab==='members'?requests+
  '<section class="section"><div class="section-heading"><div><span class="eyebrow">[ 02 ] MITGLIEDER</span>'+
  '<h2>Deine Teamkonten</h2><p>Tarifänderungen werden über den geschützten Administrationsserver gespeichert. Administratoren haben immer Vollzugriff.</p></div></div>'+
