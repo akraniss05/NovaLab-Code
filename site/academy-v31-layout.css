@@ -350,3 +350,10 @@ body.focus-modal-visible{overflow:hidden}
 .ll-xp-more>summary{cursor:pointer;padding:14px 0;color:#d6bbf4;list-style-position:inside;font-size:13px;font-weight:700}
 .ll-xp-more>summary:focus-visible{outline:2px solid #b98cf4;outline-offset:2px}
 @media(max-width:430px){.ll-xp-history{padding:15px}.ll-xp-row{gap:8px}.ll-xp-symbol{flex-basis:31px;width:31px;height:31px}.ll-xp-amount{font-size:11px;padding:6px}.ll-xp-detail strong{font-size:13px}}
+
+/* v45: lesson objective stays visible without crowding the two learning parts. */
+.ll-lesson-focus{display:grid;gap:8px;margin:17px 0 22px;padding:18px 20px;border:1px solid #8860c7;border-radius:17px;background:linear-gradient(125deg,#31204b,#201d39);box-shadow:inset 3px 0 0 #b789ff}
+.ll-lesson-focus span{font:700 .75rem var(--mono,monospace);letter-spacing:.14em;color:#cba8ff}
+.ll-lesson-focus strong{font-size:clamp(1rem,2vw,1.15rem);line-height:1.55;overflow-wrap:anywhere}
+#quiz-choices .quiz-choice{white-space:normal;overflow-wrap:anywhere;text-align:left;line-height:1.45}
+@media(max-width:580px){.ll-lesson-focus{padding:15px;margin:14px 0}.ll-part-body p{line-height:1.65}}
