@@ -7,7 +7,7 @@ const path=require('node:path');
 
 const edgeSource=fs.readFileSync(path.join(__dirname,'../supabase/functions/admin-users/index.ts'),'utf8');
 const javascript=edgeSource
- .replace(/^import \{ createClient \} from 'npm:@supabase\/supabase-js@2';\s*/m,'')
+ .replace(/^import \{ createClient \} from 'npm:@supabase\/supabase-js@2(?:\\.\\d+)*';\\s*/m,'')
  .replace('const headers: Record<string,string> =','const headers =')
  .replace('const reply=(status:number,data:unknown)=>','const reply=(status,data)=>')
  .replace('const env=(n:string)=>','const env=(n)=>')
@@ -18,7 +18,12 @@ const javascript=edgeSource
  .replace('(x:{user_id:string})','(x)')
  .replace('let expiresAt:string|null=','let expiresAt=')
  .replaceAll('expiresAt!','expiresAt')
- .replace('plan_expires_at:null as string|null','plan_expires_at:null');
+ .replace('plan_expires_at:null as string|null','plan_expires_at:null')
+ .replace('const allLessons:Array<{id:string,course_id:string,title:string,chapter:string,position:number}>=[];','const allLessons=[];')
+ .replace('const lessonGroups=new Map<string,typeof allLessons>();','const lessonGroups=new Map();')
+ .replace('const validIds=new Set<string>();','const validIds=new Set();')
+ .replace('(value:unknown):value is string=>','(value)=>')
+ .replace('lessonGroups.get(lesson.course_id)!.push(lesson);','lessonGroups.get(lesson.course_id).push(lesson);');
 
 const ADMIN='11111111-1111-4111-8111-111111111111';
 const STUDENT='22222222-2222-4222-8222-222222222222';
