@@ -78,8 +78,8 @@ assert(!js.includes('data-action="run-practice"'),'Run button must not render');
 assert(html.includes('class="focus-center"')&&html.includes('data-timer-open'),'Center timer missing');
 assert(js.includes('localStorage.setItem(timerStorageKey'),'Timer must persist beyond tab reload');
 const layoutRestore=read('site/academy-v31-layout.css');
-assert(html.includes('academy-v31-layout.css?build=20261108v45'),'v31 simplified CSS missing');
-assert(read('site/v31.html').includes('academy-v31-layout.css?build=20261108v45'),'PWA simple CSS missing');
+assert(html.includes('academy-v31-layout.css?build=20261108v47'),'v31 simplified CSS missing');
+assert(read('site/v31.html').includes('academy-v31-layout.css?build=20261108v47'),'PWA simple CSS missing');
 for(const selector of ['.ll-home-brand-banner','.topbar','.bottom-nav','.focus-center','.practice-actions-simple'])assert(layoutRestore.includes(selector),'Visual recovery missing '+selector);
 
 const curriculum=read('site/academy-curriculum.js');
