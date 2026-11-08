@@ -19,6 +19,8 @@ on:
       - 'tests/runtime-browser.cjs'
       - 'tests/runtime-grading.cjs'
       - 'tests/simple-academy.cjs'
+      - 'tests/support-submit.cjs'
+      - 'supabase/data/v47_contextual_quizzes.sql'
       - 'tests/admin-plans.cjs'
       - 'tests/xp-rewards.cjs'
       - 'supabase/migrations/20261107_v44_one_time_xp_ledger.sql'
@@ -42,6 +44,8 @@ on:
       - 'tests/runtime-browser.cjs'
       - 'tests/runtime-grading.cjs'
       - 'tests/simple-academy.cjs'
+      - 'tests/support-submit.cjs'
+      - 'supabase/data/v47_contextual_quizzes.sql'
       - 'tests/admin-plans.cjs'
       - 'tests/xp-rewards.cjs'
       - 'supabase/migrations/20261107_v44_one_time_xp_ledger.sql'
@@ -68,6 +72,8 @@ jobs:
           node --check site/practice-engine.js
       - name: Simple Academy and timer regression tests
         run: node tests/simple-academy.cjs
+      - name: Support ticket sending and receipt regression
+        run: node tests/support-submit.cjs
       - name: Subscription Edge Function security regression
         run: node tests/admin-plans.cjs
       - name: One-time XP and reward history regression
