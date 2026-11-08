@@ -11,7 +11,7 @@ var api=null, s={shopDiscount:0,service:{beta_open:true,mine:[],admin:[]},streak
 var plans={free:'Free',pro:'Plus',ultimate:'Ultimate'};
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];});}
 function safeLink(url){return /^https:\/\/[^\s<>"]+$/i.test(String(url||''))?esc(url):'#';}
-function notice(message){toastNode.textContent=message;toastNode.classList.add('show');clearTimeout(notice.timer);notice.timer=setTimeout(function(){toastNode.classList.remove('show');},5000);}
+function notice(message){toastNode.textContent=window.LLI18n?.translate?.(message)||message;toastNode.classList.add('show');clearTimeout(notice.timer);notice.timer=setTimeout(function(){toastNode.classList.remove('show');},5000);}
 function formatError(e){return (e&&e.message)||'Unbekannter Fehler';}
 function safeNumber(n){return Number.isFinite(Number(n))?Number(n):0;}
 function xpEarned(){return (s.xpAwards||[]).reduce((sum,entry)=>sum+Math.max(0,Number(entry.xp)||0),0);}
@@ -264,6 +264,7 @@ function passwordChangeRequired(){
 async function boot(){
  var auth=await api.auth.getUser();if(auth.error||!auth.data?.user){s.user=null;login();return;}
  s.user=auth.data.user;
+ window.LLI18n?.setAccount?.(s.user.id);
  try{
   await window.LLMFA.refresh(api);
   if(window.LLMFA.pending){s.ready=false;frame();content.className='content mfa-box';await window.LLMFA.renderGate(content,{client:api,onSuccess:async function(){content.className='content';await boot();},onLogout:logout});return;}
@@ -330,7 +331,7 @@ async function loadData(){
  }).catch(()=>{});
  await navigateCurrent();
 }
-async function logout(){window.LLLearning?.clear?.();try{await api.auth.signOut();}catch(e){}s.authScreen='login';s.ready=false;s.streakModalOpen=false;s.streakError='';s.loginStreak=null;paintStreakModal();s.user=null;s.profile=null;s.lesson=null;s.courses=[];s.lessons=[];location.hash='#home';login();}
+async function logout(){window.LLI18n?.setAccount?.('');window.LLLearning?.clear?.();try{await api.auth.signOut();}catch(e){}s.authScreen='login';s.ready=false;s.streakModalOpen=false;s.streakError='';s.loginStreak=null;paintStreakModal();s.user=null;s.profile=null;s.lesson=null;s.courses=[];s.lessons=[];location.hash='#home';login();}
 async function saveProgress(){
  var accountProgress={...s.progress};delete accountProgress.quizProgress;
  var res=await api.from('academy_progress').upsert({user_id:s.user.id,key:'liverylab-v10',payload:accountProgress,updated_at:new Date().toISOString()},{onConflict:'user_id,key'});
@@ -389,6 +390,7 @@ function render(){
  paintStreakModal();
  paintTimer();
  paintEditorLines();
+ window.LLI18n?.apply?.();
 }
 function htmlCssPreview(code,lang){
  const csp='<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; style-src &#39;unsafe-inline&#39;; img-src data: blob:; font-src data:;">';
