@@ -2017,7 +2017,7 @@ document.addEventListener('submit',async function(e){
      if(!Array.isArray(s.service.mine))s.service.mine=[];
      s.service.mine.unshift({id:r.data.id,category,tier,message,status:'open',reply:null,created_at:new Date().toISOString()});
     }
-    render();notice('Anfrage erfolgreich gespeichert · Ticket '+r.data.id.slice(0,8));return;
+    s.supportBusy=false;render();notice('Anfrage erfolgreich gespeichert · Ticket '+r.data.id.slice(0,8));return;
    }finally{s.supportBusy=false;}
   }
   if(mode==='support-reply'){
