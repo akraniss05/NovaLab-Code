@@ -1,0 +1,478 @@
+/* LiveryLab Atelier / version 1.5
+   Intentional second design layer: structural layout, authentic progress and
+   CSS-rendered holograms. Keeps existing interaction IDs, RPCs and form controls. */
+.ll-neon-screen{
+ --atelier-ink:#130c21;--atelier-surface:#24152f;--atelier-violet:#c087ff;
+ --atelier-violet-deep:#6e358e;--atelier-mint:#85f6c2;
+ --atelier-edge:rgba(185,125,239,.63);--atelier-shadow:0 18px 46px #0905149b;
+ --atelier-font:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+ color:#f7f2ff;position:relative;
+}
+.ll-neon-screen :is(h1,h2,h3){font-family:var(--atelier-font);letter-spacing:-.038em}
+.ll-neon-screen .section-heading .eyebrow{color:#c39cff}
+.ll-neon-screen .btn.primary,.ll-neon-screen .btn:not(.danger):not(.discord):hover{
+ transition:background .2s,transform .2s,box-shadow .2s
+}
+.ll-neon-screen .btn.primary:active,.ll-atelier-rail-card:active,.ll-neon-menu-tile:active{transform:scale(.985)}
+/* The same orbital sky from Lernen, now a real distinctive hero per page */
+.ll-neon-page-heading{
+ border-radius:23px!important;border:1px solid #a274ce!important;
+ margin:0 0 22px!important;padding:24px 28px!important;min-height:214px!important;
+ background:radial-gradient(ellipse at 83% 3%,#6f38964a,transparent 48%),linear-gradient(122deg,#271837,#110d20 90%)!important;
+ box-shadow:0 10px 39px #0902148b,inset 0 1px 0 #e9b8ff40!important;overflow:hidden!important;isolation:isolate;
+}
+.ll-neon-page-heading:before{
+ top:-76px!important;right:-46px!important;width:min(86%,800px)!important;height:307px!important;
+ background:url('./roadmap-orbit.svg') right center/contain no-repeat!important;opacity:.95!important
+}
+.ll-neon-page-heading .ll-neon-page-title{padding-right:clamp(115px,19vw,265px);align-self:center}
+.ll-neon-brand-text{font-size:14px!important;margin-bottom:18px!important}
+.ll-neon-page-heading h1{font-size:clamp(33px,4.2vw,49px)!important;line-height:1.08!important;margin:6px 0 11px!important}
+.ll-neon-page-heading .lede{font-size:14px!important;line-height:1.65!important;color:#cebadc!important;max-width:590px}
+.ll-neon-hero-art{
+ z-index:1!important;width:150px!important;height:147px!important;right:62px!important;top:25px!important;
+ border:0!important;background:none!important;box-shadow:none!important;border-radius:0!important;
+ transform:none!important;overflow:visible!important
+}
+.ll-neon-hero-art:after{display:none}
+.ll-neon-hero-glyph{display:block;width:100%;height:100%}
+.ll-atelier-scene{
+ display:block;position:relative;isolation:isolate;width:100%;height:100%;min-width:0;
+ transform-style:preserve-3d;perspective:440px;overflow:visible;
+}
+.ll-atelier-halo{position:absolute;inset:-18% -15%;border-radius:50%;z-index:-1;
+ background:radial-gradient(ellipse,#b159f364 0,#8040be28 30%,transparent 68%);
+ filter:blur(6px);pointer-events:none
+}
+.ll-atelier-grid{position:absolute;inset:12% 0 7%;opacity:.75;z-index:-1;transform:rotate(-15deg);
+ background:linear-gradient(90deg,transparent 47%,#cb85ff36 49% 51%,transparent 53%) 0 0/30px 30px,
+ linear-gradient(0deg,transparent 47%,#ad79ed31 49% 51%,transparent 53%) 0 0/30px 30px;
+ mask-image:radial-gradient(ellipse,black 15%,transparent 65%)}
+.ll-atelier-platform{position:absolute;left:14%;right:7%;bottom:6%;height:34%;
+ border:1.5px solid #a5fdd6;border-radius:17px;
+ background:linear-gradient(135deg,#542c82a8,#214c4f8a);
+ box-shadow:0 0 18px #71efb69c,inset 0 0 18px #71d8bc31;
+ transform:perspective(220px) rotateX(66deg) rotateZ(-18deg);
+}
+.ll-atelier-cube{
+ position:absolute;left:22%;top:12%;width:57%;height:57%;
+ display:grid;place-items:center;z-index:2;border:1.5px solid #edc9ff;border-radius:18px;
+ background:linear-gradient(138deg,#9a5bcb 4%,#633394 28%,#3a205a 68%,#241639 100%);
+ box-shadow:inset 0 2px 12px #f8ddff84,inset -8px -9px 19px #1b102b73,
+  0 0 17px #b873fbd1,11px 16px 0 -7px #26735e,13px 21px 19px #44dea56e;
+ transform:rotate(11deg) skewY(-5deg);
+}
+.ll-atelier-cube:after{content:"";position:absolute;left:0;right:-8%;bottom:-10px;height:12px;
+ border:1px solid #6fddaa;border-radius:0 0 6px 8px;background:linear-gradient(90deg,#265d66,#248a69);
+ transform:skewX(36deg);z-index:-1;box-shadow:0 0 10px #64efb967}
+.ll-atelier-scene .ll-icon{display:block!important;width:35px!important;height:35px!important;max-width:35px!important;
+ color:#f9dcff;filter:drop-shadow(0 0 6px #d5a5ffdf)}
+.ll-atelier-spark{position:absolute;color:#dfb9ff;font-size:15px;z-index:2;
+ text-shadow:0 0 10px #bb6cff;line-height:1;pointer-events:none}
+.ll-spark-one{top:11%;left:10%}.ll-spark-two{right:9%;top:35%;color:#8effce}
+.ll-atelier-orbit{position:absolute;inset:28% -7% 18%;z-index:1;border:1px solid #b17aeead;
+ border-radius:50%;transform:rotate(-24deg);box-shadow:0 0 13px #ad58f371;pointer-events:none}
+.ll-atelier-scene-shop .ll-atelier-cube{background:linear-gradient(135deg,#bc84db,#603a8b,#2e1b4b)}
+.ll-atelier-scene-admin .ll-atelier-cube{background:linear-gradient(135deg,#8e75df,#4b277a,#241b4e)}
+.ll-atelier-scene-profile .ll-atelier-cube,.ll-atelier-scene-friends .ll-atelier-cube{border-color:#92f2c8}
+.ll-atelier-scene-script .ll-atelier-cube{background:linear-gradient(140deg,#6547a8,#39216c,#171f3f)}
+.ll-atelier-scene-exam .ll-atelier-cube{background:linear-gradient(145deg,#a65ec4,#3e205b,#19223a)}
+.ll-atelier-scene-settings .ll-atelier-cube{background:linear-gradient(135deg,#6e65c6,#4c2a84,#302052)}
+.ll-neon-feature{min-height:175px!important;padding:23px 27px!important;box-shadow:0 0 0 1px #d6a0ff28 inset,0 0 25px #8f3de756,0 15px 35px #06031078!important}
+.ll-neon-feature-copy{max-width:620px}
+.ll-neon-feature-icon{flex:0 0 132px!important;width:132px!important;height:122px!important;
+ border:0!important;background:none!important;box-shadow:none!important;transform:none!important;overflow:visible!important}
+.ll-neon-feature-icon .ll-atelier-scene{width:132px;height:122px}
+.ll-neon-feature-icon svg{width:32px!important;height:32px!important}
+.ll-neon-feature h2{font-size:clamp(23px,3.7vw,34px)!important;line-height:1.22}
+.ll-neon-feature p{font-size:13px}
+@media(prefers-reduced-motion:no-preference){
+ .ll-neon-page-heading .ll-atelier-cube{animation:llAtelierFloat 7s ease-in-out infinite}
+ .ll-neon-feature-icon .ll-atelier-cube{animation:llAtelierFloat 8s ease-in-out infinite}
+ .ll-atelier-spark{animation:llAtelierTwinkle 4s ease-in-out infinite alternate}
+}
+@keyframes llAtelierFloat{0%,100%{translate:0 0}50%{translate:0 -5px}}
+@keyframes llAtelierTwinkle{0%{opacity:.3;transform:scale(.8)}100%{opacity:1;transform:scale(1.16)}}
+/* Key stats look like small premium progress modules */
+.ll-atelier-mission-strip,.ll-atelier-stats{
+ display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;
+ margin:15px 0 22px;min-width:0;position:relative
+}
+.ll-atelier-mission-stat,.ll-atelier-stats>div{
+ position:relative;display:flex;flex-direction:column;justify-content:center;min-width:0;
+ gap:8px;padding:20px 17px;border-radius:17px;
+ border:1px solid #8459ab;
+ background:radial-gradient(ellipse at 90% 0%,#75449456,transparent 58%),linear-gradient(140deg,#271b37,#161023);
+ box-shadow:inset 0 1px 0 #cb8afd26,0 7px 20px #09051889;overflow:hidden
+}
+.ll-atelier-mission-stat:before,.ll-atelier-stats>div:before{content:"";position:absolute;inset:0 auto 0 0;width:3px;
+ background:linear-gradient(180deg,#b87efe,#61e5b0);opacity:.85}
+.ll-atelier-mission-stat>span,.ll-atelier-stats>div>span{display:flex;color:#be8df4;line-height:1}
+.ll-atelier-mission-stat>span svg,.ll-atelier-stats>div>span svg{width:23px!important;height:23px!important}
+.ll-atelier-mission-stat strong,.ll-atelier-stats strong{font-size:clamp(19px,2.8vw,30px);color:#9cffd2;font-variant-numeric:tabular-nums;line-height:1.15}
+.ll-atelier-mission-stat small,.ll-atelier-stats small{font-size:11px;line-height:1.4;color:#c3b2d6}
+.ll-atelier-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ll-atelier-stats .ll-atelier-ref-tip{background:radial-gradient(ellipse at right,#5c377b85,transparent),#241735}
+.ll-atelier-stats .ll-atelier-ref-tip strong{font-size:20px;color:#f0d7ff}
+.ll-atelier-stats .ll-atelier-ref-tip .eyebrow{font-size:9px}
+.ll-atelier-section-intro{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.ll-atelier-section-intro h2{font-size:clamp(22px,3vw,30px);color:#fff;margin:7px 0}
+.ll-atelier-section-intro p{font-size:12px;line-height:1.6;color:#beb0d0;margin:0}
+.ll-atelier-section-intro .btn{flex-shrink:0}
+/* Learning rail is a real mini roadmap, not a dead illustration */
+.ll-atelier-course-rail,.ll-atelier-profile-path,.ll-atelier-admin-pulse{
+ margin:22px 0;padding:23px;border-radius:22px;border:1px solid #9b6fc8;
+ background:radial-gradient(ellipse at 80% 0%,#67378e53,transparent 60%),linear-gradient(137deg,#231631,#130e20);
+ box-shadow:inset 0 1px 0 #dfb2ff27,0 10px 25px #0603137d
+}
+.ll-atelier-rail-list{position:relative;margin:20px 0 0;padding-left:3px;display:flex;flex-direction:column;gap:10px}
+.ll-atelier-rail-list:before{content:"";position:absolute;left:24px;top:22px;bottom:22px;border-left:3px solid #775491;
+ box-shadow:0 0 10px #b678f77a;pointer-events:none}
+.ll-atelier-rail-card{position:relative;z-index:1;display:flex;align-items:center;gap:15px;text-align:left;
+ width:100%;min-height:86px;padding:13px;border:1px solid #6f548c;border-radius:17px;cursor:pointer;
+ background:linear-gradient(100deg,#301d43,#20152e);color:#f9f3ff;
+ transition:border-color .18s,box-shadow .18s,transform .18s}
+.ll-atelier-rail-card:hover{border-color:#cfa3fc;box-shadow:0 0 20px #ac67ee70;transform:translateX(2px)}
+.ll-atelier-rail-node{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border-radius:50%;
+ background:#462469;color:#eed0ff;border:2px solid #cc95ff;box-shadow:0 0 15px #b45aef8f;font:850 14px/1 monospace}
+.ll-atelier-rail-card:first-child .ll-atelier-rail-node{border-color:#85f8c4;background:#1d5642;color:#b5ffda;box-shadow:0 0 16px #6aebb47f}
+.ll-atelier-rail-info{display:flex;flex-direction:column;gap:7px;min-width:0;flex:1}
+.ll-atelier-rail-info strong{font-size:15px;line-height:1.25}
+.ll-atelier-rail-info small{font-size:11px;color:#beaed2}
+.ll-atelier-rail-progress{height:7px;border-radius:999px;background:#433154;overflow:hidden;border:1px solid #65507a}
+.ll-atelier-rail-progress>span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#7aebba,#b5ffe0);box-shadow:0 0 9px #6affbf}
+.ll-atelier-rail-percent{font:850 14px/1 monospace;color:#9effd3;white-space:nowrap}
+/* Home layout: real dashboard with emphatic continue lesson */
+.ll-neon-home .ll-home-greeting{position:relative;overflow:hidden;isolation:isolate;padding:24px}
+.ll-neon-home .ll-home-greeting:before{content:"";position:absolute;right:-56px;bottom:-64px;width:240px;height:130px;
+ opacity:.53;background:url('./roadmap-orbit.svg') right bottom/cover no-repeat;pointer-events:none;z-index:-1}
+.ll-neon-home .ll-home-continue{position:relative;isolation:isolate;overflow:hidden;gap:18px;min-height:178px;
+ border-color:#d1a0ff;background:radial-gradient(ellipse at 88% 7%,#8951ae76,transparent 67%),linear-gradient(145deg,#3a2255,#181224 85%);
+ box-shadow:0 0 26px #a15ef258,0 13px 30px #0a04187a}
+.ll-neon-home .ll-home-continue:after{content:"";position:absolute;right:-32px;bottom:-65px;width:52%;height:190px;
+ opacity:.55;z-index:-1;background:url('./roadmap-orbit.svg') right bottom/cover no-repeat;pointer-events:none}
+.ll-neon-home .ll-home-continue .ll-continue-icon{width:62px;height:62px;flex:0 0 62px;transform:rotate(-8deg);border-radius:16px;
+ background:linear-gradient(140deg,#854bb1,#40215e);border:1px solid #e0acff;box-shadow:0 0 16px #c579fd,8px 10px 0 -5px #337d66}
+.ll-neon-home .ll-home-continue .ll-continue-icon svg{width:35px!important;height:35px!important}
+.ll-neon-home .ll-home-continue .ll-continue-copy{min-width:0;flex:1}
+.ll-neon-home .ll-home-continue .ll-continue-button{white-space:normal;text-align:center}
+.ll-neon-home .ll-home-metrics{gap:8px;border:none;box-shadow:none!important;background:none!important;padding:0!important}
+.ll-neon-home .ll-home-metrics>div{border:1px solid #79549e!important;border-radius:14px!important;
+ background:linear-gradient(150deg,#2f1b3e,#1a1327);padding:12px 6px!important}
+.ll-neon-home .ll-home-shortcuts{gap:13px}
+.ll-neon-home .ll-home-shortcut{border:1px solid #9c69cd!important;border-radius:18px;min-height:119px!important;
+ box-shadow:0 8px 21px #0804178a,inset 0 1px 0 #cc9cff3f}
+.ll-neon-home .ll-home-shortcut:nth-child(4n+1){background:radial-gradient(ellipse at top right,#6940929a,transparent 62%),#231531}
+.ll-neon-home .ll-home-shortcut:nth-child(4n+3){background:radial-gradient(ellipse at top right,#2c876852,transparent 62%),#231531}
+.ll-neon-home .ll-home-shortcuts .ll-home-shortcut .ll-shortcut-text strong{font-size:15px}
+.ll-neon-home .ll-tool-card{border-color:#8461a9!important}
+.ll-neon-home .ll-home-tools .ll-tool-card:first-child{border-color:#57cb9d!important}
+/* Main menu: first route is hero-sized, other routes as holographic constellation cards */
+.ll-neon-menu .ll-atelier-menu-lede{position:relative;margin:9px 0 11px;padding:20px 21px;border-left:3px solid #91f6c7;
+ background:linear-gradient(105deg,#34204b,#1b122b);border-radius:0 16px 16px 0}
+.ll-atelier-menu-lede h2{font-size:clamp(21px,3vw,29px);margin:7px 0}
+.ll-atelier-menu-lede p{font-size:12px;margin:0}
+.ll-neon-menu .ll-neon-menu-grid{gap:14px;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:17px}
+.ll-neon-menu .ll-neon-menu-tile{
+ position:relative;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;
+ min-height:218px;padding:17px 19px 20px;border-radius:20px;overflow:hidden;isolation:isolate;
+ border-color:#aa70d8;background:radial-gradient(ellipse at 90% 10%,#69369f94,transparent 55%),linear-gradient(138deg,#302044,#181126 85%);
+ box-shadow:inset 0 1px 0 #dfadff62,0 0 17px #9e5be84b,0 11px 27px #07021687
+}
+.ll-neon-menu .ll-neon-menu-tile:before{content:"";position:absolute;inset:auto -35px -70px auto;width:240px;height:157px;
+ background:radial-gradient(ellipse,#8e44d22a,transparent 75%);z-index:-1;pointer-events:none}
+.ll-neon-menu .ll-neon-menu-tile:first-child{grid-column:span 2;min-height:186px;display:grid;
+ grid-template-columns:minmax(0,1fr) 190px;grid-template-rows:auto 1fr;
+ grid-template-areas:"kicker art" "label art";align-items:center;
+ background:radial-gradient(ellipse at 75% 44%,#2e825f53,transparent 56%),linear-gradient(120deg,#442666,#21132e);
+ border-color:#87e9c1;box-shadow:inset 0 1px 0 #c6ffe087,0 0 24px #55ddaa37,0 11px 27px #07021687
+}
+.ll-neon-menu .ll-neon-menu-tile:first-child .ll-atelier-tile-kicker{grid-area:kicker;align-self:end}
+.ll-neon-menu .ll-neon-menu-tile:first-child .ll-neon-menu-label{grid-area:label;align-self:start}
+.ll-neon-menu .ll-neon-menu-tile:first-child .ll-neon-menu-label strong{font-size:clamp(22px,3vw,29px)}
+.ll-neon-menu .ll-neon-menu-tile:first-child .ll-neon-menu-art{grid-area:art;position:relative;inset:auto;
+ width:175px;height:145px;transform:scale(1.03)}
+.ll-neon-menu .ll-neon-menu-tile:first-child .ll-neon-tile-arrow{border-color:#9bffd2}
+.ll-atelier-tile-kicker{font:800 10px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;
+ color:#b893da;letter-spacing:.07em;margin:0 0 8px}
+.ll-neon-menu .ll-neon-menu-art{position:absolute;right:0;top:0;width:141px;height:115px;
+ margin:0;align-self:auto;flex:0 0 auto;border:0;filter:none;pointer-events:none;z-index:0}
+.ll-neon-menu .ll-neon-menu-art:before,.ll-neon-menu .ll-neon-menu-art:after{display:none}
+.ll-neon-menu .ll-neon-menu-art .ll-atelier-scene{width:100%;height:100%}
+.ll-neon-menu .ll-neon-menu-art .ll-atelier-cube{width:56%;height:53%}
+.ll-neon-menu .ll-neon-menu-label{position:relative;z-index:2;min-height:68px;flex:0 0 auto;
+ padding-right:24px;gap:8px;margin:0}
+.ll-neon-menu .ll-neon-menu-label strong{font-size:clamp(17px,2.6vw,23px);color:#fff}
+.ll-neon-menu .ll-neon-menu-label small{font-size:12px;color:#cdbadd;line-height:1.48}
+.ll-neon-menu .ll-neon-tile-arrow{z-index:3;right:13px;bottom:12px}
+.ll-neon-menu .ll-neon-menu-tile.is-locked{border-color:#74578c}
+.ll-neon-menu .ll-neon-menu-tile:hover{transform:translateY(-3px);box-shadow:0 0 25px #bb74f880,0 12px 28px #080313}
+/* Real script IDE, no new editor or fake download controls */
+.ll-neon-script .ll-atelier-studio-shell{display:grid;grid-template-columns:245px minmax(0,1fr);gap:14px;min-width:0;margin-top:16px}
+.ll-atelier-studio-files,.ll-atelier-studio-work{
+ min-width:0;padding:14px;border:1px solid #905dbd;border-radius:19px;
+ background:linear-gradient(155deg,#231430,#140f21);box-shadow:inset 0 1px 0 #d09dff3b,0 12px 27px #0602117c
+}
+.ll-atelier-studio-work{background:linear-gradient(140deg,#2a1939,#140e20)}
+.ll-atelier-panel-caption{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;
+ padding:6px 2px 15px;border-bottom:1px solid #6c4b88}
+.ll-atelier-panel-caption .eyebrow{font-size:10px}
+.ll-atelier-panel-caption strong{font-size:12px;color:#9cffd0}
+.ll-neon-script .ll-atelier-studio-files .file-tree{margin:10px 0 0;padding:8px;border:0;box-shadow:none;background:transparent;overflow:auto}
+.ll-neon-script .ll-atelier-studio-files .tree-file{width:100%;display:flex;justify-content:flex-start;text-align:left;gap:7px;
+ min-height:44px;border:1px solid transparent;border-radius:11px;padding:9px 8px}
+.ll-neon-script .ll-atelier-studio-files .tree-file.selected{border-color:#74e6b7!important;background:#1d5945!important}
+.ll-neon-script .ll-atelier-studio-files .tree-count{margin-left:auto}
+.ll-neon-script .ll-atelier-studio-work .file-tabs{margin:13px 0;border:none;background:#24182f;border-radius:12px;padding:7px}
+.ll-neon-script .ll-atelier-studio-work .file-tab{border-radius:9px;white-space:nowrap}
+.ll-neon-script .ll-atelier-studio-work .file-tab.active{border:1px solid #ad7fe4;background:#4a2c64;color:#e8c9ff}
+.ll-neon-script .ll-atelier-studio-work .file-preview{margin:0;min-width:0;border-radius:14px;border:1px solid #754c9c}
+.ll-neon-script .ll-atelier-studio-work .file-preview-head{background:linear-gradient(100deg,#493065,#241737);
+ border-bottom:1px solid #9066b4;gap:9px;flex-wrap:wrap}
+.ll-neon-script .ll-atelier-studio-work .file-code{font:13px/1.8 ui-monospace,SFMono-Regular,Menlo,monospace;
+ background:radial-gradient(ellipse at top right,#28183c,transparent 48%),#0f0b1b;color:#a4ffcd;
+ overflow:auto;max-height:700px;min-height:240px;padding:16px 18px}
+.ll-neon-script .ll-atelier-script-stats{margin-top:18px}
+.ll-neon-script .project-message{background:linear-gradient(135deg,#233e39,#181b29);border-color:#70d4ac}
+.ll-neon-script .project-message strong{color:#adffda}
+/* Course examinations are actual cards with status, progress, scope and CTA */
+.ll-neon-exams .ll-atelier-exam-card{position:relative;min-height:275px;isolation:isolate;overflow:hidden;
+ padding:22px 21px!important;gap:13px!important;border:1px solid #a270d4!important;
+ background:radial-gradient(ellipse at 91% 10%,#673b8bb0,transparent 57%),linear-gradient(138deg,#281a39,#151021)!important;
+ box-shadow:0 0 16px #9651d948,0 12px 28px #07031280}
+.ll-atelier-exam-card-glow{position:absolute;inset:-75px -70px auto auto;width:230px;height:185px;
+ background:radial-gradient(ellipse,#a44ef149,transparent 73%);filter:blur(4px);pointer-events:none;z-index:-1}
+.ll-neon-exams .ll-atelier-exam-card.is-complete{border-color:#75dfae!important;background:
+ radial-gradient(ellipse at 85% 10%,#2a71585c,transparent 60%),linear-gradient(140deg,#1c3f36,#141d26)!important}
+.ll-neon-exams .ll-atelier-exam-card .course-icon{display:block!important;width:110px!important;height:88px!important;
+ border:0!important;background:none!important;box-shadow:none!important;overflow:visible!important}
+.ll-neon-exams .ll-atelier-exam-card .ll-atelier-scene{width:115px;height:88px}
+.ll-neon-exams .ll-atelier-exam-card .ll-atelier-cube{border-radius:13px}
+.ll-neon-exams .ll-atelier-exam-card .ll-atelier-scene .ll-icon{width:25px!important;height:25px!important}
+.ll-neon-exams .ll-atelier-exam-card h3{font-size:clamp(19px,2.7vw,25px)!important}
+.ll-atelier-exam-progress{display:flex;align-items:center;justify-content:space-between;gap:9px;margin-top:auto}
+.ll-atelier-exam-progress>div{display:flex;flex-direction:column;gap:2px}
+.ll-atelier-exam-progress strong{font-size:23px;color:#a6ffd9}
+.ll-atelier-exam-progress small,.ll-atelier-exam-progress>span{color:#c0b1d1;font-size:11px}
+.ll-neon-exams .ll-atelier-exam-card .btn{min-height:46px}
+.ll-neon-exams .ll-atelier-exam-card .progress{height:8px}
+/* References become a professional syntax library without touching select logic */
+.ll-neon-reference .ll-atelier-ref-stats{margin-top:15px}
+.ll-neon-reference .reference-picker{padding:24px!important;background:linear-gradient(145deg,#322043,#171122)}
+.ll-neon-reference .reference-section .ref-section-head{padding:3px 5px 9px}
+.ll-neon-reference .reference-section .ref-section-head h2{font-size:24px}
+.ll-neon-reference .reference-block{border:1px solid #8863b0!important;border-radius:17px}
+.ll-neon-reference .reference-row{position:relative;gap:14px;min-height:62px;background:#1d152a;
+ border-top:1px solid #53416e}
+.ll-neon-reference .reference-row:nth-child(even){background:#261934}
+.ll-neon-reference .reference-row code{color:#96ffd1;font-size:13px;padding:7px 11px;
+ background:#0e1f23;border:1px solid #346c5b;border-radius:9px}
+.ll-neon-reference .reference-row span{line-height:1.55}
+.ll-neon-reference .reference-head{background:#3d2753}
+/* Shop visuals use real prices, discount and membership state */
+.ll-neon-plans .membership-stack{margin-top:22px;align-items:stretch}
+.ll-neon-plans .membership-card{isolation:isolate;position:relative;overflow:hidden;min-height:425px;
+ padding:25px 21px!important;border-radius:20px!important;border:1px solid #a16dce!important;
+ box-shadow:inset 0 1px 0 #d3a5ff6b,0 10px 27px #0903178f,0 0 17px #8141c632!important}
+.ll-neon-plans .membership-card:before{content:"";position:absolute;inset:-68px -79px auto auto;width:205px;height:180px;
+ background:radial-gradient(ellipse,#985ac866,transparent 69%);pointer-events:none;z-index:-1}
+.ll-neon-plans .membership-card:after{content:"✦";position:absolute;right:25px;top:17px;
+ color:#b88df3;font-size:37px;text-shadow:0 0 20px #a766ea;font-family:var(--atelier-font)}
+.ll-neon-plans .membership-card.tier-pro:after{content:"⬡";color:#98ffd1}
+.ll-neon-plans .membership-card.tier-ultimate:after{content:"✧";color:#ebbbff;font-size:47px}
+.ll-neon-plans .membership-card.tier-pro{border-color:#77e7b7!important;box-shadow:inset 0 1px 0 #d0ffeb7c,0 0 28px #6bdda465!important}
+.ll-neon-plans .membership-card.tier-ultimate{border-color:#e0a2ff!important;box-shadow:inset 0 1px 0 #e0a2ff7c,0 0 30px #ae58e980!important}
+.ll-neon-plans .membership-top h2{font-size:clamp(24px,3vw,31px);letter-spacing:-.04em}
+.ll-neon-plans .membership-price{padding:13px 0;display:block;font-size:28px!important;font-weight:900;color:#d9b2ff!important}
+.ll-neon-plans .membership-card.tier-pro .membership-price,.ll-neon-plans .membership-card.tier-pro .sale-new{color:#a9ffda!important}
+.ll-neon-plans .membership-limits{border:1px solid #69517f;background:#241c37;border-radius:11px;padding:11px;display:flex;flex-wrap:wrap}
+.ll-neon-plans .membership-benefits{margin-bottom:auto}
+.ll-neon-plans .membership-benefits li{padding-block:4px;color:#ded1e8;line-height:1.55}
+/* User progression with connected nodes and meaningful completion */
+.ll-neon-profile .profile-overview-card{min-height:186px;padding:24px!important;overflow:hidden;position:relative}
+.ll-neon-profile .profile-overview-avatar{width:89px;height:89px;flex:0 0 89px;font-size:34px;
+ border-radius:23px;box-shadow:0 0 24px #b36dfa9e,11px 11px 0 -7px #277d61}
+.ll-neon-profile .profile-quick-tile{padding:19px;border:1px solid #8f62b9!important}
+.ll-neon-profile .ll-atelier-profile-path{margin-top:17px}
+.ll-atelier-milestones{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:25px;position:relative}
+.ll-atelier-milestones:before{content:"";position:absolute;left:10%;right:10%;top:24px;border-top:2px dashed #6c5189}
+.ll-atelier-milestone{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;z-index:1;color:#c4b2d4;min-width:0}
+.ll-atelier-milestone-node{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;
+ border:2px solid #71558d;background:#2c1e3a;color:#c49bee;box-shadow:inset 0 0 10px #9859c221}
+.ll-atelier-milestone-node svg{width:22px!important;height:22px!important}
+.ll-atelier-milestone.is-done .ll-atelier-milestone-node{border-color:#85fac6;background:#15573e;color:#b6ffe0;box-shadow:0 0 15px #69eab2b2}
+.ll-atelier-milestone strong{font:850 12px/1 ui-monospace,monospace;color:#ca98ff}
+.ll-atelier-milestone small{font-size:11px;line-height:1.4}
+.ll-neon-profile .profile-title-picker,.ll-neon-profile .profile-quick-tile{border-color:#a071cb}
+/* Community is welcoming without exposing user private profile data */
+.ll-neon-friends .friend-profile-card{border-radius:18px;overflow:hidden}
+.ll-neon-friends .friend-card-banner{min-height:98px;background:
+ linear-gradient(120deg,#49246fbd,#1c1843a5),url('./roadmap-orbit.svg') right center/cover no-repeat}
+.ll-neon-friends .friend-card-top{gap:11px}
+.ll-neon-friends .friend-identity strong{font-size:clamp(17px,2.5vw,22px)}
+.ll-neon-friends .friends-counter{padding:18px 14px;box-shadow:0 9px 21px #09031772}
+.ll-neon-friends .friend-nav-tab.active{box-shadow:0 0 13px #63e8b356}
+.ll-neon-friends .friend-profile-card .friend-actions .btn{min-height:37px}
+/* Support ticket module and real open/answered counts */
+.ll-neon-support .ll-atelier-support-stats{margin:16px 0 11px}
+.ll-neon-support .support-compose,.ll-neon-support .support-history{padding:23px!important}
+.ll-neon-support .support-compose:before{content:"[ + ]  NEUES TICKET";display:block;
+ font:800 10px/1.5 ui-monospace,monospace;letter-spacing:.08em;color:#aaffd4}
+.ll-neon-support .support-grid .panel{border-color:#ad79d7;background:
+ radial-gradient(ellipse at top right,#60358850,transparent 57%),linear-gradient(150deg,#241632,#171124)}
+.ll-neon-support .support-faq details[open] summary{color:#9effd7}
+.ll-neon-support .support-ticket{box-shadow:inset 0 1px 0 #ad76dc2b,0 7px 16px #08031579}
+.ll-neon-support .support-ticket .btn{min-height:36px}
+/* Settings: clearly distinguish live personal style preview from toggles */
+.ll-atelier-settings-preview{display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:179px;
+ margin:17px 0 21px;padding:23px 27px;border:1px solid #c18be9;border-radius:21px;
+ background:radial-gradient(ellipse at 85% 0%,#754a9c8c,transparent 62%),linear-gradient(130deg,#29183d,#1a1329);
+ box-shadow:inset 0 1px 0 #efbcff79,0 0 21px #a959ed65;overflow:hidden;isolation:isolate}
+.ll-atelier-settings-preview-copy{flex:1;min-width:0}
+.ll-atelier-settings-preview h2{font-size:clamp(22px,3.5vw,29px);margin:6px 0 8px}
+.ll-atelier-settings-preview p{font-size:12px;color:#d7c4e3;margin:0;line-height:1.57}
+.ll-atelier-preview-tags{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+.ll-atelier-preview-tags>span{border:1px solid #c094e3;border-radius:99px;padding:5px 9px;font-size:10px;
+ color:#e6ceff;background:#3b2452}
+.ll-atelier-preview-tags>span:last-child{border-color:#6adeaf;color:#b9ffe0;background:#174337}
+.ll-atelier-settings-preview>.ll-atelier-scene{flex:0 0 145px;width:145px;height:135px}
+.ll-neon-settings .setting-section{padding:24px 22px;border-color:#aa73d1}
+.ll-neon-settings .settings-appearance-card{padding:19px}
+.ll-neon-settings .appearance-choice.selected{box-shadow:0 0 15px #55e6a989!important}
+.ll-neon-settings .settings-row{min-height:71px;gap:12px}
+/* Admin pulse and real operational queue data */
+.ll-neon-admin .ll-atelier-admin-pulse{padding:22px;margin-bottom:15px}
+.ll-atelier-admin-pulse-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0 0}
+.ll-atelier-pulse-card{position:relative;min-height:133px;display:flex;flex-direction:column;align-items:flex-start;gap:7px;
+ border:1px solid #9566c2;border-radius:16px;padding:16px 17px;text-align:left;color:#f4ebff;cursor:pointer;
+ background:radial-gradient(ellipse at 80% 7%,#55337f8b,transparent 60%),#221632;
+ box-shadow:inset 0 1px 0 #daa3ff50,0 8px 22px #09021479}
+.ll-atelier-pulse-card:hover{border-color:#cf9eff;box-shadow:0 0 17px #a867ef6e}
+.ll-atelier-pulse-card>span{color:#c9a2f1}.ll-atelier-pulse-card svg{width:22px!important;height:22px!important}
+.ll-atelier-pulse-card strong{font-size:26px;color:#93ffd0}
+.ll-atelier-pulse-card small{font-size:11px;color:#c9b9d7;line-height:1.45}
+.ll-atelier-pulse-card b{position:absolute;right:12px;bottom:14px;font-size:10px;color:#9dffcf}
+.ll-neon-admin .ll-admin-hub-card{position:relative;min-height:165px!important;border-color:#ae7cdb!important;
+ overflow:hidden;background:radial-gradient(ellipse at 80% 0%,#6c3e978b,transparent 58%),#21152f}
+.ll-neon-admin .ll-admin-hub-card:before{content:"";position:absolute;right:-12px;top:-10px;width:126px;height:120px;
+ pointer-events:none;opacity:.47;background:url('./roadmap-orbit.svg') right center/cover no-repeat}
+.ll-neon-admin .ll-admin-hub-card>span{transform:rotate(-8deg);box-shadow:0 0 14px #be79f385,5px 6px 0 -3px #35866a}
+.ll-neon-admin .ll-admin-tabs{margin:18px 0 20px}
+.ll-neon-admin .ll-admin-tabs .btn.primary{background:#1e503f!important;color:#bbffe0!important;border-color:#84ecc0!important;box-shadow:0 0 17px #61f5b75d}
+/* Mobile: cards remain readable and all real controls preserve touch targets */
+@media(max-width:1050px){
+ .ll-neon-page-heading .ll-neon-page-title{padding-right:145px}
+ .ll-neon-hero-art{right:28px!important;width:132px!important;height:138px!important}
+ .ll-neon-script .ll-atelier-studio-shell{grid-template-columns:205px minmax(0,1fr)}
+ .ll-neon-plans .membership-card{min-height:0}
+}
+@media(max-width:700px){
+ .ll-neon-page-heading{padding:19px 17px!important;min-height:181px!important}
+ .ll-neon-page-heading .ll-neon-page-title{padding-right:95px}
+ .ll-neon-page-heading:before{top:-64px!important;right:-67px!important;width:115%!important;height:250px!important}
+ .ll-neon-page-heading h1{font-size:clamp(28px,7vw,36px)!important}
+ .ll-neon-page-heading .lede{font-size:12px!important;max-width:400px}
+ .ll-neon-hero-art{right:5px!important;top:28px!important;width:105px!important;height:110px!important}
+ .ll-atelier-scene .ll-icon{width:29px!important;height:29px!important}
+ .ll-neon-feature{padding:17px!important;min-height:138px!important}
+ .ll-neon-feature-icon{width:98px!important;height:94px!important;flex-basis:98px!important}
+ .ll-neon-feature-icon .ll-atelier-scene{width:98px;height:94px}
+ .ll-atelier-mission-strip{gap:7px}
+ .ll-atelier-mission-stat{padding:14px 10px}
+ .ll-atelier-mission-stat strong{font-size:19px}
+ .ll-atelier-mission-stat small{font-size:10px}
+ .ll-neon-menu .ll-neon-menu-tile{min-height:190px;padding:14px;gap:7px}
+ .ll-neon-menu .ll-neon-menu-art{width:106px;height:96px}
+ .ll-neon-menu .ll-neon-menu-label small{font-size:11px}
+ .ll-neon-menu .ll-neon-menu-tile:first-child{min-height:166px;grid-template-columns:minmax(0,1fr) 120px}
+ .ll-neon-menu .ll-neon-menu-tile:first-child .ll-neon-menu-art{width:121px;height:119px}
+ .ll-neon-script .ll-atelier-studio-shell{grid-template-columns:1fr}
+ .ll-neon-script .ll-atelier-studio-files .file-tree{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+ .ll-neon-script .ll-atelier-studio-files .file-root{grid-column:1/-1}
+ .ll-neon-exams .ll-atelier-exam-card{min-height:255px}
+ .ll-atelier-settings-preview>.ll-atelier-scene{flex-basis:108px;width:108px;height:102px}
+}
+@media(max-width:490px){
+ .ll-neon-page-heading{margin-bottom:13px!important;min-height:180px!important;border-radius:19px!important;
+ padding:17px 13px!important}
+ .ll-neon-page-heading .ll-neon-page-title{padding-right:68px}
+ .ll-neon-page-heading .ll-neon-brand-text{margin-bottom:12px!important;font-size:13px!important}
+ .ll-neon-page-heading h1{font-size:30px!important}
+ .ll-neon-page-heading .lede{font-size:11px!important;line-height:1.5!important}
+ .ll-neon-hero-art{width:77px!important;height:85px!important;right:2px!important;top:39px!important}
+ .ll-atelier-scene .ll-icon{width:24px!important;height:24px!important;max-width:24px!important}
+ .ll-atelier-cube{border-radius:12px}
+ .ll-atelier-platform{border-radius:10px}
+ .ll-neon-feature{padding:14px!important;gap:2px;min-height:124px!important}
+ .ll-neon-feature h2{font-size:20px!important}
+ .ll-neon-feature p{font-size:11px}
+ .ll-neon-feature-icon{width:65px!important;height:73px!important;flex-basis:65px!important}
+ .ll-neon-feature-icon .ll-atelier-scene{width:65px;height:73px}
+ .ll-neon-feature-icon .ll-atelier-scene .ll-icon{width:23px!important;height:23px!important}
+ .ll-atelier-mission-strip{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0}
+ .ll-atelier-mission-stat{min-height:91px;padding:11px 12px;gap:5px}
+ .ll-atelier-mission-stat strong{font-size:22px}
+ .ll-atelier-mission-stat small{font-size:10px}
+ .ll-atelier-stats{gap:7px}
+ .ll-atelier-stats>div{padding:11px 9px;gap:6px}
+ .ll-atelier-stats strong{font-size:18px}
+ .ll-atelier-stats small{font-size:9px}
+ .ll-atelier-stats>div>span svg{width:19px!important;height:19px!important}
+ .ll-atelier-course-rail,.ll-atelier-profile-path,.ll-atelier-admin-pulse{padding:15px;margin:15px 0}
+ .ll-atelier-section-intro h2{font-size:22px}
+ .ll-atelier-section-intro .btn{font-size:11px;min-height:35px}
+ .ll-atelier-rail-card{min-height:76px;padding:10px;gap:10px}
+ .ll-atelier-rail-node{flex-basis:35px;width:35px;height:35px;font-size:12px}
+ .ll-atelier-rail-list:before{left:20px}
+ .ll-atelier-rail-info strong{font-size:13px}
+ .ll-atelier-rail-info small{font-size:10px}
+ .ll-atelier-rail-percent{font-size:12px}
+ .ll-neon-home .ll-home-continue{gap:10px}
+ .ll-neon-home .ll-home-continue .ll-continue-icon{width:47px;height:50px;flex-basis:47px}
+ .ll-neon-home .ll-home-continue .ll-continue-icon svg{width:27px!important;height:27px!important}
+ .ll-neon-menu .ll-atelier-menu-lede{padding:14px}
+ .ll-neon-menu .ll-neon-menu-grid{gap:10px}
+ .ll-neon-menu .ll-neon-menu-tile{min-height:177px;padding:12px 11px 15px}
+ .ll-atelier-tile-kicker{font-size:8px;letter-spacing:0}
+ .ll-neon-menu .ll-neon-menu-art{width:97px;height:93px;right:0;top:0}
+ .ll-neon-menu .ll-neon-menu-label{padding-right:15px}
+ .ll-neon-menu .ll-neon-menu-label strong{font-size:15px}
+ .ll-neon-menu .ll-neon-menu-label small{font-size:10px}
+ .ll-neon-menu .ll-neon-menu-tile:first-child{min-height:157px;grid-template-columns:minmax(0,1fr) 95px}
+ .ll-neon-menu .ll-neon-menu-tile:first-child .ll-neon-menu-art{width:95px;height:106px}
+ .ll-neon-menu .ll-neon-menu-tile:first-child .ll-neon-menu-label strong{font-size:23px}
+ .ll-neon-script .ll-atelier-studio-files,.ll-neon-script .ll-atelier-studio-work{padding:10px}
+ .ll-neon-script .ll-atelier-studio-files .file-tree{padding:5px}
+ .ll-neon-script .ll-atelier-studio-work .file-code{min-height:175px;font-size:11px;padding:12px}
+ .ll-neon-exams .ll-atelier-exam-card{padding:17px!important;min-height:247px}
+ .ll-neon-exams .ll-atelier-exam-card .course-icon{width:80px!important;height:70px!important}
+ .ll-neon-exams .ll-atelier-exam-card .ll-atelier-scene{width:80px;height:70px}
+ .ll-neon-plans .membership-card{padding:18px!important}
+ .ll-neon-profile .profile-overview-avatar{width:65px;height:65px;flex-basis:65px;font-size:25px}
+ .ll-atelier-milestones{gap:5px}
+ .ll-atelier-milestone-node{width:37px;height:37px}
+ .ll-atelier-milestone-node svg{width:18px!important;height:18px!important}
+ .ll-atelier-milestones:before{top:18px}
+ .ll-atelier-milestone small{font-size:9px}
+ .ll-atelier-settings-preview{gap:7px;padding:15px}
+ .ll-atelier-settings-preview h2{font-size:21px}
+ .ll-atelier-settings-preview p{font-size:11px}
+ .ll-atelier-settings-preview>.ll-atelier-scene{flex-basis:82px;width:82px;height:82px}
+ .ll-atelier-admin-pulse-cards{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+ .ll-atelier-pulse-card{min-height:114px;padding:10px 8px}
+ .ll-atelier-pulse-card strong{font-size:19px}
+ .ll-atelier-pulse-card small{font-size:9px}
+ .ll-atelier-pulse-card b{position:static;font-size:9px}
+}
+@media(max-width:360px){
+ .ll-neon-page-heading .ll-neon-page-title{padding-right:45px}
+ .ll-neon-hero-art{width:64px!important;height:67px!important;right:-5px!important}
+ .ll-neon-menu .ll-neon-menu-tile{min-height:173px}
+ .ll-neon-menu .ll-neon-menu-label small{font-size:9px}
+ .ll-atelier-course-rail{padding:11px}
+ .ll-atelier-stats .ll-atelier-ref-tip{display:flex}
+}
+@media(prefers-reduced-motion:reduce){
+ .ll-neon-screen .ll-atelier-scene *{animation:none!important;transition:none!important}
+ .ll-atelier-rail-card:hover,.ll-neon-menu .ll-neon-menu-tile:hover{transform:none!important}
+}
