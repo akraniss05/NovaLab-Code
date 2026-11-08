@@ -41,9 +41,9 @@ const fd=new Map([
  await assert.rejects(()=>registerAccount(fd),e=>String(e?.message||e)==='Invalid email');
  assert.deepEqual(log,['signup'],'Other errors should remain errors');
  const server=fs.readFileSync(path.join(__dirname,'../supabase/functions/academy-register/index.ts'),'utf8');
- for(const token of ["email_confirm:true","access_status!=='pending'","academy_signup_rate_limit","academy_signup_flow:'manual_request'","allowedOrigins","requires_approval:true"])
+ for(const token of ["email_confirm:true","access_status!=='pending'","academy_signup_rate_limit","academy_signup_flow:autoApprove?'self_service':'manual_request'","allowedOrigins","requires_approval:true"])
  assert(server.includes(token),'Missing safe registration server behavior: '+token);
  const admin=fs.readFileSync(path.join(__dirname,'../supabase/functions/admin-users/index.ts'),'utf8');
  assert(admin.includes("manualEmailReview"),'Admin must require deliberate review for unverified email');
- console.log('Registration via signup-disabled fallback, normal signup and error behavior passed');
+ console.log('Legacy signup behavior and server-side registration approval-mode safeguards passed');
 })().catch(err=>{console.error(err);process.exitCode=1;});
