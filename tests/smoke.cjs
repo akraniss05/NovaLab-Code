@@ -92,7 +92,8 @@ for(const token of ['ll-focus-modal','ll-focus-ring','data-timer-preset','focusT
 assert(read('site/academy-v31-layout.css').includes('.ll-plan-manager'),'Missing responsive subscriptions');
 
 const localReader=read('site/academy-curriculum.js'),localSync=read('site/academy-learning-sync.js');
-assert(localReader.includes('.slice(0,2)'),'No more than two learning parts may display');
+assert.equal(require('../site/academy-curriculum.js').LLCurriculum.parts({theory:'Grundlage',example:'print(1)'}).length,2,'Exactly two focused learning parts must display');
+require('./lesson-reader.cjs');
 assert(localReader.includes('ll-part-selector-two'),'Two-tab lesson selector is required');
 assert(js.includes("saveQuizLocal(parseRoute().id"),'Quiz checkpoints must save in the browser');
 assert(js.includes('lessonLocalKey'),'Local progress must be scoped to the logged-in user');

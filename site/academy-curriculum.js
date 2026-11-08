@@ -5,7 +5,7 @@
 (function(root){
 'use strict';
 function parts(p){
- if(!p || (!String(p.theory||'').trim()&&!String(p.example||'').trim()))return [];
+ if(!p || (!String(p.theory||'').trim()&&!String(p.example||'').trim()&&!String(p.goal||p.title||'').trim()&&!(Array.isArray(p.sections)&&p.sections.length)))return [];
  return [{title:'Thema verstehen'},{title:'Beispiel nachvollziehen'}];
 }
 function questions(p){
