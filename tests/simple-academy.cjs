@@ -20,7 +20,7 @@ vm.runInContext(exposed,sandbox,{filename:'academy-v21.js'});
 const app=window.__appTest,s=app.s;
 assert.equal(app.quizQuestions({quiz:'Richtig?',options:['Ja','Nein'],correct:0}).length,1,'No fabricated extra quiz questions');
 assert.equal(app.quizQuestions({quiz:'Defekt',options:['A'],correct:3}).length,0,'Bad quiz data not accepted');
-assert.equal(app.quizQuestions({quiz:'Wofür?',options:['A','B'],correct:0,quiz_version:2,goal:'Lernziel verstehen.',task:'Erstelle eine konkrete Übung und kontrolliere die Ausgabe.'}).length,2,'Older lessons without a mistake still have two relevant questions');
+assert.equal(app.quizQuestions({quiz:'Wofür?',options:['A','B'],correct:0,quiz_version:2,goal:'Lernziel verstehen.',task:'Erstelle eine konkrete Übung und kontrolliere die Ausgabe.'}).length,1,'Old generated quiz banks must fall back to the original verified question');
 assert.equal(app.quizQuestions({quiz:'Wofür?',options:['A','B'],correct:0,quiz_version:3,quiz_items:Array.from({length:8},(_,i)=>({question:'Welche Aussage gehört zu Lektion '+i+'?',options:['A','B'],correct:0}))}).length,3,'Curated banks never overwhelm a lesson');
 assert.equal(source.includes('data-action="run-practice"'),false,'Visible terminal action removed');
 assert.equal(source.includes('practice-console'),false,'Terminal UI removed');
@@ -67,10 +67,10 @@ async function click(selector,node){for(const fn of callbacks.click||[])await fn
  assert.equal(s.quizPassed,true,'Correct quiz answer passes');
  assert.equal(elements.get('#answer-result').classList.contains('quiz-correct'),true,'Correct quiz is green');
  assert.equal(elements.get('#mark-lesson').disabled,false,'Correct video + code + quiz unlocks completion');
- // Generated banks yield two or three lesson-specific questions.
+ // Verified v3 banks contain three contextual questions; obsolete v2 banks are ignored.
  const chapters=Array.from({length:2},(_,i)=>({title:'Lernteil '+(i+1),paragraphs:['Ausführliche Erklärung zu Teil '+(i+1)+'.'],bullets:['Wichtiger Begriff'],exercise:'Aufgabe ausführen.'}));
  const questions=Array.from({length:6},(_,i)=>({question:'Wissensfrage '+(i+1)+' zum Thema Lua?',options:['Antwort A','Antwort B','Antwort C'],correct:i%3,explanation:'Prüfe die Erklärung im Lernteil.'}));
- s.lesson.payload={...s.lesson.payload,sections:chapters,quiz_items:questions,quiz_version:2,
+ s.lesson.payload={...s.lesson.payload,sections:chapters,quiz_items:questions.slice(0,3).map((q,i)=>({...q,correct:[0,2,0][i]})),quiz_version:3,
   title:'Erste Lua-Ausgabe',goal:'Eine Lua-Ausgabe verstehen und testen.',task:'Gib mit print den Text Hello im Terminal aus.',
   mistake:'Ein nicht geschlossener String führt zu einem Syntaxfehler.',hint:'Setze den auszugebenden Text zwischen Anführungszeichen.'};
  s.quizStep=0;s.choice=null;s.quizPassed=false;
