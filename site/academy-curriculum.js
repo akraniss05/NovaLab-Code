@@ -17,16 +17,37 @@ function questions(p){
   Array.isArray(q.options)&&q.options.length>=2&&q.options.length<=6&&
   q.options.every(x=>typeof x==='string'&&x.trim().length>0)&&
   Number.isInteger(Number(q.correct))&&Number(q.correct)>=0&&Number(q.correct)<q.options.length);
- if(valid.length>=2){
-  return valid.slice(0,12).map(q=>({
+ // Hand-authored question banks may provide several choices. Keep the three most
+ // relevant ones; v2 banks were generated with generic distractors, so rebuild
+ // their follow-up questions from this lesson's actual task and mistake.
+ if(valid.length>=2&&Number(p?.quiz_version)!==2){
+  return valid.slice(0,3).map(q=>({
    question:String(q.question),options:q.options.map(String),
    correct:Number(q.correct),explanation:String(q.explanation||'')
   }));
  }
  const opts=Array.isArray(p?.options)?p.options.map(String):[];
  const c=Number(p?.correct);
- if(opts.length<2||!Number.isInteger(c)||c<0||c>=opts.length)return [];
- return [{question:String(p.quiz||'Welche Antwort ist richtig?'),options:opts,correct:c,explanation:''}];
+ const first=opts.length>=2&&Number.isInteger(c)&&c>=0&&c<opts.length?
+  {question:String(p.quiz||'Welche Antwort ist richtig?'),options:opts,correct:c,explanation:String(p.theory||'').slice(0,260)}:null;
+ if(!first)return [];
+ const result=[first];
+ const text=(x)=>typeof x==='string'?x.trim():'';
+ const task=text(p.task),goal=text(p.goal),rawMistake=text(p.mistake),mistake=/alles gleichzeitig ändern|viele dinge gleichzeitig/i.test(rawMistake)?'':rawMistake,hint=text(p.hint);
+ const other=mistake||hint;
+ if(task.length>=15&&goal&&other&&new Set([task,goal,other]).size===3){
+  result.push({question:'Welche konkrete Aufgabe bearbeitest du in dieser Lektion?',options:[goal,other,task],correct:2,explanation:'Die Praxisaufgabe lautet: '+task});
+ }else if(task.length>=15&&goal&&task!==goal){
+  result.push({question:'Welche konkrete Aufgabe bearbeitest du in dieser Lektion?',options:[goal,task],correct:1,explanation:'Die Praxisaufgabe lautet: '+task});
+ }
+ if(mistake.length>=15&&goal&&hint&&new Set([mistake,goal,hint]).size===3){
+  result.push({question:'Welchen typischen Fehler solltest du bei „'+text(p.title||p.goal).slice(0,75)+'“ vermeiden?',options:[mistake,goal,hint],correct:0,explanation:'Achte darauf: '+mistake});
+ }else if(!mistake&&hint.length>=15&&goal&&task&&new Set([hint,goal,task]).size===3){
+  result.push({question:'Welcher Hinweis hilft dir bei dieser Praxisaufgabe?',options:[task,hint,goal],correct:1,explanation:hint});
+ }
+ // Some older lessons have no distinct task or mistake. In that case show the
+ // one verified question instead of inventing unrelated answers.
+ return result.slice(0,3);
 }
 function render(p,index,escapeHtml,safeLink){
  const a=parts(p),esc=escapeHtml;
@@ -44,6 +65,7 @@ function render(p,index,escapeHtml,safeLink){
    const short=i===0?'Verstehen':'Üben';
    return '<button type="button" data-lesson-part="'+i+'" class="'+(i===at?'active':'')+'" aria-current="'+(i===at?'step':'false')+'" aria-label="Lernteil '+(i+1)+': '+esc(v.title)+'"><span class="ll-part-number">'+(i+1)+'</span><span>'+short+'</span></button>';
   }).join('')+'</nav>'+
+  '<div class="ll-lesson-focus"><span>'+(at===0?'DEIN LERNZIEL':'DEINE KONKRETE AUFGABE')+'</span><strong>'+esc(at===0?p.goal||p.theory||'Verstehe das Beispiel.':p.task||t.exercise||'Wende das Gelernte an.')+'</strong></div>'+
   '<div class="ll-part-body">'+
   t.paragraphs.filter(x=>typeof x==='string'&&x.trim()).map(x=>'<p>'+esc(x)+'</p>').join('')+
   (Array.isArray(t.bullets)&&t.bullets.length?'<ul>'+t.bullets.filter(x=>typeof x==='string'&&x.trim()).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+
