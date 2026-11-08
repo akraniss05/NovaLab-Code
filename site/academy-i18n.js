@@ -317,6 +317,17 @@ Object.assign(translations,{
  'DE':'DE',
  'EN':'EN'
 });
+Object.assign(translations,{
+ 'Interaktionen & Atmosphäre':'Interactions & ambience',
+ 'Animierter Hintergrund':'Animated background',
+ 'Sanfte, langsam bewegte Lichtakzente im Hintergrund.':'Subtle, slowly moving light accents in the background.',
+ 'Klickeffekte':'Click effects',
+ 'Kleine Lichtkreise beim Drücken von Buttons anzeigen.':'Show small light ripples when you tap buttons.',
+ 'Klicksounds':'Click sounds',
+ 'Leise Rückmeldung bei Button-Klicks. Standardmäßig ausgeschaltet.':'Quiet feedback when tapping buttons. Disabled by default.',
+ 'Lautstärke der Klicksounds':'Click sound volume',
+ 'Sounds spielen erst nach dem Aktivieren und deiner nächsten Berührung. Die Auswahl wird auf diesem Gerät gespeichert.':'Sounds play after you enable them and tap again. Your choice is saved on this device.'
+});
 const patterns=[
  [/^Welche praktische Aufgabe gehört zu „(.+)“\?$/i,(_,topic)=>'Which practical task is part of “'+translate(topic)+'”?'],
  [/^Welcher Tipp hilft dir bei „(.+)“\?$/i,(_,topic)=>'Which hint helps you with “'+translate(topic)+'”?'],
