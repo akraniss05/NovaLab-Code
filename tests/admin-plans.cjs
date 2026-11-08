@@ -36,22 +36,43 @@ const profiles=new Map([
  [OWNER,{id:OWNER,role:'admin',active:true,access_status:'approved',username:'owner'}]
 ]);
 const owners=new Set([OWNER]);
+let actor=ADMIN;
+const registrationPolicy={id:true,mode:'approval',updated_at:'2030-01-01T00:00:00Z'};
+const demoCourses=[{id:'python',name:'Python',category:'Sprachen',level:'beginner'},
+{id:'lua',name:'Lua',category:'Sprachen',level:'beginner'}];
+const demoLessons=[
+{id:'python-01',course_id:'python',title:'Variablen',chapter:'Grundlagen',position:1},
+{id:'python-02',course_id:'python',title:'Schleifen',chapter:'Grundlagen',position:2},
+{id:'lua-01',course_id:'lua',title:'Erster Befehl',chapter:'Grundlagen',position:1},
+{id:'lua-65',course_id:'lua',title:'Archiv',chapter:'Archiv',position:65}
+];
+const demoProgress=[{user_id:STUDENT,key:'liverylab-v10',updated_at:'2030-01-01T12:00:00Z',
+ payload:{done:['python-01','lua-01','lua-65'],lastLesson:{id:'python-02'},
+ notes:{private:'Do not expose'},lessonCode:{'python-02':'do not expose'} }}];
+
 const apiUsers=[...profiles.values()].map(p=>({id:p.id,email:p.username+'@example.com',email_confirmed_at:new Date().toISOString(),app_metadata:{},created_at:new Date().toISOString()}));
 
 function recordSet(table){
  if(table==='academy_profiles')return [...profiles.values()];
  if(table==='academy_plans')return [...plans.values()];
  if(table==='academy_owner_ids')return [...owners].map(user_id=>({user_id}));
+ if(table==='academy_registration_policy')return [registrationPolicy];
+ if(table==='academy_progress')return demoProgress;
+ if(table==='ll_courses')return demoCourses;
+ if(table==='ll_lesson_index')return demoLessons;
  throw Error('Unexpected mocked table '+table);
 }
 function from(table){
- const filters={};let included=null;
+ const filters={};let included=null,pendingUpdate=null;
  const builder={
   select(){return this;},
+  order(){return this;},
+  range(){return this;},
+  update(values){pendingUpdate=values;return this;},
   eq(field,value){filters[field]=value;return this;},
   in(field,values){included={field,values};return this;},
   async maybeSingle(){return {data:matching()[0]||null,error:null};},
-  async single(){const data=matching()[0];return {data:data||null,error:data?null:{message:'Not found'}};},
+  async single(){const data=matching()[0];if(pendingUpdate&&data)Object.assign(data,pendingUpdate);return {data:data||null,error:data?null:{message:'Not found'}};},
   async upsert(values){
    assert.equal(table,'academy_plans','Only subscription upsert is expected');
    plans.set(values.user_id,{...values});
@@ -71,7 +92,7 @@ const backend={
  }},
  from
 };
-const publicClient={auth:{getUser:async()=>({data:{user:{id:ADMIN}},error:null})}};
+const publicClient={auth:{getUser:async()=>({data:{user:{id:actor}},error:null})}};
 let handle=null;
 const fakeDeno={
  env:{get(name){return {SUPABASE_URL:'https://fake.supabase.co',SUPABASE_PUBLISHABLE_KEY:'public-test-key',SUPABASE_SERVICE_ROLE_KEY:'service-only-test-key'}[name]||null;}},
@@ -145,6 +166,48 @@ const roughly=(actual,expected,tolerance=30000)=>Math.abs(actual-expected)<=tole
  x=await call({action:'adjustPlan',userId:STUDENT,operation:'reduce',days:45});
  assert.equal(x.status,200);
  assert.equal(plans.get(STUDENT).tier,'free','Reducing past zero ends subscription');
+
+
+ // New registration policy actions are server-authorized.
+ x=await call({action:'getRegistrationMode'});
+ assert.equal(x.status,200);
+ assert.equal(x.data.mode,'approval');
+ assert.equal(x.data.canChange,false,'Other team admins can view, not change registration');
+ x=await call({action:'setRegistrationMode',mode:'open'});
+ assert.equal(x.status,403,'Only the owner may enable open registration');
+ actor=OWNER;
+ x=await call({action:'setRegistrationMode',mode:'open'});
+ assert.equal(x.status,200,JSON.stringify(x.data));
+ assert.equal(registrationPolicy.mode,'open');
+ actor=ADMIN;
+ x=await call({action:'getRegistrationMode'});
+ assert.equal(x.data.mode,'open','Mode is persisted by the trusted backend');
+ x=await call({action:'setRegistrationMode',mode:'invalid'});
+ assert.equal(x.status,403,'Non-owner must not change the policy, even with bad values');
+ // Admin-only progress summary: archived Lua lessons must not inflate counts.
+ x=await call({action:'studentProgress',userId:STUDENT});
+ assert.equal(x.status,200,JSON.stringify(x.data));
+ assert.equal(x.data.courses.length,2);
+ const py=x.data.courses.find(y=>y.id==='python'),lua=x.data.courses.find(y=>y.id==='lua');
+ assert.equal(py.completed,1);assert.equal(py.total,2);
+ assert.equal(py.next.title,'Schleifen');
+ assert.equal(py.last_opened.title,'Schleifen');
+ assert.equal(lua.completed,1);assert.equal(lua.total,1,'Historic Lua lesson must not inflate path');
+ assert.equal(x.data.progress.completed,2);
+ assert.equal(x.data.progress.finished_courses,1);
+ assert(!JSON.stringify(x.data).includes('do not expose'),'Never return private code drafts');
+ assert(!JSON.stringify(x.data).includes('private'),'Never return private notes');
+ x=await call({action:'studentProgress',userId:'invalid'});
+ assert.equal(x.status,400,'Reject arbitrary user identifiers');
+ profiles.get(ADMIN).role='student';
+ x=await call({action:'studentProgress',userId:STUDENT});
+ assert.equal(x.status,403,'Students must not inspect other users');
+ profiles.get(ADMIN).role='admin';
+ actor=OWNER;
+ x=await call({action:'setRegistrationMode',mode:'approval'});
+ assert.equal(x.status,200,'Owner can re-enable mandatory approval');
+ actor=ADMIN;
+ console.log('PASS: owner-only signup policy, private learner progress summary, course and lesson counts.');
 
  console.log('PASS: protected subscription listing, exact day arithmetic, paid-tier preservation, expiry, permanent duration and admin authorization.');
 })().catch(e=>{console.error(e);process.exitCode=1;});
