@@ -1,0 +1,762 @@
+{
+  "version": 51,
+  "group": "3b",
+  "topics": [
+    {
+      "course": "swift",
+      "ordinal": 1,
+      "title": "let und var",
+      "theory": "let deklariert in Swift eine unveränderliche Bindung, var eine veränderliche. Die Entscheidung macht Absichten sichtbar.",
+      "example": "let name=\"Alex\"\nvar punkte=5",
+      "example_note": "punkte kann später neu zugewiesen werden, name nicht.",
+      "task": "Erkläre, welcher Wert veränderbar sein soll."
+    },
+    {
+      "course": "swift",
+      "ordinal": 2,
+      "title": "Optional",
+      "theory": "Ein Optional kann einen Wert oder nil enthalten. Vor der Verwendung muss der Inhalt sicher entpackt werden.",
+      "example": "var name:String?=nil",
+      "example_note": "name enthält derzeit keinen String; der Typ lässt diesen Zustand zu.",
+      "task": "Modelliere einen fehlenden Spielernamen."
+    },
+    {
+      "course": "swift",
+      "ordinal": 3,
+      "title": "if let",
+      "theory": "Optional Binding mit if let macht einen vorhandenen Wert innerhalb eines Blocks sicher verfügbar.",
+      "example": "if let name=name { print(name) }",
+      "example_note": "Der Block läuft nur, wenn der Optionalwert nicht nil ist.",
+      "task": "Zeige einen vorhandenen und einen fehlenden Wert."
+    },
+    {
+      "course": "swift",
+      "ordinal": 4,
+      "title": "guard let",
+      "theory": "guard let prüft eine notwendige Voraussetzung und verlässt bei Misserfolg frühzeitig den gültigen Bereich.",
+      "example": "guard let user=user else { return }",
+      "example_note": "Nach dem guard kann der entpackte Benutzer ohne weitere Optionalprüfung verwendet werden.",
+      "task": "Nutze einen Guard am Funktionsanfang."
+    },
+    {
+      "course": "swift",
+      "ordinal": 5,
+      "title": "Arrays",
+      "theory": "Swift-Arrays speichern geordnete Elemente eines bestimmten Typs und können mit append erweitert werden.",
+      "example": "var zahlen=[1,2]\nzahlen.append(3)",
+      "example_note": "Das Array enthält danach drei ganze Zahlen.",
+      "task": "Füge zwei Zahlen zu einer Liste hinzu."
+    },
+    {
+      "course": "swift",
+      "ordinal": 6,
+      "title": "Dictionaries",
+      "theory": "Ein Dictionary ordnet Schlüsseln Werte zu. Ein Zugriff kann nil ergeben, wenn der Schlüssel fehlt.",
+      "example": "let preise=[\"brot\":3,\"wasser\":1]",
+      "example_note": "preise[\"brot\"] liefert einen optionalen Wert, der 3 enthält.",
+      "task": "Behandle einen fehlenden Schlüssel."
+    },
+    {
+      "course": "swift",
+      "ordinal": 7,
+      "title": "Structs",
+      "theory": "Ein struct ist ein Werttyp. Beim Übergeben oder Zuweisen entsteht eine eigene Wertsemantik.",
+      "example": "struct Punkt{var x:Int;var y:Int}",
+      "example_note": "Punkt(x:2,y:3) erzeugt einen Wert mit zwei Feldern.",
+      "task": "Erstelle zwei unabhängige Punkte."
+    },
+    {
+      "course": "swift",
+      "ordinal": 8,
+      "title": "Enums",
+      "theory": "Ein enum modelliert eine geschlossene Anzahl möglicher Zustände und kann zugehörige Werte tragen.",
+      "example": "enum Status{case offen,geschlossen}",
+      "example_note": "Ein Status kann nur einen der definierten Fälle annehmen.",
+      "task": "Definiere drei Auftragsstatus."
+    },
+    {
+      "course": "swift",
+      "ordinal": 9,
+      "title": "Protocols",
+      "theory": "Ein Protocol beschreibt Eigenschaften oder Methoden, die konkrete Typen bereitstellen sollen.",
+      "example": "protocol Speichern{func save()}",
+      "example_note": "Ein konformer Typ muss save erfüllen.",
+      "task": "Entwirf ein Protokoll für ein Repository."
+    },
+    {
+      "course": "swift",
+      "ordinal": 10,
+      "title": "Closures",
+      "theory": "Ein Closure ist eine ausführbare Funktion, die in einer Variablen gespeichert oder an andere Funktionen übergeben werden kann.",
+      "example": "let verdoppeln={(x:Int) in x*2}",
+      "example_note": "verdoppeln(3) liefert 6.",
+      "task": "Definiere einen Closure zur Preisberechnung."
+    },
+    {
+      "course": "swift",
+      "ordinal": 11,
+      "title": "async await",
+      "theory": "Mit async können Swift-Funktionen asynchron arbeiten; await kennzeichnet das Warten auf ihren Abschluss.",
+      "example": "func laden() async -> Int { return 3 }",
+      "example_note": "Der Aufruf benötigt einen asynchronen Kontext und liefert später die Zahl 3.",
+      "task": "Erkläre, wie ein Netzwerkaufruf abgewartet wird."
+    },
+    {
+      "course": "swift",
+      "ordinal": 12,
+      "title": "SwiftUI State",
+      "theory": "@State verwaltet lokalen Zustand einer SwiftUI-View und löst bei Änderungen eine Aktualisierung aus.",
+      "example": "@State private var anzahl=0",
+      "example_note": "Eine View kann bei einer Zustandsänderung neu berechnet werden.",
+      "task": "Erstelle einen Zähler mit lokalem View-Zustand."
+    },
+    {
+      "course": "kotlin",
+      "ordinal": 1,
+      "title": "String Templates",
+      "theory": "Kotlin kann Variablen und Ausdrücke über Dollarzeichen direkt in Strings einfügen.",
+      "example": "val name=\"Alex\"\nprintln(\"Hallo $name\")",
+      "example_note": "Die Ausgabe lautet Hallo Alex.",
+      "task": "Erstelle eine Statusmeldung mit einer Variablen."
+    },
+    {
+      "course": "kotlin",
+      "ordinal": 2,
+      "title": "if als Ausdruck",
+      "theory": "Ein Kotlin-if kann selbst einen Wert liefern; dann müssen die relevanten Zweige passende Ergebnisse haben.",
+      "example": "val label=if(level>5)\"Profi\" else \"Start\"",
+      "example_note": "label erhält einen der beiden Texte abhängig vom Level.",
+      "task": "Weise einen berechneten Status zu."
+    },
+    {
+      "course": "kotlin",
+      "ordinal": 3,
+      "title": "when",
+      "theory": "when vergleicht einen Wert oder mehrere Bedingungen mit geordneten Fällen.",
+      "example": "val text=when(status){1->\"offen\";else->\"unbekannt\"}",
+      "example_note": "Bei status 1 wird offen gewählt.",
+      "task": "Schreibe drei getrennte Statusfälle."
+    },
+    {
+      "course": "kotlin",
+      "ordinal": 4,
+      "title": "Safe Call",
+      "theory": "?. erlaubt einen sicheren Zugriff auf ein nullable Objekt. Bei null lautet das gesamte Zugriffsergebnis null.",
+      "example": "val laenge=name?.length",
+      "example_note": "Wenn name null ist, wird kein Fehler beim Zugriff ausgelöst.",
+      "task": "Lies eine optionale Texteigenschaft."
+    },
+    {
+      "course": "kotlin",
+      "ordinal": 5,
+      "title": "Elvis Operator",
+      "theory": "?: setzt einen Ersatzwert, wenn ein nullable Ausdruck null ergibt.",
+      "example": "val text=name ?: \"Gast\"",
+      "example_note": "Fehlt name, verwendet text den Wert Gast.",
+      "task": "Definiere einen Standardnamen."
+    },
+    {
+      "course": "kotlin",
+      "ordinal": 6,
+      "title": "Data Classes",
+      "theory": "data class erzeugt häufig benötigte Methoden für Datenobjekte wie equals und toString.",
+      "example": "data class Player(val name:String,val level:Int)",
+      "example_note": "Zwei Player mit denselben Werten werden wertorientiert verglichen.",
+      "task": "Definiere ein kleines Datenmodell."
+    },
+    {
+      "course": "kotlin",
+      "ordinal": 7,
+      "title": "Extension Functions",
+      "theory": "Eine Extension Function erweitert die Aufrufsyntax eines vorhandenen Typs, ohne dessen Quellcode zu verändern.",
+      "example": "fun String.begruessen()=\"Hallo $this\"",
+      "example_note": "\"Alex\".begruessen() liefert Hallo Alex.",
+      "task": "Schreibe eine Erweiterungsfunktion für einen String."
+    },
+    {
+      "course": "kotlin",
+      "ordinal": 8,
+      "title": "Collections filter",
+      "theory": "filter erzeugt eine neue Liste mit Elementen, die ein Prädikat erfüllen.",
+      "example": "val top=listOf(1,2,3).filter{it>1}",
+      "example_note": "Die Ergebnisliste enthält 2 und 3.",
+      "task": "Filtere eine Punkteliste."
+    },
+    {
+      "course": "kotlin",
+      "ordinal": 9,
+      "title": "Collections map",
+      "theory": "map wandelt jedes Element durch eine Funktion in ein neues Ergebnis um.",
+      "example": "val doppelt=listOf(1,2).map{it*2}",
+      "example_note": "Das Ergebnis enthält 2 und 4.",
+      "task": "Erzeuge Quadrate aus Zahlen."
+    },
+    {
+      "course": "kotlin",
+      "ordinal": 10,
+      "title": "Sealed Classes",
+      "theory": "sealed class beschränkt, welche Untertypen innerhalb der erlaubten Deklarationsgrenzen entstehen können.",
+      "example": "sealed class Result{data class Ok(val n:Int):Result();object Fail:Result()}",
+      "example_note": "Das Ergebnis kann als Ok oder Fail behandelt werden.",
+      "task": "Baue zwei Fälle eines Rückgabetyps."
+    },
+    {
+      "course": "kotlin",
+      "ordinal": 11,
+      "title": "Coroutines",
+      "theory": "Eine suspend-Funktion kann innerhalb einer Coroutine kooperativ auf andere Aufgaben warten.",
+      "example": "suspend fun laden(){delay(100)}",
+      "example_note": "delay pausiert ohne einen Thread wie Thread.sleep blockierend anzuhalten.",
+      "task": "Schreibe eine suspend-Funktion für eine kurze Pause."
+    },
+    {
+      "course": "kotlin",
+      "ordinal": 12,
+      "title": "JUnit Tests",
+      "theory": "Kotlin/JVM-Projekte können JUnit-Tests verwenden, um erwartete Ergebnisse automatisch zu prüfen.",
+      "example": "assertEquals(6,verdoppeln(3))",
+      "example_note": "Die Assertion prüft eine konkrete Berechnung.",
+      "task": "Teste einen positiven und einen negativen Eingabewert."
+    },
+    {
+      "course": "dart",
+      "ordinal": 1,
+      "title": "final und const",
+      "theory": "final erlaubt eine einmalige Zuweisung zur Laufzeit, const verlangt einen konstanten Wert zur Compilezeit.",
+      "example": "final name='Alex';\nconst maxLevel=10;",
+      "example_note": "Beide Bindungen dürfen nicht einfach neu zugewiesen werden.",
+      "task": "Trenne feste und zur Laufzeit ermittelte Werte."
+    },
+    {
+      "course": "dart",
+      "ordinal": 2,
+      "title": "Null Safety",
+      "theory": "Ein Dart-Typ mit ? kann null enthalten; ohne ? muss ein passender nicht-null-Wert vorhanden sein.",
+      "example": "String? name;",
+      "example_note": "Die Variable darf fehlen und muss vor bestimmten Zugriffen geprüft werden.",
+      "task": "Modelliere einen optionalen Profilnamen."
+    },
+    {
+      "course": "dart",
+      "ordinal": 3,
+      "title": "Null-Aware Access",
+      "theory": "?. vermeidet einen Zugriff auf null und liefert dann null als Ergebnis.",
+      "example": "String? name;\nprint(name?.length);",
+      "example_note": "Die Ausgabe ist null statt einer Exception beim direkten length-Zugriff.",
+      "task": "Prüfe einen optionalen Text."
+    },
+    {
+      "course": "dart",
+      "ordinal": 4,
+      "title": "Collections",
+      "theory": "Dart-Listen enthalten geordnete Einträge und lassen sich über add verändern.",
+      "example": "var werte=<int>[1,2];\nwerte.add(3);",
+      "example_note": "Die Liste enthält danach drei Zahlen.",
+      "task": "Hänge zwei Einträge an."
+    },
+    {
+      "course": "dart",
+      "ordinal": 5,
+      "title": "Map",
+      "theory": "Maps speichern Schlüssel-Wert-Paare mit definierten Schlüssel- und Werttypen.",
+      "example": "var preise=<String,int>{'brot':3};",
+      "example_note": "preise['brot'] liefert den Wert 3.",
+      "task": "Erstelle eine kleine Preisliste."
+    },
+    {
+      "course": "dart",
+      "ordinal": 6,
+      "title": "Named Parameters",
+      "theory": "Benannte Parameter machen Funktionsaufrufe verständlicher und können mit required verpflichtend werden.",
+      "example": "void begruessen({required String name}){print(name);}",
+      "example_note": "Der Aufruf muss den benannten Parameter name übergeben.",
+      "task": "Schreibe eine Funktion mit zwei benannten Parametern."
+    },
+    {
+      "course": "dart",
+      "ordinal": 7,
+      "title": "Klassenkonstruktoren",
+      "theory": "Konstruktoren legen beim Erzeugen eines Objekts dessen Felder fest. Dart unterstützt eine kurze Initialisierungssyntax.",
+      "example": "class User{final String name;User(this.name);}",
+      "example_note": "User('Alex') setzt name direkt im Konstruktor.",
+      "task": "Lege zwei User-Objekte an."
+    },
+    {
+      "course": "dart",
+      "ordinal": 8,
+      "title": "Factory Constructors",
+      "theory": "factory kann statt eines neuen Objekts auch eine vorhandene Instanz oder einen Subtyp zurückgeben.",
+      "example": "factory User.fromJson(Map<String,dynamic> j)=>User(j['name'] as String);",
+      "example_note": "Der Konstruktor erzeugt ein User-Objekt aus geprüften JSON-Daten.",
+      "task": "Baue einen Factory-Konstruktor für ein Modell."
+    },
+    {
+      "course": "dart",
+      "ordinal": 9,
+      "title": "Future",
+      "theory": "Ein Future repräsentiert einen späteren Wert oder Fehler und lässt sich mit await abwarten.",
+      "example": "Future<int> laden() async => 3;",
+      "example_note": "Der Rückgabewert wird über Future<int> verfügbar.",
+      "task": "Schreibe eine asynchrone Funktion."
+    },
+    {
+      "course": "dart",
+      "ordinal": 10,
+      "title": "Streams",
+      "theory": "Ein Stream liefert eine Folge von Werten über die Zeit; Empfänger können darauf lauschen.",
+      "example": "Stream<int> zahlen() async*{yield 1;yield 2;}",
+      "example_note": "Die Werte 1 und 2 werden nacheinander veröffentlicht.",
+      "task": "Erzeuge einen Stream mit drei Updates."
+    },
+    {
+      "course": "dart",
+      "ordinal": 11,
+      "title": "Exceptions",
+      "theory": "try/catch behandelt Ausnahmen, die während einer Operation auftreten können.",
+      "example": "try{throw Exception('Fehler');}catch(e){print(e);}",
+      "example_note": "Die Exception wird abgefangen und sichtbar gemacht.",
+      "task": "Fange einen Parser-Fehler ab."
+    },
+    {
+      "course": "dart",
+      "ordinal": 12,
+      "title": "Widget State",
+      "theory": "In Flutter kann ein StatefulWidget veränderliche Zustände verwalten und seine Oberfläche neu aufbauen.",
+      "example": "setState((){counter++;});",
+      "example_note": "Der geänderte Zähler wird beim nächsten Build berücksichtigt.",
+      "task": "Erkläre einen Zähler-Button mit setState."
+    },
+    {
+      "course": "ruby",
+      "ordinal": 1,
+      "title": "String Interpolation",
+      "theory": "Mit #{...} werden Ruby-Ausdrücke innerhalb doppelt zitierter Strings ausgewertet.",
+      "example": "name=\"Alex\"\nputs \"Hallo #{name}\"",
+      "example_note": "Der Name erscheint direkt im ausgegebenen Text.",
+      "task": "Erzeuge eine Meldung mit zwei Variablen."
+    },
+    {
+      "course": "ruby",
+      "ordinal": 2,
+      "title": "Symbole",
+      "theory": "Symbols sind unveränderliche benannte Kennungen, die häufig als Hash-Schlüssel verwendet werden.",
+      "example": "status=:offen",
+      "example_note": ":offen bezeichnet ein Symbol und nicht denselben Typ wie der String \"offen\".",
+      "task": "Vergleiche einen Symbolschlüssel mit einem Stringschlüssel."
+    },
+    {
+      "course": "ruby",
+      "ordinal": 3,
+      "title": "Arrays",
+      "theory": "Ruby-Arrays speichern geordnete Werte und erlauben das Anhängen mit <<.",
+      "example": "zahlen=[1,2]\nzahlen << 3",
+      "example_note": "Die Liste enthält danach drei Zahlen.",
+      "task": "Erweitere eine Liste."
+    },
+    {
+      "course": "ruby",
+      "ordinal": 4,
+      "title": "Hashes",
+      "theory": "Ein Hash ordnet Schlüsseln Werte zu und eignet sich für benannte Eigenschaften.",
+      "example": "user={name:\"Alex\",level:3}",
+      "example_note": "user[:name] liefert Alex.",
+      "task": "Erstelle ein Hash mit drei Feldern."
+    },
+    {
+      "course": "ruby",
+      "ordinal": 5,
+      "title": "each",
+      "theory": "each läuft nacheinander über die Elemente einer Sammlung und führt einen Block aus.",
+      "example": "[1,2,3].each{|n| puts n}",
+      "example_note": "Die drei Zahlen werden einzeln ausgegeben.",
+      "task": "Gib alle Namen einer Liste aus."
+    },
+    {
+      "course": "ruby",
+      "ordinal": 6,
+      "title": "map",
+      "theory": "map transformiert jedes Element und erzeugt eine neue Sammlung.",
+      "example": "result=[1,2].map{|n| n*2}",
+      "example_note": "result enthält 2 und 4.",
+      "task": "Erstelle eine Liste von Quadratzahlen."
+    },
+    {
+      "course": "ruby",
+      "ordinal": 7,
+      "title": "select",
+      "theory": "select wählt die Elemente, für die ein Block einen wahrheitswertigen Wert zurückgibt.",
+      "example": "top=[1,2,3].select{|n| n>1}",
+      "example_note": "Die Liste enthält 2 und 3.",
+      "task": "Filtere Preise über einer Grenze."
+    },
+    {
+      "course": "ruby",
+      "ordinal": 8,
+      "title": "Methoden",
+      "theory": "def definiert eine Ruby-Methode. Der letzte ausgewertete Ausdruck wird üblicherweise als Wert zurückgegeben.",
+      "example": "def doppelt(n)\n n*2\nend",
+      "example_note": "doppelt(3) liefert 6 auch ohne explizites return.",
+      "task": "Erstelle eine Methode zur Rabattberechnung."
+    },
+    {
+      "course": "ruby",
+      "ordinal": 9,
+      "title": "Klassen",
+      "theory": "Klassen bündeln Zustand und Methoden in Objekten. initialize setzt Werte beim Erzeugen.",
+      "example": "class Player\n def initialize(name);@name=name;end\nend",
+      "example_note": "@name ist eine Instanzvariable des einzelnen Player-Objekts.",
+      "task": "Erstelle zwei unabhängige Objekte."
+    },
+    {
+      "course": "ruby",
+      "ordinal": 10,
+      "title": "Module",
+      "theory": "Ein Module bündelt Namensräume oder gemeinsam verwendbares Verhalten.",
+      "example": "module Tools\n def self.doppelt(n);n*2;end\nend",
+      "example_note": "Tools.doppelt(3) ist über den Modulnamen aufrufbar.",
+      "task": "Baue ein Modul mit einer Hilfsmethode."
+    },
+    {
+      "course": "ruby",
+      "ordinal": 11,
+      "title": "Exceptions",
+      "theory": "begin/rescue reagiert auf Laufzeitfehler und ermöglicht eine verständliche Behandlung.",
+      "example": "begin\n Integer(\"abc\")\nrescue ArgumentError\n puts \"Ungültig\"\nend",
+      "example_note": "Eine ungültige Umwandlung löst ArgumentError aus und wird behandelt.",
+      "task": "Prüfe zwei Eingabefälle."
+    },
+    {
+      "course": "ruby",
+      "ordinal": 12,
+      "title": "RSpec",
+      "theory": "RSpec bietet beschreibende Tests und Erwartungen für Ruby-Code.",
+      "example": "expect(doppelt(3)).to eq(6)",
+      "example_note": "Die Erwartung prüft die Ausgabe der Funktion.",
+      "task": "Schreibe einen weiteren Test."
+    },
+    {
+      "course": "perl",
+      "ordinal": 1,
+      "title": "Skalare",
+      "theory": "Perl verwendet das $-Präfix für skalare Werte wie Text und Zahlen.",
+      "example": "my $name=\"Alex\";\nprint $name;",
+      "example_note": "Der Wert wird aus einer skalaren Variablen gelesen.",
+      "task": "Lege zwei lokale Skalare an."
+    },
+    {
+      "course": "perl",
+      "ordinal": 2,
+      "title": "Arrays",
+      "theory": "@ kennzeichnet eine Arrayvariable. Einzelne Elemente werden als Skalare über Indizes gelesen.",
+      "example": "my @werte=(1,2,3);\nprint $werte[1];",
+      "example_note": "Index 1 liefert den zweiten Eintrag 2.",
+      "task": "Lies das letzte Arrayelement."
+    },
+    {
+      "course": "perl",
+      "ordinal": 3,
+      "title": "Hashes",
+      "theory": "% kennzeichnet eine Hashtabelle für Schlüssel-Wert-Zuordnungen.",
+      "example": "my %user=(name=>\"Alex\",level=>3);",
+      "example_note": "$user{name} greift auf den Schlüssel name zu.",
+      "task": "Baue ein Hash mit drei Eigenschaften."
+    },
+    {
+      "course": "perl",
+      "ordinal": 4,
+      "title": "strict",
+      "theory": "use strict erkennt viele problematische Variablen- und Symbolverwendungen bereits früh.",
+      "example": "use strict;\nuse warnings;",
+      "example_note": "strict und warnings helfen beim Auffinden häufiger Programmierfehler.",
+      "task": "Erkläre eine nicht deklarierte Variable."
+    },
+    {
+      "course": "perl",
+      "ordinal": 5,
+      "title": "my Scope",
+      "theory": "my deklariert eine lexikalisch begrenzte Variable, die außerhalb ihres Bereichs nicht verfügbar ist.",
+      "example": "{my $x=3;print $x;}",
+      "example_note": "$x gilt nur innerhalb des Blocks.",
+      "task": "Erkläre zwei gleichnamige Blockvariablen."
+    },
+    {
+      "course": "perl",
+      "ordinal": 6,
+      "title": "foreach",
+      "theory": "foreach durchläuft eine Liste und bindet nacheinander jedes Element an die Schleifenvariable.",
+      "example": "foreach my $n (1,2,3){print $n;}",
+      "example_note": "Die Zahlen werden der Reihe nach verarbeitet.",
+      "task": "Durchlaufe eine Liste von Namen."
+    },
+    {
+      "course": "perl",
+      "ordinal": 7,
+      "title": "Subroutinen",
+      "theory": "sub definiert eine Funktion. Parameter werden traditionell über @_ empfangen.",
+      "example": "sub doppelt{my($x)=@_;return $x*2;}",
+      "example_note": "Die Subroutine erhält ihr Argument und liefert dessen doppelten Wert.",
+      "task": "Baue eine Funktion mit zwei Parametern."
+    },
+    {
+      "course": "perl",
+      "ordinal": 8,
+      "title": "Reguläre Ausdrücke",
+      "theory": "Perl erlaubt kompakte Regex-Prüfungen mit dem Operator =~.",
+      "example": "my $text=\"item42\";\nprint \"ok\" if $text =~ /\\d+/;",
+      "example_note": "Der Ausdruck findet mindestens eine Ziffer.",
+      "task": "Prüfe einen einfachen Kennzeichentext."
+    },
+    {
+      "course": "perl",
+      "ordinal": 9,
+      "title": "Referenzen",
+      "theory": "Eine Referenz verweist auf Datenstrukturen, damit verschachtelte Strukturen ohne Kopieren genutzt werden können.",
+      "example": "my $ref=[1,2,3];\nprint $ref->[0];",
+      "example_note": "Der Arrow-Operator liest das erste Element des referenzierten Arrays.",
+      "task": "Erstelle eine Referenz auf ein Hash."
+    },
+    {
+      "course": "perl",
+      "ordinal": 10,
+      "title": "Dateien öffnen",
+      "theory": "Die Drei-Argument-Form von open trennt Dateiname und Modus. Ein Fehler muss behandelt werden.",
+      "example": "open my $fh,'<','daten.txt' or die $!;",
+      "example_note": "Die Datei wird nur im Lesemodus geöffnet oder es wird eine Fehlermeldung ausgelöst.",
+      "task": "Lies die erste Dateizeile."
+    },
+    {
+      "course": "perl",
+      "ordinal": 11,
+      "title": "JSON::PP",
+      "theory": "JSON::PP kann JSON-Text dekodieren oder eine Datenstruktur in JSON umwandeln.",
+      "example": "use JSON::PP;\nmy $obj=decode_json('{\"n\":3}');",
+      "example_note": "Der String wird in eine Perl-Datenstruktur übersetzt.",
+      "task": "Lies einen kleinen JSON-Text."
+    },
+    {
+      "course": "perl",
+      "ordinal": 12,
+      "title": "Tests",
+      "theory": "Test::More stellt Prüfungen bereit, mit denen sich Rückgabewerte automatisch vergleichen lassen.",
+      "example": "use Test::More;\nis(2+3,5,'Addition');\ndone_testing();",
+      "example_note": "Der Test meldet einen Fehler, falls das Ergebnis nicht 5 ist.",
+      "task": "Ergänze einen zweiten Testfall."
+    },
+    {
+      "course": "haskell",
+      "ordinal": 1,
+      "title": "Reine Funktionen",
+      "theory": "Reine Funktionen hängen nur von ihren Eingaben ab und erzeugen keine versteckten Seiteneffekte.",
+      "example": "doppelt x = x * 2",
+      "example_note": "Bei gleichem x kommt immer derselbe Rückgabewert heraus.",
+      "task": "Definiere eine reine Quadratfunktion."
+    },
+    {
+      "course": "haskell",
+      "ordinal": 2,
+      "title": "Typannotationen",
+      "theory": "Eine Signatur mit :: beschreibt Eingabe- und Ausgabetypen einer Funktion.",
+      "example": "doppelt :: Int -> Int",
+      "example_note": "Die Funktion nimmt einen Int und liefert einen Int.",
+      "task": "Schreibe eine Signatur für zwei Argumente."
+    },
+    {
+      "course": "haskell",
+      "ordinal": 3,
+      "title": "Pattern Matching",
+      "theory": "Pattern Matching zerlegt Werte anhand ihrer Konstruktoren oder ihrer Form in Fallunterscheidungen.",
+      "example": "istLeer [] = True\nistLeer _ = False",
+      "example_note": "Für eine leere Liste entsteht True; für jede andere Liste False.",
+      "task": "Unterscheide leere und nichtleere Listen."
+    },
+    {
+      "course": "haskell",
+      "ordinal": 4,
+      "title": "Guards",
+      "theory": "Guards definieren Bedingungen mit | in einer Funktionsdefinition und können mehrere Fälle strukturieren.",
+      "example": "note x | x >= 50 = \"bestanden\" | otherwise = \"offen\"",
+      "example_note": "Die erste wahre Bedingung bestimmt das Ergebnis.",
+      "task": "Erstelle drei Punktestufen."
+    },
+    {
+      "course": "haskell",
+      "ordinal": 5,
+      "title": "Listen-Comprehension",
+      "theory": "Eine Listen-Comprehension baut eine Liste durch Ausdruck, Generatoren und optionale Filter.",
+      "example": "quadrate = [x*x | x <- [1..5]]",
+      "example_note": "Die Folge enthält die Quadrate von 1 bis 5.",
+      "task": "Erzeuge gerade Zahlen per Comprehension."
+    },
+    {
+      "course": "haskell",
+      "ordinal": 6,
+      "title": "map",
+      "theory": "map wendet eine Funktion auf jedes Listenelement an, ohne die ursprüngliche Liste zu verändern.",
+      "example": "map (*2) [1,2,3]",
+      "example_note": "Das Ergebnis lautet [2,4,6].",
+      "task": "Verdopple drei Listenwerte."
+    },
+    {
+      "course": "haskell",
+      "ordinal": 7,
+      "title": "filter",
+      "theory": "filter behält Listenelemente, die ein Prädikat erfüllen.",
+      "example": "filter even [1,2,3,4]",
+      "example_note": "Das Ergebnis enthält 2 und 4.",
+      "task": "Filtere Werte über einer Grenze."
+    },
+    {
+      "course": "haskell",
+      "ordinal": 8,
+      "title": "Maybe",
+      "theory": "Maybe a beschreibt einen vorhandenen Wert als Just a oder das Fehlen als Nothing.",
+      "example": "wert = Just 3",
+      "example_note": "Eine Funktion kann den Wert prüfen, ohne mit einem unkontrollierten Nullpointer zu arbeiten.",
+      "task": "Behandle beide Maybe-Fälle."
+    },
+    {
+      "course": "haskell",
+      "ordinal": 9,
+      "title": "Either",
+      "theory": "Either kann einen Fehlerzustand Left oder einen Erfolgszustand Right beschreiben.",
+      "example": "resultat = Right 5",
+      "example_note": "Der Wert ist ein Erfolg; Left könnte eine Fehlermeldung enthalten.",
+      "task": "Definiere Erfolg und Fehler für eine Berechnung."
+    },
+    {
+      "course": "haskell",
+      "ordinal": 10,
+      "title": "Algebraische Datentypen",
+      "theory": "Mit data können mehrere benannte Varianten eines Typs definiert werden.",
+      "example": "data Status = Offen | Geschlossen deriving Show",
+      "example_note": "Status besitzt genau die beiden deklarierten Konstruktoren.",
+      "task": "Modelliere einen dritten Status."
+    },
+    {
+      "course": "haskell",
+      "ordinal": 11,
+      "title": "Rekursion",
+      "theory": "Eine rekursive Funktion ruft sich selbst mit einem kleineren Teilproblem auf und benötigt einen Basisfall.",
+      "example": "summe [] = 0\nsumme (x:xs) = x + summe xs",
+      "example_note": "Die Liste wird schrittweise bis zum leeren Basisfall abgearbeitet.",
+      "task": "Schreibe eine rekursive Längenfunktion."
+    },
+    {
+      "course": "haskell",
+      "ordinal": 12,
+      "title": "IO Aktionen",
+      "theory": "IO kennzeichnet Aktionen, die mit der Außenwelt interagieren. Reine Werte und IO-Aktionen bleiben unterscheidbar.",
+      "example": "main = putStrLn \"Hallo\"",
+      "example_note": "Der Einstiegspunkt führt eine Ausgabewirkung aus.",
+      "task": "Erstelle eine einfache Konsolenausgabe."
+    },
+    {
+      "course": "scala",
+      "ordinal": 1,
+      "title": "val und var",
+      "theory": "val bindet einen Wert unveränderlich, var erlaubt eine Neuzuweisung. Bevorzuge val für klare Datenflüsse.",
+      "example": "val name=\"Alex\"\nvar level=1",
+      "example_note": "level darf später neu zugewiesen werden, name nicht.",
+      "task": "Unterscheide feste und veränderliche Werte."
+    },
+    {
+      "course": "scala",
+      "ordinal": 2,
+      "title": "Option",
+      "theory": "Option modelliert einen vorhandenen Wert als Some oder fehlenden Wert als None.",
+      "example": "val name:Option[String]=None",
+      "example_note": "Es ist kein String vorhanden; getOrElse kann einen Standard liefern.",
+      "task": "Behandle einen optionalen Namen."
+    },
+    {
+      "course": "scala",
+      "ordinal": 3,
+      "title": "Pattern Matching",
+      "theory": "match zerlegt einen Wert in Fälle. Ein Case-Zweig kann einen passenden Wert verarbeiten.",
+      "example": "val text=status match {case 1=>\"offen\";case _=>\"unbekannt\"}",
+      "example_note": "Der Platzhalter behandelt alle anderen Werte.",
+      "task": "Erstelle drei Statusfälle."
+    },
+    {
+      "course": "scala",
+      "ordinal": 4,
+      "title": "Case Classes",
+      "theory": "Eine case class eignet sich für unveränderliche Datenmodelle mit automatisch bereitgestellten Methoden.",
+      "example": "case class Player(name:String,level:Int)",
+      "example_note": "Player(\"Alex\",3) erstellt ein Datenobjekt.",
+      "task": "Modelliere eine Kurskarte."
+    },
+    {
+      "course": "scala",
+      "ordinal": 5,
+      "title": "Listen",
+      "theory": "List ist eine unveränderliche sequenzartige Sammlung. Operationen erzeugen neue Listen statt die alte direkt zu ändern.",
+      "example": "val zahlen=List(1,2,3)",
+      "example_note": "Die Liste enthält drei Werte und kann gefiltert werden.",
+      "task": "Baue eine kleine Namensliste."
+    },
+    {
+      "course": "scala",
+      "ordinal": 6,
+      "title": "map",
+      "theory": "map transformiert jedes Listenelement mit einer Funktion und liefert eine neue Liste.",
+      "example": "List(1,2,3).map(_*2)",
+      "example_note": "Ergebnis ist List(2,4,6).",
+      "task": "Erzeuge Quadrate aus einer Liste."
+    },
+    {
+      "course": "scala",
+      "ordinal": 7,
+      "title": "filter",
+      "theory": "filter behält nur Werte, die eine Bedingung erfüllen.",
+      "example": "List(1,2,3).filter(_>1)",
+      "example_note": "Die Ergebnisliste enthält 2 und 3.",
+      "task": "Filtere Punktzahlen."
+    },
+    {
+      "course": "scala",
+      "ordinal": 8,
+      "title": "Funktionen als Werte",
+      "theory": "Funktionen können in Variablen gespeichert und an andere Methoden übergeben werden.",
+      "example": "val doppelt:(Int=>Int)=x=>x*2",
+      "example_note": "doppelt(3) liefert 6.",
+      "task": "Erstelle eine Funktion als Wert."
+    },
+    {
+      "course": "scala",
+      "ordinal": 9,
+      "title": "Generics",
+      "theory": "Ein generischer Typ erhält einen Typparameter, damit derselbe Code mit unterschiedlichen Datentypen nutzbar ist.",
+      "example": "def erstes[A](xs:List[A]):Option[A]=xs.headOption",
+      "example_note": "Der Elementtyp A bleibt im Ergebnis erhalten.",
+      "task": "Schreibe eine generische Hilfsfunktion."
+    },
+    {
+      "course": "scala",
+      "ordinal": 10,
+      "title": "for-Comprehension",
+      "theory": "Eine for-Comprehension verknüpft mehrere Berechnungen oder Sammlungen in lesbarer Form.",
+      "example": "for {x<-List(1,2);y<-List(3,4)} yield x+y",
+      "example_note": "Es entstehen Kombinationen der beiden Listenwerte.",
+      "task": "Erzeuge Koordinatenpaare aus zwei Listen."
+    },
+    {
+      "course": "scala",
+      "ordinal": 11,
+      "title": "Futures",
+      "theory": "Ein Future beschreibt eine Berechnung, deren Ergebnis später vorliegt. Der Aufrufer arbeitet mit asynchronem Ergebniszugriff.",
+      "example": "val f=Future { 2+3 }",
+      "example_note": "Die Berechnung kann auf einem passenden ExecutionContext parallel erfolgen.",
+      "task": "Beschreibe die Fehlerbehandlung eines Future."
+    },
+    {
+      "course": "scala",
+      "ordinal": 12,
+      "title": "ScalaTest",
+      "theory": "Ein ScalaTest-Test vergleicht erwartete Ergebnisse einer Methode mit konkreten Werten.",
+      "example": "assert(2+3==5)",
+      "example_note": "Die Assertion wird bei einem abweichenden Ergebnis ausgelöst.",
+      "task": "Schreibe einen zweiten Test für einen Grenzwert."
+    }
+  ]
+}
