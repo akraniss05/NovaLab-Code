@@ -4,7 +4,7 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),asse
 const {chromium}=require('playwright-core');
 const root=path.join(__dirname,'..');
 const source=fs.readFileSync(path.join(root,'site/academy-v21.js'),'utf8');
-const css=['site/app-v21.css','site/academy-v31-layout.css','site/academy-roadmap.css','site/academy-neon-ui.css'].map(file=>fs.readFileSync(path.join(root,file),'utf8')).join('\n');
+const css=['site/app-v21.css','site/academy-v31-layout.css','site/academy-roadmap.css','site/academy-neon-ui.css','site/academy-atelier.css'].map(file=>fs.readFileSync(path.join(root,file),'utf8')).join('\n');
 const expose='\nwindow.__views={s,neonMenuPage,neonHero,neonBanner,neonExamOverview,filteredCourses,difficultyDiagram,coursesPage,trackPage,lessonPage,scriptPage,examPage,examsPage,referencePage,plansPage,adminPage,login,profilePage,friendsPage,supportPage,settingsPage,homePage,streakModalHtml,llIcon,paywall};\n})();';
 assert.match(source,/\ninit\(\);\n\}\)\(\);\s*$/);
 const rewritten=source.replace(/\ninit\(\);\n\}\)\(\);\s*$/,expose);
@@ -77,20 +77,20 @@ try{
 fs.mkdirSync(path.join(root,'test-results'),{recursive:true});
 const neonWrap=(page,markup)=>'<div class="ll-neon-screen ll-neon-'+page+'">'+markup+'</div>';
 const scenes=[
- ['neon-home',neonWrap('home',app.homePage()),['.ll-neon-custom-hero','.ll-home-brand-banner','.ll-home-continue','.ll-home-shortcuts']],
- ['neon-menu',neonWrap('menu',app.neonMenuPage()),['.ll-neon-page-heading','.ll-neon-menu-grid','.ll-neon-menu-tile','[data-go="settings"]','[data-go="support"]']],
- ['neon-script',neonWrap('script',app.scriptPage()),['.ll-neon-custom-hero','.file-tree','.file-preview','.file-tabs']],
- ['neon-exams',neonWrap('exams',app.examsPage()),['.ll-neon-page-heading','.ll-neon-exam-overview','.ll-neon-stat-row','.exam-filters']],
- ['neon-reference',neonWrap('reference',app.referencePage()),['.ll-neon-custom-hero','.reference-picker','#reference-search','#reference-results']],
+ ['neon-home',neonWrap('home',app.homePage()),['.ll-atelier-mission-strip','.ll-atelier-course-rail','.ll-neon-custom-hero','.ll-home-brand-banner','.ll-home-continue','.ll-home-shortcuts']],
+ ['neon-menu',neonWrap('menu',app.neonMenuPage()),['.ll-atelier-mission-strip','.ll-atelier-scene','.ll-neon-page-heading','.ll-neon-menu-grid','.ll-neon-menu-tile','[data-go="settings"]','[data-go="support"]']],
+ ['neon-script',neonWrap('script',app.scriptPage()),['.ll-atelier-stats','.ll-atelier-studio-shell','.ll-atelier-studio-files','.ll-atelier-studio-work','.ll-neon-custom-hero','.file-tree','.file-preview','.file-tabs']],
+ ['neon-exams',neonWrap('exams',app.examsPage()),['.ll-atelier-exam-card','.ll-atelier-scene','.ll-neon-page-heading','.ll-neon-exam-overview','.ll-neon-stat-row','.exam-filters']],
+ ['neon-reference',neonWrap('reference',app.referencePage()),['.ll-atelier-ref-stats','.ll-neon-custom-hero','.reference-picker','#reference-search','#reference-results']],
  ['neon-plans',neonWrap('plans',app.plansPage()),['.ll-neon-page-heading','.ll-neon-feature','.membership-stack','.voucher-panel']],
- ['neon-profile',neonWrap('profile',app.profilePage()),['.ll-neon-page-heading','.profile-overview-card','.profile-title-picker']],
+ ['neon-profile',neonWrap('profile',app.profilePage()),['.ll-atelier-profile-path','.ll-atelier-milestone','.ll-neon-page-heading','.profile-overview-card','.profile-title-picker']],
  ['neon-friends',neonWrap('friends',app.friendsPage()),['.ll-neon-page-heading','.ll-neon-feature','.friend-navigation']],
- ['neon-support',neonWrap('support',app.supportPage()),['.ll-neon-page-heading','.ll-neon-feature','.support-grid','[data-form="support-ticket"]']],
- ['neon-settings',neonWrap('settings',app.settingsPage()),['.ll-neon-page-heading','.appearance-picker','.settings-list','[data-form="password"]','#mfa-settings']],
+ ['neon-support',neonWrap('support',app.supportPage()),['.ll-atelier-support-stats','.ll-neon-page-heading','.ll-neon-feature','.support-grid','[data-form="support-ticket"]']],
+ ['neon-settings',neonWrap('settings',app.settingsPage()),['.ll-atelier-settings-preview','.ll-neon-page-heading','.appearance-picker','.settings-list','[data-form="password"]','#mfa-settings']],
  ['neon-admin',(()=>{const oldRole=s.profile.role,oldIsOwner=s.isOwner,oldMembers=s.members;
   s.profile.role='admin';s.isOwner=true;s.members=[];const html=neonWrap('admin',app.adminPage());
   s.profile.role=oldRole;s.isOwner=oldIsOwner;s.members=oldMembers;return html;})(),
- ['.ll-neon-page-heading','.ll-neon-feature','.ll-admin-tabs','.admin-overview','.ll-admin-hub']],
+ ['.ll-atelier-admin-pulse','.ll-atelier-admin-pulse-cards','.ll-neon-page-heading','.ll-neon-feature','.ll-admin-tabs','.admin-overview','.ll-admin-hub']],
  ['home',app.homePage(),['.ll-home-brand-banner img','.ll-home-shortcuts','.ll-home-continue','.ll-streak-shortcut']],
  ['courses',app.coursesPage(),['.ll-learning-hero','.ll-journey','.ll-journey-step','.ll-difficulty-dashboard','.ll-difficulty-chart','.ll-difficulty-tile','#course-difficulty-select','#course-search','.course-grid','.ll-path-course','.ll-mini-road']],
  ['admin-registration',(()=>{const old=context.location.hash,oldRole=s.profile.role,oldOwner=s.isOwner,oldPolicy=s.registrationPolicy;

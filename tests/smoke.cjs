@@ -5,7 +5,7 @@ const read=file=>fs.readFileSync(path.join(__dirname,'..',file),'utf8');
 const html=read('site/index.html'),js=read('site/academy-v21.js'),css=read('site/app-v21.css');
 for(const file of ['site/reference-data.js','site/app-v21.css','site/app-v12.css','site/config.js','site/auth-mfa-v15.js','site/academy-v21.js','site/privacy.html','site/manifest.webmanifest','site/icon.svg','supabase/functions/academy-signin/index.ts','supabase/functions/admin-users/index.ts'])
  assert(fs.existsSync(path.join(__dirname,'..',file)),file+' missing');
-for(const token of ['app-v21.css?build=20261107v31','academy-v21.js?build=20261108v61','auth-mfa-v15.js?build=20261107v31','config.js?build=20261107v31','LiveryLab Academy'])
+for(const token of ['app-v21.css?build=20261107v31','academy-v21.js?build=20261108v63','auth-mfa-v15.js?build=20261107v31','config.js?build=20261107v31','LiveryLab Academy'])
  assert(html.includes(token),'Versioned asset missing: '+token);
 for(const obsolete of ['styles.css','refined.css','music-studio.js','studio3d-v5.js'])
  assert(!html.includes(obsolete),'Old asset still linked: '+obsolete);
@@ -42,7 +42,7 @@ assert.equal(banner.subarray(8,12).toString(),'WEBP','LiveryLab banner invalid')
 for(const selector of ['.ll-home-shortcuts','.ll-home-brand-banner','.ll-streak-modal','.ll-streak-claim','.ll-streak-backdrop'])assert(css.includes(selector),'Missing v19 interface style: '+selector);
 assert(fs.existsSync(path.join(__dirname,'../site/v21.html')),'Physical uncached v20 entry missing');
 assert(read('site/v21.html').includes('academy-v21.js?build='),'Unique iOS entry must load new code');
-assert(read('site/v31.html').includes('academy-v21.js?build=20261108v61'),'Fresh entry must load current code');
+assert(read('site/v31.html').includes('academy-v21.js?build=20261108v63'),'Fresh entry must load current code');
 assert(read('site/manifest.webmanifest').includes('v31.html#home'),'Installed app must open fresh entry');
 assert(js.includes("root=document.createElement('div')"),'Old HTML popup fallback missing');
 assert(js.includes("s.streakModalOpen=true;"),'Daily popup must appear after every login');
@@ -200,3 +200,17 @@ for(const sel of ['.ll-neon-page-heading','.ll-neon-menu-grid','.ll-neon-menu-ti
 for(const fn of ['neonMenuPage','neonHero','neonBanner','neonExamOverview'])assert(js.includes('function '+fn+'('),'Missing site design '+fn);
 assert(js.includes("home:homePage,menu:neonMenuPage,courses:coursesPage"),'Existing router must expose new menu while retaining original routes');
 require('./neon-ui.cjs');
+
+/* Visual Atelier: real 3D scenes and layout enhancements, zero fake actions. */
+const atelierCss=read('site/academy-atelier.css');
+for(const page of ['site/index.html','site/v21.html','site/v31.html']){
+ const entry=read(page);
+ assert(entry.includes('academy-atelier.css?build=20261108v63'),page+' missing Atelier style');
+ assert(entry.indexOf('academy-atelier.css?build=')>entry.indexOf('academy-neon-ui.css?build='),'Atelier must have last precedence');
+}
+for(const selector of ['.ll-atelier-scene','.ll-atelier-cube','.ll-atelier-mission-strip',
+ '.ll-atelier-course-rail','.ll-atelier-studio-shell','.ll-atelier-exam-card',
+ '.ll-atelier-profile-path','.ll-atelier-support-stats','.ll-atelier-settings-preview','.ll-atelier-admin-pulse',
+ '@media(max-width:490px)','prefers-reduced-motion'])
+ assert(atelierCss.includes(selector),'Atelier missing '+selector);
+require('./atelier.cjs');
