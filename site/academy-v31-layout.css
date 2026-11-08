@@ -423,3 +423,73 @@ body:not(.is-auth) .topbar > .top-right{position:relative;z-index:4}
 .support-submit-status.error{color:#ffd7e2;background:#442332;border-color:#ad5071}
 .support-compose button[type="submit"][disabled]{opacity:.7;cursor:wait}
 @media(max-width:480px){.support-submit-status{font-size:12px;padding:10px}}
+
+
+/* v49: Dedicated administration sections and private two-way support tickets.
+ * Built on the existing Academy theme; no global navigation changes. */
+.ll-admin-tabs{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:18px 0 22px}
+.ll-admin-tabs .btn{font-size:12px;min-height:41px}
+.ll-admin-tabs [aria-current="page"]{border-color:#c391ff}
+.ll-admin-hub{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:21px 0}
+.ll-admin-hub-card{display:flex;flex-direction:column;align-items:flex-start;gap:11px;min-height:185px;padding:23px;border:1px solid #75549e;border-radius:20px;background:linear-gradient(145deg,#2a1b43,#171225);color:#f2e8ff;text-align:left;cursor:pointer}
+.ll-admin-hub-card:hover,.ll-admin-hub-card:focus-visible{border-color:#c19aff;background:linear-gradient(145deg,#38214e,#201534);outline-offset:3px}
+.ll-admin-hub-card>span{display:grid;place-items:center;background:#4e2f73;border-radius:12px;width:43px;height:43px;font-size:25px;color:#e7c0ff}
+.ll-admin-hub-card strong{font-size:17px;line-height:1.35}
+.ll-admin-hub-card small{font-size:12px;color:#cdbdde;line-height:1.5}
+.ll-admin-hub-card b{font-size:12px;color:#d8b5ff;margin-top:auto}
+.ll-member-compact{padding:0!important;overflow:hidden}
+.ll-member-compact>.ll-member-summary{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 15px;cursor:pointer;min-width:0;list-style:none}
+.ll-member-compact>.ll-member-summary::-webkit-details-marker{display:none}
+.ll-member-compact>.ll-member-summary:focus-visible{outline:2px solid #d1a5ff;outline-offset:-3px}
+.ll-member-compact .member-header{min-width:0;flex:1}
+.ll-member-compact .member-avatar{width:38px;height:38px;flex-basis:38px}
+.ll-member-compact .member-identity strong{font-size:13px}
+.ll-member-compact .member-identity small{font-size:11px;overflow-wrap:anywhere}
+.ll-member-expand{flex:0 0 auto;color:#bca2db;font-size:11px;white-space:nowrap}
+.ll-member-compact[open] .ll-member-expand{color:#edceff}
+.ll-member-compact>.member-management{padding:16px;margin:0;border-top:1px solid #4e396c;flex-wrap:wrap;align-items:stretch}
+.ll-member-compact .ll-plan-manager{margin:0}
+.ll-admin-inbox{margin:15px 0 0}
+.ll-admin-ticket-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin-top:17px}
+.ll-admin-ticket{min-width:0;border:1px solid #61477a;border-radius:14px;background:#1f182f;padding:14px}
+.ll-admin-ticket.selected{border-color:#b68cf3;background:#2b1b41}
+.ll-ticket-row{display:flex;justify-content:space-between;align-items:center;gap:9px}
+.ll-ticket-row strong{font-size:14px;overflow-wrap:anywhere}
+.ll-admin-ticket small{display:block;color:#bda7d5;font-size:11px;margin-top:5px}
+.ll-admin-ticket p{font-size:12px;line-height:1.5;color:#d9c8e6;overflow-wrap:anywhere;white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.ll-chat-panel{min-width:0;margin:20px 0;padding:22px!important;border:1px solid #9664b9!important;border-radius:18px!important;grid-column:1/-1}
+.ll-chat-heading{display:flex;align-items:center;justify-content:space-between;gap:13px;margin-bottom:15px}
+.ll-chat-heading h3{margin:6px 0;font-size:21px}
+.ll-chat-heading small{font-size:11px;color:#cab6db}
+.ll-chat-messages{display:flex;flex-direction:column;align-items:stretch;gap:11px;max-height:min(52vh,490px);min-height:125px;overflow-y:auto;padding:15px;border:1px solid #56416e;border-radius:15px;background:#120e1e;overscroll-behavior:contain}
+.ll-chat-message{max-width:min(87%,540px);padding:12px 14px;border-radius:15px;background:#2b2140;border:1px solid #594578;align-self:flex-start;overflow-wrap:anywhere}
+.ll-chat-message.is-mine{align-self:flex-end;background:#462969;border-color:#9666c9}
+.ll-chat-message .ll-chat-sender{font-size:11px;font-weight:750;color:#dcbeff}
+.ll-chat-message p{font-size:13px;line-height:1.65;margin:6px 0;white-space:pre-wrap;color:#f7eeff}
+.ll-chat-message small{font-size:10px;color:#cab8d9}
+.ll-chat-compose{margin:16px 0 0}
+.ll-chat-compose textarea{display:block;width:100%;min-height:86px;resize:vertical}
+.ll-chat-compose-footer{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-top:9px}
+.ll-chat-compose-footer small{color:#bdadd0;font-size:11px}
+.ll-chat-status{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin-top:19px;padding-top:15px;border-top:1px solid #59436e}
+.ll-chat-status label{display:flex;flex-direction:column;gap:5px;min-width:130px;flex:1;font-size:12px;color:#dac6ea}
+.ll-chat-status button{min-height:42px}
+.ll-support-list-item .btn{margin-top:7px}
+.ll-shop-discount{margin-bottom:18px;padding:16px}
+@media(max-width:850px){.ll-admin-hub{grid-template-columns:1fr 1fr}.ll-admin-ticket-list{grid-template-columns:1fr 1fr}}
+@media(max-width:620px){
+ .ll-admin-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ .ll-admin-tabs .btn{min-width:0}
+ .ll-admin-hub,.ll-admin-ticket-list{grid-template-columns:1fr}
+ .ll-admin-hub-card{min-height:125px;padding:17px}
+ .ll-member-compact>.ll-member-summary{padding:12px;align-items:flex-start}
+ .ll-member-compact .member-header{gap:8px;flex-wrap:wrap}
+ .ll-member-expand{font-size:10px}
+ .ll-chat-panel{padding:15px!important}
+ .ll-chat-heading{align-items:flex-start;gap:8px}
+ .ll-chat-messages{max-height:49vh;padding:11px}
+ .ll-chat-message{max-width:96%}
+ .ll-chat-compose-footer .btn{width:100%}
+ .ll-chat-status{align-items:stretch}
+ .ll-chat-status label,.ll-chat-status button{flex:1 0 100%}
+}
