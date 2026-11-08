@@ -104,6 +104,7 @@ assert(fakeNodes['#bottom-nav'].innerHTML.includes('Script'),'Script navigation 
 assert(fakeNodes['#bottom-nav'].innerHTML.includes('Referenz'),'Reference is available in the five-item bottom navigation');
 state.members=[{id:'pending-user',username:'TestUser',email:'test@example.com',access_status:'pending',email_confirmed:true,active:false,role:'student'}];
 state.profile.role='admin';
+sandbox.location.hash='#admin/members';
 assert(app.adminPage().includes('Registrierungsanfragen'),'Pending approval cards render');
 assert(app.adminPage().includes('Genehmigen'),'Admin approval action renders');
 assert(app.adminPage().includes('data-admin-tier')===false,'Pending accounts do not have tier controls yet');
@@ -116,6 +117,16 @@ assert(adminHtml.includes('data-plan-user="paid-user"'),'Subscription actions ar
 state.memberExpiry['paid-user']=null;
 assert(app.adminPage().includes('Laufzeit festlegen'),'Permanent subscriptions can be converted to a fixed duration');
 state.members.pop();
+sandbox.location.hash='#admin';
+assert(app.adminPage().includes('ll-admin-hub'),'Admin overview uses category cards rather than expanded members');
+assert(!app.adminPage().includes('member-management'),'Admin overview no longer displays bulky member controls');
+sandbox.location.hash='#admin/support';
+state.service={beta_open:true,mine:[],admin:[{id:'11111111-1111-4111-8111-111111111111',category:'bug',status:'open',message:'Problem with editor',created_at:'2026-11-08T00:00:00Z',username:'User'}]};
+assert(app.adminPage().includes('ll-admin-ticket-list'),'Dedicated support inbox renders');
+assert(app.adminPage().includes('data-chat-open'),'Admin may open ticket conversations');
+sandbox.location.hash='#admin/vouchers';
+assert(app.adminPage().includes('voucher-maker'),'Vouchers have their own admin category');
+sandbox.location.hash='#admin/members';
 
 state.authScreen='register';app.login();
 assert(fakeNodes['#content'].innerHTML.includes('Registrierungsanfrage senden'),'Registration form renders');
