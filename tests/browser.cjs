@@ -95,7 +95,7 @@ const scenes=[
   context.location.hash=old;s.profile.role=oldRole;s.members=oldMembers;s.adminLearner=oldLearner;s.registrationPolicy=oldPolicy;
   return html;})(),['.ll-admin-progress-panel','.ll-admin-course-progress-card','#admin-progress-search','#admin-progress-filter','[data-view-progress]']],
 
- ['track',app.trackPage('fivem'),['.ll-roadmap-course','.ll-track-summary','.ll-map-entry','.ll-map-timeline-node','.lesson-card','.lesson-main strong','.lesson-summary','.status-ring']],
+ ['track',app.trackPage('fivem'),['.ll-roadmap-course','.ll-track-summary','.ll-map-entry','.ll-map-timeline-node','.ll-art-svg','.ll-track-continue','.lesson-card','.lesson-main strong','.lesson-summary','.status-ring']],
  ['lesson',app.lessonPage('fivem-01'),['.ll-roadmap-lesson','.ll-lesson-hero','.lesson-steps','.lesson-step','.step-box','.video-frame','.quiz-choice','.exercise-textarea','.code-editor','#code-lines','.ll-part-selector-two','[data-lesson-part="0"]','[data-lesson-part="1"]','[data-action="reset-lesson"]']],
  ['script',app.scriptPage(),['.file-tree','.file-tabs','.file-preview']],
  ['reference',app.referencePage(),['.reference-row','.reference-block']],

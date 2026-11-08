@@ -6,7 +6,7 @@ const root=path.join(__dirname,'..');
 const appSource=fs.readFileSync(path.join(root,'site/academy-v21.js'),'utf8');
 assert.match(appSource,/\ninit\(\);\n\}\)\(\);\s*$/);
 const rewritten=appSource.replace(/\ninit\(\);\n\}\)\(\);\s*$/,
- '\nwindow.__roadmap={s,courseCard,coursesPage,trackPage,lessonPage};\n})();');
+ '\nwindow.__roadmap={s,courseCard,coursesPage,trackPage,lessonPage,roadmapCoursePreview,roadmapJourney};\n})();');
 const fake=()=>({innerHTML:'',classList:{toggle(){},add(){},remove(){},contains(){return false}}});
 const context={
  window:{LL_CONFIG:{},addEventListener(){}},
@@ -59,6 +59,21 @@ assert(!track.includes('[ 01 ] 01 · Einstieg'),'Chapter labels must not duplica
 assert(track.includes('data-go="lesson/lua-04"'),'Next lesson must keep working navigation');
 assert(track.includes('data-pin-course="lua"'),'Pin action stays available');
 assert(track.includes('data-bookmark-course="lua"'),'Bookmark action stays available');
+assert(track.includes('ll-track-continue'), 'Continue action is available without interrupting the roadmap');
+assert(track.includes('ll-art-svg') && track.includes('ll-art-types') && track.includes('ll-art-comment'),
+ 'Each topic has its own glowing SVG illustration');
+assert(!track.includes('ll-next-roadmap'),'Standalone CTA must not interrupt the lesson timeline');
+const mini=context.window.__roadmap.roadmapCoursePreview(s.courses[0],2,50);
+assert.equal((mini.match(/ll-mini-stop is-done/g)||[]).length,1,'Only first milestone is complete at 2/50');
+assert.equal((mini.match(/ll-mini-stop is-active/g)||[]).length,1,'Second milestone is active at 2/50');
+const previousLessons=s.lessons,previousDone=s.progress.done;
+s.lessons=Array.from({length:100},(_,i)=>({id:'other-'+i,course_id:'other'}));
+s.progress.done=s.lessons.slice(0,12).map(l=>l.id);
+const journey=context.window.__roadmap.roadmapJourney();
+assert.equal((journey.match(/ll-journey-step is-done/g)||[]).length,1,'12% should complete only stage one');
+assert.equal((journey.match(/ll-journey-step is-active/g)||[]).length,1,'12% should activate stage two');
+assert(journey.includes('ll-roadmap-lock-icon'), 'Future milestones have a lock illustration');
+s.lessons=previousLessons;s.progress.done=previousDone;
 const blender=trackPage('blender-fundamentals');
 assert(blender.includes('ll-roadmap-lesson-list')&&blender.includes('Ein erster Würfel'),'Roadmap works for Blender');
 const lesson=lessonPage('lua-04');
@@ -68,7 +83,7 @@ for(const token of ['ll-roadmap-lesson','ll-lesson-hero','ll-lesson-road-stages'
  assert(lesson.includes(token),'Lesson action missing '+token);
 for(const htmlFile of ['index.html','v21.html','v31.html']){
  const html=fs.readFileSync(path.join(root,'site',htmlFile),'utf8');
- assert(html.includes('academy-roadmap.css?build=20261108v58'),htmlFile+' does not load new roadmap CSS');
+ assert(html.includes('academy-roadmap.css?build=20261108v59'),htmlFile+' does not load new roadmap CSS');
 }
 const css=fs.readFileSync(path.join(root,'site/academy-roadmap.css'),'utf8');
 for(const token of ['.ll-journey-steps','.ll-mini-stop','.ll-map-entry.is-current',
