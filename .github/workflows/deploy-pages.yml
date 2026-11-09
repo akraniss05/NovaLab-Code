@@ -44,6 +44,7 @@ jobs:
           node tests/simple-academy.cjs
           node tests/support-submit.cjs
           node tests/support-conversations.cjs
+          node tests/subscription-countdown.cjs
           node tests/admin-self.cjs
           node tests/shop-tiers.cjs
           node tests/admin-plans.cjs

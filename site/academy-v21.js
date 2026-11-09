@@ -639,6 +639,7 @@ function render(){
  if(r.page==='settings')renderMFA();
  paintStreakModal();
  paintTimer();
+ updateMembershipClocks();
  paintEditorLines();
  if(r.page==='lesson'&&s.lesson)updateLessonControls();
  window.LLI18n?.apply?.();
@@ -897,7 +898,7 @@ function homePage(){
  const streak=Number(s.loginStreak?.current||0),ready=!!s.loginStreak?.claimable;
  const picks=['coding-basics','lua','python','javascript'].map(courseOf).filter(Boolean);
  return '<div class="ll-home-dashboard">'+neonHero('home')+
- '<section class="ll-home-brand-banner"><img src="./novalab-banner.webp" alt="NovaLab – Premium FiveM Systems, violette Skyline" loading="eager" fetchpriority="high"></section>'+
+ '<section class="ll-home-brand-banner"><img src="./novalab-banner.webp" alt="NovaLab Academy – Learn. Code. Grow. – violette Skyline" loading="eager" fetchpriority="high"></section>'+ownPlanCountdownHtml()+
  '<div class="ll-home-greeting"><div><span class="eyebrow">DEIN PERSÖNLICHES DASHBOARD</span>'+
  '<h1>Willkommen zurück, <span class="gradient">'+esc(nickname)+'</span>!</h1><p>Lerne programmieren, entwickle Projekte und erreiche deine nächsten Ziele.</p></div>'+
  '<div class="ll-home-level"><div class="ll-level-top">'+llIcon('xp')+'<span>Level '+level+'</span></div>'+
@@ -1534,7 +1535,7 @@ function plansPage(){
  return pageHeading('MITGLIEDSCHAFT','Dein <span class="gradient">Lernzugang.</span>',
   'Free zum Einstieg, Plus mit doppelten Limits, Ultimate mit dreifachen Lernlimits und Max ohne Begrenzung.')+
  neonBanner('Dein Upgrade für mehr Lernfreiheit','Vergleiche Kurse, Tageslimits und Prüfungen. Der Preis zeigt immer die gesamte ausgewählte Laufzeit.','xp')+
- dailyStrip()+selector+
+ dailyStrip()+ownPlanCountdownHtml()+selector+
  ((s.shopOffers||[]).some(x=>Number(x.promo_percent)>0)||s.shopDiscount>0?
  '<div class="shop-sale-banner">✦ Shopaktionen gelten je Tarif und Laufzeit. Der reduzierte Preis steht direkt beim Angebot.</div>':'')+
  '<div class="membership-stack">'+
@@ -1926,7 +1927,7 @@ function profilePage(){
  const streak=Number(s.loginStreak?.current||0),best=Number(s.loginStreak?.best||0),titles=(s.social?.titles||['Developer']).filter(Boolean),selected=s.social?.profile?.title||'Developer';
  return pageHeading('DEIN PROFIL','Dein Lern-<span class="gradient">fortschritt.</span>',
  'Hier siehst du deine wichtigsten Werte und freigeschalteten Erfolge. Persönliche App-Farben und Hintergründe findest du in den Einstellungen.')+
- '<section class="profile-overview-card"><div class="profile-overview-avatar">'+esc(name.slice(0,1).toUpperCase())+'</div><div><span class="eyebrow">NOVALAB DEVELOPER</span><h2>'+esc(name)+'</h2><span class="profile-title-badge">✦ '+esc(selected)+'</span><p>@'+esc(s.profile?.username||'developer')+' · '+esc(plans[s.tier]||'Free')+'</p>'+(s.tier!=='free'?'<p class="plan-expiry">'+(s.planExpires?'Freigeschaltet bis '+esc(new Date(s.planExpires).toLocaleString('de-DE')):'Dauerhaft freigeschaltet')+'</p>':'')+'</div><button class="btn small" data-go="settings">App-Design ändern →</button></section>'+atelierProfilePath()+
+ '<section class="profile-overview-card"><div class="profile-overview-avatar">'+esc(name.slice(0,1).toUpperCase())+'</div><div><span class="eyebrow">NOVALAB DEVELOPER</span><h2>'+esc(name)+'</h2><span class="profile-title-badge">✦ '+esc(selected)+'</span><p>@'+esc(s.profile?.username||'developer')+' · '+esc(plans[s.tier]||'Free')+'</p>'+(s.tier!=='free'?'<p class="plan-expiry">'+(s.planExpires?'Freigeschaltet bis '+esc(new Date(s.planExpires).toLocaleString('de-DE')):'Dauerhaft freigeschaltet')+'</p>':'')+'</div><button class="btn small" data-go="settings">App-Design ändern →</button></section>'+ownPlanCountdownHtml()+atelierProfilePath()+
  '<section class="profile-title-picker"><div><span class="eyebrow">[ ✦ ] DEIN PROFILTITEL</span><h3>Zeig, was du erreicht hast.</h3><p>Du kannst nur Titel auswählen, die du durch Lektionen, Prüfungen, Freunde oder Streaks freigeschaltet hast.</p></div><form data-form="profile-title"><label class="form-label" for="profile-title">Freigeschalteten Titel auswählen</label><div class="profile-title-row"><select class="select" id="profile-title" name="title">'+titles.map(t=>'<option value="'+esc(t)+'" '+(t===selected?'selected':'')+'>'+esc(t)+'</option>').join('')+'</select><button class="btn primary" type="submit">Titel verwenden</button></div></form></section>'+
  '<section class="profile-quick-stats"><div class="profile-quick-tile"><span>🔥</span><strong>'+streak+'</strong><small>Login-Streak in Tagen</small></div>'+
  '<div class="profile-quick-tile"><span>🏅</span><strong>'+best+'</strong><small>Bisheriger Rekord</small></div>'+
@@ -2088,31 +2089,57 @@ function supportAdminSection(){
   '<div class="empty">'+(s.serviceError?'Posteingang konnte nicht geladen werden. Bitte aktualisieren.':'Noch keine Supportanfragen. Neue Tickets erscheinen hier automatisch.')+'</div>')+'</div></section>'+ticketChatPanel(true);
 }
 
+
+/* Render server-authoritative expiry times; never create a client-only subscription. */
 function membershipRemainingText(tier,expiry){
- if(!tier||tier==='free')return 'Kein aktives Abo';
- if(expiry===null||expiry===undefined||expiry==='')return 'Unbefristet';
- const remaining=Date.parse(expiry)-Date.now();
- if(!Number.isFinite(remaining))return 'Ablaufdatum nicht verfügbar';
- if(remaining<=0)return 'Abgelaufen';
- const mins=Math.ceil(remaining/60000);
- const days=Math.floor(mins/1440),hours=Math.floor(mins%1440/60),minutes=mins%60;
- return days>0?days+' Tage · '+hours+' Std.':hours>0?hours+' Std. · '+minutes+' Min.':minutes+' Minuten';
+ if(!tier||tier==='free')return 'Free · dauerhaft kostenlos';
+ if(expiry===null||expiry===undefined||expiry==='')return 'Unbefristet · kein Ablaufdatum';
+ const end=Date.parse(expiry);
+ if(!Number.isFinite(end))return 'Ablaufdatum nicht verfügbar';
+ const seconds=Math.max(0,Math.ceil((end-Date.now())/1000));
+ if(seconds===0)return 'Abgelaufen';
+ const d=Math.floor(seconds/86400),h=Math.floor(seconds%86400/3600),
+       m=Math.floor(seconds%3600/60),s=seconds%60;
+ return d+' Tage · '+String(h).padStart(2,'0')+' Std. · '+
+  String(m).padStart(2,'0')+' Min. · '+String(s).padStart(2,'0')+' Sek.';
 }
 function membershipExpiryText(tier,expiry){
- if(!tier||tier==='free')return 'Free · keine Laufzeit';
+ if(!tier||tier==='free')return 'Free · ohne Ablaufdatum';
  if(!expiry)return 'Ohne Ablaufdatum';
  const value=new Date(expiry);
- return Number.isNaN(value.getTime())?'Ungültiges Ablaufdatum':'Endet am '+new Intl.DateTimeFormat('de-DE',{dateStyle:'medium',timeStyle:'short',timeZone:'Europe/Berlin'}).format(value);
+ return Number.isNaN(value.getTime())?'Ungültiges Ablaufdatum':
+  'Läuft am '+new Intl.DateTimeFormat('de-DE',{
+   dateStyle:'medium',timeStyle:'medium',timeZone:'Europe/Berlin'
+  }).format(value)+' ab';
+}
+function ownPlanCountdownHtml(){
+ if(!s.ready)return '';
+ const tier=plans[s.tier]||'Free';
+ const expiry=s.planExpires;
+ return '<section class="ll-own-plan-status" aria-label="Deine Mitgliedschaft und verbleibende Laufzeit">'+
+  '<div class="ll-own-plan-identity"><span class="eyebrow">DEINE MITGLIEDSCHAFT</span>'+
+  '<strong>'+esc(tier)+'</strong><small>'+esc(membershipExpiryText(s.tier,expiry))+'</small></div>'+
+  '<div class="ll-own-plan-time"><span class="ll-own-plan-caption">Verbleibende Laufzeit</span>'+
+  '<strong role="timer" aria-live="off" data-own-plan-clock>'+
+   esc(membershipRemainingText(s.tier,expiry))+'</strong></div>'+
+  '<button type="button" class="btn small" data-go="plans">Tarife ansehen →</button></section>';
 }
 function updateMembershipClocks(){
- if(!s.ready||parseRoute().page!=='admin')return;
- document.querySelectorAll('[data-plan-clock]').forEach(el=>{
-  const id=el.dataset.planClock,remaining=membershipRemainingText(s.memberPlans[id],s.memberExpiry[id]);
-  if(el.textContent!==remaining)el.textContent=remaining;
-  el.classList.toggle('is-expired',remaining==='Abgelaufen');
+ if(!s.ready)return;
+ if(parseRoute().page==='admin'){
+  document.querySelectorAll('[data-plan-clock]').forEach(el=>{
+   const id=el.dataset.planClock,remaining=membershipRemainingText(s.memberPlans[id],s.memberExpiry[id]);
+   if(el.textContent!==remaining)el.textContent=remaining;
+   el.classList.toggle('is-expired',remaining==='Abgelaufen');
+  });
+ }
+ const text=membershipRemainingText(s.tier,s.planExpires);
+ document.querySelectorAll('[data-own-plan-clock]').forEach(el=>{
+  if(el.textContent!==text)el.textContent=text;
+  el.classList.toggle('is-expired',text==='Abgelaufen');
  });
 }
-if(typeof setInterval==='function')setInterval(updateMembershipClocks,30000);
+if(typeof setInterval==='function')setInterval(updateMembershipClocks,1000);
 
 function adminRegistrationSection(pendingCount){
  const mode=s.registrationPolicy?.mode||'approval',ready=s.registrationPolicy?.loaded===true;
@@ -2224,7 +2251,7 @@ function adminSelfSection(){
   '<section class="panel ll-self-admin-hero"><span class="eyebrow">ADMINISTRATION · NUR DEIN KONTO</span><h2>Meine <span class="gradient">Admin-Einstellungen</span></h2>'+
   '<p>Verwalte deinen eigenen XP-Stand, deine Daily Streak und deinen Tarif. Deine Adminrechte bleiben immer erhalten; andere Konten werden nicht verändert.</p>'+
   '<button type="button" class="btn small" data-action="admin-self-refresh">↻ Daten aktualisieren</button></section>'+
-  '<div class="ll-admin-self-stats">'+
+  ownPlanCountdownHtml()+'<div class="ll-admin-self-stats">'+
   [['✦',total.toLocaleString('de-DE'),'Meine XP'],
    ['♨',current+' Tage','Aktuelle Streak'],
    ['★',best+' Tage','Streak-Rekord'],
