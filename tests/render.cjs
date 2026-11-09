@@ -44,7 +44,7 @@ assert(app.examsPage().includes('Prüfungen'),'Exams visible on Free');
 state.tier='pro';assert(app.scriptPage().includes('sh_shop'),'Script project unlocked on Plus');
 assert(app.scriptPage().includes('file-tabs'),'File tabs rendered');
 assert(app.referencePage().includes('gesperrt'),'Reference should be locked on Plus');
-state.tier='ultimate';assert(app.referencePage().includes('Spickzettel'),'Reference unlocked on Ultimate');
+state.tier='max';assert(app.referencePage().includes('Spickzettel'),'Reference unlocked on Max');
 assert(app.referencePage().includes('reference-language'),'Language picker rendered');
 assert(app.referencePage().includes('485 Referenzeinträge'),'Full reference library available');
 const lessonHtml=app.lessonPage('python-01');
