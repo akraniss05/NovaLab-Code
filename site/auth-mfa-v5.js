@@ -56,7 +56,7 @@ async function renderSettings(node,c){
   $('#ll-mfa-enroll',node).onclick=async()=>{
    const area=$('#ll-mfa-enroll-area',node);area.textContent='Einrichtung starten …';
    try{
-    const res=await c.auth.mfa.enroll({factorType:'totp',friendlyName:'LiveryLab Academy'});if(res.error)throw res.error;
+    const res=await c.auth.mfa.enroll({factorType:'totp',friendlyName:'NovaLab Academy'});if(res.error)throw res.error;
     const draft=res.data;const qr=draft.totp?.qr_code||'';
     area.innerHTML=`<div class="ll-mfa-setup"><h3>Authenticator koppeln</h3><p>Scanne den QR-Code mit deiner Authenticator-App. Falls du am selben Handy bist, kopiere das Geheimnis und gib es manuell ein. Teile es niemals mit anderen.</p><div id="ll-mfa-qr"></div><label>Manueller Schlüssel <input readonly class="input" id="ll-mfa-secret"></label><label>Sechsstelliger Code <input class="input" id="ll-mfa-setup-code" maxlength="6" inputmode="numeric" autocomplete="one-time-code" placeholder="000000"></label><div class="flex"><button class="btn primary" id="ll-mfa-activate">2FA aktivieren</button><button class="btn" id="ll-mfa-cancel">Abbrechen</button></div><p id="ll-mfa-setup-status" role="status"></p></div>`;
     const image=document.createElement('img');image.alt='TOTP QR-Code';image.className='ll-mfa-qr';if(/^data:image\/svg\+xml[;,]/i.test(qr))image.src=qr;$('#ll-mfa-qr',area).append(image);

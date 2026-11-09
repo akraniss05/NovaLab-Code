@@ -1,5 +1,5 @@
-/* LiveryLab Academy • Mobile App Design v12
-   Made with 💙 from NyxAtheris (LiveryLab Studios)
+/* NovaLab Academy • Mobile App Design v12
+   Made with 💙 from NyxAtheris (NovaLab Academy)
    Single stylesheet: no legacy cascades. */
 :root{
  color-scheme:dark;
@@ -115,7 +115,7 @@ body.is-auth .sidebar,body.is-auth .topbar,body.is-auth .bottom-nav{display:none
 @media(prefers-reduced-motion:reduce){*,*:after,*:before{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 
 
-/* LiveryLab Academy v13 • membership, coupons, daily learning */
+/* NovaLab Academy v13 • membership, coupons, daily learning */
 .daily-strip{display:flex;align-items:center;gap:13px;margin:18px 0;padding:15px 17px;background:#201735;border:1px solid #534071;border-radius:15px}
 .daily-symbol{width:44px;height:44px;flex:0 0 44px;border-radius:12px;background:#35224e;color:#c5a6ff;display:grid;place-items:center;font:800 27px var(--mono)}
 .daily-strip strong,.daily-strip small{display:block}.daily-strip strong{font-size:15px;line-height:1.35}.daily-strip small{font-size:12px;line-height:1.5;color:#b5a6cc;margin-top:3px}
@@ -476,7 +476,7 @@ body.is-auth .sidebar,body.is-auth .topbar,body.is-auth .bottom-nav{display:none
 }
 
 
-/* LiveryLab Academy v18 · Appearance, Creator Profiles, Community & Voucher Manager */
+/* NovaLab Academy v18 · Appearance, Creator Profiles, Community & Voucher Manager */
 [hidden]{display:none!important}
 html[data-theme="midnight"]{--bg:#080e1d;--nav:#0c1326;--panel:#151d34;--panel2:#202943;--panel3:#2c3653;--stroke:#344262;--stroke2:#526482;--text:#f1f4ff;--muted:#a3b2d0;--soft:#c4d0e4}
 html[data-theme="ocean"]{--bg:#071b2b;--nav:#0c2435;--panel:#112b40;--panel2:#1a3850;--panel3:#214761;--stroke:#34546d;--stroke2:#4b7590;--text:#eaf8ff;--muted:#9ebfd2;--soft:#c4deeb}
@@ -693,7 +693,7 @@ body.decorative-background .content,body.decorative-background .footer{position:
 @media(max-width:560px){.streak-home{padding:12px;gap:9px}.streak-home strong{font-size:12px}.streak-home small{font-size:10px}.streak-arrow{font-size:10px}}
 
 
-/* v19 · LiveryLab Academy — dashboard and verified daily claim */
+/* v19 · NovaLab Academy — dashboard and verified daily claim */
 .ll-icon{display:inline-block;width:22px;height:22px;vertical-align:middle;flex:0 0 auto}
 .ll-home-dashboard{width:100%;max-width:1080px;margin:0 auto}
 .ll-home-brand-banner{position:relative;width:100%;aspect-ratio:2.63/1;border-radius:24px;overflow:hidden;border:1px solid #7637b88a;
