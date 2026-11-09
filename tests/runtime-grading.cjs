@@ -21,3 +21,11 @@ const js={lang:'javascript',task:'Verwende Arrays und map.',checks:['const','con
 assert.equal(check('const namen=["Mia","Alex"];console.log(namen);',js,['MIA,ALEX'],['MIA,ALEX']).ok,false,'Missing .map rejected');
 assert.equal(check('const namen=["Mia","Alex"];console.log(namen.map(x => x.toUpperCase()));',js,['MIA,ALEX'],['MIA,ALEX']).ok,true);
 console.log('PASS: runtime grading checks Python assignments, Python branches, Lua personalized output and JavaScript map.');
+
+const ownVariables={lang:'lua',task:'Lege die lokalen Variablen spielerName und level an und gib beide aus.',
+ checks:['local\\s+spielerName\\s*=','local\\s+level\\s*=','print\\s*\\('],
+ solution:'local spielerName = "Luca"\nlocal level = 1\nprint(spielerName, level)'};
+assert.equal(check('local spielerName="Mia"\nlocal level=25\nprint(spielerName,level)',ownVariables,['Mia\t25'],['Luca\t1']).ok,true,
+ 'Live Lua runtime must allow own variable values');
+assert.equal(check('local spielerName="Mia"\nlocal level=25\nprint("egal")',ownVariables,['egal'],['Luca\t1']).ok,false,
+ 'Live Lua runtime must reject hardcoded irrelevant output');
