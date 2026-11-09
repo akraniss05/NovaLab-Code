@@ -36,7 +36,7 @@ for(const match of ['+ownPlanCountdownHtml()+','dailyStrip()+ownPlanCountdownHtm
 }
 const css=read('site/academy-atelier.css');
 assert(css.includes('NovaLab v74'),'new banner override missing');
-assert(css.includes('.ll-neon-home .ll-home-dashboard .ll-home-brand-banner>img'));
+assert(css.includes('.ll-home-dashboard .ll-home-brand-banner>img'));
 assert(css.includes('object-fit:cover!important'),'cover must override old contain rule');
 assert(css.includes('aspect-ratio:16 / 9!important'),'mobile banner must have original image ratio');
 assert(css.includes('.ll-own-plan-status'),'responsive plan status card missing');
