@@ -1,5 +1,5 @@
-/* LiveryLab Academy v15 · Supabase Authenticator-App (TOTP)
- * Made with 💙 from NyxAtheris (LiveryLab Studios)
+/* NovaLab Academy v15 · Supabase Authenticator-App (TOTP)
+ * Made with 💙 from NyxAtheris (NovaLab Academy)
  * The server, not this UI, validates verification codes and enforces AAL2.
  */
 (()=>{
@@ -164,7 +164,7 @@ async function renderSettings(node,c){
    const btn=$('#ll-mfa-enroll',node),area=$('#ll-mfa-enroll-area',node);
    btn.disabled=true;message(result,'Erstelle einen neuen Sicherheitsschlüssel …');
    try{
-    const res=await c.auth.mfa.enroll({factorType:'totp',friendlyName:'LiveryLab Academy'});
+    const res=await c.auth.mfa.enroll({factorType:'totp',friendlyName:'NovaLab Academy'});
     if(res.error)throw res.error;
     message(result,'');
     const draft=res.data;
