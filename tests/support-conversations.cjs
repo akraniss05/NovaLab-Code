@@ -71,7 +71,7 @@ function submitForm(type,fields){
  assert.match(app.adminPage(),/data-chat-open/,'Admin can open member ticket');
  await submitForm('ticket-chat',{body:'Thanks! We are checking your lesson now.'});
  assert.equal(sendCalls,2,'Admin reply is saved by the same secure RPC');
- assert.match(app.ticketChatPanel(true),/LiveryLab Team/,'Replies are labeled as the support team');
+ assert.match(app.ticketChatPanel(true),/NovaLab Team/,'Replies are labeled as the support team');
  assert.match(app.ticketChatPanel(true),/Thanks! We are checking/,'Admin sees full chat history');
  context.location.hash='#admin/members';
  assert.match(app.adminPage(),/ll-admin-tabs/,'Separate members navigation exists');
