@@ -1,4 +1,4 @@
-/* LiveryLab Academy · optional interaction effects v48
+/* NovaLab Academy · optional interaction effects v48
    Non-interactive overlays; existing navigation and design are untouched. */
 #ll-ambient-layer{position:fixed;inset:0;overflow:hidden;pointer-events:none;
  z-index:2;opacity:0;visibility:hidden;isolation:isolate;contain:layout paint;

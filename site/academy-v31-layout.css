@@ -1,6 +1,6 @@
-/* LiveryLab Academy – v31 layout recovery, 2026-11-07
+/* NovaLab Academy – v31 layout recovery, 2026-11-07
    Functional Studio pages stay available; the main Academy layout remains original.
-   Made with 💙 by NyxAtheris (LiveryLab Studios). */
+   Made with 💙 by NyxAtheris (NovaLab Academy). */
 html,body,.app-shell,.app-column{max-width:100%;min-width:0}
 .app-shell,.app-column,.content{min-width:0}
 .content,.ll-home-dashboard{max-width:100%;min-width:0}
@@ -666,3 +666,8 @@ body:not(.is-auth) .topbar > .top-right{position:relative;z-index:4}
 .ll-admin-self-page button:focus-visible,.ll-admin-self-page input:focus-visible,.ll-admin-self-page select:focus-visible{outline:2px solid #b7a0fc;outline-offset:3px}
 @media(max-width:880px){.ll-admin-self-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.ll-admin-self-grid{grid-template-columns:1fr}}
 @media(max-width:420px){.ll-admin-self-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.ll-admin-self-stat{padding:12px}.ll-admin-self-fields{grid-template-columns:1fr}.ll-admin-self-card{padding:16px}.ll-admin-self-event{align-items:flex-start;flex-direction:column}.ll-admin-self-event>span{text-align:left}.ll-admin-self-history{padding:15px}}
+
+/* NovaLab launch: keep mobile header compact with the new name and icon. */
+body:not(.is-auth) .topbar .brand{min-width:0;max-width:100%;overflow:hidden}
+body:not(.is-auth) .topbar .brand>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:430px){body:not(.is-auth) .topbar .brand{font-size:12px;letter-spacing:-.02em}}

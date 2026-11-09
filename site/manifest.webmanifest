@@ -1,17 +1,23 @@
 {
-  "name": "LiveryLab Academy",
-  "short_name": "LiveryLab",
-  "description": "Lernplattform für Coding und Blender",
+  "name": "NovaLab Academy",
+  "short_name": "NovaLab",
+  "description": "NovaLab Academy – Learn. Code. Grow. Programmieren, Sprachen und Blender lernen.",
   "start_url": "./v31.html#home",
   "scope": "./",
   "display": "standalone",
   "background_color": "#0d0a19",
-  "theme_color": "#0d0a19",
+  "theme_color": "#180b2b",
   "icons": [
     {
-      "src": "./icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "./novalab-icon-192.webp",
+      "sizes": "192x192",
+      "type": "image/webp",
+      "purpose": "any"
+    },
+    {
+      "src": "./novalab-icon-512.webp",
+      "sizes": "512x512",
+      "type": "image/webp",
       "purpose": "any"
     }
   ]

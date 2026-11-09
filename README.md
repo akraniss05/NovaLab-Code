@@ -1,8 +1,10 @@
-# LiveryLab Academy v12
+# NovaLab Academy v12
 
-**Made with 💙 from NyxAtheris (LiveryLab Studios)**
+**Rebranding (9. November 2026):** Die App heißt jetzt **NovaLab Academy**. Banner, Logo, Startseite, Login, App-Icons und Manifest wurden aktualisiert. Die existierende Domain `liverylab-academy.dev`, die GitHub-Repository-Kennung und die internen Supabase-/Speicherschlüssel bleiben bis zu einer separaten technischen Migration unverändert, damit Accounts und Lernfortschritte erhalten bleiben.
 
-Neue responsive Lernplattform für Programmiersprachen, FiveM und Blender. Dunkles Violett, mobile Bottom-Navigation, Kurskarten und XP wie in den Designreferenzen.
+**Made with 💙 from NyxAtheris (NovaLab Academy)**
+
+Neue responsive NovaLab-Lernplattform für Programmiersprachen, FiveM und Blender. Dunkles Violett, mobile Bottom-Navigation, Kurskarten und XP wie in den Designreferenzen.
 
 Live: https://akraniss05.github.io/liverylab-academy/  
 Discord: https://discord.gg/livery-lab  

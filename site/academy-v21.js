@@ -1,5 +1,5 @@
-/* LiveryLab Academy v13 — focused learning, memberships and vouchers.
- * Made with 💙 from NyxAtheris (LiveryLab Studios)
+/* NovaLab Academy v13 — focused learning, memberships and vouchers.
+ * Made with 💙 from NyxAtheris (NovaLab Academy)
  * The footer attribution remains visible; open-source code itself cannot be made tamper-proof.
  * No browser-side administrator secrets. Supabase Auth + RLS enforce access server-side.
  */
@@ -78,7 +78,7 @@ function pageHeading(label,title,description){
   'HILFE & FEEDBACK':['Support','book'],
   'MITGLIEDSCHAFT':['Shop','xp'],
   'PRÜFUNGEN':['Prüfungen','exam'],
-  'LIVERYLAB COMMUNITY':['Freunde','friends'],
+  'NOVALAB COMMUNITY':['Freunde','friends'],
   'DEIN PROFIL':['Mein Profil','profile'],
   'EINSTELLUNGEN':['Einstellungen','settings'],
   'ADMINISTRATION':['Administration','settings'],
@@ -86,7 +86,7 @@ function pageHeading(label,title,description){
  };
  const entry=designs[label]||[label,'code'];
  return '<header class="page-heading ll-neon-page-heading">'+
-  '<div class="ll-neon-page-title"><span class="ll-neon-brand-text"><img src="./liverylab-symbol.svg" alt=""> LiveryLab <em>Academy</em></span>'+
+  '<div class="ll-neon-page-title"><span class="ll-neon-brand-text"><img src="./novalab-logo.webp" alt=""> NovaLab <em>Academy</em></span>'+
   '<span class="eyebrow ll-neon-kicker">'+esc(label)+'</span><h1>'+esc(entry[0])+'</h1>'+
   '<p class="lede">'+esc(description)+'</p><span class="ll-neon-legacy-heading" aria-hidden="true">'+title+'</span></div>'+
   '<span class="ll-neon-hero-art" aria-hidden="true"><span class="ll-neon-hero-glyph">'+atelierScene(entry[1],label==='MITGLIEDSCHAFT'?'shop':label==='ADMINISTRATION'?'admin':entry[1])+'</span></span>'+
@@ -105,7 +105,7 @@ function videoInfo(id){var sources={
 
 /* v1.5 neon app design: presentation only; existing route/actions/forms are retained. */
 
-/* LiveryLab Atelier: original CSS-driven holograms; all interactions stay native. */
+/* NovaLab Atelier: original CSS-driven holograms; all interactions stay native. */
 function atelierScene(icon,variant){
  const scene=/^[a-z-]+$/.test(variant||'')?variant:'code';
  return '<span class="ll-atelier-scene ll-atelier-scene-'+scene+'" aria-hidden="true">'+
@@ -210,15 +210,15 @@ function neonHero(kind){
  }[kind];
  if(!info)return '';
  return '<header class="ll-neon-page-heading ll-neon-custom-hero" aria-label="'+esc(info[0])+'">'+
-  '<div class="ll-neon-page-title"><span class="ll-neon-brand-text"><img src="./liverylab-symbol.svg" alt=""> LiveryLab <em>Academy</em></span>'+
-  '<span class="eyebrow ll-neon-kicker">LIVERYLAB ACADEMY</span><h1>'+esc(info[0])+'</h1>'+
+  '<div class="ll-neon-page-title"><span class="ll-neon-brand-text"><img src="./novalab-logo.webp" alt=""> NovaLab <em>Academy</em></span>'+
+  '<span class="eyebrow ll-neon-kicker">NOVALAB ACADEMY</span><h1>'+esc(info[0])+'</h1>'+
   '<p class="lede">'+esc(info[1])+'</p></div>'+
   '<span class="ll-neon-hero-art" aria-hidden="true"><span class="ll-neon-hero-glyph">'+atelierScene(info[2],kind)+'</span></span>'+
   '</header>';
 }
 function neonBanner(title,description,icon,extra){
  return '<section class="ll-neon-feature" aria-label="'+esc(title)+'"><div class="ll-neon-feature-copy">'+
-  '<span class="eyebrow">[ ✦ ] LIVERYLAB ACADEMY</span><h2>'+esc(title)+'</h2>'+
+  '<span class="eyebrow">[ ✦ ] NOVALAB ACADEMY</span><h2>'+esc(title)+'</h2>'+
   '<p>'+esc(description)+'</p>'+(extra||'')+'</div>'+
   '<span class="ll-neon-feature-icon" aria-hidden="true">'+atelierScene(icon||'code',icon||'code')+'</span></section>';
 }
@@ -301,7 +301,7 @@ function frame(){
  const route=parseRoute().page;
  if(!authenticated){sidebar.innerHTML='';bottom.innerHTML='';}
  else{
-  sidebar.innerHTML='<div class="sidebar-logo"><img class="ll-brand-symbol" src="./liverylab-symbol.svg" alt=""><span>LiveryLab<br><span class="gradient">Academy</span></span><button type="button" class="sidebar-close" data-nav-close aria-label="Menü schließen">×</button></div>'+
+  sidebar.innerHTML='<div class="sidebar-logo"><img class="ll-brand-symbol" src="./novalab-logo.webp" alt=""><span>NovaLab<br><span class="gradient">Academy</span></span><button type="button" class="sidebar-close" data-nav-close aria-label="Menü schließen">×</button></div>'+
   '<div class="side-label">Navigation</div>'+navHTML(route)+
   '<div class="side-bottom"><span class="eyebrow">DEIN PROFIL</span><strong>'+
   esc(s.profile.display_name||s.profile.username||'Developer')+'</strong>'+
@@ -320,16 +320,16 @@ function frame(){
  }
  if(st){st.innerHTML=llIcon('fire')+' '+Number(s.loginStreak?.current||0)+' Tage';st.classList.toggle('can-claim',!!s.loginStreak?.claimable);}
  const mark=document.querySelector('.topbar .brand-mark');
- if(mark&&mark.querySelector&&!mark.querySelector('.ll-brand-symbol'))mark.innerHTML='<img class="ll-brand-symbol" src="./liverylab-symbol.svg" alt="">';
+ if(mark&&mark.querySelector&&!mark.querySelector('.ll-brand-symbol'))mark.innerHTML='<img class="ll-brand-symbol" src="./novalab-logo.webp" alt="">';
  const avatar=$('.avatar-btn');if(avatar)avatar.textContent=String(s.profile?.display_name||s.profile?.username||'N').slice(0,1).toUpperCase();
 }
 
 function login(){
  s.ready=false;frame();
- const betaLabel=s.service?.beta_open===false?'LIVERYLAB · ACADEMY':'LIVERYLAB · PRIVATE BETA';
- const brand='<img class="ll-login-banner" src="./liverylab-banner.webp" alt="Livery-Lab Premium FiveM Systems Banner"><div class="brandmark"><img class="ll-brand-symbol" src="./liverylab-symbol.svg" alt=""><span>LiveryLab <span class="gradient">Academy</span></span></div><div class="ll-auth-release">'+(s.service?.beta_open===false?'ACADEMY':'PRIVATE BETA')+' <span>NEUE ACADEMY · V28</span></div>';
+ const betaLabel=s.service?.beta_open===false?'NOVALAB · ACADEMY':'NOVALAB · PRIVATE BETA';
+ const brand='<img class="ll-login-banner" src="./novalab-banner.webp" alt="NovaLab Premium FiveM Systems Banner"><div class="brandmark"><img class="ll-brand-symbol" src="./novalab-logo.webp" alt=""><span>NovaLab <span class="gradient">Academy</span></span></div><div class="ll-auth-release">'+(s.service?.beta_open===false?'ACADEMY':'PRIVATE BETA')+' <span>NEUE ACADEMY · V28</span></div>';
  if(s.authScreen==='register'){
- content.innerHTML='<div class="auth-layout auth-login-layout"><aside class="auth-showcase"><span class="eyebrow">'+betaLabel+'</span><h2>Baue echte Skills.<br><em>Schritt für Schritt.</em></h2><p>Programmierung, FiveM und Blender in klaren Lernpfaden – mit Videos, Praxis, Quizzen und Abschlussprüfungen.</p><div class="auth-feature-grid"><span>▶ Video-Lektionen</span><span>✓ Praxisaufgaben</span><span>✦ XP & Titel</span><span>★ Kursprüfungen</span></div><small>Made with 💙 from NyxAtheris (LiveryLab Studios)</small></aside><section class="auth-card">'+brand+
+ content.innerHTML='<div class="auth-layout auth-login-layout"><aside class="auth-showcase"><span class="eyebrow">'+betaLabel+'</span><h2>Baue echte Skills.<br><em>Schritt für Schritt.</em></h2><p>Programmierung, FiveM und Blender in klaren Lernpfaden – mit Videos, Praxis, Quizzen und Abschlussprüfungen.</p><div class="auth-feature-grid"><span>▶ Video-Lektionen</span><span>✓ Praxisaufgaben</span><span>✦ XP & Titel</span><span>★ Kursprüfungen</span></div><small>Made with 💙 from NyxAtheris (NovaLab Academy)</small></aside><section class="auth-card">'+brand+
  '<span class="eyebrow">'+(s.registrationPolicy?.mode==='open'?'[ + ] FREIE REGISTRIERUNG':'[ + ] BEWERBUNG')+'</span><h1>Dein Weg in die <span class="gradient">Academy.</span></h1>'+
  '<p class="lede">'+(s.registrationPolicy?.mode==='open'?'Erstelle ein Konto und starte direkt mit den Free-Kursen. Dafür ist keine Freigabe durch das Team erforderlich.':'Erstelle ein Konto und sende deine Bewerbung. Erst nach der Freigabe durch das Team erhältst du Zugang.')+'</p>'+
  '<form data-form="register"><div class="form-group"><label class="form-label" for="reg-email">E-Mail-Adresse</label>'+
@@ -343,7 +343,7 @@ function login(){
  '<button class="btn primary block" type="submit">'+(s.registrationPolicy?.mode==='open'?'Konto erstellen →':'Registrierungsanfrage senden →')+'</button></form>'+
  '<p class="micro">Dein Passwort wird sicher über Supabase Auth verarbeitet. Die E-Mail-Adresse wird bei diesem Registrierungsweg nicht automatisch auf Besitz geprüft. '+(s.registrationPolicy?.mode==='open'?'Mit der kostenlosen Mitgliedschaft kannst du dich nach der Registrierung anmelden.':'Ohne Annahme deiner Bewerbung bleibt das Konto gesperrt.')+'</p>'+
  '<button type="button" class="btn ghost block" data-action="show-login">← Bereits registriert? Anmelden</button>'+
- '<p class="smallprint" style="text-align:center;margin-top:18px">Made with 💙 from NyxAtheris (LiveryLab Studios)</p></section></div>';return;
+ '<p class="smallprint" style="text-align:center;margin-top:18px">Made with 💙 from NyxAtheris (NovaLab Academy)</p></section></div>';return;
  }
  if(s.authScreen==='sent'){
  content.innerHTML='<div class="auth-layout"><section class="auth-card auth-success">'+brand+
@@ -353,7 +353,7 @@ function login(){
  '<button class="btn primary block" type="button" data-action="show-login">Zur Anmeldung →</button>'+
  '<a class="btn ghost block" style="margin-top:10px" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord-Support</a></section></div>';return;
  }
- content.innerHTML='<div class="auth-layout auth-login-layout"><aside class="auth-showcase"><span class="eyebrow">'+betaLabel+'</span><h2>Baue echte Skills.<br><em>Schritt für Schritt.</em></h2><p>Programmierung, FiveM und Blender in klaren Lernpfaden – mit Videos, Praxis, Quizzen und Abschlussprüfungen.</p><div class="auth-feature-grid"><span>▶ Video-Lektionen</span><span>✓ Praxisaufgaben</span><span>✦ XP & Titel</span><span>★ Kursprüfungen</span></div><small>Made with 💙 from NyxAtheris (LiveryLab Studios)</small></aside><section class="auth-card">'+brand+
+ content.innerHTML='<div class="auth-layout auth-login-layout"><aside class="auth-showcase"><span class="eyebrow">'+betaLabel+'</span><h2>Baue echte Skills.<br><em>Schritt für Schritt.</em></h2><p>Programmierung, FiveM und Blender in klaren Lernpfaden – mit Videos, Praxis, Quizzen und Abschlussprüfungen.</p><div class="auth-feature-grid"><span>▶ Video-Lektionen</span><span>✓ Praxisaufgaben</span><span>✦ XP & Titel</span><span>★ Kursprüfungen</span></div><small>Made with 💙 from NyxAtheris (NovaLab Academy)</small></aside><section class="auth-card">'+brand+
  '<span class="eyebrow">[ 01 ] DEVELOPER ACADEMY</span><h1>Lernen. Entwickeln.<br><span class="gradient">Weiterkommen.</span></h1>'+
  '<p class="lede">Melde dich mit deinem Benutzernamen oder deiner E-Mail-Adresse an.</p>'+
  '<form data-form="login"><div class="form-group"><label class="form-label" for="username">Benutzername oder E-Mail</label>'+
@@ -364,7 +364,7 @@ function login(){
  '<div class="auth-secondary"><span>Noch kein Konto?</span><button type="button" class="btn" data-action="show-register">Jetzt registrieren →</button></div>'+
  '<p class="micro">'+(s.registrationPolicy?.mode==='open'?'Neue Konten sind derzeit ohne Freigabe möglich.':'Neue Registrierungen müssen derzeit vom Team angenommen werden.')+'</p>'+
  '<a class="btn discord block discord-block" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord beitreten</a>'+
- '<p class="smallprint" style="text-align:center;margin-top:19px">Sicherer Zugang über LiveryLab Academy</p></section></div>';
+ '<p class="smallprint" style="text-align:center;margin-top:19px">Sicherer Zugang über NovaLab Academy</p></section></div>';
 }
 async function fetchRegistrationPolicy(adminView){
  try{
@@ -897,7 +897,7 @@ function homePage(){
  const streak=Number(s.loginStreak?.current||0),ready=!!s.loginStreak?.claimable;
  const picks=['coding-basics','lua','python','javascript'].map(courseOf).filter(Boolean);
  return '<div class="ll-home-dashboard">'+neonHero('home')+
- '<section class="ll-home-brand-banner"><img src="./liverylab-banner.webp" alt="Livery-Lab – Premium FiveM Systems, violette Skyline" loading="eager" fetchpriority="high"></section>'+
+ '<section class="ll-home-brand-banner"><img src="./novalab-banner.webp" alt="NovaLab – Premium FiveM Systems, violette Skyline" loading="eager" fetchpriority="high"></section>'+
  '<div class="ll-home-greeting"><div><span class="eyebrow">DEIN PERSÖNLICHES DASHBOARD</span>'+
  '<h1>Willkommen zurück, <span class="gradient">'+esc(nickname)+'</span>!</h1><p>Lerne programmieren, entwickle Projekte und erreiche deine nächsten Ziele.</p></div>'+
  '<div class="ll-home-level"><div class="ll-level-top">'+llIcon('xp')+'<span>Level '+level+'</span></div>'+
@@ -993,8 +993,8 @@ function coursesPage(){
   .filter(c=>c==='Alle'||c==='Merkliste'||s.courses.some(x=>x.category===c));
  const levels=[1,2,3,4,5],selected=s.difficultyFilter==='all'?'all':String(s.difficultyFilter);
  return '<div class="ll-roadmap-catalog">'+
- '<header class="ll-learning-hero"><div class="ll-learning-brand"><img src="./liverylab-symbol.svg" alt="">'+
- '<span>LiveryLab <strong>Academy</strong></span></div>'+
+ '<header class="ll-learning-hero"><div class="ll-learning-brand"><img src="./novalab-logo.webp" alt="">'+
+ '<span>NovaLab <strong>Academy</strong></span></div>'+
  '<span class="ll-learning-eyebrow">'+catalogText('KURSBIBLIOTHEK · DEIN LERNPFAD','COURSE LIBRARY · YOUR PATH')+'</span>'+
  '<h1>'+catalogText('Lernen','Learn')+'</h1>'+
  '<p>'+catalogText('Dein geführter Lernpfad für Scripting und Entwicklung.','Your guided path to scripting and software development.')+'</p>'+
@@ -1438,7 +1438,7 @@ function ticketChatPanel(isAdmin){
   const own=(isAdmin?msg.role==='admin':msg.role==='member');
   const d=new Date(msg.at||0);
   const when=Number.isNaN(d.getTime())?'':d.toLocaleString('de-DE',{dateStyle:'short',timeStyle:'short'});
-  return '<div class="ll-chat-message '+(own?'is-mine':'is-other')+'"><span class="ll-chat-sender">'+esc(msg.role==='admin'?'LiveryLab Team':'Mitglied')+'</span>'+
+  return '<div class="ll-chat-message '+(own?'is-mine':'is-other')+'"><span class="ll-chat-sender">'+esc(msg.role==='admin'?'NovaLab Team':'Mitglied')+'</span>'+
   '<p>'+esc(msg.body||'')+'</p><small>'+esc(when)+'</small></div>';
  }).join('');
  const approval=isAdmin&&ticket.category==='plan'&&ticket.status!=='approved';
@@ -1494,8 +1494,8 @@ function dailyStrip(){
 
 function membershipHelp(){
  if(s.service?.beta_open===false)return '';
- return '<section class="membership-help-callout"><div class="membership-help-spark">✦</div><span class="eyebrow">LIVERYLAB STUDIOS · BETA</span><h2>Plus oder Ultimate testen?</h2>'+
- '<p>Schreib <strong>NyxAtheris</strong> eine Discord-DM oder eröffne ein <strong>Ticket</strong> auf dem LiveryLab-Server. Erwähne dort <strong>@nyxatheris</strong> und teile mit, warum du Zugang möchtest. Wir schalten Testmitglieder manuell frei.</p>'+
+ return '<section class="membership-help-callout"><div class="membership-help-spark">✦</div><span class="eyebrow">NOVALAB ACADEMY · BETA</span><h2>Plus oder Ultimate testen?</h2>'+
+ '<p>Schreib <strong>NyxAtheris</strong> eine Discord-DM oder eröffne ein <strong>Ticket</strong> auf dem NovaLab-Discord-Server. Erwähne dort <strong>@nyxatheris</strong> und teile mit, warum du Zugang möchtest. Wir schalten Testmitglieder manuell frei.</p>'+
  '<div class="membership-help-actions"><button class="btn primary" data-go="support">In der App anfragen →</button>'+
  '<button class="btn" data-go="plans">Mitgliedschaften vergleichen →</button></div></section>';
 }
@@ -1753,7 +1753,7 @@ function socialBanner(card,name,editable){
  return '<div class="social-banner banner-'+esc(style)+'">'+(banner?'<img class="social-banner-photo" src="'+safeLink(banner)+'" alt="" loading="lazy">':'')+'<span class="banner-glints">✦ ✧ ✦</span>'+
  '<div class="social-banner-identity">'+avatarFor(card,name,'large')+
  '<div><span class="social-title">✦ '+esc(title)+'</span><h2 class="social-name name-'+esc(card?.name_style||'classic')+'">'+esc(name||'Developer')+'</h2><span class="social-handle">@'+esc(username)+'</span></div></div>'+
- '<span class="social-banner-label">LIVERYLAB STUDIOS · DEVELOPER ACADEMY</span></div>';
+ '<span class="social-banner-label">NOVALAB ACADEMY · DEVELOPER</span></div>';
 }
 function socialProfilePanel(){
  const card=s.social?.profile||{username:s.profile?.username,display_name:s.profile?.display_name},
@@ -1780,7 +1780,7 @@ function friendsPage(){
  const tab=['friends','requests','search'].includes(s.friendTab)?s.friendTab:'friends';
  const card=(user,actions)=>{
   const banner=esc(user.banner_style||'nebula');
-  return '<article class="friend-profile-card" data-friend-name="'+esc((user.display_name||'')+' '+(user.username||''))+'"><div class="friend-card-banner banner-'+banner+'"><span>✦ LIVERYLAB ACADEMY</span></div>'+
+  return '<article class="friend-profile-card" data-friend-name="'+esc((user.display_name||'')+' '+(user.username||''))+'"><div class="friend-card-banner banner-'+banner+'"><span>✦ NOVALAB ACADEMY</span></div>'+
   '<div class="friend-card-body"><div class="friend-card-top">'+avatarFor(user,user.display_name||user.username,'')+
   '<div class="friend-identity"><strong class="name-'+esc(user.name_style||'classic')+'">'+esc(user.display_name||user.username||'Developer')+'</strong>'+
   '<span>@'+esc(user.username||'')+'</span></div><span class="social-title">✦ '+esc(user.title||'Developer')+'</span></div>'+
@@ -1815,7 +1815,7 @@ function friendsPage(){
   '<div class="voucher-input-row"><input class="input" id="friend-query" name="username" pattern="[A-Za-z][A-Za-z0-9_]{2,23}" maxlength="24" placeholder="z. B. nyxatheris" required>'+
   '<button class="btn primary" type="submit">Suchen →</button></div></form><div id="friend-search-result"></div></section>';
  }
- return pageHeading('LIVERYLAB COMMUNITY','Deine Developer-<span class="gradient">Freunde.</span>',
+ return pageHeading('NOVALAB COMMUNITY','Deine Developer-<span class="gradient">Freunde.</span>',
  'Gemeinsam programmieren und Fortschritte teilen – ohne persönliche Daten anderer Mitglieder offenzulegen.')+
  neonBanner('Gemeinsam besser lernen!','Du hast '+friends.length+' bestätigte Freunde und '+incoming.length+' offene Freundschaftsanfragen. Du bestimmst, welche Fortschritte du teilst.','friends',
  '<button type="button" class="btn small primary" data-friend-tab="search">Freunde hinzufügen →</button>')+
@@ -1926,7 +1926,7 @@ function profilePage(){
  const streak=Number(s.loginStreak?.current||0),best=Number(s.loginStreak?.best||0),titles=(s.social?.titles||['Developer']).filter(Boolean),selected=s.social?.profile?.title||'Developer';
  return pageHeading('DEIN PROFIL','Dein Lern-<span class="gradient">fortschritt.</span>',
  'Hier siehst du deine wichtigsten Werte und freigeschalteten Erfolge. Persönliche App-Farben und Hintergründe findest du in den Einstellungen.')+
- '<section class="profile-overview-card"><div class="profile-overview-avatar">'+esc(name.slice(0,1).toUpperCase())+'</div><div><span class="eyebrow">LIVERYLAB DEVELOPER</span><h2>'+esc(name)+'</h2><span class="profile-title-badge">✦ '+esc(selected)+'</span><p>@'+esc(s.profile?.username||'developer')+' · '+esc(plans[s.tier]||'Free')+'</p>'+(s.tier!=='free'?'<p class="plan-expiry">'+(s.planExpires?'Freigeschaltet bis '+esc(new Date(s.planExpires).toLocaleString('de-DE')):'Dauerhaft freigeschaltet')+'</p>':'')+'</div><button class="btn small" data-go="settings">App-Design ändern →</button></section>'+atelierProfilePath()+
+ '<section class="profile-overview-card"><div class="profile-overview-avatar">'+esc(name.slice(0,1).toUpperCase())+'</div><div><span class="eyebrow">NOVALAB DEVELOPER</span><h2>'+esc(name)+'</h2><span class="profile-title-badge">✦ '+esc(selected)+'</span><p>@'+esc(s.profile?.username||'developer')+' · '+esc(plans[s.tier]||'Free')+'</p>'+(s.tier!=='free'?'<p class="plan-expiry">'+(s.planExpires?'Freigeschaltet bis '+esc(new Date(s.planExpires).toLocaleString('de-DE')):'Dauerhaft freigeschaltet')+'</p>':'')+'</div><button class="btn small" data-go="settings">App-Design ändern →</button></section>'+atelierProfilePath()+
  '<section class="profile-title-picker"><div><span class="eyebrow">[ ✦ ] DEIN PROFILTITEL</span><h3>Zeig, was du erreicht hast.</h3><p>Du kannst nur Titel auswählen, die du durch Lektionen, Prüfungen, Freunde oder Streaks freigeschaltet hast.</p></div><form data-form="profile-title"><label class="form-label" for="profile-title">Freigeschalteten Titel auswählen</label><div class="profile-title-row"><select class="select" id="profile-title" name="title">'+titles.map(t=>'<option value="'+esc(t)+'" '+(t===selected?'selected':'')+'>'+esc(t)+'</option>').join('')+'</select><button class="btn primary" type="submit">Titel verwenden</button></div></form></section>'+
  '<section class="profile-quick-stats"><div class="profile-quick-tile"><span>🔥</span><strong>'+streak+'</strong><small>Login-Streak in Tagen</small></div>'+
  '<div class="profile-quick-tile"><span>🏅</span><strong>'+best+'</strong><small>Bisheriger Rekord</small></div>'+
@@ -2008,9 +2008,9 @@ function settingsPage(){
  '<div class="settings-row"><div class="setting-info"><span class="setting-icon">♡</span>'+
  '<span><b>Discord-Support</b><p>Schreibe NyxAtheris eine DM oder öffne ein Ticket und erwähne @nyxatheris.</p></span></div>'+
  '<a class="btn small discord" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord ↗</a></div></div></section>'+
- '<section class="section panel"><span class="eyebrow">LIVERYLAB STUDIOS</span><h3>Über die Academy</h3>'+
+ '<section class="section panel"><span class="eyebrow">NOVALAB ACADEMY</span><h3>Über die Academy</h3>'+
  '<p class="micro">Developer-Lernplattform mit Kursen, sicheren Accounts, Profilen, Freunden und Erfolgen. Version 28.</p>'+
- '<a href="./privacy.html">Datenschutzhinweise ansehen ↗</a><p class="smallprint" style="margin-top:16px">Made with 💙 from NyxAtheris (LiveryLab Studios)</p></section>';
+ '<a href="./privacy.html">Datenschutzhinweise ansehen ↗</a><p class="smallprint" style="margin-top:16px">Made with 💙 from NyxAtheris (NovaLab Academy)</p></section>';
 }
 
 function voucherAdminSection(){
@@ -2502,7 +2502,7 @@ function openTimer(){
  '<section class="timer-dialog ll-focus-modal" role="dialog" aria-modal="true" aria-labelledby="focus-modal-title">'+
  '<button type="button" class="ll-focus-close" data-timer-close aria-label="Fokus-Timer schließen">×</button>'+
  '<div class="ll-focus-emblem" aria-hidden="true">◷</div>'+
- '<span class="eyebrow ll-focus-kicker">LIVERYLAB · DEIN LERNMODUS</span>'+
+ '<span class="eyebrow ll-focus-kicker">NOVALAB · DEIN LERNMODUS</span>'+
  '<h2 class="ll-focus-title" id="focus-modal-title">Deine <span class="gradient">Fokuszeit.</span></h2>'+
  '<p class="ll-focus-lede">Konzentriert lernen, Schritt für Schritt. Deine Zeit bleibt auch beim Seitenwechsel erhalten.</p>'+
  '<div class="ll-focus-ring" data-timer-ring style="--focus-progress:'+elapsed+'%">'+

@@ -1,4 +1,7 @@
-# Eigene Domain für LiveryLab Academy
+# Eigene Domain für NovaLab Academy
+
+**Hinweis:** Das Produkt heißt jetzt NovaLab Academy. Bestehende Domain-Namen, DNS- und GitHub-Pfade mit `liverylab` sind technische Bestandsadressen und werden nicht automatisch umbenannt.
+
 
 Wunschadresse: **https://github.liverylabacademy.app**
 
@@ -30,4 +33,4 @@ GitHub-Dokumentation:
 https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site
 https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/verifying-your-custom-domain-for-github-pages
 
-Made with 💙 from NyxAtheris (LiveryLab Studios)
+Made with 💙 from NyxAtheris (NovaLab Academy)

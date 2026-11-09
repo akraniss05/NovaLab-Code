@@ -1,4 +1,4 @@
-name: Deploy LiveryLab Academy v31 • learning and community tools
+name: Deploy NovaLab Academy v31 • learning and community tools
 on:
   push:
     branches: [main]
@@ -17,10 +17,15 @@ jobs:
       name: github-pages
     steps:
       - uses: actions/checkout@v4
-      - name: Restore original LiveryLab banner
+      - name: Verify official NovaLab Academy brand assets
         run: |
-          cat site/banner-src/part-*.b64 | base64 --decode > site/liverylab-banner.webp
-          echo '8feba3844a4ed453bc5d6e7b6835f8c54ae0b41565454abe56cda7501cbe9aa6  site/liverylab-banner.webp' | sha256sum -c -
+          test -s site/novalab-banner.webp
+          test -s site/novalab-logo.webp
+          test -s site/novalab-icon-192.webp
+          test -s site/novalab-icon-512.webp
+          test -s site/novalab-icon-180.png
+          echo '8fc50a162fdac0e2cf5194f51131eaa0a56f0f2efb16fd01c4bf036be41a55b4  site/novalab-banner.webp' | sha256sum -c -
+          echo 'd8e7b5baf692f2f5ce2b72d3278a793d9fdb0e54b50f38053f68aea38d437520  site/novalab-logo.webp' | sha256sum -c -
           rm -rf site/banner-src
       - name: Validate sources
         run: |
@@ -75,7 +80,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: academy-v31-mobile-captures
+          name: novalab-v31-mobile-captures
           path: test-results/
           if-no-files-found: ignore
       - name: Remove restricted reference data from public site artifact

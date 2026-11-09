@@ -1,7 +1,7 @@
-/* LiveryLab Academy · DE / EN locale switch
+/* NovaLab Academy · DE / EN locale switch
  * The locale is a presentation preference. No editor source, passwords,
  * user content, account names or Supabase records are translated/mutated.
- * Made with 💙 by NyxAtheris (LiveryLab Studios)
+ * Made with 💙 by NyxAtheris (NovaLab Academy)
  */
 (function(root){
 'use strict';
@@ -21,7 +21,7 @@ const translations={
 'DEIN LERNFORTSCHRITT':'YOUR LEARNING PROGRESS','DEINE BELOHNUNGEN':'YOUR REWARDS','Wofür du XP bekommen hast':'Where your XP came from','Erlernte XP':'XP earned','30 XP':'30 XP','Level':'Level','Streak':'Streak','Login-Streak in Tagen':'Login streak (days)','Bisheriger Rekord':'Personal best','freigeschaltet':'unlocked','Freigeschaltet':'Unlocked','Gesperrt':'Locked','Erfolge & Titel':'Achievements & titles','AUSZEICHNUNGEN':'ACHIEVEMENTS','DEIN PROFILTITEL':'YOUR PROFILE TITLE','Titel verwenden':'Use title','Freigeschalteten Titel auswählen':'Choose an unlocked title','Freundesliste öffnen →':'Open friends list →','Freundesliste':'Friends list','Freund hinzufügen':'Add friend','Anfrage senden →':'Send request →','Anfrage senden':'Send request','Anfrage annehmen':'Accept request','Anfrage ablehnen':'Decline request',
 'EINSTELLUNGEN':'SETTINGS','PERSÖNLICHES DESIGN':'PERSONAL DESIGN','01 · PERSÖNLICHES DESIGN':'01 · PERSONAL DESIGN','Farben & Hintergrund':'Colors & background','Hintergrund & Oberflächen':'Background & surfaces','Akzentfarbe':'Accent color','App-Hintergrund':'App background','Hintergrund-Effekte':'Background effects','Kompakte Kurskarten':'Compact course cards','Größere Schrift':'Larger text','Hoher Kontrast':'High contrast','Konto & Sicherheit':'Account & security','Sicherheit':'Security','SICHERHEIT':'SECURITY','Authenticator':'Authenticator','Zwei-Faktor-Authentifizierung':'Two-factor authentication','Zurücksetzen':'Reset','Auf Standard zurücksetzen':'Reset to default','Speichern':'Save','Änderungen speichern':'Save changes','Gespeichert':'Saved','Sprache':'Language','Sprache auswählen':'Choose language','Deutsch':'German','Englisch':'English','Automatisch':'Automatic','Datenschutz':'Privacy','Datenschutzerklärung':'Privacy policy',
 'Free':'Free','Plus':'Plus','Ultimate':'Ultimate','Mitgliedschaft':'Membership','Mitgliedschaften':'Memberships','Tarif':'Plan','Tarife':'Plans','Abo':'Subscription','Abo beenden':'End subscription','Laufzeit in Tagen':'Duration in days','Laufzeit festlegen':'Set duration','Kein aktives Abo':'No active subscription','Unbefristet':'Unlimited','Abgelaufen':'Expired','Dauerhaft freigeschaltet':'Permanently unlocked','Tage hinzufügen':'Add days','Tage abziehen':'Remove days','+ Tage':'+ Days','− Tage':'− Days','Tage':'Days','Tag':'Day','Stunden':'Hours','Minuten':'Minutes','Kostenlos':'Free','Jetzt freischalten':'Unlock now','Tarif ansehen →':'View plan →','Mitgliedschaften vergleichen →':'Compare plans →','Mitgliedschaften vergleichen':'Compare plans','Gutschein':'Voucher','Gutscheine':'Vouchers','Gutschein einlösen':'Redeem voucher','Rabatt':'Discount','Gutscheincode':'Voucher code',
-'DEINE FOKUSZEIT':'YOUR FOCUS TIME','LIVERYLAB · DEIN LERNMODUS':'LIVERYLAB · YOUR STUDY MODE','Deine Fokuszeit.':'Your focus time.','Fokuszeit':'Focus time','VERBLEIBENDE ZEIT':'TIME REMAINING','Eigene Dauer':'Custom duration','Minuten':'Minutes','Starten':'Start','▶ Starten':'▶ Start','⏸ Pausieren':'⏸ Pause','Pausieren':'Pause','Zeit einstellen':'Set duration','↻ Zurücksetzen auf 25 Minuten':'↻ Reset to 25 minutes','Timer':'Timer','Timer bereit oder pausiert.':'Timer ready or paused.','Fokus-Timer öffnen':'Open focus timer','Fokus-Timer schließen':'Close focus timer','Schließen':'Close',
+'DEINE FOKUSZEIT':'YOUR FOCUS TIME','NOVALAB · DEIN LERNMODUS':'NOVALAB · YOUR STUDY MODE','Deine Fokuszeit.':'Your focus time.','Fokuszeit':'Focus time','VERBLEIBENDE ZEIT':'TIME REMAINING','Eigene Dauer':'Custom duration','Minuten':'Minutes','Starten':'Start','▶ Starten':'▶ Start','⏸ Pausieren':'⏸ Pause','Pausieren':'Pause','Zeit einstellen':'Set duration','↻ Zurücksetzen auf 25 Minuten':'↻ Reset to 25 minutes','Timer':'Timer','Timer bereit oder pausiert.':'Timer ready or paused.','Fokus-Timer öffnen':'Open focus timer','Fokus-Timer schließen':'Close focus timer','Schließen':'Close',
 'DAILY STREAK':'DAILY STREAK','TÄGLICHE BELOHNUNG':'DAILY REWARD','Tägliche Belohnung':'Daily reward','Belohnung abholen':'Claim reward','Jetzt abholen':'Claim now','Abholen':'Claim','Bereits abgeholt':'Already claimed','Noch nicht verfügbar':'Not available yet','Wieder verfügbar in':'Available again in','Täglicher Login':'Daily login','🔥 0 Tage':'🔥 0 days',
 'ADMINISTRATION':'ADMINISTRATION','Administratoren':'Administrators','Mitglieder':'Members','Mitglied':'Member','Nutzer':'Users','Nutzer suchen':'Search users','Bestätigen':'Confirm','Ablehnen':'Reject','Freischalten':'Approve','Sperren':'Block','Entsperren':'Unblock','Löschen':'Delete','Konto löschen':'Delete account','Erstellen':'Create','Aktionen':'Actions','Abo-Verwaltung':'Subscription management','Abo-Laufzeit':'Subscription duration','Endet am':'Expires on','Aktiv':'Active','Inaktiv':'Inactive','Keine Einträge':'No entries',
 'Fehler':'Error','Unbekannter Fehler':'Unknown error','Etwas ist schiefgelaufen.':'Something went wrong.','Bitte erneut versuchen.':'Please try again.','Zurück zum Start':'Back to home','Neu laden':'Reload','Wird geladen …':'Loading…','Überprüfen':'Verify','Kopieren':'Copy','Kopiert':'Copied','Hilfe':'Help','Support-Ticket':'Support ticket','Discord-Support':'Discord support','Jetzt beitreten':'Join now','Meine Notizen':'My notes',
@@ -70,7 +70,7 @@ Object.assign(translations,{
 '★ Kursprüfungen':'★ Course exams','NEUE ACADEMY · V28':'NEW ACADEMY · V28','Dein Weg in die':'Your path to the','ANFRAGE VERSENDET':'REQUEST SENT','Melde dich mit deinem Benutzernamen oder deiner E-Mail-Adresse an.':'Sign in using your username or email address.',
 '← Bereits registriert? Anmelden':'← Already registered? Sign in','Noch kein Konto?':'No account yet?','Jetzt registrieren →':'Register now →',
 'Dein Konto muss vom Team freigegeben werden. Nach der Anmeldung kannst du Supportanfragen direkt in der Academy stellen.':'Your account must be approved by the team. After signing in, you can send support requests directly in the Academy.',
-'Sicherer Zugang über LiveryLab Academy':'Secure access through LiveryLab Academy','Freigabe erneut prüfen →':'Check approval again →','Support auf Discord':'Support on Discord',
+'Sicherer Zugang über NovaLab Academy':'Secure access through NovaLab Academy','Freigabe erneut prüfen →':'Check approval again →','Support auf Discord':'Support on Discord',
 'Vorläufiges Passwort':'Temporary password','Dein vorläufiges Passwort muss bei der ersten Anmeldung ersetzt werden. Wähle mindestens 14 Zeichen.':'Your temporary password must be changed the first time you sign in. Choose at least 14 characters.',
 'Authenticator konnte nicht geladen werden.':'Could not load the authenticator.','Lade die Website neu, um 2FA zu öffnen.':'Reload the site to open two-factor authentication.','2FA konnte nicht geladen werden.':'Could not load two-factor authentication.',
 'DEINE TÄGLICHE BELOHNUNG':'YOUR DAILY REWARD','Drücke auf':'Tap','Komm morgen wieder und sichere deine Serie. Das nächste Zeitfenster öffnet nach 24 Stunden.':'Come back tomorrow to keep your streak. The next claim window opens after 24 hours.',
@@ -92,12 +92,12 @@ Object.assign(translations,{
 'Wo sehe ich die Antwort?':'Where can I see the reply?','Hier in deinem Posteingang. Lade die App bei Bedarf neu.':'In your inbox here. Reload the app if necessary.',
 'Wähle Fehler melden und beschreibe Gerät und Schritte.':'Choose Report a bug and describe your device and the steps to reproduce it.',
 '[ ◷ ] DEIN POSTEINGANG':'[ ◷ ] YOUR INBOX','Deine Anfragen':'Your requests','Noch keine Anfragen. Deine Antwort erscheint später hier.':'No requests yet. Your replies will appear here.',
-'eine Discord-DM oder eröffne ein':'a Discord DM or open a','auf dem LiveryLab-Server. Erwähne dort':'on the LiveryLab server. Mention',
+'eine Discord-DM oder eröffne ein':'a Discord DM or open a','auf dem NovaLab-Discord-Server. Erwähne dort':'on the NovaLab server. Mention',
 'und teile mit, warum du Zugang möchtest. Wir schalten Testmitglieder manuell frei.':'and tell us why you want access. We approve test members manually.',
 'In der App anfragen →':'Request in app →','BETA · nur auf Anfrage':'BETA · by request only','✓ Dein aktueller Tarif':'✓ Your current plan',
 '[ % ] GUTSCHEIN':'[ % ] VOUCHER','Code einlösen':'Redeem code','Rabatt erhalten oder eine kostenlose Plus-/Pro-Mitgliedschaft freischalten.':'Get a discount or unlock a free Plus/Pro membership.',
 'Dein Gutscheincode':'Your voucher code','Einlösen →':'Redeem →','✓ Dein reservierter Rabatt:':'✓ Your reserved discount:',
-'Für Zahlung und Aktivierung den LiveryLab-Support kontaktieren.':'Contact LiveryLab support for payment and activation.',
+'Für Zahlung und Aktivierung den NovaLab-Support kontaktieren.':'Contact NovaLab support for payment and activation.',
 'Kursprüfungen.':'Course exams.','DEINE KURSE':'YOUR COURSES','Hier sind gerade keine passenden Prüfungen.':'There are no matching exams right now.',
 'Dein Lernpfad ist noch nicht vollständig.':'You have not completed this learning path yet.','Keine Prüfungsfragen hinterlegt.':'No exam questions have been added.',
 'Deine Auswertung':'Your results','[ ++ ] DEIN PROJEKT':'[ ++ ] YOUR PROJECT',
@@ -204,7 +204,7 @@ Object.assign(translations,{
 'Funktionsdefinition: local function sagHallo() ... end. Danach: sagHallo().':'Function definition: local function sagHallo() ... end. Then call sagHallo().',
 'Ein Modul kann eine Tabelle mit Funktionen zurückgeben: return Utils.':'A module can return a table of functions: return Utils.',
 'array.map(x => ...) erstellt ein neues Array aus den umgewandelten Elementen des ursprünglichen Arrays.':'array.map(x => ...) creates a new array by transforming elements of the original array.',
-'Die Variablenwerte bestimmen den Datentyp: 500 → number, true → boolean, "LiveryLab" → string. type(variable) verrät ihn.':'Variable values determine their types: 500 → number, true → boolean, "LiveryLab" → string. type(variable) reveals the type.',
+'Die Variablenwerte bestimmen den Datentyp: 500 → number, true → boolean, "NovaLab" → string. type(variable) verrät ihn.':'Variable values determine their types: 500 → number, true → boolean, "NovaLab" → string. type(variable) reveals the type.',
 'Eine JavaScript-Bedingung steht in runden Klammern: if (preis > 100) { ... }.':'A JavaScript condition uses parentheses: if (preis > 100) { ... }.',
 'Python gibt mit print("Text") eine Textzeile aus. Denk an beide Anführungszeichen und die schließende Klammer.':'Python prints a line of text with print("Text"). Remember both quotation marks and the closing parenthesis.',
 'Jede innere Tabelle benötigt wieder ein eigenes { ... }.':'Every nested table requires its own pair of { ... } braces.',
@@ -361,7 +361,7 @@ Object.assign(translations,{
  'Noch keine Nachrichten.':'No messages yet.',
  'Deine Unterhaltung':'Your conversation',
  'Mitglied':'Member',
- 'LiveryLab Team':'LiveryLab Team',
+ 'NovaLab Team':'NovaLab Team',
  'Schließen ×':'Close ×',
  'Nachricht an das Mitglied':'Message to member',
  'Nachricht an das Team':'Message the team',

@@ -1,4 +1,4 @@
-/* LiveryLab Academy v48 · browser integration for optional UX effects.
+/* NovaLab Academy v48 · browser integration for optional UX effects.
  * Tests mobile header layout, mute-by-default, volume, reduced motion,
  * theme backgrounds and pointer interaction without real speakers.
  */
@@ -12,7 +12,7 @@ const exec=[process.env.CHROME_BIN,'/usr/bin/google-chrome','/opt/google/chrome/
 if(!exec)throw Error('Chrome required for effects tests');
 const html='<!doctype html><html lang="de"><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+'</style></head><body>'+
  '<div class="app-shell"><header class="topbar" style="display:flex;justify-content:space-between;align-items:center;height:66px;max-width:100%;padding:0 12px;">'+
- '<span>LiveryLab Academy</span><button id="timer" style="height:35px">25:00</button>'+
+ '<span>NovaLab Academy</span><button id="timer" style="height:35px">25:00</button>'+
  '<span><button>DE</button><button>EN</button></span></header>'+
  '<main class="content"><button class="btn primary" id="tap" style="padding:13px 18px">Continue learning</button>'+
  '<button id="disabled" disabled>Disabled</button>'+

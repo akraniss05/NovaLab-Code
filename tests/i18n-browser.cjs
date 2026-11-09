@@ -10,7 +10,7 @@ const executable=[process.env.CHROME_BIN,'/usr/bin/google-chrome','/opt/google/c
 if(!executable)throw Error('Chrome is needed for browser localization tests');
 const html='<!doctype html><html lang="de"><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+'</style></head><body>'+
 '<div class="app-shell"><aside class="sidebar"></aside><div class="app-column">'+
-'<header class="topbar"><div class="brandbox"><button class="icon-btn mobile-only">☰</button><a class="brand" href="#home"><span>LiveryLab <strong>Academy</strong></span></a></div>'+
+'<header class="topbar"><div class="brandbox"><button class="icon-btn mobile-only">☰</button><a class="brand" href="#home"><span>NovaLab <strong>Academy</strong></span></a></div>'+
 '<div class="focus-center"><button class="focus-header" id="focus-header">◷ 25:00</button></div>'+
 '<div class="top-right"><div class="ll-lang-switch" role="group" aria-label="Sprache / Language">'+
 '<button type="button" class="ll-lang-btn" data-lang="de" aria-pressed="true">DE</button>'+
