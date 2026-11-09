@@ -82,7 +82,7 @@ function submitForm(type,fields){
  // A failed inbox request must show the real error, not a false empty inbox.
  context.location.hash='#admin/support';
  app.setApi({rpc:async()=>({data:null,error:{message:'Abruf derzeit fehlgeschlagen'}})});
- await assert.rejects(()=>app.refreshService(),/Abruf derzeit fehlgeschlagen/);
+ await assert.rejects(()=>app.refreshService(),e=>e?.message==='Abruf derzeit fehlgeschlagen');
  assert.match(app.adminPage(),/Posteingang nicht vollständig geladen/);
  app.setApi({rpc:async(name)=>name==='academy_service'
   ?{data:{beta_open:true,mine:[],admin:[ticket]},error:null}
