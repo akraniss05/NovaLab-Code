@@ -7,8 +7,8 @@
 'use strict';
 var cfg=window.LL_CONFIG||{}, $=function(q,root){return (root||document).querySelector(q);};
 var content=$('#content'), sidebar=$('#sidebar'), bottom=$('#bottom-nav'), toastNode=$('#toast');
-var api=null, s={shopDiscount:0,service:{beta_open:true,mine:[],admin:[]},serviceError:'',serviceLastUpdated:0,lastSupportReceipt:null,supportBusy:false,chatTicketId:null,chatMessages:[],chatBusy:false,chatLoading:false,streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],xpAwards:[],xpClaimBusy:false,progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',difficultyFilter:'all',lesson:null,choice:null,quizStep:0,quizPassed:false,sectionIndex:0,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},memberExpiry:{},adminPage:1,adminFilter:'all',adminSearch:'',registrationPolicy:{mode:'approval',loaded:false},registrationManual:true,adminLearner:null,adminProgressBusy:false,adminProgressSearch:'',adminProgressFilter:'all',catalogLimit:9,practiceChecked:false,draft:'',lessonStep:1,hintStage:0,prefs:null,projectTab:0,projectSource:'',projectLoading:false};
-var plans={free:'Free',pro:'Plus',ultimate:'Ultimate'};
+var api=null, s={shopDiscount:0,shopMonths:1,shopOffers:[],selectedPlan:'pro',selectedMonths:1,service:{beta_open:true,mine:[],admin:[]},serviceError:'',serviceLastUpdated:0,lastSupportReceipt:null,supportBusy:false,chatTicketId:null,chatMessages:[],chatBusy:false,chatLoading:false,streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],xpAwards:[],xpClaimBusy:false,progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',difficultyFilter:'all',lesson:null,choice:null,quizStep:0,quizPassed:false,sectionIndex:0,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},memberExpiry:{},adminPage:1,adminFilter:'all',adminSearch:'',registrationPolicy:{mode:'approval',loaded:false},registrationManual:true,adminLearner:null,adminProgressBusy:false,adminProgressSearch:'',adminProgressFilter:'all',catalogLimit:9,practiceChecked:false,draft:'',lessonStep:1,hintStage:0,prefs:null,projectTab:0,projectSource:'',projectLoading:false};
+var plans={free:'Free',pro:'Plus',ultimate:'Ultimate',max:'Max'};
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];});}
 function safeLink(url){return /^https:\/\/[^\s<>"]+$/i.test(String(url||''))?esc(url):'#';}
 function notice(message){toastNode.textContent=window.LLI18n?.translate?.(message)||message;toastNode.classList.add('show');clearTimeout(notice.timer);notice.timer=setTimeout(function(){toastNode.classList.remove('show');},5000);}
@@ -26,11 +26,11 @@ function countDone(courseId){var d=doneIds();return lessonsOf(courseId).filter(f
 function lessonsOf(id){return s.lessons.filter(function(l){return l.course_id===id&&inMainPath(l);}).sort(function(a,b){return a.position-b.position;});}
 function courseOf(id){return s.courses.find(function(c){return c.id===id;});}
 function pct(n,total){return total?Math.round(n/total*100):0;}
-function tierLabel(t){return t==='plus'?'Plus':t==='pro'?'Pro':'Free';}
-function allowed(l){return !!s.profile&&(s.profile.role==='admin'||(!s.entitledCourses||s.entitledCourses.includes(l.course_id))&&(l.required_plan==='free'||(l.required_plan==='plus'&&['pro','ultimate'].includes(s.tier))||(l.required_plan==='pro'&&s.tier==='ultimate')));}
-function fullAccess(){return s.profile?.role==='admin'||s.tier==='ultimate';}
-function hasScript(){return s.profile?.role==='admin'||s.tier==='pro'||s.tier==='ultimate';}
-function examCap(){return fullAccess()?-1:s.tier==='pro'?4:2;}
+function tierLabel(t){return t==='plus'?'Plus':t==='pro'?'Ultimate':t==='max'?'Max':'Free';}
+function allowed(l){return !!s.profile&&(s.profile.role==='admin'||(!s.entitledCourses||s.entitledCourses.includes(l.course_id))&&(l.required_plan==='free'||(l.required_plan==='plus'&&['pro','ultimate','max'].includes(s.tier))||(l.required_plan==='pro'&&['ultimate','max'].includes(s.tier))));}
+function fullAccess(){return s.profile?.role==='admin'||s.tier==='max';}
+function hasScript(){return s.profile?.role==='admin'||['pro','ultimate','max'].includes(s.tier);}
+function examCap(){return fullAccess()?-1:s.tier==='ultimate'?8:s.tier==='pro'?4:2;}
 function paywall(feature,tier,description){return '<section class="feature-gate"><span class="feature-lock">🔒</span><span class="eyebrow">'+esc(tier)+'-MITGLIEDSCHAFT</span><h1>'+esc(feature)+' ist gesperrt.</h1><p class="lede">'+esc(description)+'</p><div class="feature-gate-actions"><button type="button" data-go="plans" class="btn primary">Tarif ansehen →</button><a class="btn discord" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Auf Discord anfragen</a></div><p class="micro">Schreibe NyxAtheris eine DM oder eröffne im Discord ein Ticket und erwähne @nyxatheris mit dem Grund.</p></section>';}
 function badge(t){return '<span class="chip '+esc(t)+'">'+tierLabel(t)+'</span>';}
 function levelText(l){var x=String(l||'beginner').toLowerCase();return /beginner|anfänger/.test(x)?'Anfänger':/intermediate|mittelstufe/.test(x)?'Aufbau':'Fortgeschritten';}
@@ -516,7 +516,7 @@ async function loadData(){
  ]);
  if(all[0].error)throw all[0].error;if(all[1].error)throw all[1].error;
  s.courses=all[0].data||[];s.lessons=all[1].data||[];
- s.tier=['free','pro','ultimate'].includes(all[4].data?.tier)?all[4].data.tier:'free';
+ s.tier=['free','pro','ultimate','max'].includes(all[4].data?.tier)?all[4].data.tier:'free';
  s.daily=all[4].error?null:all[4].data;
  s.planExpires=all[2].data?.expires_at||null;
  s.discount=s.daily?.discount||null;
@@ -545,7 +545,8 @@ async function loadData(){
   api.rpc('academy_social_list'),
   api.rpc('academy_entitled_courses'),
   api.rpc('academy_social_media_list'),
-  api.rpc('academy_service',{p_action:'list',p_payload:{}})
+  api.rpc('academy_service',{p_action:'list',p_payload:{}}),
+  api.rpc('academy_shop_offers',{})
  ]).then(results=>{
   if(!s.ready)return;
   const data=results.map(x=>x.status==='fulfilled'&&!x.value?.error?x.value?.data:null);
@@ -554,6 +555,7 @@ async function loadData(){
   s.entitledCourses=data[2]||null;
   s.socialMedia=data[3]||{};
   if(data[4]&&Array.isArray(data[4].mine))s.service=data[4];
+  if(Array.isArray(data[5]))s.shopOffers=data[5];
   if(!s.streakModalOpen&&parseRoute().page==='home')render();
  }).catch(()=>{});
  await navigateCurrent();
@@ -602,6 +604,7 @@ async function navigateCurrent(){
  }
  if(route.page==='admin'&&s.profile?.role==='admin'){try{await Promise.all([fetchMembers(),fetchVouchers(),fetchRegistrationPolicy(true)]);}catch(e){notice('Administration: '+formatError(e));}}
  if(route.page==='support'||route.page==='admin'||route.page==='plans'){try{await refreshService();}catch(e){notice('Support: '+formatError(e));}}
+ if(route.page==='plans'||route.page==='admin'){try{await refreshShopOffers();}catch(e){notice('Shop: '+formatError(e));}}
  if(route.page==='script'&&hasScript()){await loadProjectTab();}
  if(route.page==='reference'&&fullAccess()&&!s.referenceData){const ref=await api.rpc('academy_reference_get');if(!ref.error)s.referenceData=ref.data||{};}
  if(route.page==='friends'||route.page==='profile'){try{const r=await api.rpc('academy_social_list');if(!r.error)s.social=r.data;}catch(_){}}
@@ -1381,6 +1384,23 @@ async function markLesson(){
 }
 
 
+
+const SHOP_BASE={pro:199,ultimate:599,max:1199};
+function offerFor(tier,months){
+ const m=[1,3,12].includes(Number(months))?Number(months):1;
+ const saved=(s.shopOffers||[]).find(x=>x.tier===tier&&Number(x.months)===m);
+ if(saved)return saved;
+ const monthly=SHOP_BASE[tier]||0,base=monthly*m;
+ const annual=Math.round(base*(m===12?.95:1)),promo=Math.max(0,Math.min(90,Number(s.shopDiscount)||0));
+ return {tier,months:m,monthly_cents:monthly,base_cents:base,annual_cents:annual,
+  year_discount_percent:m===12?5:0,promo_percent:promo,total_cents:Math.round(annual*(100-promo)/100)};
+}
+async function refreshShopOffers(){
+ const response=await api.rpc('academy_shop_offers',{});
+ if(response.error)throw response.error;
+ if(!Array.isArray(response.data)||response.data.length!==9)throw Error('Shopangebote nicht verfügbar.');
+ s.shopOffers=response.data;return response.data;
+}
 function salePrice(cents){return Math.round(cents*(100-Math.max(0,Math.min(90,Number(s.shopDiscount)||0)))/100)}
 function euro(cents){return (Number(cents||0)/100).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'}
 async function refreshService(){
@@ -1460,7 +1480,7 @@ async function fetchVouchers(){
  s.vouchers=Array.isArray(r.data)?r.data:[];
 }
 function dailyStrip(){
- const cap=Number(s.daily?.daily_limit??(s.tier==='ultimate'?-1:s.tier==='pro'?10:5)),used=Number(s.daily?.used_today)||0;
+ const cap=Number(s.daily?.daily_limit??(s.tier==='max'?-1:s.tier==='ultimate'?15:s.tier==='pro'?10:5)),used=Number(s.daily?.used_today)||0;
  return '<div class="daily-strip"><span class="daily-symbol">◷</span><div><strong>'+
  (cap<0?'Unbegrenztes Lernen':'Heute: '+Math.max(0,cap-used)+' von '+cap+' Stationen übrig')+'</strong>'+
  '<small>'+(cap<0?'Alle Lernstationen ohne tägliche Begrenzung.':'Einmal geöffnete Stationen bleiben jederzeit abrufbar.')+'</small></div></div>';
@@ -1520,7 +1540,7 @@ function examsPage(){
  .sort((a,b)=>(countDone(a.id)===lessonsOf(a.id).length?0:1)-(countDone(b.id)===lessonsOf(b.id).length?0:1)||a.name.localeCompare(b.name,'de'));
  const filtered=suitable.filter(c=>{const done=countDone(c.id),total=lessonsOf(c.id).length,passed=!!s.progress.exams?.[c.id];return s.examFilter==='all'||(s.examFilter==='ready'&&done===total&&!passed)||(s.examFilter==='passed'&&passed)||(s.examFilter==='learning'&&done<total);});
  return pageHeading('PRÜFUNGEN','Deine <span class="gradient">Kursprüfungen.</span>','Jede Prüfung gehört zu genau einem freigeschalteten Kurs. Schließe zuerst dessen Lektionen ab.')+
- neonExamOverview()+'<div class="exam-quota"><strong>✦ '+(cap<0?'Unbegrenzt':Math.max(0,cap-used)+' von '+cap)+' Prüfungen heute übrig</strong><small>Free: 2 · Plus: 4 · Ultimate: unbegrenzt. Reset um Mitternacht (Berlin).</small><button class="btn small" data-go="plans">Tarife →</button></div>'+
+ neonExamOverview()+'<div class="exam-quota"><strong>✦ '+(cap<0?'Unbegrenzt':Math.max(0,cap-used)+' von '+cap)+' Prüfungen heute übrig</strong><small>Free: 2 · Plus: 4 · Ultimate: 8 · Max: unbegrenzt. Reset um Mitternacht (Berlin).</small><button class="btn small" data-go="plans">Tarife →</button></div>'+
  '<section class="section"><div class="section-heading"><div><span class="eyebrow">DEINE KURSE</span><h2>'+suitable.length+' passende Prüfungen</h2></div></div><div class="exam-filters" role="group" aria-label="Prüfungen filtern">'+[['all','Alle'],['ready','Bereit'],['learning','Noch lernen'],['passed','Bestanden']].map(([key,label])=>'<button class="pill'+(s.examFilter===key?' active':'')+'" type="button" data-exam-filter="'+key+'">'+label+'</button>').join('')+'</div><div class="course-grid">'+(filtered.map(c=>{
   const ls=lessonsOf(c.id),count=countDone(c.id),ready=count===ls.length,passed=!!s.progress.exams?.[c.id];
   return '<article class="course-card ll-atelier-exam-card '+(passed?'is-complete':'')+'"><div class="ll-atelier-exam-card-glow" aria-hidden="true"></div><div class="course-head"><span class="course-icon">'+atelierScene(passed?'check':'exam','exam')+'</span><span class="chip '+(passed?'free':'plus')+'">'+(passed?'✓ Bestanden':ready?'Bereit':'Noch gesperrt')+'</span></div><span class="micro">'+esc(c.category)+'</span><h3>'+esc(c.name)+'</h3>'+difficultyBadge(c)+'<div class="ll-atelier-exam-progress"><div><strong>'+pct(count,ls.length)+'%</strong><small>Lernfortschritt</small></div><span>'+count+' / '+ls.length+' Lektionen</span></div><div class="progress"><span style="width:'+pct(count,ls.length)+'%"></span></div><button class="btn block" data-go="'+(ready?'exam/':'track/')+esc(c.id)+'">'+(ready?'Prüfung öffnen →':'Kurs fortsetzen →')+'</button></article>';
@@ -1994,7 +2014,7 @@ function voucherAdminSection(){
  '<form data-form="create-voucher"><div class="form-row"><div class="form-group"><label class="form-label">Gutscheintyp</label><select class="select" name="kind">'+
  '<option value="gift">Gratis-Mitgliedschaft</option><option value="discount">Rabattcode</option></select></div>'+
  '<div class="form-group"><label class="form-label">Mitgliedschaft</label><select class="select" name="tier">'+
- '<option value="pro">Plus · 1,99 € / Monat</option><option value="ultimate">Ultimate · 5,99 € / Monat</option><option value="all" class="voucher-all-tier" hidden>Alle Tarife · Rabatt</option></select></div>'+
+ '<option value="pro">Plus · 1,99 € / Monat</option><option value="ultimate">Ultimate · 5,99 € / Monat</option><option value="max">Max · 11,99 € / Monat</option><option value="all" class="voucher-all-tier" hidden>Alle Tarife · Rabatt</option></select></div>'+
  '<div class="form-group"><label class="form-label">Code erstellen</label><select class="select" name="code_mode">'+
  '<option value="random">Automatisch generieren</option><option value="custom">Eigenen Code bestimmen</option></select></div>'+
  '<div class="form-group voucher-custom-field" hidden><label class="form-label">Dein Wunschcode</label>'+
@@ -2177,9 +2197,9 @@ function adminPage(){
   '<div class="member-management"><div class="ll-admin-user-progress-action"><button type="button" class="btn small ll-progress-open" data-view-progress="'+esc(u.id)+'">◉ Kurs- & Lektionsfortschritt ansehen →</button></div><div><label class="form-label">Mitgliedschaft</label>'+
    (owner?'<span class="member-admin-tier">Administrator · Vollzugriff</span>':
    '<select class="select" data-admin-tier="'+esc(u.id)+'" aria-label="Mitgliedschaft ändern für '+esc(u.username||u.email||'Mitglied')+'">'+
-   '<option value="free" '+(tier==='free'?'selected':'')+'>Free · 3/Tag</option>'+
-   '<option value="pro" '+(tier==='pro'?'selected':'')+'>Plus · 6/Tag</option>'+
-   '<option value="ultimate" '+(tier==='ultimate'?'selected':'')+'>Ultimate · Unbegrenzt</option></select>')+
+   '<option value="free" '+(tier==='free'?'selected':'')+'>Free · 5/Tag</option>'+
+   '<option value="pro" '+(tier==='pro'?'selected':'')+'>Plus · 10/Tag</option>'+
+   '<option value="ultimate" '+(tier==='ultimate'?'selected':'')+'>Ultimate · 15/Tag</option>'+'<option value="max" '+(tier==='max'?'selected':'')+'>Max · Unbegrenzt</option></select>')+
    '</div>'+(!owner?
     '<section class="ll-plan-manager" aria-label="Abo-Laufzeit von '+esc(u.username||'Mitglied')+'">'+
     '<div class="ll-plan-status"><span class="ll-plan-dot '+subscription+'"></span><div><strong data-plan-clock="'+esc(u.id)+'">'+esc(membershipRemainingText(tier,expiry))+'</strong><small>'+esc(membershipExpiryText(tier,expiry))+'</small></div></div>'+
@@ -2246,7 +2266,7 @@ async function fetchMembers(){
  updateMembershipClocks();
 }
 async function updateTier(uid,tier){
- if(s.profile?.role!=='admin'||!['free','pro','ultimate'].includes(tier))throw Error('Tarifwechsel nicht erlaubt.');
+ if(s.profile?.role!=='admin'||!['free','pro','ultimate','max'].includes(tier))throw Error('Tarifwechsel nicht erlaubt.');
  const result=await adminCall({action:'setTier',userId:uid,tier});
  if(!result.ok)throw Error(result.error||'Tarif konnte nicht geändert werden.');
  s.memberPlans[uid]=tier;await fetchMembers();render();notice('Mitgliedschaft auf '+(plans[tier]||tier)+' geändert.');
