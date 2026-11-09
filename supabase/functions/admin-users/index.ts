@@ -203,7 +203,7 @@ Deno.serve(async(req:Request)=>{
       let expiresAt:string|null=previous?.expires_at||null;
       if(body.action==='setTier'){
         const requested=String(body.tier||'');
-        if(!['free','pro','ultimate'].includes(requested))return reply(400,{error:'Ungültiger Tarif'});
+        if(!['free','pro','ultimate','max'].includes(requested))return reply(400,{error:'Ungültiger Tarif'});
         if(requested==='free'){tier='free';expiresAt=nowIso;}
         else{
           const active=previous&&previous.tier!=='free'&&
