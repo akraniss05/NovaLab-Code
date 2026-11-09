@@ -547,7 +547,7 @@ body:not(.is-auth) .topbar .brand strong{color:var(--accent)}
 
 /* NovaLab v74 — readable banner on mobile without black left/right gutters.
    Loaded last, overriding the old 3.2:1 + object-fit:contain rules. */
-.ll-neon-home .ll-home-dashboard .ll-home-brand-banner{
+.ll-home-dashboard .ll-home-brand-banner{
  display:block!important;position:relative!important;width:100%!important;
  height:auto!important;min-height:0!important;max-height:none!important;
  aspect-ratio:2.2 / 1!important;overflow:hidden!important;
@@ -555,14 +555,14 @@ body:not(.is-auth) .topbar .brand strong{color:var(--accent)}
  background:#12071f!important;
  box-shadow:0 15px 36px #0401099c,0 0 27px #a946f059!important;
 }
-.ll-neon-home .ll-home-dashboard .ll-home-brand-banner>img{
+.ll-home-dashboard .ll-home-brand-banner>img{
  display:block!important;position:absolute!important;inset:0!important;
  width:100%!important;height:100%!important;max-width:none!important;
  object-fit:cover!important;object-position:center center!important;
  background:transparent!important;border:0!important;
 }
 @media(max-width:820px){
- .ll-neon-home .ll-home-dashboard .ll-home-brand-banner{
+ .ll-home-dashboard .ll-home-brand-banner{
   aspect-ratio:16 / 9!important;max-height:none!important;border-radius:16px!important;
  }
 }
