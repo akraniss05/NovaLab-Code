@@ -68,8 +68,8 @@ Deno.serve(async (request:Request)=>{
   const password=typeof body.password==='string'?body.password:'';
   if(!validEmail(email)||!/^[a-z][a-z0-9_]{2,23}$/.test(username))
     return respond(400,{error:'Bitte eine gültige E-Mail-Adresse und einen Benutzernamen (3–24 Zeichen) verwenden.'},origin);
-  if(password.length<14||password.length>256)
-    return respond(400,{error:'Das Passwort muss 14–256 Zeichen lang sein.'},origin);
+  if(password.length<7||password.length>256)
+    return respond(400,{error:'Das Passwort muss mindestens 7 Zeichen lang sein.'},origin);
   const url=Deno.env.get('SUPABASE_URL')||'';
   const secret=Deno.env.get('SUPABASE_SECRET_KEY')||Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')||'';
   if(!url||!secret)return respond(503,{error:'Registrierung ist momentan nicht erreichbar.'},origin);
