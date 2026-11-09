@@ -1,4 +1,4 @@
-/* LiveryLab Academy: E2E auth settings UI with a mocked Supabase MFA server.
+/* NovaLab Academy: E2E auth settings UI with a mocked Supabase MFA server.
  * Tests UI interactions, not live account enrollment. */
 'use strict';
 const assert=require('node:assert/strict');
@@ -26,7 +26,7 @@ if(!executable)throw Error('Chrome/Chromium required for MFA E2E tests');
       async getAuthenticatorAssuranceLevel(){const any=s.factors.some(f=>f.status==='verified');
         return {data:{currentLevel:any&&!s.secondLogin?'aal2':'aal1',nextLevel:any?'aal2':'aal1'},error:null};},
       async listFactors(){return {data:{totp:s.factors,all:s.factors},error:null};},
-      async enroll(){const f={id:'test-factor-'+(s.factors.length+1),factor_type:'totp',friendly_name:'LiveryLab Academy',status:'unverified'};
+      async enroll(){const f={id:'test-factor-'+(s.factors.length+1),factor_type:'totp',friendly_name:'NovaLab Academy',status:'unverified'};
         s.factors.push(f);
         return {data:{...f,totp:{secret:'JBSWY3DPEHPK3PXP',qr_code:'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220"><rect width="220" height="220" fill="white"/><rect x="45" y="45" width="120" height="120" fill="black"/></svg>')}},error:null};
       },

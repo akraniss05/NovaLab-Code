@@ -6,13 +6,13 @@ const root=path.join(__dirname,'..');
 const read=(p)=>fs.readFileSync(path.join(root,p),'utf8');
 const js=read('site/academy-v21.js');
 const css=read('site/app-v21.css');
-const logo=fs.readFileSync(path.join(root,'site/liverylab-symbol.svg')).toString('base64');
-const banner=fs.readFileSync(path.join(root,'site/liverylab-banner.webp')).toString('base64');
+const logo=fs.readFileSync(path.join(root,'site/novalab-logo.webp')).toString('base64');
+const banner=fs.readFileSync(path.join(root,'site/novalab-banner.webp')).toString('base64');
 let html=read('site/index.html')
  .replace(/<link rel="stylesheet"[^>]*>/,'<style>'+css+'</style>')
  .replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'')
- .replaceAll('./liverylab-symbol.svg','data:image/svg+xml;base64,'+logo)
- .replaceAll('./liverylab-banner.webp','data:image/webp;base64,'+banner);
+ .replaceAll('./novalab-logo.webp','data:image/webp;base64,'+logo)
+ .replaceAll('./novalab-banner.webp','data:image/webp;base64,'+banner);
 const stub=String.raw`
 window.LL_CONFIG={supabaseUrl:'https://example.supabase.co',supabasePublishableKey:'sb_publishable_mock_test'};
 window.LLMFA={pending:false,async refresh(){this.pending=false},renderSettings(){}};

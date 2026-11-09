@@ -1,4 +1,4 @@
-/* LiveryLab Academy v19 — client-side claim UX, with mocked Supabase. */
+/* NovaLab Academy v19 — client-side claim UX, with mocked Supabase. */
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),assert=require('node:assert/strict');
 const js=fs.readFileSync(path.join(__dirname,'../site/academy-v21.js'),'utf8');

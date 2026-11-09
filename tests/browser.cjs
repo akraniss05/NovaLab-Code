@@ -1,4 +1,4 @@
-/* LiveryLab Academy v15: actual Chromium mobile layout regression tests */
+/* NovaLab Academy v15: actual Chromium mobile layout regression tests */
 'use strict';
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),assert=require('node:assert/strict');
 const {chromium}=require('playwright-core');
@@ -28,7 +28,7 @@ s.courses=[{id:'fivem',name:'Lua für FiveM – bis zum eigenen Script',category
 const titles=['Variablen, Typen & print','Bedingungen & Schleifen','Funktionen','Tables: Listen & Dictionaries','Event-Grundlagen','fxmanifest und Resource','Client, Server & Events','Threads & Performance','Natives und Blips','Commands & ACE','Server-Logik','Sicherheit','Debugging'];
 s.lessons=Array.from({length:13},(_,i)=>({id:'fivem-'+String(i+1).padStart(2,'0'),course_id:'fivem',chapter:i<5?'01 · Lua-Grundlagen':i<10?'02 · FiveM-Scripting':'03 · Fortgeschritten',position:i+1,title:titles[i],summary:'Jede Lektion erklärt ein Konzept und zeigt einen praktischen Anwendungsfall.',minutes:12,required_plan:'free'}));
 s.progress={done:['fivem-01'],watched:[],practiced:[],exams:{}};
-s.lesson={payload:{title:titles[0],theory:'Mit Variablen speicherst du Werte, die du später wiederverwenden kannst.',example:'local name = "LiveryLab"\nlocal points = 10\nprint(name, points)',task:'Schreibe eine eigene Variable und gib sie mit print aus.',quiz:'Wofür steht local in Lua?',options:['Lokale Variable','Globale Datei','Neuer Server'],correct:0,goal:'Du kannst Variablen erklären und verwenden.',sections:[{title:'1 · Verstehen & Beispiel',paragraphs:['Variablen enthalten Daten.'],bullets:['Datentypen','Werte'],code:'local score = 10'},{title:'2 · Ausprobieren & festigen',paragraphs:['Verändere einen Wert und prüfe die Ausgabe.'],exercise:'Print die Variable'}]},video_id:'xcmGSRdCXc4',video_start:510};
+s.lesson={payload:{title:titles[0],theory:'Mit Variablen speicherst du Werte, die du später wiederverwenden kannst.',example:'local name = "NovaLab"\nlocal points = 10\nprint(name, points)',task:'Schreibe eine eigene Variable und gib sie mit print aus.',quiz:'Wofür steht local in Lua?',options:['Lokale Variable','Globale Datei','Neuer Server'],correct:0,goal:'Du kannst Variablen erklären und verwenden.',sections:[{title:'1 · Verstehen & Beispiel',paragraphs:['Variablen enthalten Daten.'],bullets:['Datentypen','Werte'],code:'local score = 10'},{title:'2 · Ausprobieren & festigen',paragraphs:['Verändere einen Wert und prüfe die Ausgabe.'],exercise:'Print die Variable'}]},video_id:'xcmGSRdCXc4',video_start:510};
 // v1.5 difficulty radar: actual filter matching, search terms and chart rendering.
 const originalCatalogCourses=s.courses, originalCatalogState={filter:s.filter,search:s.search,difficultyFilter:s.difficultyFilter};
 s.courses=[
@@ -58,15 +58,15 @@ s.filter=originalCatalogState.filter;
 s.search=originalCatalogState.search;
 s.difficultyFilter=originalCatalogState.difficultyFilter;
 
-const bannerB64=fs.readFileSync(path.join(root,'site/liverylab-banner.webp')).toString('base64');
+const bannerB64=fs.readFileSync(path.join(root,'site/novalab-banner.webp')).toString('base64');
 function capture(html){
-html=html.replaceAll('src="./liverylab-banner.webp"','src="data:image/webp;base64,'+bannerB64+'"');
+html=html.replaceAll('src="./novalab-banner.webp"','src="data:image/webp;base64,'+bannerB64+'"');
 const nav=['Home','Lernen','Script','Prüfung','Profil'].map((n,i)=>'<button class="bottom-item '+(i===0?'active':'')+'"><span class="side-icon">'+app.llIcon(['home','learn','code','exam','profile'][i])+'</span>'+n+'</button>').join('');
 return '<!doctype html><html lang="de"><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+'</style></head><body>'+
-'<div class="app-shell"><aside class="sidebar"><div class="sidebar-logo"><span class="logo-mark">fx</span>LiveryLab Academy</div></aside>'+
-'<div class="app-column"><header class="topbar"><div class="brandbox"><button class="icon-btn mobile-only">☰</button><a class="brand" href="#"><span class="brand-mark">fx</span><span>LiveryLab <strong>Academy</strong></span></a></div>'+
+'<div class="app-shell"><aside class="sidebar"><div class="sidebar-logo"><span class="logo-mark">fx</span>NovaLab Academy</div></aside>'+
+'<div class="app-column"><header class="topbar"><div class="brandbox"><button class="icon-btn mobile-only">☰</button><a class="brand" href="#"><span class="brand-mark">fx</span><span>NovaLab <strong>Academy</strong></span></a></div>'+
 '<div class="focus-center"><button class="focus-header" id="focus-header" data-timer-open>◷ 25:00</button></div><div class="top-right"><span class="xp-header">30 XP</span><button class="header-streak-chip" data-streak-open>🔥 1 Tag</button><button class="avatar-btn">N</button></div></header>'+
-'<main id="content" class="content">'+html+'</main><footer class="footer">Made with 💙 from NyxAtheris (LiveryLab Studios)</footer></div>'+
+'<main id="content" class="content">'+html+'</main><footer class="footer">Made with 💙 from NyxAtheris (NovaLab Academy)</footer></div>'+
 '<nav class="bottom-nav">'+nav+'</nav></div></body></html>';
 }
 const executable=[process.env.CHROME_BIN,'/usr/bin/google-chrome','/opt/google/chrome/chrome','/usr/bin/chromium'].filter(Boolean).find(p=>fs.existsSync(p));
@@ -157,7 +157,7 @@ scenes.push(['admin-dashboard',app.adminPage(),['.ll-admin-hub','.ll-admin-tabs'
 scenes.push(['focus-timer',
  '<div class="timer-backdrop ll-focus-backdrop"></div><section class="timer-dialog ll-focus-modal" role="dialog">'+
  '<button class="ll-focus-close" type="button">×</button><div class="ll-focus-emblem">◷</div>'+
- '<span class="eyebrow ll-focus-kicker">LIVERYLAB · DEIN LERNMODUS</span>'+
+ '<span class="eyebrow ll-focus-kicker">NOVALAB · DEIN LERNMODUS</span>'+
  '<h2 class="ll-focus-title">Deine <span class="gradient">Fokuszeit.</span></h2>'+
  '<p class="ll-focus-lede">Konzentriert lernen, Schritt für Schritt. Deine Zeit bleibt beim Seitenwechsel erhalten.</p>'+
  '<div class="ll-focus-ring" data-timer-ring style="--focus-progress:45%"><div class="ll-focus-ring-inner"><span>✦</span><strong data-timer-time>14:20</strong><small>VERBLEIBENDE ZEIT</small></div></div>'+

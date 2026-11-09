@@ -1,4 +1,4 @@
-/* LiveryLab Academy v11 — headless view-render verification.
+/* NovaLab Academy v11 — headless view-render verification.
    Tests actual view functions without a login or network connection. */
 'use strict';
 const assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');
@@ -35,7 +35,7 @@ assert(app.courseCard(state.courses[0]).includes('30 Lektionen'),'Lua course car
 assert.equal(state.lessons.length,70,'Historic lesson data stays available');
 state.courses=originalCourses;state.lessons=originalLessons;
 assert(app.homePage().includes('Willkommen zurück')&&app.homePage().includes('ll-neon-custom-hero')&&app.homePage().includes('data-go="menu"'),'Neon dashboard home and new functional main menu rendered');
-assert(app.homePage().includes('liverylab-banner.webp'),'Original site banner displayed');
+assert(app.homePage().includes('novalab-banner.webp'),'Original site banner displayed');
 assert(app.homePage().includes('ll-home-shortcuts'),'Dashboard menu displayed');
 assert(/kursbibliothek/i.test(app.coursesPage()),'Catalog rendered');
 assert(app.trackPage('python').includes('Variablen'),'Learning track rendered');
