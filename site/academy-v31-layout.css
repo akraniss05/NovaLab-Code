@@ -637,3 +637,32 @@ body:not(.is-auth) .topbar > .top-right{position:relative;z-index:4}
 .ll-offer-admin-card button{margin-top:auto}
 @media(max-width:900px){.ll-offer-admin-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.ll-offer-admin-grid{grid-template-columns:1fr}.ll-term-picker{padding:15px}.ll-term-buttons button{flex:1 1 100%}.membership-price .sale-new{font-size:24px}}
+
+/* v72: self-service administrator settings — responsive, keyboard-accessible */
+.ll-admin-self-page{display:flex;flex-direction:column;gap:18px;min-width:0}
+.ll-admin-self-page .ll-self-admin-hero{padding:clamp(18px,3vw,28px);background:linear-gradient(122deg,#221a38,#111526);border:1px solid #69508d}
+.ll-admin-self-hero h2{margin:6px 0 12px;font-size:clamp(24px,3vw,33px)}
+.ll-admin-self-hero p{color:#c6bfd7;max-width:72ch;line-height:1.5}
+.ll-admin-self-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.ll-admin-self-stat{min-width:0;border:1px solid #4e3d71;border-radius:15px;padding:16px;background:linear-gradient(145deg,#20162e,#131224);display:flex;flex-direction:column;gap:6px}
+.ll-admin-self-stat>span{font-size:18px;color:#b5a0fd}
+.ll-admin-self-stat>strong{font-size:clamp(19px,3vw,28px);line-height:1.2;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.ll-admin-self-stat>small{color:#c9bedc;font-size:12px}
+.ll-admin-self-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:stretch}
+.ll-admin-self-card{display:flex;flex-direction:column;gap:13px;min-width:0;padding:20px;border:1px solid #57466f}
+.ll-admin-self-card h3{margin:0;font-size:19px}
+.ll-admin-self-card p{color:#c8bfdc;font-size:13px;line-height:1.55;margin:0}
+.ll-admin-self-card form{display:flex;flex-direction:column;gap:12px}
+.ll-admin-self-card label{display:block;font-size:12px;font-weight:650;color:#dcd0f4}
+.ll-admin-self-card input,.ll-admin-self-card select{margin-top:7px;min-width:0;max-width:100%}
+.ll-admin-self-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.ll-admin-self-shortcuts{display:flex;flex-wrap:wrap;gap:7px}
+.ll-admin-self-shortcuts .btn{flex:1 0 auto}
+.ll-admin-self-card small{font-size:11px;color:#bcb3d4}
+.ll-admin-self-history{padding:18px 22px;border:1px solid #57466f}
+.ll-admin-self-events{display:grid;gap:8px;margin-top:12px}
+.ll-admin-self-event{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 12px;border:1px solid #493855;border-radius:10px;background:#1b1526;font-size:12px}
+.ll-admin-self-event>span{color:#b9b1cb;text-align:right}
+.ll-admin-self-page button:focus-visible,.ll-admin-self-page input:focus-visible,.ll-admin-self-page select:focus-visible{outline:2px solid #b7a0fc;outline-offset:3px}
+@media(max-width:880px){.ll-admin-self-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.ll-admin-self-grid{grid-template-columns:1fr}}
+@media(max-width:420px){.ll-admin-self-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.ll-admin-self-stat{padding:12px}.ll-admin-self-fields{grid-template-columns:1fr}.ll-admin-self-card{padding:16px}.ll-admin-self-event{align-items:flex-start;flex-direction:column}.ll-admin-self-event>span{text-align:left}.ll-admin-self-history{padding:15px}}
