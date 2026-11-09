@@ -2048,10 +2048,23 @@ function voucherAdminSection(){
  '<p class="micro voucher-footnote">Bereits eingelöste Codes bleiben für Abrechnung und Nachweise intern archiviert. Ungenutzte Codes werden nach Ablauf automatisch gelöscht. Die automatische Bereinigung läuft etwa jede Minute.</p></section>';
 }
 
+
 function shopDiscountAdminSection(){
- return '<section class="panel ll-shop-discount"><form data-form="shop-sale" class="shop-sale-admin"><div><strong>Allgemeiner Shoprabatt</strong><small>Für Plus und Ultimate. 0 % beendet die Aktion.</small></div>'+
- '<label><input class="input" type="number" name="percent" min="0" max="90" value="'+Number(s.shopDiscount||0)+'" required> %</label>'+
- '<button class="btn primary small" type="submit">Rabatt speichern</button></form></section>';
+ const tiers=[['pro','Plus'],['ultimate','Ultimate'],['max','Max']];
+ return '<section class="panel ll-shop-discount"><h2>Rabatte je Tarif und Laufzeit</h2>'+
+ '<p>Zusatzrabatt für 1, 3 oder 12 Monate separat festlegen (0–90 %). Bei 12 Monaten bleibt der automatische 5%-Jahresrabatt bestehen. Keine Zahlung oder automatische Aktivierung.</p>'+
+ '<div class="shop-sale-admin ll-offer-admin-grid">'+tiers.flatMap(([tier,name])=>
+ [1,3,12].map(months=>{
+  const offer=offerFor(tier,months),percent=Number(offer.promo_percent)||0;
+  return '<form data-form="shop-offer" class="ll-offer-admin-card">'+
+   '<strong>'+name+' · '+months+' '+(months===1?'Monat':'Monate')+'</strong>'+
+   '<p class="micro">Grundpreis '+euro(offer.base_cents)+(months===12?' · inkl. Jahresrabatt':'')+'</p>'+
+   '<label>Zusatzrabatt <input type="number" class="input" name="percent" min="0" max="90" step="1" value="'+percent+'" required> %</label>'+
+   '<input type="hidden" name="tier" value="'+tier+'">'+
+   '<input type="hidden" name="months" value="'+months+'">'+
+   '<small>Gesamt: '+euro(offer.total_cents)+'</small>'+
+   '<button type="submit" class="btn small primary">Speichern</button></form>';
+ })).join('')+'</div></section>';
 }
 function supportAdminSection(){
  const entries=Array.isArray(s.service?.admin)?[...s.service.admin].sort((a,b)=>Date.parse(b.updated_at||b.created_at)-Date.parse(a.updated_at||a.created_at)):[];
@@ -2494,6 +2507,15 @@ document.addEventListener('click',async function(e){
  }
  var adminFilter=e.target.closest('[data-admin-filter]');
  if(adminFilter){s.adminFilter=adminFilter.dataset.adminFilter||'all';render();return;}
+ if(e.target.closest('[data-plan-months]')){
+  s.shopMonths=Number(e.target.closest('[data-plan-months]').dataset.planMonths)||1;render();return;
+ }
+ const planRequest=e.target.closest('[data-plan-request]');
+ if(planRequest){
+  const tier=planRequest.dataset.planRequest;
+  if(!['pro','ultimate','max'].includes(tier))return;
+  s.selectedPlan=tier;s.selectedMonths=s.shopMonths;go('support');return;
+ }
  if(e.target.closest('[data-action="refresh-support"]')){try{await refreshService();render();notice('Support-Posteingang aktualisiert.');}catch(err){render();notice('Support: '+formatError(err))}return;}
  var friendAction=e.target.closest('[data-friend-action]');
  if(friendAction){
@@ -2842,6 +2864,16 @@ document.addEventListener('submit',async function(e){
   if(mode==='login'){await signIn(fd,button);return;}
   if(mode==='register'){await registerAccount(fd);return;}
   if(mode==='first-password'){await finishPassword(fd,button);return;}
+  if(mode==='shop-offer'){
+   if(s.profile?.role!=='admin')throw Error('Nur Administratoren');
+   const tier=String(fd.get('tier')),months=Number(fd.get('months')),percent=Number(fd.get('percent'));
+   if(!['pro','ultimate','max'].includes(tier)||![1,3,12].includes(months)||!Number.isInteger(percent)||percent<0||percent>90)
+    throw Error('Ungültige Shopaktion.');
+   const response=await api.rpc('academy_shop_offers',{p_tier:tier,p_months:months,p_percent:percent});
+   if(response.error)throw response.error;
+   if(!Array.isArray(response.data))throw Error('Shopaktion nicht bestätigt.');
+   s.shopOffers=response.data;render();notice('Rabatt gespeichert: '+plans[tier]+' · '+months+' Monate.');return;
+  }
   if(mode==='shop-sale'){
    if(s.profile?.role!=='admin')throw Error('Nur Administratoren');const percent=Number(fd.get('percent'));
    if(!Number.isInteger(percent)||percent<0||percent>90)throw Error('Rabatt: 0 bis 90 Prozent.');
