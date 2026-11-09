@@ -6,7 +6,7 @@ const assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('nod
 const appCode=fs.readFileSync(path.join(__dirname,'../site/academy-v21.js'),'utf8');
 const footer=/\ninit\(\);\n\}\)\(\);\s*$/;
 assert.match(appCode,footer);
-const source=appCode.replace(footer,'\nwindow.__chatTest={s,supportPage,adminPage,ticketChatPanel,loadTicketThread,setApi(v){api=v}};\n})();');
+const source=appCode.replace(footer,'\nwindow.__chatTest={s,supportPage,adminPage,ticketChatPanel,loadTicketThread,refreshService,setApi(v){api=v}};\n})();');
 const events={};
 const node=()=>({innerHTML:'',textContent:'',value:'',disabled:false,isConnected:true,
  classList:{add(){},remove(){},toggle(){},contains(){return false}},
@@ -79,6 +79,17 @@ function submitForm(type,fields){
  context.location.hash='#admin';
  assert.match(app.adminPage(),/ll-admin-hub/,'Dashboard hides bulky user list');
  assert.ok(chatCalls>=3);
+ // A failed inbox request must show the real error, not a false empty inbox.
+ context.location.hash='#admin/support';
+ app.setApi({rpc:async()=>({data:null,error:{message:'Abruf derzeit fehlgeschlagen'}})});
+ await assert.rejects(()=>app.refreshService(),e=>e?.message==='Abruf derzeit fehlgeschlagen');
+ assert.match(app.adminPage(),/Posteingang nicht vollständig geladen/);
+ app.setApi({rpc:async(name)=>name==='academy_service'
+  ?{data:{beta_open:true,mine:[],admin:[ticket]},error:null}
+  :{data:null,error:{message:'unexpected'}}});
+ await app.refreshService();
+ assert.equal(app.s.serviceError,'','A successful reload must clear the visible error');
+ assert.match(app.adminPage(),/data-chat-open/,'An existing admin ticket reappears after reloading');
  const sql=fs.readFileSync(path.join(__dirname,'../supabase/data/v49_support_conversations.sql'),'utf8');
  for(const token of ['academy_private.is_active()','academy_private.is_admin()',
   "ticket.user_id<>who","PRIMARY KEY","REVOKE ALL","ON DELETE CASCADE","status IN ('answered','closed','rejected')"]){
@@ -86,3 +97,8 @@ function submitForm(type,fields){
  }
  console.log('PASS: member and admin two-way conversations, persisted history, compact account administration and secure RPC.');
 })().catch(e=>{console.error(e);process.exitCode=1;});
+
+// SQL regression: the function's rowtype variable must never shadow a FROM alias.
+const inboxFix=fs.readFileSync(path.join(__dirname,'../supabase/migrations/20261109_v69_support_inbox_alias_fix.sql'),'utf8');
+assert.match(inboxFix,/academy_tickets ticket_row join public\.academy_profiles/);
+assert.doesNotMatch(inboxFix,/academy_tickets t join public\.academy_profiles/);
