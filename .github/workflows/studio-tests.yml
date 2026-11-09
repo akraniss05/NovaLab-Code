@@ -27,6 +27,7 @@ on:
       - 'tests/support-conversations.cjs'
       - 'supabase/data/v49_support_conversations.sql'
       - 'supabase/data/v47_contextual_quizzes.sql'
+      - 'tests/shop-tiers.cjs'
       - 'tests/admin-plans.cjs'
       - 'tests/xp-rewards.cjs'
       - 'supabase/migrations/20261107_v44_one_time_xp_ledger.sql'
@@ -58,6 +59,7 @@ on:
       - 'tests/support-conversations.cjs'
       - 'supabase/data/v49_support_conversations.sql'
       - 'supabase/data/v47_contextual_quizzes.sql'
+      - 'tests/shop-tiers.cjs'
       - 'tests/admin-plans.cjs'
       - 'tests/xp-rewards.cjs'
       - 'supabase/migrations/20261107_v44_one_time_xp_ledger.sql'
@@ -93,6 +95,8 @@ jobs:
         run: node tests/admin-plans.cjs
       - name: One-time XP and reward history regression
         run: node tests/xp-rewards.cjs
+      - name: Four tier pricing and discounts
+        run: node tests/shop-tiers.cjs
       - name: Seven-character registration contract
         run: node tests/registration-v21.cjs
       - name: Existing practice tests
