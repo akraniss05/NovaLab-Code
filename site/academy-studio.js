@@ -1,5 +1,5 @@
-/* LiveryLab Academy Studio · real projects, level rewards, notes and learning paths.
-   Made with 💙 by NyxAtheris (LiveryLab Studios). */
+/* NovaLab Academy Studio · real projects, level rewards, notes and learning paths.
+   Made with 💙 by NyxAtheris (NovaLab Academy). */
 (function(root){
 'use strict';
 let bridge=null,projects=[],prefs={},notes={},ready=false,editing=null,pendingProject=null,selectedMonth=new Date();
@@ -240,16 +240,16 @@ function calendarPage(){
 }
 function exportPortfolio(){
  const name=state()?.profile?.display_name||state()?.profile?.username||'Developer';
- const lines=['# '+name+' · LiveryLab Portfolio','','Erstellt in der LiveryLab Academy','','## Projekte',''];
+ const lines=['# '+name+' · NovaLab Portfolio','','Erstellt in der NovaLab Academy','','## Projekte',''];
  for(const p of projects){
   lines.push('### '+p.title,'',p.description||'Keine Beschreibung','');
   if(p.technologies?.length)lines.push('**Technologien:** '+p.technologies.join(', '),'');
   if(/^https:\/\/[^\s<>"']{4,500}$/i.test(p.project_url||''))lines.push('**Projektlink:** '+p.project_url,'');
  }
  if(!projects.length)lines.push('Noch keine Projekte erfasst.','');
- lines.push('---','Made with 💙 by NyxAtheris (LiveryLab Studios)');
+ lines.push('---','Made with 💙 by NyxAtheris (NovaLab Academy)');
  const blob=new Blob([lines.join('\n')],{type:'text/markdown;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
- a.href=url;a.download='LiveryLab-Portfolio.md';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);
+ a.href=url;a.download='NovaLab-Portfolio.md';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);
  message('Portfolio als Markdown exportiert.');
 }
 
