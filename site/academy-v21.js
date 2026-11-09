@@ -2108,7 +2108,7 @@ function membershipExpiryText(tier,expiry){
  if(!expiry)return 'Ohne Ablaufdatum';
  const value=new Date(expiry);
  return Number.isNaN(value.getTime())?'Ungültiges Ablaufdatum':
-  'Läuft am '+new Intl.DateTimeFormat('de-DE',{
+  'Endet am '+new Intl.DateTimeFormat('de-DE',{
    dateStyle:'medium',timeStyle:'medium',timeZone:'Europe/Berlin'
   }).format(value)+' ab';
 }
