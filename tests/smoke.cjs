@@ -79,8 +79,8 @@ assert(!js.includes('data-action="run-practice"'),'Run button must not render');
 assert(html.includes('class="focus-center"')&&html.includes('data-timer-open'),'Center timer missing');
 assert(js.includes('localStorage.setItem(timerStorageKey'),'Timer must persist beyond tab reload');
 const layoutRestore=read('site/academy-v31-layout.css');
-assert(html.includes('academy-v31-layout.css?build=20261108v57'),'v31 simplified CSS missing');
-assert(read('site/v31.html').includes('academy-v31-layout.css?build=20261108v57'),'PWA simple CSS missing');
+assert(html.includes('academy-v31-layout.css?build=20261109v71'),'v31 simplified CSS missing');
+assert(read('site/v31.html').includes('academy-v31-layout.css?build=20261109v71'),'PWA simple CSS missing');
 for(const selector of ['.ll-home-brand-banner','.topbar','.bottom-nav','.focus-center','.practice-actions-simple'])assert(layoutRestore.includes(selector),'Visual recovery missing '+selector);
 
 const curriculum=read('site/academy-curriculum.js');
@@ -129,7 +129,7 @@ assert(currentI18n.includes('Welche praktische Aufgabe gehört zu'),'New questio
 assert(js.includes('lastSupportReceipt'),'Support must show persisted ticket reference');
 assert(js.includes('r.data?.ok!==true'),'Never claim a support request was sent without server confirmation');
 assert(js.includes('support-submit-status'),'Send errors must be shown inline');
-for(const entry of ['site/index.html','site/v21.html','site/v31.html'])assert(read(entry).includes('academy-v31-layout.css?build=20261108v57'),'Current support CSS missing '+entry);
+for(const entry of ['site/index.html','site/v21.html','site/v31.html'])assert(read(entry).includes('academy-v31-layout.css?build=20261109v71'),'Current support CSS missing '+entry);
 
 const effectsJs=read('site/academy-effects.js'),effectsCss=read('site/academy-effects.css');
 for(const page of ['site/index.html','site/v21.html','site/v31.html']){
