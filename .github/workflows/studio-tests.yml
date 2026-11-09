@@ -27,6 +27,7 @@ on:
       - 'tests/support-conversations.cjs'
       - 'supabase/data/v49_support_conversations.sql'
       - 'supabase/data/v47_contextual_quizzes.sql'
+      - 'tests/subscription-countdown.cjs'
       - 'tests/admin-self.cjs'
       - 'tests/shop-tiers.cjs'
       - 'tests/admin-plans.cjs'
@@ -96,6 +97,8 @@ jobs:
         run: node tests/admin-plans.cjs
       - name: One-time XP and reward history regression
         run: node tests/xp-rewards.cjs
+      - name: Exact subscription countdown and NovaLab banner
+        run: node tests/subscription-countdown.cjs
       - name: Admin self XP, streak and membership controls
         run: node tests/admin-self.cjs
       - name: Four tier pricing and discounts
