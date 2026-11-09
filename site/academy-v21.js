@@ -2207,6 +2207,75 @@ async function loadAdminStudentProgress(userId){
  }
 }
 
+
+function adminSelfSection(){
+ const state=s.adminSelf;
+ if(!state)return '<section class="section panel ll-self-admin"><span class="eyebrow">ADMIN · MEIN KONTO</span><h2>Meine Admin-Einstellungen</h2>'+
+ '<p class="muted">'+esc(s.adminSelfError||'Kontostatus wird geladen. Du kannst die Daten erneut abrufen.')+'</p>'+
+ '<button type="button" class="btn primary" data-action="admin-self-refresh">Kontostatus laden</button></section>';
+ const total=Math.max(0,Number(state.xp_total)||0),base=Math.max(0,Number(state.xp_lesson)||0),
+  extra=Number(state.xp_adjustment)||0,st=state.streak||{},
+  current=Math.max(0,Number(st.current)||0),best=Math.max(current,Number(st.best)||0),
+  completed=(s.progress?.done||[]).length,months=[0,1,3,12],
+  history=Array.isArray(state.changes)?state.changes:[];
+ const expiry=state.plan_expires_at?new Date(state.plan_expires_at).toLocaleString('de-DE'):'Unbefristet';
+ const auditLabel={set_xp:'XP korrigiert',set_streak:'Daily Streak angepasst',set_plan:'Eigenen Tarif geändert'};
+ return '<div class="ll-admin-self-page">'+
+  '<section class="panel ll-self-admin-hero"><span class="eyebrow">ADMINISTRATION · NUR DEIN KONTO</span><h2>Meine <span class="gradient">Admin-Einstellungen</span></h2>'+
+  '<p>Verwalte deinen eigenen XP-Stand, deine Daily Streak und deinen Tarif. Deine Adminrechte bleiben immer erhalten; andere Konten werden nicht verändert.</p>'+
+  '<button type="button" class="btn small" data-action="admin-self-refresh">↻ Daten aktualisieren</button></section>'+
+  '<div class="ll-admin-self-stats">'+
+  [['✦',total.toLocaleString('de-DE'),'Meine XP'],
+   ['♨',current+' Tage','Aktuelle Streak'],
+   ['★',best+' Tage','Streak-Rekord'],
+   ['▦',completed+' Lektionen','Abgeschlossene Lektionen'],
+   ['◎',Number(state.stations_today||0)+'','Stationen heute'],
+   ['✧',Number(state.exams_today||0)+'','Prüfungen heute']].map(([icon,num,label])=>
+    '<div class="ll-admin-self-stat"><span>'+icon+'</span><strong>'+esc(num)+'</strong><small>'+esc(label)+'</small></div>').join('')+
+  '</div>'+
+  '<div class="ll-admin-self-grid">'+
+  '<section class="panel ll-admin-self-card"><span class="eyebrow">[ ✦ ] XP VERWALTEN</span><h3>XP-Level anpassen</h3>'+
+   '<p>Deine echten Lektions-XP ('+base.toLocaleString('de-DE')+') bleiben unverändert. Der Admin-Ausgleich ('+(extra>=0?'+':'')+extra.toLocaleString('de-DE')+') wird zusätzlich berücksichtigt.</p>'+
+   '<form data-form="admin-self-xp"><label for="admin-own-xp">Neuer Gesamt-XP-Stand</label>'+
+   '<input id="admin-own-xp" class="input" name="xp" type="number" min="0" max="10000000" step="1" value="'+total+'" required>'+
+   '<button class="btn primary block" type="submit">XP-Stand speichern</button></form>'+
+   '<div class="ll-admin-self-shortcuts"><button type="button" class="btn small" data-action="admin-self-xp-add" data-amount="500">+500 XP</button>'+
+   '<button type="button" class="btn small" data-action="admin-self-xp-add" data-amount="1000">+1.000 XP</button>'+
+   '<button type="button" class="btn small" data-action="admin-self-xp-add" data-amount="5000">+5.000 XP</button>'+
+   '<button type="button" class="btn small" data-action="admin-self-xp-add" data-amount="-500">−500 XP</button></div></section>'+
+  '<section class="panel ll-admin-self-card"><span class="eyebrow">[ ♨ ] DAILY STREAK</span><h3>Deine Streak einstellen</h3>'+
+   '<p>Dein aktueller Stand und dein Rekord werden dauerhaft gespeichert. Der tägliche Claim-Cooldown bleibt geschützt.</p>'+
+   '<form data-form="admin-self-streak"><div class="ll-admin-self-fields">'+
+   '<label>Aktuelle Tage<input class="input" type="number" name="current" min="0" max="5000" value="'+current+'" step="1" required></label>'+
+   '<label>Streak-Rekord<input class="input" type="number" name="best" min="0" max="5000" value="'+best+'" step="1" required></label></div>'+
+   '<button class="btn primary block" type="submit">Daily Streak speichern</button></form>'+
+   '<div class="ll-admin-self-shortcuts"><button type="button" class="btn small" data-action="admin-self-streak-add" data-amount="1">+1 Tag</button>'+
+   '<button type="button" class="btn small" data-action="admin-self-streak-add" data-amount="7">+7 Tage</button>'+
+   '<button type="button" class="btn small" data-action="admin-self-streak-add" data-amount="30">+30 Tage</button>'+
+   '<button type="button" class="btn small" data-action="admin-self-streak-add" data-amount="-1">−1 Tag</button></div>'+
+   '<small>Bereits echte Daily-Claims: '+Number(state.streak_claims||0)+' · '+(st.claimable?'Heute claimbar':st.claimed_today?'Heute bereits geclaimt':'Nächster Claim nach Cooldown')+'</small></section>'+
+  '<section class="panel ll-admin-self-card"><span class="eyebrow">[ ◈ ] MEINE MITGLIEDSCHAFT</span><h3>Eigenen Tarif ändern</h3>'+
+   '<p><strong>Aktuell: '+esc(plans[state.tier]||state.tier||'Max')+'</strong> · '+esc(expiry)+'</p>'+
+   '<p>Wähle Free, Plus, Ultimate oder Max. Die Einstellung wirkt auf deine Lernlimits und Premiumfunktionen, nicht auf deine Administratorrolle.</p>'+
+   '<form data-form="admin-self-plan"><div class="ll-admin-self-fields">'+
+   '<label>Mitgliedschaft<select class="select" name="tier">'+[['free','Free'],['pro','Plus'],['ultimate','Ultimate'],['max','Max']].map(([key,name])=>
+    '<option value="'+key+'" '+(state.tier===key?'selected':'')+'>'+name+'</option>').join('')+'</select></label>'+
+   '<label>Laufzeit<select class="select" name="months">'+months.map(n=>
+    '<option value="'+n+'" '+(n===0?'selected':'')+'>'+(n===0?'Dauerhaft':n+' '+(n===1?'Monat':'Monate'))+'</option>').join('')+'</select></label></div>'+
+   '<button class="btn primary block" type="submit">Eigenes Abo ändern</button></form>'+
+   '<button type="button" class="btn small" data-action="admin-self-max">Max dauerhaft wiederherstellen</button>'+
+   '<small>Es wird keine Zahlung ausgelöst. Bei einer befristeten Mitgliedschaft wechseln die Lernrechte nach Ablauf automatisch auf Free. Die Adminrechte bleiben bestehen.</small></section>'+
+  '</div>'+
+  '<section class="panel ll-admin-self-history"><div class="section-heading"><div><span class="eyebrow">[ ◷ ] SICHERHEIT</span><h3>Meine letzten Admin-Änderungen</h3></div>'+
+   '<button class="btn small" type="button" data-action="admin-self-refresh">↻ Aktualisieren</button></div>'+
+   (history.length?'<div class="ll-admin-self-events">'+history.map(entry=>
+    '<div class="ll-admin-self-event"><strong>'+esc(auditLabel[entry.action]||'Kontoverwaltung')+'</strong>'+
+    '<span>'+esc(new Date(entry.updated_at).toLocaleString('de-DE'))+'</span></div>').join('')+'</div>':
+   '<p class="muted">Hier erscheinen deine künftig vorgenommenen XP-, Streak- und Tarifänderungen.</p>')+
+   '<p class="micro">Nur angemeldete, verifizierte Administratoren dürfen die eigenen Werte anpassen. Jede Änderung wird protokolliert.</p></section>'+
+ '</div>';
+}
+
 function adminPage(){
  if(s.profile?.role!=='admin')return '<section class="locked-panel"><h2>Nur für Administratoren.</h2></section>';
  const people=s.members||[],pending=people.filter(u=>u.access_status==='pending'),query=String(s.adminSearch||'').toLowerCase(),rest=people.filter(u=>u.access_status!=='pending').filter(u=>(s.adminFilter==='all'||(s.adminFilter==='active'&&u.active)||(s.adminFilter==='blocked'&&!u.active)||(s.adminFilter==='admin'&&u.role==='admin'))&&(!query||String(u.username||'').toLowerCase().includes(query)||String(u.email||'').toLowerCase().includes(query))),active=people.filter(u=>u.active).length,blocked=people.filter(u=>!u.active&&u.access_status!=='pending').length;
@@ -2231,7 +2300,7 @@ function adminPage(){
   '<div class="member-identity"><strong>'+esc(u.username||u.email||'Mitglied')+'</strong>'+
   '<small>'+esc(u.email||'')+'</small></div>'+status(u)+'</div><span class="ll-member-expand">Details ansehen ⌄</span></summary>'+
   '<div class="member-management"><div class="ll-admin-user-progress-action"><button type="button" class="btn small ll-progress-open" data-view-progress="'+esc(u.id)+'">◉ Kurs- & Lektionsfortschritt ansehen →</button></div><div><label class="form-label">Mitgliedschaft</label>'+
-   (owner?'<span class="member-admin-tier">Administrator · Vollzugriff</span>':
+   (owner?'<span class="member-admin-tier">Administrator · eigener Tarif separat verwaltbar</span>':
    '<select class="select" data-admin-tier="'+esc(u.id)+'" aria-label="Mitgliedschaft ändern für '+esc(u.username||u.email||'Mitglied')+'">'+
    '<option value="free" '+(tier==='free'?'selected':'')+'>Free · 5/Tag</option>'+
    '<option value="pro" '+(tier==='pro'?'selected':'')+'>Plus · 10/Tag</option>'+
@@ -2250,15 +2319,16 @@ function adminPage(){
    (u.active?'Zugriff sperren':'Zugriff erlauben')+'</button>'+
    '<button class="btn small danger" data-delete-user="'+esc(u.id)+'" '+(owner?'disabled':'')+'>Löschen</button></div>'+(s.isOwner&&!u.is_owner?'<div class="admin-role-select"><label class="form-label">Teamrolle</label><select class="select" data-admin-role="'+esc(u.id)+'" aria-label="Teamrolle von '+esc(u.username||'')+'"><option value="student" '+(u.role==='student'?'selected':'')+'>Mitglied</option><option value="admin" '+(u.role==='admin'?'selected':'')+'>Administrator · Team verwalten</option></select></div>':'')+'</div></details>';
  }).join('');
- const tab=['members','support','vouchers','registration'].includes(parseRoute().id)?parseRoute().id:'overview';
+ const tab=['members','support','vouchers','registration','self'].includes(parseRoute().id)?parseRoute().id:'overview';
  const tabs='<nav class="ll-admin-tabs" aria-label="Administration">'+[
-   ['overview','Übersicht'],['support','Support & Chat'],['members','Mitglieder'],['registration','Registrierung'],['vouchers','Gutscheine']
+   ['overview','Übersicht'],['self','Mein Admin-Konto'],['support','Support & Chat'],['members','Mitglieder'],['registration','Registrierung'],['vouchers','Gutscheine']
  ].map(([key,label])=>'<button type="button" class="btn small '+(key===tab?'primary':'')+'" data-go="'+(key==='overview'?'admin':'admin/'+key)+'" aria-current="'+(key===tab?'page':'false')+'">'+label+'</button>').join('')+'</nav>';
  const summary='<section class="admin-overview"><article><span>◷</span><strong>'+pending.length+'</strong><small>Registrierungen</small></article>'+
  '<article><span>✉</span><strong>'+(s.service?.admin||[]).filter(t=>t.status==='open').length+'</strong><small>Offene Tickets</small></article>'+
  '<article><span>✓</span><strong>'+active+'</strong><small>Aktive Konten</small></article>'+
  '<article><span>✦</span><strong>'+people.filter(u=>u.role==='admin').length+'</strong><small>Administratoren</small></article></section>';
  const hub='<div class="ll-admin-hub">'+[
+  ['admin/self','✦','Mein Admin-Konto','XP, Daily Streak, eigenes Abo und Änderungsverlauf'],
   ['admin/support','✉','Support & Nachrichten','Alle Anfragen und Gespräche mit Mitgliedern'],
   ['admin/members','◉','Mitgliederverwaltung','Nutzer, Tarife, Rollen und Anträge'],
   ['admin/registration','◎','Registrierungsmodus','Frei anmelden oder Bewerbungspflicht'],
@@ -2267,11 +2337,11 @@ function adminPage(){
   '<button type="button" class="ll-admin-hub-card" data-go="'+path+'"><span>'+icon+'</span><strong>'+title+'</strong><small>'+subtitle+'</small><b>Öffnen →</b></button>'
  ).join('')+'</div>';
  return pageHeading('ADMINISTRATION','Dein <span class="gradient">Control Center.</span>',
- 'Support, Mitglieder und Gutscheine übersichtlich getrennt verwalten.')+
+ 'Support, Mitglieder, Shop und deine eigenen XP, Daily Streak und Mitgliedschaft übersichtlich verwalten.')+
  neonBanner('Admin-Dashboard','Hier steuerst du echte Registrierungen, Mitglieder, Tarife und Supportanfragen – ohne erfundene Statistiken.','settings')+tabs+
- (tab==='overview'?atelierAdminPulse(people,pending)+summary+hub:tab==='support'?supportAdminSection():tab==='registration'?adminRegistrationSection(pending.length):tab==='members'?requests+
+ (tab==='overview'?atelierAdminPulse(people,pending)+summary+hub:tab==='self'?adminSelfSection():tab==='support'?supportAdminSection():tab==='registration'?adminRegistrationSection(pending.length):tab==='members'?requests+
  '<section class="section"><div class="section-heading"><div><span class="eyebrow">[ 02 ] MITGLIEDER</span>'+
- '<h2>Deine Teamkonten</h2><p>Tarifänderungen werden über den geschützten Administrationsserver gespeichert. Administratoren haben immer Vollzugriff.</p></div></div>'+
+ '<h2>Deine Teamkonten</h2><p>Tarifänderungen werden sicher gespeichert. Den persönlichen Admin-Tarif kannst du unter „Mein Admin-Konto“ ändern.</p></div></div>'+
  '<div class="admin-tools"><input class="input" id="admin-search" type="search" placeholder="Benutzername oder E-Mail suchen …" value="'+esc(s.adminSearch)+'"><div class="admin-filter" role="group" aria-label="Konten filtern">'+[['all','Alle'],['active','Aktiv'],['blocked','Gesperrt'],['admin','Admins']].map(([value,label])=>'<button type="button" class="'+(s.adminFilter===value?'active':'')+'" data-admin-filter="'+value+'">'+label+'</button>').join('')+'</div></div>'+
  '<div id="admin-learner-progress">'+(s.adminProgressBusy?'<section class="ll-admin-progress-panel"><div class="spinner"></div><p>Lernfortschritt wird geschützt geladen …</p></section>':adminStudentProgressPanel())+'</div>'+
  '<div class="member-list">'+(cards||'<div class="empty">Keine passenden Mitglieder gefunden.</div>')+'</div>'+
