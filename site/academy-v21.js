@@ -1494,44 +1494,61 @@ function membershipHelp(){
  '<button class="btn" data-go="plans">Mitgliedschaften vergleichen →</button></div></section>';
 }
 
+
 function plansPage(){
- const own=s.tier,allCourseCount=s.courses.length||52;
- function tile(tier,name,cap,stations,price,desc,benefits){
-  const current=own===tier,included=(tier==='free'&&own!=='free')||(tier==='pro'&&own==='ultimate');
+ const own=s.tier,months=s.shopMonths,allCourseCount=s.courses.length||52;
+ const selector='<section class="panel ll-term-picker"><h2>Laufzeit wählen</h2><p>Bei 12 Monaten sparst du automatisch 5 %. Zusätzliche Shopaktionen können hinzukommen.</p>'+
+ '<div class="ll-term-buttons" role="group" aria-label="Laufzeit">'+
+ [[1,'1 Monat'],[3,'3 Monate'],[12,'12 Monate · −5 %']].map(([n,label])=>
+ '<button type="button" class="btn small '+(months===n?'primary':'')+'" data-plan-months="'+n+'" aria-pressed="'+(months===n)+'">'+label+'</button>').join('')+'</div></section>';
+ function tile(tier,name,cap,stations,desc,benefits){
+  const rank={free:0,pro:1,ultimate:2,max:3},current=own===tier,included=rank[own]>rank[tier];
+  const offer=tier==='free'?null:offerFor(tier,months);
+  const discounted=offer&&offer.total_cents<offer.base_cents;
+  const badges=offer?'<div class="ll-price-discounts">'+
+   (months===12?'<span class="sale-badge">−5 % Jahresrabatt</span>':'')+
+   (Number(offer.promo_percent)>0?'<span class="sale-badge">−'+Number(offer.promo_percent)+' % Shopaktion</span>':'')+'</div>':'';
   return '<article class="membership-card tier-'+tier+(current?' current':'')+'">'+
-   '<div class="membership-top"><div><span class="eyebrow">'+(tier==='free'?'KOSTENLOS':tier==='pro'?'MEHR LERNEN':'VOLLER ZUGRIFF')+'</span><h2>'+name+'</h2></div>'+
-   '<span class="membership-price">'+(tier!=='free'&&s.shopDiscount>0?'<s class="sale-old">'+price+'</s><strong class="sale-new">'+euro(salePrice(tier==='pro'?199:599))+'</strong><b class="sale-badge">−'+s.shopDiscount+' % Rabatt</b>':price)+'<small>/Monat</small>'+(tier==='free'||s.service?.beta_open===false?'':'<em class="membership-beta">BETA · nur auf Anfrage</em>')+'</span></div>'+
+   '<div class="membership-top"><div><span class="eyebrow">'+(tier==='free'?'KOSTENLOS':tier==='max'?'VOLLER ZUGRIFF':'MEHR LERNEN')+'</span><h2>'+name+'</h2></div>'+
+   '<span class="membership-price">'+(offer?
+    (discounted?'<s class="sale-old">'+euro(offer.base_cents)+'</s>':'')+
+    '<strong class="sale-new">'+euro(offer.total_cents)+'</strong>'+
+    '<small>Gesamtpreis für '+months+' '+(months===1?'Monat':'Monate')+'</small>':
+    '<strong>0,00 €</strong><small>dauerhaft</small>')+badges+'</span></div>'+
    '<div class="membership-limits"><span>▦ '+cap+' Kurse</span><span>◷ '+stations+'</span></div>'+
    '<p class="membership-desc">'+desc+'</p>'+
    '<ul class="membership-benefits">'+benefits.map(x=>'<li>'+x+'</li>').join('')+'</ul>'+
    (current?'<div class="membership-own">✓ Dein aktueller Tarif</div>':
-   included?'<div class="membership-included">✓ In deinem Tarif enthalten</div>':
-   (s.service?.beta_open===false?'<div class="membership-included">Aktuell keine Anfragen</div>':'<button class="btn primary block" data-go="support">'+name+' anfragen →</button>'))+
-   '</article>';
+    included?'<div class="membership-included">✓ In deinem Tarif enthalten</div>':
+    tier==='free'?'<div class="membership-included">Kostenlos nutzbar</div>':
+    s.service?.beta_open===false?'<div class="membership-included">Aktuell keine Anfragen</div>':
+    '<button type="button" class="btn primary block" data-plan-request="'+tier+'">'+name+' für '+months+' '+(months===1?'Monat':'Monate')+' anfragen →</button>')+'</article>';
  }
  const quote=s.discount;
  return pageHeading('MITGLIEDSCHAFT','Dein <span class="gradient">Lernzugang.</span>',
- 'Wähle deinen Lernumfang. Free: 2 Prüfungen pro Tag, Plus: 4 Prüfungen und Script, Ultimate: alles unbegrenzt.')+
- neonBanner('Dein Upgrade für mehr Lernfreiheit','Free, Plus und Ultimate – vergleiche die bestehenden Tarife und löse vorhandene Gutscheine ein.','xp')+
- dailyStrip()+
- (s.shopDiscount>0?'<div class="shop-sale-banner">✦ '+s.shopDiscount+' % Shoprabatt auf Plus und Ultimate · Der reduzierte Preis steht direkt beim Tarif.</div>':'')+
+  'Free zum Einstieg, Plus mit doppelten Limits, Ultimate mit dreifachen Lernlimits und Max ohne Begrenzung.')+
+ neonBanner('Dein Upgrade für mehr Lernfreiheit','Vergleiche Kurse, Tageslimits und Prüfungen. Der Preis zeigt immer die gesamte ausgewählte Laufzeit.','xp')+
+ dailyStrip()+selector+
+ ((s.shopOffers||[]).some(x=>Number(x.promo_percent)>0)||s.shopDiscount>0?
+ '<div class="shop-sale-banner">✦ Shopaktionen gelten je Tarif und Laufzeit. Der reduzierte Preis steht direkt beim Angebot.</div>':'')+
  '<div class="membership-stack">'+
- tile('free','Free','10','5 pro Tag','0,00 €','Die wichtigsten Grundlagen für deinen Anfang.',[
-  '10 Grundlagenkurse und 5 neue Lektionen pro Tag','2 Kursprüfungen pro Tag','Script-Werkstatt und Referenzen gesperrt'])+
- tile('pro','Plus','25','10 pro Tag','1,99 €','Mehr Themen und mehr Übungszeit.',[
-  '25 Lernpfade, 10 Lektionen pro Tag','4 Prüfungen pro Tag','Script-Werkstatt freigeschaltet · Referenzen gesperrt'])+
- tile('ultimate','Ultimate','Alle '+allCourseCount,'Unbegrenzt','5,99 €','Der gesamte Kurskatalog.',[
-  'Alle Kurse, Lektionen und Prüfungen unbegrenzt','Script-Werkstatt + vollständige Code-Referenzen','Sämtliche Lernfunktionen ohne Tageslimit'])+
- '</div>'+
+ tile('free','Free','10','5 pro Tag','Der kostenlose Einstieg.',[
+  '10 Kurse und 5 neue Lernstationen täglich','2 Prüfungen pro Tag','Grundlegende Lernfunktionen'])+
+ tile('pro','Plus','20','10 pro Tag','Doppelter Lernumfang von Free.',[
+  '20 Kurse und 10 neue Lernstationen täglich','4 Prüfungen pro Tag','Script-Werkstatt freigeschaltet'])+
+ tile('ultimate','Ultimate','30','15 pro Tag','Dreifacher Lernumfang von Free und doppelt so viele Prüfungen wie Plus.',[
+  '30 Kurse und 15 neue Lernstationen täglich','8 Prüfungen pro Tag','Script-Werkstatt und Premium-Lektionen'])+
+ tile('max','Max','Alle '+allCourseCount,'Unbegrenzt','Alle Lernfunktionen ohne Kontingente.',[
+  'Alle Kurse und neue Lernstationen ohne Tageslimit','Prüfungen unbegrenzt','Vollständige Code-Referenzen, Script-Werkstatt und alle Premium-Lektionen'])+'</div>'+
  '<section class="voucher-panel"><div class="voucher-head"><div><span class="eyebrow">[ % ] GUTSCHEIN</span><h2>Code einlösen</h2></div><span class="voucher-icon">◇</span></div>'+
- '<p>Rabatt erhalten oder eine kostenlose Plus-/Pro-Mitgliedschaft freischalten.</p>'+
+ '<p>Rabatt erhalten oder eine Plus-, Ultimate- oder Max-Mitgliedschaft mit einem Gutschein freischalten.</p>'+
  '<form data-form="redeem-voucher" class="voucher-form"><label class="form-label" for="voucher-code">Dein Gutscheincode</label>'+
  '<div class="voucher-input-row"><input class="input" id="voucher-code" name="code" autocapitalize="characters" autocomplete="off" required maxlength="64" placeholder="LL-XXXXXXXXXXXX">'+
  '<button type="submit" class="btn primary">Einlösen →</button></div></form>'+
- (quote?'<div class="voucher-quote">✓ Dein reservierter Rabatt: <strong>'+Number(quote.percent)+' % auf '+(quote.tier==='all'?'Plus und Ultimate':quote.tier==='pro'?'Plus':'Ultimate')+'</strong>'+
- '<div>'+(quote.tier==='all'?'Plus '+euro(Math.round(199*(100-Number(quote.percent))/100))+' · Ultimate '+euro(Math.round(599*(100-Number(quote.percent))/100)):'<s>'+euro(quote.original_cents)+'</s> <strong>'+euro(quote.final_cents)+'</strong>')+' / Monat bei bestätigter Freischaltung</div>'+
- '<small>Für Zahlung und Aktivierung den LiveryLab-Support kontaktieren.</small></div>':'')+
- '<small>Rabattcodes sind Angebote, kein automatischer Kauf. Kostenpflichtige Mitgliedschaften werden derzeit vom Team nach Bestätigung aktiviert.</small></section>'+
+ (quote?'<div class="voucher-quote">✓ Dein reservierter Rabatt: <strong>'+Number(quote.percent)+' % auf '+(quote.tier==='all'?'Plus, Ultimate und Max':plans[quote.tier]||quote.tier)+'</strong>'+
+ '<div>1 Monat als Orientierung: <s>'+euro(quote.original_cents||0)+'</s> <strong>'+euro(quote.final_cents||0)+'</strong></div>'+
+ '<small>Der endgültige Preis wird beim Team bestätigt. Keine automatische Zahlung.</small></div>':'')+
+ '<small>Preise sind unverbindliche Angebote bis zur Bestätigung. Die Mitgliedschaft wird vom Team manuell aktiviert. Keine automatische Zahlung oder Verlängerung.</small></section>'+
  membershipHelp();
 }
 function examsPage(){
