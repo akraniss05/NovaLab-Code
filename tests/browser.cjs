@@ -23,7 +23,7 @@ vm.runInContext(fs.readFileSync(path.join(root,'site/academy-difficulty.js'),'ut
 vm.runInContext(rewritten,context,{filename:'academy.js'});
 const app=context.window.__views,s=app.s;
 s.ready=true;s.profile={display_name:'Developer',username:'developer',role:'student',active:true};s.referenceData=context.window.LL_REFERENCE_DATA;s.social={profile:{username:'developer',display_name:'Developer',bio:'Lerne FiveM und Python',avatar_style:'violet',banner_style:'nebula',name_style:'gradient',title:'Developer',lessons:1,awards:0},friends:[],requests:[],titles:['Developer']};
-s.user={email:'developer@example.com'};s.tier='ultimate';
+s.user={email:'developer@example.com'};s.tier='max';
 s.courses=[{id:'fivem',name:'Lua für FiveM – bis zum eigenen Script',category:'FiveM',level:'beginner'}];
 const titles=['Variablen, Typen & print','Bedingungen & Schleifen','Funktionen','Tables: Listen & Dictionaries','Event-Grundlagen','fxmanifest und Resource','Client, Server & Events','Threads & Performance','Natives und Blips','Commands & ACE','Server-Logik','Sicherheit','Debugging'];
 s.lessons=Array.from({length:13},(_,i)=>({id:'fivem-'+String(i+1).padStart(2,'0'),course_id:'fivem',chapter:i<5?'01 · Lua-Grundlagen':i<10?'02 · FiveM-Scripting':'03 · Fortgeschritten',position:i+1,title:titles[i],summary:'Jede Lektion erklärt ein Konzept und zeigt einen praktischen Anwendungsfall.',minutes:12,required_plan:'free'}));

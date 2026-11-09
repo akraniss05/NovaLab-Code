@@ -614,3 +614,26 @@ body:not(.is-auth) .topbar > .top-right{position:relative;z-index:4}
 @media(max-width:850px){.ll-admin-course-progress-list{grid-template-columns:1fr}.ll-admin-progress-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.ll-admin-progress-controls{grid-template-columns:1fr 160px}}
 @media(max-width:620px){.ll-registration-admin,.ll-admin-progress-panel{padding:15px;border-radius:16px}.ll-registration-mode-grid{grid-template-columns:1fr}.ll-registration-mode{min-height:176px;padding:16px}.ll-admin-progress-head{align-items:flex-start}.ll-admin-progress-controls{grid-template-columns:1fr}.ll-admin-course-progress-list{max-height:530px}.ll-admin-progress-metrics>div{padding:11px}.ll-progress-open{width:100%;white-space:normal}}
 @media(prefers-reduced-motion:reduce){.ll-registration-mode{transition:none}.ll-registration-mode:hover{transform:none}}
+
+/* v71: four membership tiers, term pricing, accessible discount forms. */
+.ll-term-picker{margin:16px 0 20px;padding:20px;border:1px solid #7253a3;border-radius:17px;background:linear-gradient(130deg,#21132f,#101324)}
+.ll-term-picker h2{margin:0 0 7px;font-size:19px}
+.ll-term-picker p{color:var(--muted);font-size:13px;margin:0 0 14px}
+.ll-term-buttons{display:flex;flex-wrap:wrap;gap:9px}
+.ll-term-buttons button{flex:1 1 115px;min-height:43px}
+.membership-stack .tier-max{border-color:#9d7cfc;box-shadow:0 0 0 1px #8e6cea44,0 15px 40px #110d2666}
+.membership-stack .tier-max .membership-price{color:#cbb1ff}
+.membership-price .sale-old{display:block;text-decoration:line-through;color:#aaa0b7;font-size:14px;font-weight:500}
+.membership-price .sale-new{display:block;font-size:clamp(23px,3.7vw,32px);font-weight:800;line-height:1.2}
+.membership-price>small{display:block;font-size:11px;font-weight:500;color:#c3b1d7}
+.ll-price-discounts{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;margin-top:6px}
+.ll-price-discounts .sale-badge{font-size:10px;padding:3px 5px;white-space:normal}
+.ll-offer-admin-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;margin-top:15px}
+.ll-offer-admin-card{min-width:0;display:flex;flex-direction:column;gap:9px;border:1px solid #55406e;background:#160f26;border-radius:14px;padding:15px}
+.ll-offer-admin-card strong{font-size:14px}
+.ll-offer-admin-card label{display:block;font-size:12px}
+.ll-offer-admin-card input[type=number]{width:100%;margin-top:5px}
+.ll-offer-admin-card small{color:#c2d7c8}
+.ll-offer-admin-card button{margin-top:auto}
+@media(max-width:900px){.ll-offer-admin-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.ll-offer-admin-grid{grid-template-columns:1fr}.ll-term-picker{padding:15px}.ll-term-buttons button{flex:1 1 100%}.membership-price .sale-new{font-size:24px}}

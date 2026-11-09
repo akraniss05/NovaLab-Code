@@ -13,7 +13,7 @@ vm.runInContext(src.replace(/\ninit\(\);\n\}\)\(\);\s*$/,expose),context,{filena
 const a=context.window.__atelier,s=a.s;
 s.ready=true;s.user={id:'demo',email:'demo@example.com'};
 s.profile={display_name:'Demo',username:'demo',role:'student',active:true};
-s.tier='ultimate';
+s.tier='max';
 s.courses=[{id:'lua',name:'Lua',category:'Sprachen',level:'beginner'},{id:'python',name:'Python',category:'Sprachen',level:'beginner'}];
 s.lessons=[{id:'lua-01',course_id:'lua',title:'Dein erster Lua-Befehl',summary:'Syntax',position:1,chapter:'Einstieg',required_plan:'free',minutes:15},
 {id:'python-01',course_id:'python',title:'Dein erster Python-Befehl',summary:'Syntax',position:1,chapter:'Einstieg',required_plan:'free',minutes:15}];
