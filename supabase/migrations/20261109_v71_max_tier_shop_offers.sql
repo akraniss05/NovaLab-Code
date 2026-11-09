@@ -265,3 +265,100 @@ begin
    'used_today',used_count,'remaining_today',case when cap<0 then -1 else greatest(0,cap-used_count) end,
    'today',d,'expires_at',expiry,'discount',result);
 end $function$;
+
+-- Other old tier gates must recognize Max or require Max only for full access.
+CREATE OR REPLACE FUNCTION academy_private.consume_tool(p_feature text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+declare who uuid;level text;
+begin
+ who:=auth.uid();
+ if who is null or not academy_private.is_active() then raise exception 'Account not active';end if;
+ if p_feature not in ('music_wav','music_multitrack','music_advanced_fx','music_midi','code_run','code_export','code_advanced','studio3d_export','studio3d_advanced','video_export','video_advanced') then raise exception 'Unknown feature';end if;
+ select coalesce((select tier from public.academy_plans where user_id=who),'free') into level;
+ return jsonb_build_object('allowed',level='max','tier',level,'feature',p_feature,'remaining',case when level='max' then -1 else 0 end,'limit',case when level='max' then -1 else 0 end,'ultimate_only',level<>'max');
+end $function$;
+
+CREATE OR REPLACE FUNCTION academy_private.project_examples(p_lessons text[])
+ RETURNS jsonb
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+ select case when academy_private.current_tier() not in ('pro','ultimate','max') or not academy_private.is_active() then '[]'::jsonb
+ else coalesce(jsonb_agg(jsonb_build_object('lesson_id',li.id,'example',c.payload->>'example') order by v.ord),'[]'::jsonb) end
+ from unnest(coalesce(p_lessons,array[]::text[])) with ordinality as v(id,ord)
+ join public.ll_lesson_index li on li.id=v.id
+ join public.ll_lesson_content c on c.lesson_id=li.id
+ where auth.uid() is not null and academy_private.lesson_entitled(li.id)
+ and exists(select 1 from academy_private.academy_course_visits vis where vis.user_id=auth.uid() and vis.lesson_id=li.id)
+$function$;
+
+CREATE OR REPLACE FUNCTION academy_private.voucher_create(p_kind text, p_tier text, p_percent integer, p_membership_days integer, p_max_uses integer, p_valid_days integer)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+declare new_code text;
+begin
+ if not academy_private.is_admin() then raise exception 'Only admins can create vouchers';end if;
+ if p_kind not in ('gift','discount') or p_tier not in ('pro','ultimate','max') then raise exception 'Ungültiger Gutscheintyp';end if;
+ if p_max_uses not between 1 and 1000 or p_valid_days not between 1 and 365 then raise exception 'Ungültige Gültigkeit oder Nutzungszahl';end if;
+ if p_kind='gift' and (p_membership_days is null or p_membership_days not between 1 and 365) then raise exception 'Eine kostenlose Mitgliedschaft braucht 1 bis 365 Tage Laufzeit';end if;
+ if p_kind='discount' and (p_percent is null or p_percent not between 1 and 90) then raise exception 'Rabatt muss zwischen 1 und 90 Prozent liegen';end if;
+ new_code:='LL-'||upper(encode(extensions.gen_random_bytes(9),'hex'));
+ insert into academy_private.academy_vouchers(code,kind,tier,discount_percent,membership_days,max_uses,expires_at,created_by)
+ values(new_code,p_kind,p_tier,case when p_kind='discount' then p_percent else null end,
+  case when p_kind='gift' then p_membership_days else null end,p_max_uses,now()+make_interval(days=>p_valid_days),auth.uid());
+ return jsonb_build_object('ok',true,'code',new_code,'kind',p_kind,'tier',p_tier,'max_uses',p_max_uses);
+end
+$function$;
+
+CREATE OR REPLACE FUNCTION academy_private.voucher_create_custom(p_kind text, p_tier text, p_percent integer, p_membership_days integer, p_max_uses integer, p_valid_days integer, p_custom_code text DEFAULT NULL::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+declare code_text text; created integer;
+begin
+ if not academy_private.is_admin() then raise exception 'Nur Administratoren können Gutscheine erstellen';end if;
+ if p_custom_code is null or btrim(p_custom_code)='' then
+   return academy_private.voucher_create(p_kind,p_tier,p_percent,p_membership_days,p_max_uses,p_valid_days);
+ end if;
+ code_text:=upper(btrim(p_custom_code));
+ if length(code_text) not between 3 and 64 or code_text !~ '^[A-Z0-9][A-Z0-9-]*$' then
+  return jsonb_build_object('ok',false,'error','3 bis 64 Buchstaben, Zahlen oder Bindestriche, ohne Leerzeichen.');
+ end if;
+ if p_kind not in ('gift','discount') or p_tier not in ('pro','ultimate','max')
+ then raise exception 'Ungültiger Gutscheintyp oder Tarif';end if;
+ if p_max_uses not between 1 and 1000 or p_valid_days not between 1 and 365
+ then raise exception 'Ungültige Nutzung oder Gültigkeit';end if;
+ if p_kind='gift' and (p_membership_days is null or p_membership_days not between 1 and 365)
+ then raise exception 'Eine Gratis-Mitgliedschaft benötigt 1 bis 365 Tage';end if;
+ if p_kind='discount' and (p_percent is null or p_percent not between 1 and 90)
+ then raise exception 'Rabatt muss zwischen 1 und 90 Prozent liegen';end if;
+ insert into academy_private.academy_vouchers(code,kind,tier,discount_percent,membership_days,max_uses,expires_at,created_by)
+ values(code_text,p_kind,p_tier,case when p_kind='discount' then p_percent else null end,
+ case when p_kind='gift' then p_membership_days else null end,
+ p_max_uses,now()+make_interval(days=>p_valid_days),auth.uid())
+ on conflict(code) do nothing;
+ get diagnostics created=row_count;
+ if created<>1 then return jsonb_build_object('ok',false,'error','Dieser Gutscheincode ist schon vergeben.');end if;
+ return jsonb_build_object('ok',true,'code',code_text,'kind',p_kind,'tier',p_tier,'max_uses',p_max_uses);
+end $function$;
+
+CREATE OR REPLACE FUNCTION public.academy_reference_get()
+ RETURNS jsonb
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+ select case when academy_private.is_active() and academy_private.current_tier()='max'
+ then coalesce(jsonb_object_agg(lang,payload),'{}'::jsonb)
+ else '{}'::jsonb end from academy_private.academy_reference_library
+$function$;
