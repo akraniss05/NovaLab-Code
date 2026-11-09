@@ -1,5 +1,5 @@
-/* LiveryLab Academy v13 — focused learning, memberships and vouchers.
- * Made with 💙 from NyxAtheris (LiveryLab Studios)
+/* NovaLab Academy v13 — focused learning, memberships and vouchers.
+ * Made with 💙 from NyxAtheris (NovaLab Academy)
  * The footer attribution remains visible; open-source code itself cannot be made tamper-proof.
  * No browser-side administrator secrets. Supabase Auth + RLS enforce access server-side.
  */
@@ -85,7 +85,7 @@ function frame(){
  const route=parseRoute().page;
  if(!authenticated){sidebar.innerHTML='';bottom.innerHTML='';}
  else{
-  sidebar.innerHTML='<div class="sidebar-logo"><img class="ll-brand-symbol" src="./liverylab-symbol.svg" alt=""><span>LiveryLab<br><span class="gradient">Academy</span></span></div>'+
+  sidebar.innerHTML='<div class="sidebar-logo"><img class="ll-brand-symbol" src="./novalab-logo.webp" alt=""><span>NovaLab<br><span class="gradient">Academy</span></span></div>'+
   '<div class="side-label">Navigation</div>'+navHTML(route)+
   '<div class="side-bottom"><span class="eyebrow">DEIN PROFIL</span><strong>'+
   esc(s.profile.display_name||s.profile.username||'Developer')+'</strong>'+
@@ -104,13 +104,13 @@ function frame(){
  }
  if(st){st.innerHTML=llIcon('fire')+' '+Number(s.loginStreak?.current||0)+' Tage';st.classList.toggle('can-claim',!!s.loginStreak?.claimable);}
  const mark=document.querySelector('.topbar .brand-mark');
- if(mark&&mark.querySelector&&!mark.querySelector('.ll-brand-symbol'))mark.innerHTML='<img class="ll-brand-symbol" src="./liverylab-symbol.svg" alt="">';
+ if(mark&&mark.querySelector&&!mark.querySelector('.ll-brand-symbol'))mark.innerHTML='<img class="ll-brand-symbol" src="./novalab-logo.webp" alt="">';
  const avatar=$('.avatar-btn');if(avatar)avatar.textContent=String(s.profile?.display_name||s.profile?.username||'N').slice(0,1).toUpperCase();
 }
 
 function login(){
  s.ready=false;frame();
- const brand='<img class="ll-login-banner" src="./liverylab-banner.webp" alt="Livery-Lab Premium FiveM Systems Banner"><div class="brandmark"><img class="ll-brand-symbol" src="./liverylab-symbol.svg" alt=""><span>LiveryLab <span class="gradient">Academy</span></span></div>';
+ const brand='<img class="ll-login-banner" src="./novalab-banner.webp" alt="NovaLab Premium FiveM Systems Banner"><div class="brandmark"><img class="ll-brand-symbol" src="./novalab-logo.webp" alt=""><span>NovaLab <span class="gradient">Academy</span></span></div>';
  if(s.authScreen==='register'){
  content.innerHTML='<div class="auth-layout"><section class="auth-card">'+brand+
  '<span class="eyebrow">[ + ] BEWERBUNG</span><h1>Dein Weg in die <span class="gradient">Academy.</span></h1>'+
@@ -126,7 +126,7 @@ function login(){
  '<button class="btn primary block" type="submit">Registrierungsanfrage senden →</button></form>'+
  '<p class="micro">Dein Passwort wird sicher über Supabase Auth verarbeitet. Deine Anmeldung wird vom Team geprüft; ohne Genehmigung erhältst du keinen Zugriff.</p>'+
  '<button type="button" class="btn ghost block" data-action="show-login">← Bereits registriert? Anmelden</button>'+
- '<p class="smallprint" style="text-align:center;margin-top:18px">Made with 💙 from NyxAtheris (LiveryLab Studios)</p></section></div>';return;
+ '<p class="smallprint" style="text-align:center;margin-top:18px">Made with 💙 from NyxAtheris (NovaLab Academy)</p></section></div>';return;
  }
  if(s.authScreen==='sent'){
  content.innerHTML='<div class="auth-layout"><section class="auth-card auth-success">'+brand+
@@ -145,9 +145,9 @@ function login(){
  '<input class="input" type="password" id="password" name="password" autocomplete="current-password" required placeholder="Dein Passwort"></div>'+
  '<button class="btn primary block" type="submit">Anmelden →</button></form>'+
  '<div class="auth-secondary"><span>Noch kein Konto?</span><button type="button" class="btn" data-action="show-register">Jetzt registrieren →</button></div>'+
- '<p class="micro">LiveryLab ist aktuell eine betreute Test-Academy. Dein Konto muss freigegeben werden. Für Plus/Pro: Schreib NyxAtheris per Discord-DM oder eröffne ein Ticket mit dem Grund und erwähne @nyxatheris.</p>'+
+ '<p class="micro">NovaLab ist aktuell eine betreute Test-Academy. Dein Konto muss freigegeben werden. Für Plus/Pro: Schreib NyxAtheris per Discord-DM oder eröffne ein Ticket mit dem Grund und erwähne @nyxatheris.</p>'+
  '<a class="btn discord block discord-block" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord beitreten</a>'+
- '<p class="smallprint" style="text-align:center;margin-top:19px">Made with 💙 from NyxAtheris (LiveryLab Studios)</p></section></div>';
+ '<p class="smallprint" style="text-align:center;margin-top:19px">Made with 💙 from NyxAtheris (NovaLab Academy)</p></section></div>';
 }
 async function registerAccount(fd){
  const email=String(fd.get('email')||'').trim().toLowerCase();
@@ -468,7 +468,7 @@ function homePage(){
  const streak=Number(s.loginStreak?.current||0),ready=!!s.loginStreak?.claimable;
  const picks=['coding-basics','lua','python','javascript'].map(courseOf).filter(Boolean);
  return '<div class="ll-home-dashboard">'+
- '<section class="ll-home-brand-banner"><img src="./liverylab-banner.webp" alt="Livery-Lab – Premium FiveM Systems, violette Skyline" loading="eager" fetchpriority="high"></section>'+
+ '<section class="ll-home-brand-banner"><img src="./novalab-banner.webp" alt="NovaLab – Premium FiveM Systems, violette Skyline" loading="eager" fetchpriority="high"></section>'+
  '<div class="ll-home-greeting"><div><span class="eyebrow">WILLKOMMEN ZURÜCK, '+esc(nickname.toUpperCase())+'</span>'+
  '<h1>Deine <span class="gradient">Developer Academy.</span></h1><p>Lerne programmieren, entwickle Projekte und erreiche deine nächsten Ziele.</p></div>'+
  '<div class="ll-home-level"><div class="ll-level-top">'+llIcon('xp')+'<span>Level '+level+'</span></div>'+
@@ -677,8 +677,8 @@ function dailyStrip(){
 }
 
 function membershipHelp(){
- return '<section class="membership-help-callout"><div class="membership-help-spark">✦</div><span class="eyebrow">LIVERYLAB STUDIOS · BETA</span><h2>Plus oder Pro testen?</h2>'+
- '<p>Schreib <strong>NyxAtheris</strong> eine Discord-DM oder eröffne ein <strong>Ticket</strong> auf dem LiveryLab-Server. Erwähne dort <strong>@nyxatheris</strong> und teile mit, warum du Zugang möchtest. Wir schalten Testmitglieder manuell frei.</p>'+
+ return '<section class="membership-help-callout"><div class="membership-help-spark">✦</div><span class="eyebrow">NOVALAB ACADEMY · BETA</span><h2>Plus oder Pro testen?</h2>'+
+ '<p>Schreib <strong>NyxAtheris</strong> eine Discord-DM oder eröffne ein <strong>Ticket</strong> auf dem NovaLab-Discord-Server. Erwähne dort <strong>@nyxatheris</strong> und teile mit, warum du Zugang möchtest. Wir schalten Testmitglieder manuell frei.</p>'+
  '<div class="membership-help-actions"><a class="btn primary" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Ticket auf Discord eröffnen ↗</a>'+
  '<button class="btn" data-go="plans">Mitgliedschaften vergleichen →</button></div></section>';
 }
@@ -717,7 +717,7 @@ function plansPage(){
  '<button type="submit" class="btn primary">Einlösen →</button></div></form>'+
  (quote?'<div class="voucher-quote">✓ Dein reservierter Rabatt: <strong>'+Number(quote.percent)+' % auf '+(quote.tier==='pro'?'Plus':'Pro')+'</strong>'+
  '<div><s>'+euro(quote.original_cents)+'</s> <strong>'+euro(quote.final_cents)+'</strong> / Monat bei bestätigter Freischaltung</div>'+
- '<small>Für Zahlung und Aktivierung den LiveryLab-Support kontaktieren.</small></div>':'')+
+ '<small>Für Zahlung und Aktivierung den NovaLab-Support kontaktieren.</small></div>':'')+
  '<small>Rabattcodes sind Angebote, kein automatischer Kauf. Kostenpflichtige Mitgliedschaften werden derzeit vom Team nach Bestätigung aktiviert.</small></section>'+
  membershipHelp();
 }
@@ -914,7 +914,7 @@ function socialBanner(card,name,editable){
  return '<div class="social-banner banner-'+esc(style)+'">'+(banner?'<img class="social-banner-photo" src="'+safeLink(banner)+'" alt="" loading="lazy">':'')+'<span class="banner-glints">✦ ✧ ✦</span>'+
  '<div class="social-banner-identity">'+avatarFor(card,name,'large')+
  '<div><span class="social-title">✦ '+esc(title)+'</span><h2 class="social-name name-'+esc(card?.name_style||'classic')+'">'+esc(name||'Developer')+'</h2><span class="social-handle">@'+esc(username)+'</span></div></div>'+
- '<span class="social-banner-label">LIVERYLAB STUDIOS · DEVELOPER ACADEMY</span></div>';
+ '<span class="social-banner-label">NOVALAB ACADEMY · DEVELOPER</span></div>';
 }
 function socialProfilePanel(){
  const card=s.social?.profile||{username:s.profile?.username,display_name:s.profile?.display_name},
@@ -941,7 +941,7 @@ function friendsPage(){
  const tab=['friends','requests','search'].includes(s.friendTab)?s.friendTab:'friends';
  const card=(user,actions)=>{
   const banner=esc(user.banner_style||'nebula');
-  return '<article class="friend-profile-card"><div class="friend-card-banner banner-'+banner+'"><span>✦ LIVERYLAB ACADEMY</span></div>'+
+  return '<article class="friend-profile-card"><div class="friend-card-banner banner-'+banner+'"><span>✦ NOVALAB ACADEMY</span></div>'+
   '<div class="friend-card-body"><div class="friend-card-top">'+avatarFor(user,user.display_name||user.username,'')+
   '<div class="friend-identity"><strong class="name-'+esc(user.name_style||'classic')+'">'+esc(user.display_name||user.username||'Developer')+'</strong>'+
   '<span>@'+esc(user.username||'')+'</span></div><span class="social-title">✦ '+esc(user.title||'Developer')+'</span></div>'+
@@ -976,7 +976,7 @@ function friendsPage(){
   '<div class="voucher-input-row"><input class="input" id="friend-query" name="username" pattern="[A-Za-z][A-Za-z0-9_]{2,23}" maxlength="24" placeholder="z. B. nyxatheris" required>'+
   '<button class="btn primary" type="submit">Suchen →</button></div></form><div id="friend-search-result"></div></section>';
  }
- return pageHeading('LIVERYLAB COMMUNITY','Deine Developer-<span class="gradient">Freunde.</span>',
+ return pageHeading('NOVALAB COMMUNITY','Deine Developer-<span class="gradient">Freunde.</span>',
  'Gemeinsam programmieren und Fortschritte teilen – ohne persönliche Daten anderer Mitglieder offenzulegen.')+
  '<section class="friends-overview"><div class="friends-counter"><span>♡</span><strong>'+friends.length+'</strong><small>Freunde</small></div>'+
  '<div class="friends-counter"><span>✉</span><strong>'+incoming.length+'</strong><small>Neue Anfragen</small></div>'+
@@ -1152,9 +1152,9 @@ function settingsPage(){
  '<div class="settings-row"><div class="setting-info"><span class="setting-icon">♡</span>'+
  '<span><b>Discord-Support</b><p>Schreibe NyxAtheris eine DM oder öffne ein Ticket und erwähne @nyxatheris.</p></span></div>'+
  '<a class="btn small discord" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord ↗</a></div></div></section>'+
- '<section class="section panel"><span class="eyebrow">LIVERYLAB STUDIOS</span><h3>Über die Academy</h3>'+
+ '<section class="section panel"><span class="eyebrow">NOVALAB ACADEMY</span><h3>Über die Academy</h3>'+
  '<p class="micro">Developer-Lernplattform mit Kursen, sicheren Accounts, Profilen, Freunden und Erfolgen. Version 18.</p>'+
- '<a href="./privacy.html">Datenschutzhinweise ansehen ↗</a><p class="smallprint" style="margin-top:16px">Made with 💙 from NyxAtheris (LiveryLab Studios)</p></section>';
+ '<a href="./privacy.html">Datenschutzhinweise ansehen ↗</a><p class="smallprint" style="margin-top:16px">Made with 💙 from NyxAtheris (NovaLab Academy)</p></section>';
 }
 
 function voucherAdminSection(){
