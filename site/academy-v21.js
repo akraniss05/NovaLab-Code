@@ -1516,7 +1516,7 @@ function plansPage(){
    '<span class="membership-price">'+(offer?
     (discounted?'<s class="sale-old">'+euro(offer.base_cents)+'</s>':'')+
     '<strong class="sale-new">'+euro(offer.total_cents)+'</strong>'+
-    '<small>Gesamtpreis für '+months+' '+(months===1?'Monat':'Monate')+'</small>':
+    '<small>Gesamtpreis für '+months+' '+(months===1?'Monat':'Monate')+'</small>'+ (s.service?.beta_open===false?'':'<em class="membership-beta">BETA · nur auf Anfrage</em>'):
     '<strong>0,00 €</strong><small>dauerhaft</small>')+badges+'</span></div>'+
    '<div class="membership-limits"><span>▦ '+cap+' Kurse</span><span>◷ '+stations+'</span></div>'+
    '<p class="membership-desc">'+desc+'</p>'+
