@@ -7,14 +7,14 @@
 'use strict';
 var cfg=window.LL_CONFIG||{}, $=function(q,root){return (root||document).querySelector(q);};
 var content=$('#content'), sidebar=$('#sidebar'), bottom=$('#bottom-nav'), toastNode=$('#toast');
-var api=null, s={shopDiscount:0,shopMonths:1,shopOffers:[],selectedPlan:null,selectedMonths:1,service:{beta_open:true,mine:[],admin:[]},serviceError:'',serviceLastUpdated:0,lastSupportReceipt:null,supportBusy:false,chatTicketId:null,chatMessages:[],chatBusy:false,chatLoading:false,streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],xpAwards:[],xpClaimBusy:false,progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',difficultyFilter:'all',lesson:null,choice:null,quizStep:0,quizPassed:false,sectionIndex:0,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},memberExpiry:{},adminPage:1,adminFilter:'all',adminSearch:'',registrationPolicy:{mode:'approval',loaded:false},registrationManual:true,adminLearner:null,adminProgressBusy:false,adminProgressSearch:'',adminProgressFilter:'all',catalogLimit:9,practiceChecked:false,draft:'',lessonStep:1,hintStage:0,prefs:null,projectTab:0,projectSource:'',projectLoading:false};
+var api=null, s={adminSelf:null,adminSelfBusy:false,adminSelfError:'',shopDiscount:0,shopMonths:1,shopOffers:[],selectedPlan:null,selectedMonths:1,service:{beta_open:true,mine:[],admin:[]},serviceError:'',serviceLastUpdated:0,lastSupportReceipt:null,supportBusy:false,chatTicketId:null,chatMessages:[],chatBusy:false,chatLoading:false,streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],xpAwards:[],xpClaimBusy:false,progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',difficultyFilter:'all',lesson:null,choice:null,quizStep:0,quizPassed:false,sectionIndex:0,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},memberExpiry:{},adminPage:1,adminFilter:'all',adminSearch:'',registrationPolicy:{mode:'approval',loaded:false},registrationManual:true,adminLearner:null,adminProgressBusy:false,adminProgressSearch:'',adminProgressFilter:'all',catalogLimit:9,practiceChecked:false,draft:'',lessonStep:1,hintStage:0,prefs:null,projectTab:0,projectSource:'',projectLoading:false};
 var plans={free:'Free',pro:'Plus',ultimate:'Ultimate',max:'Max'};
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];});}
 function safeLink(url){return /^https:\/\/[^\s<>"]+$/i.test(String(url||''))?esc(url):'#';}
 function notice(message){toastNode.textContent=window.LLI18n?.translate?.(message)||message;toastNode.classList.add('show');clearTimeout(notice.timer);notice.timer=setTimeout(function(){toastNode.classList.remove('show');},5000);}
 function formatError(e){return (e&&e.message)||'Unbekannter Fehler';}
 function safeNumber(n){return Number.isFinite(Number(n))?Number(n):0;}
-function xpEarned(){return (s.xpAwards||[]).reduce((sum,entry)=>sum+Math.max(0,Number(entry.xp)||0),0);}
+function xpEarned(){const earned=(s.xpAwards||[]).reduce((sum,entry)=>sum+Math.max(0,Number(entry.xp)||0),0);return Math.max(0,earned+(s.profile?.role==='admin'?Number(s.adminSelf?.xp_adjustment||0):0));}
 function xpAwarded(id){return (s.xpAwards||[]).some(entry=>entry.lesson_id===id);}
 function xpFromCourse(id){const awarded=new Set((s.xpAwards||[]).map(entry=>entry.lesson_id));return s.lessons.filter(l=>l.course_id===id&&awarded.has(l.id)).length*30;}
 function doneIds(){return new Set(s.progress.done||[]);}
@@ -27,9 +27,9 @@ function lessonsOf(id){return s.lessons.filter(function(l){return l.course_id===
 function courseOf(id){return s.courses.find(function(c){return c.id===id;});}
 function pct(n,total){return total?Math.round(n/total*100):0;}
 function tierLabel(t){return t==='plus'?'Plus':t==='pro'?'Ultimate':t==='max'?'Max':'Free';}
-function allowed(l){return !!s.profile&&(s.profile.role==='admin'||(!s.entitledCourses||s.entitledCourses.includes(l.course_id))&&(l.required_plan==='free'||(l.required_plan==='plus'&&['pro','ultimate','max'].includes(s.tier))||(l.required_plan==='pro'&&['ultimate','max'].includes(s.tier))));}
-function fullAccess(){return s.profile?.role==='admin'||s.tier==='max';}
-function hasScript(){return s.profile?.role==='admin'||['pro','ultimate','max'].includes(s.tier);}
+function allowed(l){return !!s.profile&&(!s.entitledCourses||s.entitledCourses.includes(l.course_id))&&(l.required_plan==='free'||(l.required_plan==='plus'&&['pro','ultimate','max'].includes(s.tier))||(l.required_plan==='pro'&&['ultimate','max'].includes(s.tier)));}
+function fullAccess(){return s.tier==='max';}
+function hasScript(){return ['pro','ultimate','max'].includes(s.tier);}
 function examCap(){return fullAccess()?-1:s.tier==='ultimate'?8:s.tier==='pro'?4:2;}
 function paywall(feature,tier,description){return '<section class="feature-gate"><span class="feature-lock">🔒</span><span class="eyebrow">'+esc(tier)+'-MITGLIEDSCHAFT</span><h1>'+esc(feature)+' ist gesperrt.</h1><p class="lede">'+esc(description)+'</p><div class="feature-gate-actions"><button type="button" data-go="plans" class="btn primary">Tarif ansehen →</button><a class="btn discord" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Auf Discord anfragen</a></div><p class="micro">Schreibe NyxAtheris eine DM oder eröffne im Discord ein Ticket und erwähne @nyxatheris mit dem Grund.</p></section>';}
 function badge(t){return '<span class="chip '+esc(t)+'">'+tierLabel(t)+'</span>';}
@@ -512,13 +512,16 @@ async function loadData(){
  api.from('academy_plans').select('tier,expires_at').eq('user_id',s.user.id).maybeSingle(),
  api.from('academy_progress').select('payload').eq('user_id',s.user.id).eq('key','liverylab-v10').maybeSingle(),
  api.rpc('academy_voucher_status'),
- loadXpAwardPages()
+ loadXpAwardPages(),
+ s.profile?.role==='admin'?api.rpc('academy_admin_self',{p_action:'status',p_payload:{}}):Promise.resolve({data:null,error:null})
  ]);
  if(all[0].error)throw all[0].error;if(all[1].error)throw all[1].error;
  s.courses=all[0].data||[];s.lessons=all[1].data||[];
  s.tier=['free','pro','ultimate','max'].includes(all[4].data?.tier)?all[4].data.tier:'free';
  s.daily=all[4].error?null:all[4].data;
- s.planExpires=all[2].data?.expires_at||null;
+ s.adminSelf=all[6]?.error?null:all[6]?.data||null;
+ s.adminSelfError=all[6]?.error?formatError(all[6].error):'';
+ s.planExpires=s.profile?.role==='admin'?s.adminSelf?.plan_expires_at||null:all[2].data?.expires_at||null;
  s.discount=s.daily?.discount||null;
  if(all[4].error)notice('Kontingent konnte nicht geladen werden: '+formatError(all[4].error));
  if(all[5]?.error)throw all[5].error;
@@ -2291,6 +2294,40 @@ function adminPage(){
  shopDiscountAdminSection()+voucherAdminSection());
 
 }
+
+async function refreshAdminSelf(){
+ if(s.profile?.role!=='admin')throw Error('Nur für Administratoren');
+ const result=await api.rpc('academy_admin_self',{p_action:'status',p_payload:{}});
+ if(result.error)throw result.error;
+ if(!result.data?.ok)throw Error('Eigene Admin-Daten konnten nicht geladen werden.');
+ s.adminSelf=result.data;s.adminSelfError='';
+ s.planExpires=result.data.plan_expires_at||null;
+ if(['free','pro','ultimate','max'].includes(result.data.tier))s.tier=result.data.tier;
+ if(result.data.streak)s.loginStreak=result.data.streak;
+ return result.data;
+}
+async function changeAdminSelf(action,payload,message){
+ if(s.profile?.role!=='admin'||s.adminSelfBusy)throw Error('Administrationsaktion nicht erlaubt oder läuft bereits.');
+ s.adminSelfBusy=true;
+ try{
+  const result=await api.rpc('academy_admin_self',{p_action:action,p_payload:payload});
+  if(result.error)throw result.error;
+  if(!result.data?.ok)throw Error('Server konnte die Änderung nicht bestätigen.');
+  s.adminSelf=result.data;s.adminSelfError='';
+  s.planExpires=result.data.plan_expires_at||null;
+  if(result.data.streak)s.loginStreak=result.data.streak;
+  if(['free','pro','ultimate','max'].includes(result.data.tier))s.tier=result.data.tier;
+  if(action==='set_plan'){
+   const all=await Promise.allSettled([api.rpc('academy_voucher_status'),api.rpc('academy_exam_status'),api.rpc('academy_entitled_courses')]);
+   const data=all.map(x=>x.status==='fulfilled'&&!x.value.error?x.value.data:null);
+   if(data[0])s.daily=data[0];
+   if(data[1])s.examStatus=data[1];
+   if(data[2])s.entitledCourses=data[2];
+  }
+  render();notice(message||'Änderungen dauerhaft gespeichert.');return result.data;
+ }finally{s.adminSelfBusy=false;}
+}
+
 async function fetchMembers(){
  if(s.profile?.role!=='admin')return;
  var data=await adminCall({action:'list',page:s.adminPage});s.members=data.users||[];s.isOwner=!!data.isOwner;
