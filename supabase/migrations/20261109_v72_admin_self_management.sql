@@ -88,7 +88,7 @@ BEGIN
   SELECT * INTO existing FROM academy_private.academy_admin_self_preferences WHERE user_id=who FOR UPDATE;
 
   IF p_action='set_xp' THEN
-   IF jsonb_typeof(p_payload->'xp')<>'number'
+   IF jsonb_typeof(p_payload->'xp') IS DISTINCT FROM 'number'
       OR length(p_payload->>'xp')>10 THEN RAISE EXCEPTION 'XP müssen eine ganze Zahl sein'; END IF;
    IF (p_payload->>'xp')::numeric <> trunc((p_payload->>'xp')::numeric)
       OR (p_payload->>'xp')::numeric NOT BETWEEN 0 AND 10000000
@@ -100,8 +100,8 @@ BEGIN
    changed:=jsonb_build_object('total_xp',desired);
 
   ELSIF p_action='set_streak' THEN
-   IF jsonb_typeof(p_payload->'current')<>'number'
-      OR jsonb_typeof(p_payload->'best')<>'number'
+   IF jsonb_typeof(p_payload->'current') IS DISTINCT FROM 'number'
+      OR jsonb_typeof(p_payload->'best') IS DISTINCT FROM 'number'
       OR length(p_payload->>'current')>5 OR length(p_payload->>'best')>5
    THEN RAISE EXCEPTION 'Streak-Werte müssen ganze Zahlen sein'; END IF;
    IF (p_payload->>'current')::numeric <> trunc((p_payload->>'current')::numeric)
@@ -135,7 +135,7 @@ BEGIN
    new_tier:=p_payload->>'tier';
    IF new_tier NOT IN ('free','pro','ultimate','max') OR new_tier IS NULL
    THEN RAISE EXCEPTION 'Ungültiger Tarif'; END IF;
-   IF jsonb_typeof(p_payload->'months')<>'number'
+   IF jsonb_typeof(p_payload->'months') IS DISTINCT FROM 'number'
       OR length(p_payload->>'months')>2
    THEN RAISE EXCEPTION 'Bitte gültige Laufzeit auswählen'; END IF;
    duration_months:=(p_payload->>'months')::integer;
