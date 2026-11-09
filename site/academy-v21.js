@@ -7,7 +7,7 @@
 'use strict';
 var cfg=window.LL_CONFIG||{}, $=function(q,root){return (root||document).querySelector(q);};
 var content=$('#content'), sidebar=$('#sidebar'), bottom=$('#bottom-nav'), toastNode=$('#toast');
-var api=null, s={shopDiscount:0,service:{beta_open:true,mine:[],admin:[]},lastSupportReceipt:null,supportBusy:false,chatTicketId:null,chatMessages:[],chatBusy:false,chatLoading:false,streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],xpAwards:[],xpClaimBusy:false,progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',difficultyFilter:'all',lesson:null,choice:null,quizStep:0,quizPassed:false,sectionIndex:0,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},memberExpiry:{},adminPage:1,adminFilter:'all',adminSearch:'',registrationPolicy:{mode:'approval',loaded:false},registrationManual:true,adminLearner:null,adminProgressBusy:false,adminProgressSearch:'',adminProgressFilter:'all',catalogLimit:9,practiceChecked:false,draft:'',lessonStep:1,hintStage:0,prefs:null,projectTab:0,projectSource:'',projectLoading:false};
+var api=null, s={shopDiscount:0,service:{beta_open:true,mine:[],admin:[]},serviceError:'',serviceLastUpdated:0,lastSupportReceipt:null,supportBusy:false,chatTicketId:null,chatMessages:[],chatBusy:false,chatLoading:false,streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],xpAwards:[],xpClaimBusy:false,progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',difficultyFilter:'all',lesson:null,choice:null,quizStep:0,quizPassed:false,sectionIndex:0,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},memberExpiry:{},adminPage:1,adminFilter:'all',adminSearch:'',registrationPolicy:{mode:'approval',loaded:false},registrationManual:true,adminLearner:null,adminProgressBusy:false,adminProgressSearch:'',adminProgressFilter:'all',catalogLimit:9,practiceChecked:false,draft:'',lessonStep:1,hintStage:0,prefs:null,projectTab:0,projectSource:'',projectLoading:false};
 var plans={free:'Free',pro:'Plus',ultimate:'Ultimate'};
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];});}
 function safeLink(url){return /^https:\/\/[^\s<>"]+$/i.test(String(url||''))?esc(url):'#';}
@@ -336,10 +336,10 @@ function login(){
  '<input class="input" type="email" id="reg-email" name="email" autocomplete="email" required maxlength="254" placeholder="du@beispiel.de"></div>'+
  '<div class="form-group"><label class="form-label" for="reg-user">Benutzername</label>'+
  '<input class="input" id="reg-user" name="username" autocomplete="username" required minlength="3" maxlength="24" pattern="[A-Za-z][A-Za-z0-9_]{2,23}" placeholder="DeinBenutzername"></div>'+
- '<div class="form-group"><label class="form-label" for="reg-pass">Passwort (mind. 14 Zeichen)</label>'+
- '<input class="input" type="password" id="reg-pass" name="password" autocomplete="new-password" minlength="14" maxlength="256" required></div>'+
+ '<div class="form-group"><label class="form-label" for="reg-pass">Passwort (mind. 7 Zeichen)</label>'+
+ '<input class="input" type="password" id="reg-pass" name="password" autocomplete="new-password" minlength="7" required></div>'+
  '<div class="form-group"><label class="form-label" for="reg-confirm">Passwort wiederholen</label>'+
- '<input class="input" type="password" id="reg-confirm" name="confirm_password" autocomplete="new-password" minlength="14" required></div>'+
+ '<input class="input" type="password" id="reg-confirm" name="confirm_password" autocomplete="new-password" minlength="7" required></div>'+
  '<button class="btn primary block" type="submit">'+(s.registrationPolicy?.mode==='open'?'Konto erstellen →':'Registrierungsanfrage senden →')+'</button></form>'+
  '<p class="micro">Dein Passwort wird sicher über Supabase Auth verarbeitet. Die E-Mail-Adresse wird bei diesem Registrierungsweg nicht automatisch auf Besitz geprüft. '+(s.registrationPolicy?.mode==='open'?'Mit der kostenlosen Mitgliedschaft kannst du dich nach der Registrierung anmelden.':'Ohne Annahme deiner Bewerbung bleibt das Konto gesperrt.')+'</p>'+
  '<button type="button" class="btn ghost block" data-action="show-login">← Bereits registriert? Anmelden</button>'+
@@ -388,7 +388,7 @@ async function registerAccount(fd){
  const password=String(fd.get('password')||'');
  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)||email.length>254)throw Error('Bitte eine gültige E-Mail-Adresse eingeben.');
  if(!/^[a-z][a-z0-9_]{2,23}$/.test(username))throw Error('Benutzername: 3–24 Zeichen, Buchstaben, Zahlen und Unterstrich.');
- if(password.length<14||password.length>256)throw Error('Das Passwort muss 14–256 Zeichen lang sein.');
+ if(password.length<7||password.length>256)throw Error('Das Passwort muss mindestens 7 Zeichen lang sein.');
  if(password!==String(fd.get('confirm_password')||''))throw Error('Die beiden Passwörter stimmen nicht überein.');
  // One secure registration route for both modes. The server, never browser
  // parameters or Supabase Auth's public signUp, decides the access status.
@@ -553,7 +553,7 @@ async function loadData(){
   s.social=data[1]||null;
   s.entitledCourses=data[2]||null;
   s.socialMedia=data[3]||{};
-  s.service=data[4]||s.service;
+  if(data[4]&&Array.isArray(data[4].mine))s.service=data[4];
   if(!s.streakModalOpen&&parseRoute().page==='home')render();
  }).catch(()=>{});
  await navigateCurrent();
@@ -1384,10 +1384,21 @@ async function markLesson(){
 function salePrice(cents){return Math.round(cents*(100-Math.max(0,Math.min(90,Number(s.shopDiscount)||0)))/100)}
 function euro(cents){return (Number(cents||0)/100).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'}
 async function refreshService(){
- const r=await api.rpc('academy_service',{p_action:'list',p_payload:{}});
- if(r.error)throw r.error;
- if(!r.data||!Array.isArray(r.data.mine))throw Error('Support-Posteingang konnte nicht geladen werden.');
- s.service=r.data;return s.service;
+ try{
+  const r=await api.rpc('academy_service',{p_action:'list',p_payload:{}});
+  if(r.error)throw r.error;
+  if(!r.data||!Array.isArray(r.data.mine)||
+   (s.profile?.role==='admin'&&!Array.isArray(r.data.admin)))
+   throw Error('Support-Posteingang konnte nicht geladen werden.');
+  s.service=r.data;
+  s.serviceError='';
+  s.serviceLastUpdated=Date.now();
+  return s.service;
+ }catch(error){
+  // Never present a failed request as a genuinely empty support inbox.
+  s.serviceError=formatError(error);
+  throw error;
+ }
 }
 async function loadTicketThread(id){
  const r=await api.rpc('academy_ticket_chat',{p_action:'thread',p_ticket:id,p_body:null});
@@ -1436,7 +1447,7 @@ function supportPage(){
  (data.beta_open?'<option value="beta">Beta-Feedback</option><option value="plan">Plus / Ultimate anfragen</option>':'')+'</select></div>'+
  (data.beta_open?'<div class="form-group support-plan-field" hidden><label class="form-label">Gewünschter Tarif</label><select class="select" name="tier"><option value="pro">Plus · 1,99 €</option><option value="ultimate">Ultimate · 5,99 €</option></select><small>Freigabe erfolgt manuell durch das Team. Keine automatische Zahlung.</small></div>':'')+
  '<div class="form-group"><label class="form-label" for="support-message">Deine Nachricht</label><textarea class="input" id="support-message" name="message" minlength="10" maxlength="2000" rows="6" required placeholder="Beschreibe dein Anliegen möglichst genau …"></textarea></div><p class="support-submit-status" id="support-submit-status" role="status" aria-live="polite">'+(s.lastSupportReceipt?'✓ Anfrage gespeichert · Ticket '+esc(s.lastSupportReceipt.slice(0,8)):'Deine Nachricht wird im Support-Posteingang gespeichert.')+'</p><button class="btn primary block" type="submit" '+(s.supportBusy?'disabled':'')+'>'+(s.supportBusy?'Wird gesendet …':'Anfrage senden →')+'</button></form><p class="micro">Bis zu fünf Anfragen innerhalb von 24 Stunden. Bitte sende keine Passwörter.</p></section>'+
- '<section class="panel support-history"><div class="support-faq"><strong>Schnelle Hilfe</strong><details><summary>Wie erhalte ich Plus oder Ultimate?</summary><p>Eröffne während der Beta eine Tarif-Anfrage. Das Team gibt sie manuell frei.</p></details><details><summary>Wo sehe ich die Antwort?</summary><p>Hier in deinem Posteingang. Lade die App bei Bedarf neu.</p></details><details><summary>Wie melde ich einen Fehler?</summary><p>Wähle Fehler melden und beschreibe Gerät und Schritte.</p></details></div><span class="eyebrow">[ ◷ ] DEIN POSTEINGANG</span><h2>Deine Anfragen</h2><div class="support-controls"><input class="input" type="search" id="support-search" placeholder="Anfragen suchen …" aria-label="Anfragen suchen"><select class="select" id="support-filter"><option value="all">Alle Status</option><option value="open">Offen</option><option value="answered">Beantwortet</option><option value="approved">Genehmigt</option><option value="closed">Geschlossen</option></select></div>'+
+ '<section class="panel support-history">'+(s.serviceError?'<p class="support-submit-status error" role="alert">Anfragen konnten nicht geladen werden: '+esc(s.serviceError)+'</p>':'')+'<div class="support-faq"><strong>Schnelle Hilfe</strong><details><summary>Wie erhalte ich Plus oder Ultimate?</summary><p>Eröffne während der Beta eine Tarif-Anfrage. Das Team gibt sie manuell frei.</p></details><details><summary>Wo sehe ich die Antwort?</summary><p>Hier in deinem Posteingang. Lade die App bei Bedarf neu.</p></details><details><summary>Wie melde ich einen Fehler?</summary><p>Wähle Fehler melden und beschreibe Gerät und Schritte.</p></details></div><span class="eyebrow">[ ◷ ] DEIN POSTEINGANG</span><h2>Deine Anfragen</h2><div class="support-controls"><input class="input" type="search" id="support-search" placeholder="Anfragen suchen …" aria-label="Anfragen suchen"><select class="select" id="support-filter"><option value="all">Alle Status</option><option value="open">Offen</option><option value="answered">Beantwortet</option><option value="approved">Genehmigt</option><option value="closed">Geschlossen</option></select></div>'+
  (mine.length?mine.map(t=>'<article class="support-ticket" data-ticket-status="'+esc(t.status||'open')+'"><div><strong>'+esc(names[t.category]||'Anfrage')+'</strong><span class="chip '+(t.status==='approved'?'free':'plus')+'">'+esc(t.status||'open')+'</span></div>'+
  '<small>'+new Date(t.updated_at||t.created_at).toLocaleString('de-DE')+'</small><p>'+esc((t.reply||t.message||'').slice(0,175))+'</p>'+
  '<button type="button" class="btn small" data-chat-open="'+esc(t.id)+'">Gespräch öffnen →</button></article>').join(''):'<p class="muted">Noch keine Anfragen. Deine Antwort erscheint später hier.</p>')+
@@ -2009,14 +2020,16 @@ function supportAdminSection(){
  const entries=Array.isArray(s.service?.admin)?[...s.service.admin].sort((a,b)=>Date.parse(b.updated_at||b.created_at)-Date.parse(a.updated_at||a.created_at)):[];
  return '<section class="section panel support-admin ll-admin-inbox"><div class="section-heading"><div><span class="eyebrow">ADMIN · SUPPORT</span><h2>Support-Posteingang</h2>'+
  '<p>Alle Anfragen an einem Ort. Wähle ein Ticket aus und schreibe mit dem Mitglied.</p></div><button type="button" class="btn small" data-action="refresh-support">↻ Aktualisieren</button></div>'+
- '<div class="support-admin-stats">'+[['Offen','open'],['Beantwortet','answered'],['Genehmigt','approved']].map(([label,status])=>'<span><strong>'+entries.filter(x=>x.status===status).length+'</strong><small>'+label+'</small></span>').join('')+'</div>'+
+ (s.serviceError?'<p class="support-submit-status error" role="alert">Posteingang nicht vollständig geladen: '+esc(s.serviceError)+' · Erneut auf „Aktualisieren“ tippen.</p>':'')+
+ (s.serviceLastUpdated?'<p class="micro">Zuletzt synchronisiert: '+new Date(s.serviceLastUpdated).toLocaleTimeString('de-DE')+'</p>':'')+
+ '<div class="support-admin-stats">'+[['Gesamt','all'],['Offen','open'],['Beantwortet','answered'],['Geschlossen','closed']].map(([label,status])=>'<span><strong>'+entries.filter(x=>status==='all'||x.status===status).length+'</strong><small>'+label+'</small></span>').join('')+'</div>'+
  '<label class="beta-switch"><span><strong>Beta-Anfragen sichtbar</strong><small>Bestehende Tickets bleiben erhalten.</small></span><input type="checkbox" id="beta-enabled" '+(s.service?.beta_open?'checked':'')+'></label>'+
  '<div class="ll-admin-ticket-list">'+(entries.length?entries.map(t=>
   '<article class="ll-admin-ticket '+(s.chatTicketId===t.id?'selected':'')+'"><div class="ll-ticket-row"><strong>'+esc(t.username||'Mitglied')+'</strong>'+
   '<span class="chip '+(t.status==='approved'?'free':'plus')+'">'+esc(t.status)+'</span></div>'+
   '<small>'+esc(t.category)+(t.tier?' · '+esc(plans[t.tier]||t.tier):'')+' · '+new Date(t.updated_at||t.created_at).toLocaleString('de-DE')+'</small>'+
   '<p>'+esc((t.reply||t.message||'').slice(0,170))+'</p><button class="btn small" type="button" data-chat-open="'+esc(t.id)+'">'+(s.chatTicketId===t.id?'Gespräch aktualisieren':'Chat öffnen →')+'</button></article>').join(''):
-  '<div class="empty">Noch keine Supportanfragen. Neue Tickets erscheinen hier automatisch.</div>')+'</div></section>'+ticketChatPanel(true);
+  '<div class="empty">'+(s.serviceError?'Posteingang konnte nicht geladen werden. Bitte aktualisieren.':'Noch keine Supportanfragen. Neue Tickets erscheinen hier automatisch.')+'</div>')+'</div></section>'+ticketChatPanel(true);
 }
 
 function membershipRemainingText(tier,expiry){
@@ -2361,7 +2374,10 @@ async function pollSupportInbox(){
   if(s.chatTicketId)await loadTicketThread(s.chatTicketId);
   const focused=document.activeElement;
   if(!focused?.closest?.('form[data-form="ticket-chat"],form[data-form="support-ticket"],form[data-form="support-reply"]'))render();
- }catch(_){}
+ }catch(error){if(s.ready){s.serviceError=formatError(error);
+   const focused=document.activeElement;
+   if(!focused?.closest?.('form[data-form="ticket-chat"],form[data-form="support-ticket"],form[data-form="support-reply"]'))render();
+  }}
 }
 if(typeof setInterval==='function')setInterval(pollSupportInbox,20000);
 function filterSupportTickets(){const query=String($('#support-search')?.value||'').toLocaleLowerCase('de'),status=$('#support-filter')?.value||'all';document.querySelectorAll('.support-history .support-ticket').forEach(el=>{el.hidden=!!query&&!el.textContent.toLocaleLowerCase('de').includes(query)||status!=='all'&&el.dataset.ticketStatus!==status;});}
@@ -2441,7 +2457,7 @@ document.addEventListener('click',async function(e){
  }
  var adminFilter=e.target.closest('[data-admin-filter]');
  if(adminFilter){s.adminFilter=adminFilter.dataset.adminFilter||'all';render();return;}
- if(e.target.closest('[data-action="refresh-support"]')){try{await refreshService();render();}catch(err){notice(formatError(err))}return;}
+ if(e.target.closest('[data-action="refresh-support"]')){try{await refreshService();render();notice('Support-Posteingang aktualisiert.');}catch(err){render();notice('Support: '+formatError(err))}return;}
  var friendAction=e.target.closest('[data-friend-action]');
  if(friendAction){
   const command=friendAction.dataset.friendAction,id=friendAction.dataset.friendId;
