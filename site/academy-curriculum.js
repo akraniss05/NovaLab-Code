@@ -41,6 +41,12 @@ function render(p,index,escapeHtml,safeLink){
  const theory=String(p.theory||'').trim(),example=String(p.example||'').trim();
  const title=String(p.title||'Das Thema').trim();
  const intro=safeNotes(p.explanation_steps,5),notes=safeNotes(p.example_notes,5);
+ // Use genuine lesson-specific facts rather than generated filler paragraphs.
+ const focus=safeNotes(p.keyPoints,4).filter(x=>x.length>=30&&
+  !theory.toLocaleLowerCase().includes(x.toLocaleLowerCase())&&
+  !/^(?:Prüfe zuerst die Eingaben|Lies den Beispielcode|Dokumentiere)/i.test(x)).slice(0,3);
+ const context=theory.length>0&&theory.length<220?
+  notes.find(x=>x.length>=30&&!theory.toLocaleLowerCase().includes(x.toLocaleLowerCase()))||'':'';
  const isBlender=/blender|3d/i.test([p.courseId,p.category,p.lang].join(' '));
  const doc=p.resource?'<p class="ll-resource-link"><a href="'+safeLink(p.resource)+'" rel="noopener noreferrer" target="_blank">Weiterführende Quelle ↗</a></p>':'';
  const header='<div class="ll-part-heading"><div><span class="eyebrow">LERNTEIL '+(at+1)+' VON 2</span><h2>'+esc(sections[at].title)+'</h2></div></div>'+
@@ -50,7 +56,9 @@ function render(p,index,escapeHtml,safeLink){
  if(at===0){
   body='<div class="ll-part-body"><h3>'+esc(title)+'</h3>'+
    (theory?'<p>'+esc(theory)+'</p>':'<p>Sieh dir im nächsten Lernteil das konkrete Beispiel an.</p>')+
+   (focus.length?'<h3>Das solltest du dir merken</h3><ul class="ll-explanation-steps">'+focus.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+
    (intro.length?'<h3>So funktioniert es</h3><ol class="ll-explanation-steps">'+intro.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol>':'')+
+   (context?'<div class="note"><strong>So wirkt das im Beispiel:</strong> '+esc(context)+'</div>':'')+
    '</div>';
  }else{
   body='<div class="ll-part-body"><h3>Ein konkretes Beispiel</h3>'+
