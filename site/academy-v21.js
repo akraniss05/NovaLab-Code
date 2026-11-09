@@ -2643,6 +2643,36 @@ document.addEventListener('click',async function(e){
  var action=e.target.closest('[data-action]');
  if(action){
   var name=action.dataset.action;
+
+  if(name==='admin-self-refresh'){
+   try{await refreshAdminSelf();render();notice('Deine Admin-Werte wurden neu geladen.');}
+   catch(error){s.adminSelfError=formatError(error);render();notice('Admin-Konto: '+formatError(error));}
+   return;
+  }
+  if(name==='admin-self-max'){
+   if(!confirm('Dein eigenes Konto wieder dauerhaft auf Max setzen?'))return;
+   try{await changeAdminSelf('set_plan',{tier:'max',months:0},'Max wurde für dein Admin-Konto dauerhaft aktiviert.');}
+   catch(error){notice('Admin-Konto: '+formatError(error));}
+   return;
+  }
+  if(name==='admin-self-xp-add'){
+   const amount=Number(action.dataset.amount);
+   const current=Number(s.adminSelf?.xp_total);
+   if(!Number.isSafeInteger(amount)||!Number.isSafeInteger(current))return;
+   try{await changeAdminSelf('set_xp',{xp:Math.max(0,Math.min(10000000,current+amount))},'Deine XP wurden angepasst.');}
+   catch(error){notice('XP: '+formatError(error));}
+   return;
+  }
+  if(name==='admin-self-streak-add'){
+   const amount=Number(action.dataset.amount);
+   const current=Number(s.adminSelf?.streak?.current);
+   const best=Number(s.adminSelf?.streak?.best);
+   if(!Number.isSafeInteger(amount)||!Number.isSafeInteger(current)||!Number.isSafeInteger(best))return;
+   const next=Math.max(0,Math.min(5000,current+amount));
+   try{await changeAdminSelf('set_streak',{current:next,best:Math.max(next,best)},'Deine Streak wurde angepasst.');}
+   catch(error){notice('Streak: '+formatError(error));}
+   return;
+  }
   if(name==='logout'){await logout();return;}
   if(name==='show-register'){s.authScreen='register';login();void fetchRegistrationPolicy(false).catch(()=>{});return;}
   if(name==='show-login'){s.authScreen='login';login();return;}
@@ -2974,6 +3004,25 @@ document.addEventListener('submit',async function(e){
   if(mode==='login'){await signIn(fd,button);return;}
   if(mode==='register'){await registerAccount(fd);return;}
   if(mode==='first-password'){await finishPassword(fd,button);return;}
+
+  if(mode==='admin-self-xp'){
+   const xp=Number(fd.get('xp'));
+   if(!Number.isSafeInteger(xp)||xp<0||xp>10000000)throw Error('XP müssen eine ganze Zahl zwischen 0 und 10.000.000 sein.');
+   await changeAdminSelf('set_xp',{xp},'Dein XP-Stand wurde gespeichert.');return;
+  }
+  if(mode==='admin-self-streak'){
+   const current=Number(fd.get('current')),best=Number(fd.get('best'));
+   if(!Number.isInteger(current)||!Number.isInteger(best)||current<0||best<current||best>5000)
+    throw Error('Gültige Streak-Werte: 0–5.000; der Rekord muss mindestens so groß wie aktuell sein.');
+   await changeAdminSelf('set_streak',{current,best},'Deine Daily Streak wurde gespeichert.');return;
+  }
+  if(mode==='admin-self-plan'){
+   const tier=String(fd.get('tier')),months=Number(fd.get('months'));
+   if(!['free','pro','ultimate','max'].includes(tier)||![0,1,3,12].includes(months))
+    throw Error('Bitte gültige Mitgliedschaft und Laufzeit wählen.');
+   if(!confirm('Deine eigene Mitgliedschaft auf '+plans[tier]+' ('+(months===0?'dauerhaft':months+' Monate')+') ändern? Adminrechte bleiben bestehen.'))return;
+   await changeAdminSelf('set_plan',{tier,months},'Deine eigene Mitgliedschaft wurde aktualisiert.');return;
+  }
   if(mode==='shop-offer'){
    if(s.profile?.role!=='admin')throw Error('Nur Administratoren');
    const tier=String(fd.get('tier')),months=Number(fd.get('months')),percent=Number(fd.get('percent'));
