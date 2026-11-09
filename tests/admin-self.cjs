@@ -21,7 +21,7 @@ s.tier='max';
 assert.equal(a.xpEarned(),1800,'Manual offset should appear in XP total');
 assert.equal(s.xpAwards[0].xp,30,'One-time lesson awards must remain unchanged');
 const html=a.adminSelfSection();
-for(const token of ['Meine Admin-Einstellungen','data-form="admin-self-xp"','data-form="admin-self-streak"','data-form="admin-self-plan"',
+for(const token of ['ADMINISTRATION · NUR DEIN KONTO','data-form="admin-self-xp"','data-form="admin-self-streak"','data-form="admin-self-plan"',
  'data-action="admin-self-xp-add"','data-action="admin-self-streak-add"','data-action="admin-self-max"',
  'Meine letzten Admin-Änderungen','1.800','45 Tage','60 Tage','Freigeschaltet'])
 {
