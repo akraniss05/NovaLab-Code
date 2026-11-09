@@ -544,3 +544,59 @@ body:not(.is-auth) .topbar .brand strong{color:var(--accent)}
 @media(max-width:420px){
  body:not(.is-auth) .topbar .brand strong{display:none}
 }
+
+/* NovaLab v74 — readable banner on mobile without black left/right gutters.
+   Loaded last, overriding the old 3.2:1 + object-fit:contain rules. */
+.ll-neon-home .ll-home-dashboard .ll-home-brand-banner{
+ display:block!important;position:relative!important;width:100%!important;
+ height:auto!important;min-height:0!important;max-height:none!important;
+ aspect-ratio:2.2 / 1!important;overflow:hidden!important;
+ border:1px solid #c478fa!important;border-radius:21px!important;
+ background:#12071f!important;
+ box-shadow:0 15px 36px #0401099c,0 0 27px #a946f059!important;
+}
+.ll-neon-home .ll-home-dashboard .ll-home-brand-banner>img{
+ display:block!important;position:absolute!important;inset:0!important;
+ width:100%!important;height:100%!important;max-width:none!important;
+ object-fit:cover!important;object-position:center center!important;
+ background:transparent!important;border:0!important;
+}
+@media(max-width:820px){
+ .ll-neon-home .ll-home-dashboard .ll-home-brand-banner{
+  aspect-ratio:16 / 9!important;max-height:none!important;border-radius:16px!important;
+ }
+}
+/* Live second-by-second subscription status, responsive from 320px upward. */
+.ll-own-plan-status{
+ min-width:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.45fr) auto;
+ align-items:center;gap:15px;margin:15px 0 22px;padding:16px 19px;
+ border:1px solid #7451ab;border-radius:19px;
+ background:radial-gradient(ellipse at 95% 20%,#803fba38,transparent 60%),
+ linear-gradient(130deg,#261533,#131225);
+ box-shadow:0 10px 25px #05020b45;
+}
+.ll-own-plan-identity,.ll-own-plan-time{display:flex;flex-direction:column;min-width:0;gap:5px}
+.ll-own-plan-identity .eyebrow{font-size:10px;letter-spacing:.12em;color:#bfa3ec}
+.ll-own-plan-identity strong{font-size:clamp(17px,2vw,23px);font-weight:850;color:#f5e6ff}
+.ll-own-plan-identity small{font-size:11px;color:#c4b9d9;line-height:1.4}
+.ll-own-plan-caption{font-size:11px;font-weight:700;color:#c4acd9}
+.ll-own-plan-time strong{
+ color:#f8ecff;font-size:clamp(12px,1.7vw,18px);line-height:1.5;
+ font-variant-numeric:tabular-nums;letter-spacing:.015em;overflow-wrap:anywhere;
+}
+.ll-own-plan-time strong.is-expired{color:#ffadbc}
+.ll-own-plan-status>.btn{min-height:38px;white-space:normal;text-align:center}
+.ll-neon-profile .ll-own-plan-status,.ll-neon-plans .ll-own-plan-status,
+.ll-neon-admin .ll-own-plan-status{margin:17px 0 22px}
+@media(max-width:820px){
+ .ll-own-plan-status{grid-template-columns:minmax(0,1fr) auto;gap:9px;padding:15px}
+ .ll-own-plan-identity{grid-column:1}
+ .ll-own-plan-time{grid-column:1/-1;grid-row:2;border-top:1px solid #72549477;padding-top:10px}
+ .ll-own-plan-status>.btn{grid-column:2;grid-row:1;max-width:138px;font-size:11px}
+ .ll-own-plan-time strong{font-size:clamp(12px,3.7vw,18px)}
+}
+@media(max-width:360px){
+ .ll-own-plan-status{padding:12px}
+ .ll-own-plan-identity strong{font-size:16px}
+ .ll-own-plan-status>.btn{max-width:110px}
+}
