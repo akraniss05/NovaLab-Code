@@ -86,3 +86,8 @@ function submitForm(type,fields){
  }
  console.log('PASS: member and admin two-way conversations, persisted history, compact account administration and secure RPC.');
 })().catch(e=>{console.error(e);process.exitCode=1;});
+
+// SQL regression: the function's rowtype variable must never shadow a FROM alias.
+const inboxFix=fs.readFileSync(path.join(__dirname,'../supabase/migrations/20261109_v69_support_inbox_alias_fix.sql'),'utf8');
+assert.match(inboxFix,/academy_tickets ticket_row join public\.academy_profiles/);
+assert.doesNotMatch(inboxFix,/academy_tickets t join public\.academy_profiles/);
