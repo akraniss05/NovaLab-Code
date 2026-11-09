@@ -20,3 +20,12 @@ const twoPrints={lang:'lua',task:'Gib deinen eigenen Namen und danach „Ich ler
 assert.equal(p.evaluate('print("Luca")\nprint("Ich lerne FiveM")',twoPrints).ok,true,'Own name is valid');
 assert.equal(p.evaluate('print("Luca")\nprint("Ich lerne etwas anderes")',twoPrints).ok,false);
 console.log('Practice evaluator rejects wrong answers and accepts equivalent simple output.');
+
+// Free values are valid when the task explicitly asks for self-chosen inputs.
+const variables={lang:'lua',task:'Lege die lokalen Variablen spielerName und level an und gib beide aus.',
+ checks:['local\\s+spielerName\\s*=','local\\s+level\\s*=','print\\s*\\('],
+ solution:'local spielerName = "Luca"\nlocal level = 1\nprint(spielerName, level)'};
+assert.equal(p.evaluate('local spielerName = "Mia"\nlocal level = 25\nprint(spielerName, level)',variables).ok,true,'Personal Lua variable values must pass');
+assert.equal(p.evaluate('local spielerName = "Mia"\nlocal level = "hoch"\nprint(spielerName, level)',variables).ok,false,'Wrong value types must still fail');
+assert.equal(p.evaluate('local spielerName = "Mia"\nlocal level = 25\nprint("egal")',variables).ok,false,'Hard-coded output must not bypass learning variables');
+assert.equal(p.evaluate('print("Anderes")',{lang:'lua',solution:'print("Vorgabe")',checks:['print']}).ok,false,'Fixed output stays fixed');
