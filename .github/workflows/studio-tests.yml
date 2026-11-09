@@ -23,6 +23,7 @@ on:
       - 'tests/runtime-grading.cjs'
       - 'tests/simple-academy.cjs'
       - 'tests/support-submit.cjs'
+      - 'tests/registration-v21.cjs'
       - 'tests/support-conversations.cjs'
       - 'supabase/data/v49_support_conversations.sql'
       - 'supabase/data/v47_contextual_quizzes.sql'
@@ -53,6 +54,7 @@ on:
       - 'tests/runtime-grading.cjs'
       - 'tests/simple-academy.cjs'
       - 'tests/support-submit.cjs'
+      - 'tests/registration-v21.cjs'
       - 'tests/support-conversations.cjs'
       - 'supabase/data/v49_support_conversations.sql'
       - 'supabase/data/v47_contextual_quizzes.sql'
@@ -91,6 +93,8 @@ jobs:
         run: node tests/admin-plans.cjs
       - name: One-time XP and reward history regression
         run: node tests/xp-rewards.cjs
+      - name: Seven-character registration contract
+        run: node tests/registration-v21.cjs
       - name: Existing practice tests
         run: node tests/practice.cjs
       - name: New studio regression tests
