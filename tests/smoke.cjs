@@ -66,7 +66,7 @@ for(const token of ['academy_shop_discount','salePrice','shop-sale-admin','sale-
 for(const token of ['.shop-sale-banner','.sale-old','.sale-new','.ll-home-tools','.support-faq','.support-controls','.support-admin-stats'])assert(css.includes(token),'Missing v29 styling: '+token);
 assert(read('supabase/migrations/20261107_v29_shop_discount.sql').includes('academy_private.is_admin()'),'Shop discount must be admin-protected');
 
-for(const token of ['practice-engine.js?build=20261107v37','timer-portal','focus-header'])assert(html.includes(token),'Missing v31 entry: '+token);
+for(const token of ['practice-engine.js?build=20261109v68','timer-portal','focus-header'])assert(html.includes(token),'Missing v31 entry: '+token);
 for(const token of ['LLPractice.evaluate','quizQuestions','practice-actions-simple','weekly-goal','timer-minutes'])assert(js.includes(token),'Missing v31 learning lab: '+token);
 
 for(const entry of ['site/academy-learning-sync.js'])assert(fs.existsSync(path.join(__dirname,'..',entry)),entry+' missing');
