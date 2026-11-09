@@ -43,6 +43,7 @@ jobs:
           node tests/xp-rewards.cjs
           node tests/render.cjs
           node tests/registration.cjs
+          node tests/registration-v21.cjs
           node tests/streak.cjs
       - name: Install browser test dependency
         run: npm install --no-save --ignore-scripts --no-package-lock playwright-core@1.56.1 fengari-web@0.1.4 pyodide@0.27.8
