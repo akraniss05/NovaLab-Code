@@ -1,0 +1,4 @@
+{$CONTROL_HOST} {
+    encode zstd gzip
+    reverse_proxy api:3000
+}

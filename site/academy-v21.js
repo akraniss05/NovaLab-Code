@@ -1459,13 +1459,30 @@ function ticketChatPanel(isAdmin){
   '<div class="ll-chat-compose-footer"><small>Im Supportticket gespeichert.</small>'+
   '<button class="btn primary" type="submit" '+(s.chatBusy?'disabled':'')+'>Nachricht senden →</button></div></form>'+management+'</section>';
 }
+function controlSupportLink(){
+ const config=window.NOVALAB_CONTROL;
+ if(!config||!/^\d{17,20}$/.test(config.guildId||''))return '';
+ try{
+  const base=new URL(config.origin);
+  if(base.protocol!=='https:'||base.username||base.password||base.pathname!=='/'||base.search||base.hash)return '';
+  const link=new URL('/support',base);
+  link.searchParams.set('guild',config.guildId);
+  link.searchParams.set('lang',document.documentElement.lang==='en'?'en':'de');
+  const english=document.documentElement.lang==='en';
+  return '<section class="panel"><span class="eyebrow">NOVALAB CONTROL</span><h2>'+
+   (english?'Support with Discord':'Support mit Discord')+'</h2><p>'+
+   (english?'Open a ticket linked to a private Discord channel.':'Eröffne ein Ticket, das mit einem privaten Discord-Kanal verbunden ist.')+
+   '</p><a class="btn primary" href="'+esc(link.href)+'" target="_blank" rel="noopener noreferrer">'+
+   (english?'Open Discord support':'Discord-Support öffnen')+' ↗</a></section>';
+ }catch{return '';}
+}
 function supportPage(){
  const data=s.service||{},mine=Array.isArray(data.mine)?data.mine:[];
  const names={support:'Allgemeine Hilfe',bug:'Fehlerbericht',beta:'Beta-Feedback',plan:'Mitgliedschaft'};
  return pageHeading('HILFE & FEEDBACK','Wir helfen dir <span class="gradient">direkt in der App.</span>',
  'Melde technische Fehler, schick uns Ideen oder frage während der Beta eine Mitgliedschaft an. Deine Anfragen bleiben hier sichtbar.')+
  neonBanner('Brauchst du Hilfe?','Stelle eine Anfrage, melde einen Bug oder lies deine bisherigen Antworten. Dein Support-Ticket landet direkt beim Team.','book')+
- atelierSupportPulse(mine)+
+ atelierSupportPulse(mine)+controlSupportLink()+
  '<div class="support-grid"><section class="panel support-compose"><span class="eyebrow">[ + ] NEUE ANFRAGE</span><h2>Schreib dem Team</h2>'+
  '<form data-form="support-ticket"><div class="form-group"><label class="form-label" for="support-category">Worum geht es?</label><select class="select" id="support-category" name="category"><option value="support" '+(!s.selectedPlan?'selected':'')+'>Allgemeine Frage</option><option value="bug">Fehler melden</option>'+
  (data.beta_open?'<option value="beta">Beta-Feedback</option><option value="plan" '+(s.selectedPlan?'selected':'')+'>Mitgliedschaft anfragen</option>':'')+'</select></div>'+

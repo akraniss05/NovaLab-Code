@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+model Session {
+  hash String @id
+  userId String
+  profile Json
+  expires DateTime
+  @@index([expires])
+}
+model GuildConfig {
+  guildId String @id
+  revision Int @default(0)
+  data Json
+  updatedAt DateTime @updatedAt
+}
+model Ticket {
+  id Int @id @default(autoincrement())
+  guildId String
+  ownerId String
+  source String
+  category String
+  title String
+  status String @default("open")
+  priority String @default("normal")
+  assignee String?
+  channelId String? @unique
+  requestId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  messages Message[]
+  @@unique([guildId,ownerId,requestId])
+  @@index([guildId,ownerId,createdAt])
+  @@index([guildId,status])
+}
+model Message {
+  id String @id
+  ticketId Int
+  ticket Ticket @relation(fields:[ticketId],references:[id],onDelete:Cascade)
+  authorId String
+  source String
+  body String
+  internal Boolean @default(false)
+  createdAt DateTime @default(now())
+  @@index([ticketId,createdAt])
+}
+model Job {
+  id String @id
+  guildId String
+  kind String
+  data Json
+  attempts Int @default(0)
+  runAt DateTime @default(now())
+  finishedAt DateTime?
+  error String?
+  @@index([finishedAt,runAt])
+}
+model Audit {
+  id Int @id @default(autoincrement())
+  guildId String
+  actorId String?
+  kind String
+  data Json
+  createdAt DateTime @default(now())
+  @@index([guildId,createdAt])
+}
+model Application {
+  id Int @id @default(autoincrement())
+  guildId String
+  ownerId String
+  formId String
+  answers Json
+  status String @default("open")
+  reason String?
+  reviewer String?
+  createdAt DateTime @default(now())
+  @@index([guildId,ownerId,formId,status])
+}
+model Publication {
+  guildId String
+  panelId String
+  channelId String
+  messageId String
+  @@id([guildId,panelId])
+}
+model Confirmation {
+  guildId String
+  userId String
+  panelId String
+  version String
+  createdAt DateTime @default(now())
+  @@id([guildId,userId,panelId])
+}

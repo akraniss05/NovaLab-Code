@@ -84,6 +84,11 @@ jobs:
           name: novalab-v31-mobile-captures
           path: test-results/
           if-no-files-found: ignore
+      - name: Configure NovaLab Control support link
+        env:
+          CONTROL_URL: ${{ vars.NOVALAB_CONTROL_URL }}
+          CONTROL_GUILD: ${{ vars.NOVALAB_CONTROL_GUILD_ID }}
+        run: node control/scripts/configure-pages.mjs
       - name: Remove restricted reference data from public site artifact
         run: rm -f site/reference-data.js
       - uses: actions/configure-pages@v5
