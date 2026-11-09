@@ -1,7 +1,7 @@
-/* LiveryLab Academy · best-effort isolated lesson runtimes.
+/* NovaLab Academy · best-effort isolated lesson runtimes.
    Browser execution is available for JavaScript and Lua 5.3 (Fengari).
    Other languages need a dedicated execution service; never fake their output.
-   Made with 💙 by NyxAtheris (LiveryLab Studios). */
+   Made with 💙 by NyxAtheris (NovaLab Academy). */
 (function(root){
 'use strict';
 const supported=new Set(['javascript','js','lua','python','py']);

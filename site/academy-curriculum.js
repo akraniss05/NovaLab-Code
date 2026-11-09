@@ -1,6 +1,6 @@
-/* LiveryLab Academy · Focused lesson reader
+/* NovaLab Academy · Focused lesson reader
  * Teach the subject first. Exercises remain in the separate practice step.
- * Made with 💙 by NyxAtheris (LiveryLab Studios)
+ * Made with 💙 by NyxAtheris (NovaLab Academy)
  */
 (function(root){
 'use strict';

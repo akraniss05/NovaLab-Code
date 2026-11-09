@@ -1,7 +1,7 @@
-/* LiveryLab Academy · lightweight interactions v48
+/* NovaLab Academy · lightweight interactions v48
  * Opt-in Web Audio click sound, optional subtle animated ambient background
  * and button tap halo. No audio assets, tracking, network calls or timers.
- * Made with 💙 by NyxAtheris (LiveryLab Studios)
+ * Made with 💙 by NyxAtheris (NovaLab Academy)
  */
 (function(root){
 'use strict';

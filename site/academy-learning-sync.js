@@ -1,7 +1,7 @@
-/* LiveryLab Academy · local per-user browser lesson drafts and resume.
+/* NovaLab Academy · local per-user browser lesson drafts and resume.
  * New edits remain on this device in localStorage; no cloud autosave.
  * Previously saved cloud drafts may be imported one time when no local copy exists.
- * Made with 💙 by NyxAtheris (LiveryLab Studios).
+ * Made with 💙 by NyxAtheris (NovaLab Academy).
  */
 (function(root){
 'use strict';
