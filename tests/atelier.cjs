@@ -43,6 +43,7 @@ contains(script,['ll-atelier-script-stats','ll-atelier-studio-shell','ll-atelier
 assert(!script.includes('data-action="download-project"'),'Locked script may not expose restricted export');
 const exams=a.examsPage();
 contains(exams,['ll-atelier-exam-card','ll-atelier-exam-progress','exam-quota','exam-filters','data-exam-filter'],'Exams');
+s.tier='max'; // Max alone unlocks the full reference library.
 const references=a.referencePage();
 contains(references,['ll-atelier-ref-stats','reference-picker','reference-search','data-ref-copy'],'Reference');
 const profile=a.profilePage();
