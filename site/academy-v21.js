@@ -7,7 +7,7 @@
 'use strict';
 var cfg=window.LL_CONFIG||{}, $=function(q,root){return (root||document).querySelector(q);};
 var content=$('#content'), sidebar=$('#sidebar'), bottom=$('#bottom-nav'), toastNode=$('#toast');
-var api=null, s={shopDiscount:0,shopMonths:1,shopOffers:[],selectedPlan:'pro',selectedMonths:1,service:{beta_open:true,mine:[],admin:[]},serviceError:'',serviceLastUpdated:0,lastSupportReceipt:null,supportBusy:false,chatTicketId:null,chatMessages:[],chatBusy:false,chatLoading:false,streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],xpAwards:[],xpClaimBusy:false,progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',difficultyFilter:'all',lesson:null,choice:null,quizStep:0,quizPassed:false,sectionIndex:0,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},memberExpiry:{},adminPage:1,adminFilter:'all',adminSearch:'',registrationPolicy:{mode:'approval',loaded:false},registrationManual:true,adminLearner:null,adminProgressBusy:false,adminProgressSearch:'',adminProgressFilter:'all',catalogLimit:9,practiceChecked:false,draft:'',lessonStep:1,hintStage:0,prefs:null,projectTab:0,projectSource:'',projectLoading:false};
+var api=null, s={shopDiscount:0,shopMonths:1,shopOffers:[],selectedPlan:null,selectedMonths:1,service:{beta_open:true,mine:[],admin:[]},serviceError:'',serviceLastUpdated:0,lastSupportReceipt:null,supportBusy:false,chatTicketId:null,chatMessages:[],chatBusy:false,chatLoading:false,streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],xpAwards:[],xpClaimBusy:false,progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',difficultyFilter:'all',lesson:null,choice:null,quizStep:0,quizPassed:false,sectionIndex:0,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},memberExpiry:{},adminPage:1,adminFilter:'all',adminSearch:'',registrationPolicy:{mode:'approval',loaded:false},registrationManual:true,adminLearner:null,adminProgressBusy:false,adminProgressSearch:'',adminProgressFilter:'all',catalogLimit:9,practiceChecked:false,draft:'',lessonStep:1,hintStage:0,prefs:null,projectTab:0,projectSource:'',projectLoading:false};
 var plans={free:'Free',pro:'Plus',ultimate:'Ultimate',max:'Max'};
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];});}
 function safeLink(url){return /^https:\/\/[^\s<>"]+$/i.test(String(url||''))?esc(url):'#';}
@@ -1442,7 +1442,7 @@ function ticketChatPanel(isAdmin){
  const management=isAdmin?'<form data-form="support-reply" data-ticket-id="'+esc(ticket.id)+'" class="ll-chat-status">'+
   '<label>Status <select class="select" name="status"><option value="answered">Beantwortet</option><option value="closed">Schließen</option><option value="rejected">Ablehnen</option>'+
   (approval?'<option value="approved">Mitgliedschaft freigeben</option>':'')+'</select></label>'+
-  (approval?'<label>Laufzeit (Tage) <input class="input" name="days" type="number" min="1" max="3650" value="30"></label>':'')+
+  (approval?(ticket.term_months?'<p class="micro">Angefragt: '+Number(ticket.term_months)+' Monate · '+euro(ticket.quoted_cents||0)+' (Preis zum Anfragezeitpunkt; Zahlung separat bestätigen)</p>':'<label>Laufzeit (Tage) <input class="input" name="days" type="number" min="1" max="3650" value="30"></label>'):'')+
   '<button type="submit" class="btn small">Status speichern</button></form>':'';
  return '<section class="panel ll-chat-panel" id="academy-chat-panel"><div class="ll-chat-heading"><div><span class="eyebrow">SUPPORT · GESPRÄCH</span>'+
   '<h3>'+esc(isAdmin?(ticket.username||'Mitglied'):'Deine Unterhaltung')+'</h3><small>'+esc(ticket.category)+' · '+esc(ticket.status)+' · #'+esc(ticket.id.slice(0,8))+'</small></div>'+
@@ -1463,9 +1463,12 @@ function supportPage(){
  neonBanner('Brauchst du Hilfe?','Stelle eine Anfrage, melde einen Bug oder lies deine bisherigen Antworten. Dein Support-Ticket landet direkt beim Team.','book')+
  atelierSupportPulse(mine)+
  '<div class="support-grid"><section class="panel support-compose"><span class="eyebrow">[ + ] NEUE ANFRAGE</span><h2>Schreib dem Team</h2>'+
- '<form data-form="support-ticket"><div class="form-group"><label class="form-label" for="support-category">Worum geht es?</label><select class="select" id="support-category" name="category"><option value="support">Allgemeine Frage</option><option value="bug">Fehler melden</option>'+
- (data.beta_open?'<option value="beta">Beta-Feedback</option><option value="plan">Plus / Ultimate anfragen</option>':'')+'</select></div>'+
- (data.beta_open?'<div class="form-group support-plan-field" hidden><label class="form-label">Gewünschter Tarif</label><select class="select" name="tier"><option value="pro">Plus · 1,99 €</option><option value="ultimate">Ultimate · 5,99 €</option></select><small>Freigabe erfolgt manuell durch das Team. Keine automatische Zahlung.</small></div>':'')+
+ '<form data-form="support-ticket"><div class="form-group"><label class="form-label" for="support-category">Worum geht es?</label><select class="select" id="support-category" name="category"><option value="support" '+(!s.selectedPlan?'selected':'')+'>Allgemeine Frage</option><option value="bug">Fehler melden</option>'+
+ (data.beta_open?'<option value="beta">Beta-Feedback</option><option value="plan" '+(s.selectedPlan?'selected':'')+'>Mitgliedschaft anfragen</option>':'')+'</select></div>'+
+ (data.beta_open?'<div class="form-group support-plan-field" '+(s.selectedPlan?'':'hidden')+'><label class="form-label">Gewünschter Tarif</label>'+
+ '<select class="select" name="tier">'+[['pro','Plus · 1,99 €'],['ultimate','Ultimate · 5,99 €'],['max','Max · 11,99 €']].map(([tier,name])=>'<option value="'+tier+'" '+(s.selectedPlan===tier?'selected':'')+'>'+name+'</option>').join('')+'</select>'+
+ '<label class="form-label">Laufzeit</label><select class="select" name="months">'+[[1,'1 Monat'],[3,'3 Monate'],[12,'12 Monate · 5 % Jahresrabatt']].map(([n,label])=>'<option value="'+n+'" '+(s.selectedMonths===n?'selected':'')+'>'+label+'</option>').join('')+'</select>'+
+ '<small>Der Betrag wird serverseitig berechnet, die Freischaltung erfolgt erst nach Bestätigung. Keine automatische Zahlung.</small></div>':'')+
  '<div class="form-group"><label class="form-label" for="support-message">Deine Nachricht</label><textarea class="input" id="support-message" name="message" minlength="10" maxlength="2000" rows="6" required placeholder="Beschreibe dein Anliegen möglichst genau …"></textarea></div><p class="support-submit-status" id="support-submit-status" role="status" aria-live="polite">'+(s.lastSupportReceipt?'✓ Anfrage gespeichert · Ticket '+esc(s.lastSupportReceipt.slice(0,8)):'Deine Nachricht wird im Support-Posteingang gespeichert.')+'</p><button class="btn primary block" type="submit" '+(s.supportBusy?'disabled':'')+'>'+(s.supportBusy?'Wird gesendet …':'Anfrage senden →')+'</button></form><p class="micro">Bis zu fünf Anfragen innerhalb von 24 Stunden. Bitte sende keine Passwörter.</p></section>'+
  '<section class="panel support-history">'+(s.serviceError?'<p class="support-submit-status error" role="alert">Anfragen konnten nicht geladen werden: '+esc(s.serviceError)+'</p>':'')+'<div class="support-faq"><strong>Schnelle Hilfe</strong><details><summary>Wie erhalte ich Plus oder Ultimate?</summary><p>Eröffne während der Beta eine Tarif-Anfrage. Das Team gibt sie manuell frei.</p></details><details><summary>Wo sehe ich die Antwort?</summary><p>Hier in deinem Posteingang. Lade die App bei Bedarf neu.</p></details><details><summary>Wie melde ich einen Fehler?</summary><p>Wähle Fehler melden und beschreibe Gerät und Schritte.</p></details></div><span class="eyebrow">[ ◷ ] DEIN POSTEINGANG</span><h2>Deine Anfragen</h2><div class="support-controls"><input class="input" type="search" id="support-search" placeholder="Anfragen suchen …" aria-label="Anfragen suchen"><select class="select" id="support-filter"><option value="all">Alle Status</option><option value="open">Offen</option><option value="answered">Beantwortet</option><option value="approved">Genehmigt</option><option value="closed">Geschlossen</option></select></div>'+
  (mine.length?mine.map(t=>'<article class="support-ticket" data-ticket-status="'+esc(t.status||'open')+'"><div><strong>'+esc(names[t.category]||'Anfrage')+'</strong><span class="chip '+(t.status==='approved'?'free':'plus')+'">'+esc(t.status||'open')+'</span></div>'+
@@ -2077,7 +2080,7 @@ function supportAdminSection(){
  '<div class="ll-admin-ticket-list">'+(entries.length?entries.map(t=>
   '<article class="ll-admin-ticket '+(s.chatTicketId===t.id?'selected':'')+'"><div class="ll-ticket-row"><strong>'+esc(t.username||'Mitglied')+'</strong>'+
   '<span class="chip '+(t.status==='approved'?'free':'plus')+'">'+esc(t.status)+'</span></div>'+
-  '<small>'+esc(t.category)+(t.tier?' · '+esc(plans[t.tier]||t.tier):'')+' · '+new Date(t.updated_at||t.created_at).toLocaleString('de-DE')+'</small>'+
+  '<small>'+esc(t.category)+(t.tier?' · '+esc(plans[t.tier]||t.tier):'')+(t.term_months?' · '+Number(t.term_months)+' Monate · '+euro(t.quoted_cents||0):'')+' · '+new Date(t.updated_at||t.created_at).toLocaleString('de-DE')+'</small>'+
   '<p>'+esc((t.reply||t.message||'').slice(0,170))+'</p><button class="btn small" type="button" data-chat-open="'+esc(t.id)+'">'+(s.chatTicketId===t.id?'Gespräch aktualisieren':'Chat öffnen →')+'</button></article>').join(''):
   '<div class="empty">'+(s.serviceError?'Posteingang konnte nicht geladen werden. Bitte aktualisieren.':'Noch keine Supportanfragen. Neue Tickets erscheinen hier automatisch.')+'</div>')+'</div></section>'+ticketChatPanel(true);
 }
@@ -2882,21 +2885,23 @@ document.addEventListener('submit',async function(e){
   }
   if(mode==='support-ticket'){
    const category=String(fd.get('category')),message=String(fd.get('message')||'').trim(),tier=category==='plan'?String(fd.get('tier')):null;
+   const months=category==='plan'?Number(fd.get('months')||1):null;
+   if(category==='plan'&&(!['pro','ultimate','max'].includes(tier)||![1,3,12].includes(months)))throw Error('Bitte gültigen Tarif und Laufzeit wählen.');
    if(message.length<10||message.length>2000)throw Error('Bitte 10 bis 2000 Zeichen schreiben.');
    if(s.supportBusy)return;
    s.supportBusy=true;button.textContent='Wird gesendet …';
    const status=$('#support-submit-status');if(status)status.textContent='Deine Nachricht wird gespeichert …';
    try{
-    const r=await api.rpc('academy_service',{p_action:'create',p_payload:{category,message,tier}});
+    const r=await api.rpc('academy_service',{p_action:'create',p_payload:{category,message,tier,months}});
     if(r.error)throw r.error;
     if(r.data?.ok!==true||typeof r.data?.id!=='string')throw Error('Keine Bestätigung vom Server erhalten. Prüfe deinen Posteingang vor einem erneuten Versuch.');
     s.lastSupportReceipt=r.data.id;
     try{await refreshService();}
     catch(refreshError){
      if(!Array.isArray(s.service.mine))s.service.mine=[];
-     s.service.mine.unshift({id:r.data.id,category,tier,message,status:'open',reply:null,created_at:new Date().toISOString()});
+     s.service.mine.unshift({id:r.data.id,category,tier,term_months:months,message,status:'open',reply:null,created_at:new Date().toISOString()});
     }
-    s.supportBusy=false;render();notice('Anfrage erfolgreich gespeichert · Ticket '+r.data.id.slice(0,8));return;
+    s.supportBusy=false;s.selectedPlan=null;render();notice('Anfrage erfolgreich gespeichert · Ticket '+r.data.id.slice(0,8));return;
    }finally{s.supportBusy=false;}
   }
   if(mode==='ticket-chat'){
@@ -2915,8 +2920,9 @@ document.addEventListener('submit',async function(e){
   }
   if(mode==='support-reply'){
    if(s.profile?.role!=='admin')throw Error('Nur Administratoren');
-   const status=String(fd.get('status')),days=Number(fd.get('days')||30),reply=String(fd.get('reply')||'').trim();
-   if(status==='approved'&&!confirm('Diese Mitgliedschaft für '+days+' Tage freigeben? Es erfolgt keine automatische Zahlung.'))return;
+   const status=String(fd.get('status')),days=fd.get('days')?Number(fd.get('days')):null,reply=String(fd.get('reply')||'').trim();
+   const selectedTicket=(s.service?.admin||[]).find(t=>t.id===form.dataset.ticketId);
+   if(status==='approved'&&!confirm('Mitgliedschaft für '+(days?days+' Tage':Number(selectedTicket?.term_months||1)+' Monate')+' freigeben? Zahlung separat prüfen.'))return;
    const r=await api.rpc('academy_service',{p_action:'respond',p_payload:{id:form.dataset.ticketId,status,days,reply}});
    if(r.error)throw r.error;await refreshService();await loadTicketThread(form.dataset.ticketId);render();notice('Anfrage aktualisiert.');return;
   }
