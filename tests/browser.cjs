@@ -218,11 +218,11 @@ assert.equal(actual.missing.length,0,name+' @'+width+' missing '+actual.missing.
 assert.ok(actual.overflow<=2,name+' @'+width+' horizontal overflow '+actual.overflow+'px');
 assert.ok(actual.mainWidth<=width,name+' @'+width+' content too wide');
 if(name.startsWith('neon-plans')){
- assert.equal(actual.shopLayout.length,3);
+ assert.equal(actual.shopLayout.length,4);
  assert.ok(actual.shopLayout.every(card=>card.fits&&card.stackFits&&card.titleLines===1&&card.priceBelow),JSON.stringify(actual.shopLayout));
  if(width<=430){
   assert.ok(actual.shopLayout.every(card=>card.x===actual.shopLayout[0].x));
-  assert.equal(new Set(actual.shopLayout.map(card=>card.y)).size,3,'Mobile plans must stack vertically');
+  assert.equal(new Set(actual.shopLayout.map(card=>card.y)).size,4,'Mobile plans must stack vertically');
  }
 }
 assert.ok(actual.iconWidths.every(v=>v===0||(v>=1&&v<=48)),name+' @'+width+' icon HUGE: '+JSON.stringify(actual.iconWidths));
