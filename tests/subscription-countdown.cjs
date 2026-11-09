@@ -18,7 +18,7 @@ assert.equal(remaining(61),'0 Tage · 00 Std. · 01 Min. · 01 Sek.');
 assert.equal(a.membershipRemainingText('ultimate',new Date(Date.now()-1000).toISOString()),'Abgelaufen');
 assert.equal(a.membershipRemainingText('max',null),'Unbefristet · kein Ablaufdatum');
 assert.match(a.membershipRemainingText('free',null),/Free/);
-assert.match(a.membershipExpiryText('pro',new Date(Date.now()+10000).toISOString()),/Läuft am /);
+assert.match(a.membershipExpiryText('pro',new Date(Date.now()+10000).toISOString()),/Endet am /);
 s.ready=true;s.tier='pro';s.planExpires=new Date(Date.now()+60000).toISOString();s.profile={role:'student'};
 const html=a.ownPlanCountdownHtml();
 assert.match(html,/data-own-plan-clock/);
