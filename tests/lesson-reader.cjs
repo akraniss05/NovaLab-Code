@@ -27,3 +27,9 @@ assert.equal(LLCurriculum.questions({quiz:'Ungültig?',options:['A','B'],correct
 const valid={question:'Welche Aussage stimmt?',options:['A','B'],correct:0};
 assert.equal(LLCurriculum.questions({quiz_version:4,quiz_items:[valid,{...valid,correct:null},{...valid,question:'Welche Ausgabe ist richtig?'}]}).length,2);
 console.log('PASS: Specific explanations and examples without generic exercises.');
+
+const enriched=LLCurriculum.render({title:'print in Lua',lang:'lua',theory:'print zeigt Text an.',
+ keyPoints:['Anders als ein Variablenname wird Text mit Anführungszeichen gekennzeichnet.'],
+ example_notes:['In diesem Beispiel erscheinen zwei eigene Ausgaben nacheinander.']},0,escape,()=> '#');
+assert.match(enriched,/Das solltest du dir merken/,'Additional specific facts must be visible');
+assert.match(enriched,/So wirkt das im Beispiel/,'Brief theory must show the corresponding example outcome');
