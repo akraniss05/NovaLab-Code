@@ -1,5 +1,5 @@
-/* LiveryLab Academy • Mobile App Design v12
-   Made with 💙 from NyxAtheris (LiveryLab Studios)
+/* NovaLab Academy • Mobile App Design v12
+   Made with 💙 from NyxAtheris (NovaLab Academy)
    Single stylesheet: no legacy cascades. */
 :root{
  color-scheme:dark;
@@ -115,7 +115,7 @@ body.is-auth .sidebar,body.is-auth .topbar,body.is-auth .bottom-nav{display:none
 @media(prefers-reduced-motion:reduce){*,*:after,*:before{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 
 
-/* LiveryLab Academy v13 • membership, coupons, daily learning */
+/* NovaLab Academy v13 • membership, coupons, daily learning */
 .daily-strip{display:flex;align-items:center;gap:13px;margin:18px 0;padding:15px 17px;background:#201735;border:1px solid #534071;border-radius:15px}
 .daily-symbol{width:44px;height:44px;flex:0 0 44px;border-radius:12px;background:#35224e;color:#c5a6ff;display:grid;place-items:center;font:800 27px var(--mono)}
 .daily-strip strong,.daily-strip small{display:block}.daily-strip strong{font-size:15px;line-height:1.35}.daily-strip small{font-size:12px;line-height:1.5;color:#b5a6cc;margin-top:3px}
@@ -476,7 +476,7 @@ body.is-auth .sidebar,body.is-auth .topbar,body.is-auth .bottom-nav{display:none
 }
 
 
-/* LiveryLab Academy v18 · Appearance, Creator Profiles, Community & Voucher Manager */
+/* NovaLab Academy v18 · Appearance, Creator Profiles, Community & Voucher Manager */
 [hidden]{display:none!important}
 html[data-theme="midnight"]{--bg:#080e1d;--nav:#0c1326;--panel:#151d34;--panel2:#202943;--panel3:#2c3653;--stroke:#344262;--stroke2:#526482;--text:#f1f4ff;--muted:#a3b2d0;--soft:#c4d0e4}
 html[data-theme="ocean"]{--bg:#071b2b;--nav:#0c2435;--panel:#112b40;--panel2:#1a3850;--panel3:#214761;--stroke:#34546d;--stroke2:#4b7590;--text:#eaf8ff;--muted:#9ebfd2;--soft:#c4deeb}
@@ -693,7 +693,7 @@ body.decorative-background .content,body.decorative-background .footer{position:
 @media(max-width:560px){.streak-home{padding:12px;gap:9px}.streak-home strong{font-size:12px}.streak-home small{font-size:10px}.streak-arrow{font-size:10px}}
 
 
-/* v19 · LiveryLab Academy — dashboard and verified daily claim */
+/* v19 · NovaLab Academy — dashboard and verified daily claim */
 .ll-icon{display:inline-block;width:22px;height:22px;vertical-align:middle;flex:0 0 auto}
 .ll-home-dashboard{width:100%;max-width:1080px;margin:0 auto}
 .ll-home-brand-banner{position:relative;width:100%;aspect-ratio:2.63/1;border-radius:24px;overflow:hidden;border:1px solid #7637b88a;
@@ -1036,7 +1036,7 @@ body{background:
 .admin-tools{display:flex;gap:12px;align-items:center;margin:15px 0}.admin-tools>.input{flex:1;min-width:180px}.admin-filter{display:flex;gap:4px;padding:4px;border:1px solid #433355;border-radius:13px;background:#110c1b}.admin-filter button{border:0;border-radius:9px;background:transparent;color:#a99bb9;padding:8px 11px;font-size:11px;font-weight:750}.admin-filter button.active{background:#684093;color:#fff;box-shadow:0 4px 14px #6f3da94c}
 .member-card{background:linear-gradient(145deg,#1b142a,#130f1e);box-shadow:0 12px 32px #05020a36}.approval-card{box-shadow:0 12px 34px #05020b45}
 .auth-login-layout{max-width:1040px;display:grid;grid-template-columns:minmax(0,1fr) minmax(380px,470px);gap:18px;align-items:stretch}
-.auth-showcase{position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;min-height:640px;padding:42px;border:1px solid #5e3d86;border-radius:26px;background:linear-gradient(180deg,#0c0714a3,#10091bf5),url("./liverylab-banner.webp") center/cover;box-shadow:0 28px 90px #0301069c}
+.auth-showcase{position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;min-height:640px;padding:42px;border:1px solid #5e3d86;border-radius:26px;background:linear-gradient(180deg,#0c0714a3,#10091bf5),url("./novalab-banner.webp") center/cover;box-shadow:0 28px 90px #0301069c}
 .auth-showcase:after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 70% 25%,#b45bff3a,transparent 33%);pointer-events:none}.auth-showcase>*{position:relative;z-index:1}.auth-showcase h2{font-size:clamp(34px,5vw,57px);line-height:1.03;margin:16px 0}.auth-showcase h2 em{color:#ca91ff;font-style:italic}.auth-showcase p{max-width:590px;color:#d1c2df;line-height:1.7}.auth-showcase small{margin-top:30px;color:#9b8ba9}
 .auth-feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:18px}.auth-feature-grid span{padding:11px 13px;border:1px solid #765494;border-radius:12px;background:#150d22bd;color:#eadffd;font-size:12px;font-weight:700;backdrop-filter:blur(8px)}
 .auth-login-layout .auth-card{align-self:stretch;padding:34px;background:radial-gradient(circle at 100% 0,#8a45cb2d,transparent 42%),linear-gradient(145deg,#1b132a,#110c1c);box-shadow:0 28px 90px #0301068c}.auth-login-layout .input{min-height:50px;background:#0f0a19;border-color:#49345f}.auth-login-layout .btn.primary{min-height:52px;font-size:14px;box-shadow:0 10px 25px #9d55d942}
@@ -1072,3 +1072,9 @@ body{background:
 .practice-console{margin:16px 0;border:1px solid #5e487b;border-radius:15px;overflow:hidden;background:#090816}.practice-console strong{display:block;padding:10px 15px;background:#251a39;color:#c8a5fa;font:700 12px ui-monospace,monospace;letter-spacing:.13em}.practice-console pre{min-height:80px;max-height:230px;overflow:auto;margin:0;padding:16px;color:#dcd4ee;font:13px/1.6 ui-monospace,SFMono-Regular,monospace;white-space:pre-wrap;overflow-wrap:anywhere}.practice-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:12px 0}.practice-actions .btn{min-width:0;white-space:normal}.practice-feedback{min-height:30px;color:#a5e9c9;white-space:pre-wrap}.practice-feedback.error{color:#f19ca9}.exercise-textarea{max-width:100%;overflow-wrap:anywhere}.focus-header{border:1px solid #9c70d4;border-radius:99px;background:#38234d;color:#e9d6ff;padding:8px 12px;font:700 12px ui-monospace,monospace}.focus-header[hidden]{display:none}.timer-backdrop{position:fixed;inset:0;z-index:700;background:#05030dcc;backdrop-filter:blur(8px)}.timer-dialog{position:fixed;z-index:701;left:50%;top:50%;transform:translate(-50%,-50%);width:min(440px,calc(100vw - 30px));padding:24px;border:1px solid #ad7fe8;border-radius:24px;background:#191126;box-shadow:0 30px 100px #000b}.timer-dialog h2{text-align:center;font:700 clamp(46px,12vw,72px) ui-monospace,monospace;margin:16px 0}.timer-dialog label{display:block}.timer-dialog .input{max-width:120px;margin-left:8px}.timer-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px}.timer-dialog>.btn{float:right}.ll-home-tools .progress{margin:12px 0}
 .code-editor{display:grid;grid-template-columns:38px minmax(0,1fr);width:100%;min-width:0;border:1px solid #745b9d;border-radius:12px;background:#090814;overflow:hidden}.code-editor:focus-within{border-color:#af7bff;box-shadow:0 0 0 2px #9a6cde33}.code-lines{padding:14px 7px 14px 0;text-align:right;white-space:pre;overflow:hidden;color:#85749d;background:#171126;font:14px/1.65 ui-monospace,SFMono-Regular,monospace;user-select:none}.code-editor .exercise-textarea{margin:0;border:0;border-radius:0;min-height:220px;max-height:55vh;resize:vertical;padding:14px 12px;font:14px/1.65 ui-monospace,SFMono-Regular,monospace;white-space:pre;overflow:auto;overflow-wrap:normal;tab-size:2;outline:none}.practice-workspace{background:#151024}.practice-workspace.is-complete{background:#151f1b}.practice-tip{font-size:13px;line-height:1.5}.practice-actions .btn{min-height:42px}
 @media(max-width:560px){.practice-actions .btn{font-size:12px;padding:10px 7px}.focus-header{font-size:11px;padding:6px 7px}}
+
+/* v73 NovaLab Academy: uploaded official hero + square brand logo. */
+.ll-brand-symbol,.ll-neon-brand-text img,.ll-learning-brand img{border-radius:19%;object-fit:cover;box-shadow:0 0 12px #b745fa38}
+.brandmark .ll-brand-symbol{border-radius:18%}
+.ll-login-banner{object-position:center 45%;background:#12061c}
+.ll-home-dashboard .ll-home-brand-banner>img{object-position:center 48%;background:#090514}
