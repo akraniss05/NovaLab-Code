@@ -1303,7 +1303,10 @@ async function completePractice(){
      result=window.LLPractice.evaluateRuntime(value,payload,runtime,expected);
     }
    }else{
-    result={ok:false,diagnostic:'Die sichere Codeprüfung ist gerade nicht verfügbar. Bitte versuche es erneut.'};
+    // No runtime (offline, blocked worker or missing bundle): retain the structural
+    // static verdict instead of rejecting valid personal strings and variable values.
+    // Unsupported advanced code remains unverified; never claim it was executed.
+    if(result.ok)result={...result,diagnostic:'Statische Prüfung bestanden (keine echte Ausführung verfügbar).'};
    }
   }
   if(result.ok){

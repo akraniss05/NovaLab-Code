@@ -45,11 +45,34 @@ function output(code,lang){const vars=Object.create(null),lines=[];let supported
   if(assign){const val=expression(assign[2].replace(/;$/,''),vars);if(val===INVALID){supported=false;error='Der Wert für „'+assign[1]+'“ kann hier nicht berechnet werden.';break}vars[assign[1]]=val;continue}
   const match=line.match(print);if(match){const vals=splitArgs(match[1]).map(x=>expression(x,vars));if(vals.includes(INVALID)){supported=false;error='Ein Ausdruck ist unbekannt oder eine Variable wurde nicht definiert.';break}lines.push(vals.map(x=>x===null?'nil':String(x)).join('\t'));continue}
   supported=false;error='Diese Anweisung kann die Browser-Konsole noch nicht ausführen.';break}
- return {lines,supported,error}}
+ return {lines,supported,error,vars}}
 function matches(code,rule){try{return new RegExp(rule,'im').test(code)}catch(_){return code.includes(rule)}}
 function describe(rule){let m=rule.match(/local\\s\+([a-zA-Z_]\w*)/);if(m)return 'lokale Variable „'+m[1]+'“';
  if(/tonumber/.test(rule))return 'tonumber(…)';if(/tostring/.test(rule))return 'tostring(…)';if(/type/.test(rule))return 'type(…)';if(/print/.test(rule))return 'print(…) wie in der Aufgabe';if(/\\\+/.test(rule))return 'Addition wie in der Aufgabe';return 'ein geforderter Schritt'}
 function tokens(s){return new Set(String(s||'').match(/[a-zA-Z_$][\w$]*|\d+|["'][^"']*["']/g)||[])}
+function allowsOwnValues(payload){
+ const task=String(payload.task||'');
+ if(/(?:eigenen Namen|eigene[nrs]? (?:Namen|Zahlen?|Werte?|Texte?)|deinen Namen|selbst gewählte[nrs]? (?:Namen|Zahlen?|Werte?|Texte?)|beliebige[nrs]? (?:Namen|Zahlen?|Werte?|Texte?)|Ändere anschließend mindestens einen Wert)/i.test(task))return true;
+ // Tasks asking for variables without a prescribed number deliberately allow original values.
+ return /^\s*(?:Lege|Erstelle|Definiere|Schreibe)\b.{0,110}\b(?:Variablen?|Kommentar)\b/i.test(task)&&!/\b\d+(?:[.,]\d+)?\b/.test(task);
+}
+function sameVariableTypes(actual,expected){
+ return Object.keys(expected.vars||{}).every(key=>!Object.prototype.hasOwnProperty.call(actual.vars||{},key)||
+  valueType(actual.vars[key])===valueType(expected.vars[key]));
+}
+function requiredPrintedVariables(source,solution,expected){
+ const printed=s=>(s.match(/(?:print|console\.log)\s*\([^\n]*/g)||[]).join(' ');
+ const expectedPrint=printed(solution),actualPrint=printed(source);
+ return Object.keys(expected.vars||{}).filter(key=>new RegExp('\\b'+key+'\\b').test(expectedPrint))
+  .every(key=>new RegExp('\\b'+key+'\\b').test(actualPrint));
+}
+function customizedOutput(source,payload,out,expected,solution){
+ if(out.lines.length!==expected.lines.length||out.lines.some(x=>!String(x).trim()))return false;
+ if(!sameVariableTypes(out,expected)||!requiredPrintedVariables(source,solution,expected))return false;
+ // A lesson about types must still produce the correct types, irrespective of variable values.
+ if(/\btype\s*\(/.test(solution)&&JSON.stringify(out.lines)!==JSON.stringify(expected.lines))return false;
+ return true;
+}
 function evaluate(source,payload){const code=clean(source),lang=String(payload.lang||'').toLowerCase(),solution=significant(payload.solution||payload.example||'',lang),candidate=significant(code,lang);
  if(!code)return {ok:false,diagnostic:'Schreibe zuerst deine Lösung.',output:[]};
  const error=syntax(code,lang);if(error)return {ok:false,diagnostic:error,output:[]};
@@ -57,9 +80,10 @@ function evaluate(source,payload){const code=clean(source),lang=String(payload.l
  const missing=required.filter(x=>!matches(x.startsWith('--')?code:candidate,x)),out=output(code,lang),expected=output(solution,lang);
  if(missing.length)return {ok:false,diagnostic:'Prüfe diese Schritte: '+missing.slice(0,3).map(describe).join(', ')+'.',output:out.lines};
  if(['lua','javascript','python'].includes(lang)&&expected.supported&&expected.lines.length&&out.supported){
-  const personal=/eigenen Namen/i.test(payload.task||''),variable=/Ändere anschließend mindestens einen Wert/i.test(payload.task||'');
+  const personal=/(?:eigenen|deinen) Namen/i.test(payload.task||'');
+  const flexible=allowsOwnValues(payload);
   const matched=personal?out.lines.length===expected.lines.length&&out.lines[0].trim()!==''&&out.lines.slice(1).every((v,i)=>v===expected.lines[i+1]):
-   variable?out.lines.length===expected.lines.length&&out.lines.every(Boolean):JSON.stringify(out.lines)===JSON.stringify(expected.lines);
+   flexible?customizedOutput(candidate,payload,out,expected,solution):JSON.stringify(out.lines)===JSON.stringify(expected.lines);
   return {ok:matched,diagnostic:matched?'Die geforderten Schritte und die Ausgabe stimmen.':'Die Ausgabe passt noch nicht zur Aufgabe. Erwartet: '+expected.lines.join(' · ')+'.',output:out.lines}}
  if(!out.supported&&out.error&&candidate!==solution)return {ok:false,diagnostic:out.error,output:out.lines};
  if(candidate===solution&&solution)return {ok:true,diagnostic:'Dein Code entspricht der Musterlösung.',output:out.lines};
@@ -93,12 +117,18 @@ function evaluateRuntime(code,payload,actual,expected){
   if(expectedAssignments&&actualAssignments<expectedAssignments)return {ok:false,diagnostic:'Nutze die geforderten Variablen und Zuweisungen aus der Übung.',output:actual.lines||[]};
  }
  const lines=actual.lines||[],expectedLines=expected.lines||[];
- const personal=/eigenen Namen/i.test(payload.task||''),customize=/Ändere anschließend mindestens einen Wert/i.test(payload.task||'');
+ const personal=/(?:eigenen|deinen) Namen/i.test(payload.task||''),customize=allowsOwnValues(payload);
  let accepted;
  if(personal){
   accepted=lines.length===expectedLines.length&&String(lines[0]||'').trim()!==''&&lines.slice(1).every((line,i)=>line===expectedLines[i+1]);
  }else if(customize){
-  accepted=lines.length===expectedLines.length&&(lines.length===0||lines.every(x=>String(x).trim().length>0));
+  const simulated=output(code,lang),reference=output(payload.solution||'',lang);
+  // When the light parser understands the lesson, compare variable types and ensure
+  // that the output really depends on the required variables, not hard-coded text.
+  const meaningful=!simulated.supported||!reference.supported||
+   customizedOutput(source,payload,simulated,reference,solution);
+  accepted=meaningful&&lines.length===expectedLines.length&&lines.every(x=>String(x).trim().length>0);
+  if(/\btype\s*\(/.test(solution))accepted=accepted&&JSON.stringify(lines)===JSON.stringify(expectedLines);
  }else accepted=JSON.stringify(lines)===JSON.stringify(expectedLines);
  if(!accepted)return {ok:false,diagnostic:'Die echte Ausgabe passt noch nicht zur Aufgabe.'+(customize?' Prüfe, ob alle erwarteten Ergebnisse ausgegeben werden.':' Vergleiche Werte, Reihenfolge und Datentypen mit der Erklärung.'),output:lines};
  return {ok:true,diagnostic:'✓ Der echte Programmlauf stimmt mit den Anforderungen überein. Alle geforderten Konzepte sind vorhanden.',output:lines};
