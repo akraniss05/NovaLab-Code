@@ -2213,8 +2213,8 @@ function adminSelfSection(){
  if(!state)return '<section class="section panel ll-self-admin"><span class="eyebrow">ADMIN · MEIN KONTO</span><h2>Meine Admin-Einstellungen</h2>'+
  '<p class="muted">'+esc(s.adminSelfError||'Kontostatus wird geladen. Du kannst die Daten erneut abrufen.')+'</p>'+
  '<button type="button" class="btn primary" data-action="admin-self-refresh">Kontostatus laden</button></section>';
- const total=Math.max(0,Number(state.xp_total)||0),base=Math.max(0,Number(state.xp_lesson)||0),
-  extra=Number(state.xp_adjustment)||0,st=state.streak||{},
+ const total=xpEarned(),base=(s.xpAwards||[]).reduce((n,entry)=>n+Math.max(0,Number(entry.xp)||0),0),
+  extra=Number(state.xp_adjustment)||0,st=s.loginStreak||state.streak||{},
   current=Math.max(0,Number(st.current)||0),best=Math.max(current,Number(st.best)||0),
   completed=(s.progress?.done||[]).length,months=[0,1,3,12],
   history=Array.isArray(state.changes)?state.changes:[];
@@ -2657,7 +2657,7 @@ document.addEventListener('click',async function(e){
   }
   if(name==='admin-self-xp-add'){
    const amount=Number(action.dataset.amount);
-   const current=Number(s.adminSelf?.xp_total);
+   const current=xpEarned();
    if(!Number.isSafeInteger(amount)||!Number.isSafeInteger(current))return;
    try{await changeAdminSelf('set_xp',{xp:Math.max(0,Math.min(10000000,current+amount))},'Deine XP wurden angepasst.');}
    catch(error){notice('XP: '+formatError(error));}
@@ -2665,8 +2665,8 @@ document.addEventListener('click',async function(e){
   }
   if(name==='admin-self-streak-add'){
    const amount=Number(action.dataset.amount);
-   const current=Number(s.adminSelf?.streak?.current);
-   const best=Number(s.adminSelf?.streak?.best);
+   const current=Number((s.loginStreak||s.adminSelf?.streak)?.current);
+   const best=Number((s.loginStreak||s.adminSelf?.streak)?.best);
    if(!Number.isSafeInteger(amount)||!Number.isSafeInteger(current)||!Number.isSafeInteger(best))return;
    const next=Math.max(0,Math.min(5000,current+amount));
    try{await changeAdminSelf('set_streak',{current:next,best:Math.max(next,best)},'Deine Streak wurde angepasst.');}
