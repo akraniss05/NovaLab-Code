@@ -83,7 +83,7 @@ assert(app.plansPage().includes('1,99 €'),'Plus price visible');
 assert(app.plansPage().includes('5,99 €'),'Ultimate price visible');
 state.planExpires='2030-01-01T00:00:00Z';state.tier='pro';
 assert(app.profilePage().includes('Freigeschaltet bis'),'Membership expiry visible on profile');state.tier='ultimate';
-assert.equal((app.plansPage().match(/BETA · nur auf Anfrage/g)||[]).length,2,'Plus and Pro are marked as request-only beta plans');
+assert.equal((app.plansPage().match(/BETA · nur auf Anfrage/g)||[]).length,3,'Plus, Ultimate and Max stay request-only beta plans');
 assert(app.plansPage().includes('redeem-voucher'),'Coupon redemption visible');
 assert(app.plansPage().includes('5 pro Tag'),'Free daily limit visible');
 assert(app.plansPage().includes('10 pro Tag'),'Plus daily limit visible');
