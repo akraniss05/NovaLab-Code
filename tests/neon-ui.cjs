@@ -14,7 +14,7 @@ vm.createContext(ctx);
 vm.runInContext(mod,ctx,{filename:'academy-v21.js'});
 const a=ctx.window.__neon,s=a.s;
 s.ready=true;s.user={id:'abc',email:'student@example.com'};s.profile={username:'student',display_name:'Student',role:'student',active:true};
-s.tier='ultimate';s.courses=[{id:'lua',name:'Lua',category:'Sprachen',level:'beginner'},
+s.tier='max';s.courses=[{id:'lua',name:'Lua',category:'Sprachen',level:'beginner'},
 {id:'python',name:'Python',category:'Sprachen',level:'beginner'}];
 s.lessons=[{id:'lua-01',course_id:'lua',chapter:'Grundlagen',position:1,title:'Lua-Befehl',summary:'Einstieg',required_plan:'free',minutes:10},
 {id:'python-01',course_id:'python',chapter:'Grundlagen',position:1,title:'Python-Befehl',summary:'Einstieg',required_plan:'free',minutes:10}];
