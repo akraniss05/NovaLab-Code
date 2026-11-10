@@ -23,3 +23,5 @@ The Windows NSIS installer is in desktop/dist. The launcher downloads the ZIP fr
 GitHub Actions `.github/workflows/novalab-code-desktop.yml` builds the Windows installer and ZIP. A commit containing `[publish-code]` publishes `code-v1.0.0` with installer, launcher ZIP, SHA-256 and manifest.
 
 To update NovaLab Launcher, copy the exact verified sha256, URL, version and file size from the Release's `launcher-manifest.json` to the `novalab-code` catalog entry. Never use a placeholder SHA-256.
+
+Build target: code-v1.0.0 (Windows x64 Early Access).
