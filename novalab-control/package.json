@@ -1,0 +1,16 @@
+{
+  "name": "novalab-control-v2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.mjs",
+    "check": "node --check src/index.mjs && node --test tests/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "discord.js": "^14.22.0",
+    "express": "^5.1.0"
+  }
+}
