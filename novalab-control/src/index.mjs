@@ -30,7 +30,7 @@ function requireAuth(req,res,next){
 }
 function csrf(req,res,next){if(!equal(req.get('x-csrf-token'),req.session.csrf))return failure(res,403,'CSRF-Prüfung fehlgeschlagen');next();}
 async function guild(){if(!client.isReady())throw Error('Discord Gateway ist nicht bereit');return client.guilds.fetch(env.DISCORD_GUILD_ID);}
-function route(fn){return async(req,res)=>{try{res.json(await fn(req));}catch(e){console.error('API error:',e);failure(res,503,'Discord-Aktion fehlgeschlagen: '+e.message);}};}
+function route(fn){return async(req,res)=>{try{res.json(await fn(req));}catch(e){console.error('API error:',e);failure(res,503,'Discord-Aktion fehlgeschlagen. Bitte Bot-Rechte und Server-Logs prüfen.');}};}
 app.get('/api/health',(_req,res)=>res.status(client.isReady()?200:503).json({ready:client.isReady()}));
 app.get('/auth/login',(req,res)=>{
  const state=token();pending.set(state,Date.now()+600000);res.set('Set-Cookie',cookie('novalab_oauth',state,600));
