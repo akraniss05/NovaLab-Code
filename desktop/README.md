@@ -27,3 +27,5 @@ To update NovaLab Launcher, copy the exact verified sha256, URL, version and fil
 Build target: code-v1.0.1 (Windows x64 Early Access).
 
 Version 1.0.1 vendors Python/Lua learning runtimes and Supabase SDK into the app distribution. The restricted reference-data.js is explicitly excluded to match the production website build. Backend requests still need Internet.
+
+Release: code-v1.0.1 · geprüfte Paketstruktur und gebündelte Lern-Laufzeiten.
