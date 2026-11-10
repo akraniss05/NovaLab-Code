@@ -36,11 +36,11 @@ jobs:
       - name: Original Academy Lern-Laufzeiten und Supabase SDK lokal bereitstellen
         shell: bash
         run: |
-          npm install --no-save --ignore-scripts --no-package-lock fengari-web@0.1.4 pyodide@0.27.8 @supabase/supabase-js@2.57.4
+          npm install --no-save --ignore-scripts --no-package-lock fengari-web@0.1.4 pyodide@0.27.8
           mkdir -p site/vendor/pyodide
           cp node_modules/fengari-web/dist/fengari-web.bundle.js site/vendor/fengari-web.bundle.js
           cp -R node_modules/pyodide/. site/vendor/pyodide/
-          cp node_modules/@supabase/supabase-js/dist/umd/supabase.min.js site/vendor/supabase.min.js
+          curl --fail --location --retry 3 --max-time 45 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js' --output site/vendor/supabase.min.js
           test -s site/vendor/supabase.min.js
           test -s site/vendor/pyodide/pyodide.asm.wasm
           test -s site/vendor/fengari-web.bundle.js
