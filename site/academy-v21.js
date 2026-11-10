@@ -7,7 +7,7 @@
 'use strict';
 var cfg=window.LL_CONFIG||{}, $=function(q,root){return (root||document).querySelector(q);};
 var content=$('#content'), sidebar=$('#sidebar'), bottom=$('#bottom-nav'), toastNode=$('#toast');
-var api=null, s={adminSelf:null,adminSelfBusy:false,adminSelfError:'',shopDiscount:0,shopMonths:1,shopOffers:[],selectedPlan:null,selectedMonths:1,service:{beta_open:true,mine:[],admin:[]},serviceError:'',serviceLastUpdated:0,lastSupportReceipt:null,supportBusy:false,chatTicketId:null,chatMessages:[],chatBusy:false,chatLoading:false,streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],xpAwards:[],xpClaimBusy:false,progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',difficultyFilter:'all',lesson:null,choice:null,quizStep:0,quizPassed:false,sectionIndex:0,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},memberExpiry:{},adminPage:1,adminFilter:'all',adminSearch:'',registrationPolicy:{mode:'approval',loaded:false},registrationManual:true,adminLearner:null,adminProgressBusy:false,adminProgressSearch:'',adminProgressFilter:'all',catalogLimit:9,practiceChecked:false,draft:'',lessonStep:1,hintStage:0,prefs:null,projectTab:0,projectSource:'',projectLoading:false};
+var api=null, s={shopEnabled:false,adminSelf:null,adminSelfBusy:false,adminSelfError:'',shopDiscount:0,shopMonths:1,shopOffers:[],selectedPlan:null,selectedMonths:1,service:{beta_open:true,mine:[],admin:[]},serviceError:'',serviceLastUpdated:0,lastSupportReceipt:null,supportBusy:false,chatTicketId:null,chatMessages:[],chatBusy:false,chatLoading:false,streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],xpAwards:[],xpClaimBusy:false,progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',difficultyFilter:'all',lesson:null,choice:null,quizStep:0,quizPassed:false,sectionIndex:0,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},memberExpiry:{},adminPage:1,adminFilter:'all',adminSearch:'',registrationPolicy:{mode:'approval',loaded:false},registrationManual:true,adminLearner:null,adminProgressBusy:false,adminProgressSearch:'',adminProgressFilter:'all',catalogLimit:9,practiceChecked:false,draft:'',lessonStep:1,hintStage:0,prefs:null,projectTab:0,projectSource:'',projectLoading:false};
 var plans={free:'Free',pro:'Plus',ultimate:'Ultimate',max:'Max'};
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];});}
 function safeLink(url){return /^https:\/\/[^\s<>"]+$/i.test(String(url||''))?esc(url):'#';}
@@ -27,10 +27,10 @@ function lessonsOf(id){return s.lessons.filter(function(l){return l.course_id===
 function courseOf(id){return s.courses.find(function(c){return c.id===id;});}
 function pct(n,total){return total?Math.round(n/total*100):0;}
 function tierLabel(t){return t==='plus'?'Plus':t==='pro'?'Ultimate':t==='max'?'Max':'Free';}
-function allowed(l){return !!s.profile&&(!s.entitledCourses||s.entitledCourses.includes(l.course_id))&&(l.required_plan==='free'||(l.required_plan==='plus'&&['pro','ultimate','max'].includes(s.tier))||(l.required_plan==='pro'&&['ultimate','max'].includes(s.tier)));}
-function fullAccess(){return s.tier==='max';}
-function hasScript(){return ['pro','ultimate','max'].includes(s.tier);}
-function examCap(){return fullAccess()?-1:s.tier==='ultimate'?8:s.tier==='pro'?4:2;}
+function allowed(l){if(!s.shopEnabled)return !!s.profile;return !!s.profile&&(!s.entitledCourses||s.entitledCourses.includes(l.course_id))&&(l.required_plan==='free'||(l.required_plan==='plus'&&['pro','ultimate','max'].includes(s.tier))||(l.required_plan==='pro'&&['ultimate','max'].includes(s.tier)));}
+function fullAccess(){return !s.shopEnabled||s.tier==='max';}
+function hasScript(){return !s.shopEnabled||['pro','ultimate','max'].includes(s.tier);}
+function examCap(){return !s.shopEnabled||fullAccess()?-1:s.tier==='ultimate'?8:s.tier==='pro'?4:2;}
 function paywall(feature,tier,description){return '<section class="feature-gate"><span class="feature-lock">🔒</span><span class="eyebrow">'+esc(tier)+'-MITGLIEDSCHAFT</span><h1>'+esc(feature)+' ist gesperrt.</h1><p class="lede">'+esc(description)+'</p><div class="feature-gate-actions"><button type="button" data-go="plans" class="btn primary">Tarif ansehen →</button><a class="btn discord" href="https://discord.gg/SZhYa6Nnmy" target="_blank" rel="noopener noreferrer">Auf Discord anfragen</a></div><p class="micro">Schreibe NyxAtheris eine DM oder eröffne im Discord ein Ticket und erwähne @nyxatheris mit dem Grund.</p></section>';}
 function badge(t){return '<span class="chip '+esc(t)+'">'+tierLabel(t)+'</span>';}
 function levelText(l){var x=String(l||'beginner').toLowerCase();return /beginner|anfänger/.test(x)?'Anfänger':/intermediate|mittelstufe/.test(x)?'Aufbau':'Fortgeschritten';}
@@ -285,7 +285,7 @@ function neonMenuPage(){
 function navHTML(route){
  const items=[
   ['home','⌂','Startseite'],['menu','▦','Hauptmenü'],['courses','▦','Lernen'],['script','⌘',hasScript()?'Script':'Script 🔒'],
-  ['exams','☆','Prüfung'],['reference','▤',fullAccess()?'Referenz':'Referenz 🔒'],['plans','✦','Shop · Free / Plus / Ultimate / Max'],
+  ['exams','☆','Prüfung'],['reference','▤',fullAccess()?'Referenz':'Referenz 🔒'],...(s.shopEnabled?[['plans','✦','Shop · Free / Plus / Ultimate / Max']]:[]),
   ['profile','◉','Mein Profil'],['friends','♡','Freunde'],['support','?','Support'],['settings','⚙','Einstellungen']
  ];
  if(s.profile?.role==='admin')items.push(['admin','♢','Administration']);
@@ -505,7 +505,9 @@ async function loadXpAwardPages(){
  }
  return {data:null,error:new Error('XP-Protokoll ist größer als die technische Sicherheitsgrenze.')};
 }
+async function refreshShopVisibility(){const result=await api.rpc('novalab_shop_enabled');if(result.error)throw result.error;const next=result.data===true;if(next!==s.shopEnabled){s.shopEnabled=next;if(s.ready)render();}return next;}
 async function loadData(){
+ await refreshShopVisibility();
  var all=await Promise.all([
  api.from('ll_courses').select('id,name,category,level,icon,source_url,difficulty'),
  loadLessonIndexPages(),
@@ -555,7 +557,7 @@ async function loadData(){
   const data=results.map(x=>x.status==='fulfilled'&&!x.value?.error?x.value?.data:null);
   s.examStatus=data[0]||null;
   s.social=data[1]||null;
-  s.entitledCourses=data[2]||null;
+  s.entitledCourses=s.shopEnabled?(data[2]||null):null;
   s.socialMedia=data[3]||{};
   if(data[4]&&Array.isArray(data[4].mine))s.service=data[4];
   if(Array.isArray(data[5]))s.shopOffers=data[5];
@@ -629,6 +631,7 @@ function renderMFA(){
 }
 function render(){
  if(!s.ready){login();return;}
+ if(!s.shopEnabled&&parseRoute().page==='plans'){go('home');return;}
  frame();const r=parseRoute();
  const pages={home:homePage,menu:neonMenuPage,courses:coursesPage,track:()=>trackPage(r.id),lesson:()=>lessonPage(r.id),
   script:()=>hasScript()?scriptPage():paywall('Script-Werkstatt','Plus','Codebeispiele sind ab Plus verfügbar.'),plans:plansPage,exams:examsPage,exam:()=>examPage(r.id),
@@ -2305,8 +2308,9 @@ function adminSelfSection(){
 
 function adminPage(){
  if(s.profile?.role!=='admin')return '<section class="locked-panel"><h2>Nur für Administratoren.</h2></section>';
+ const shopToggle='<section class="panel"><h2>Shop-Sichtbarkeit</h2><p>Wenn deaktiviert, ist der Shop für alle einschließlich Administratoren unsichtbar. Alle Lerninhalte sind kostenlos.</p><button type="button" class="btn primary" data-toggle-shop>'+ (s.shopEnabled?'Shop deaktivieren':'Shop für alle aktivieren') +'</button></section>';
  const people=s.members||[],pending=people.filter(u=>u.access_status==='pending'),query=String(s.adminSearch||'').toLowerCase(),rest=people.filter(u=>u.access_status!=='pending').filter(u=>(s.adminFilter==='all'||(s.adminFilter==='active'&&u.active)||(s.adminFilter==='blocked'&&!u.active)||(s.adminFilter==='admin'&&u.role==='admin'))&&(!query||String(u.username||'').toLowerCase().includes(query)||String(u.email||'').toLowerCase().includes(query))),active=people.filter(u=>u.active).length,blocked=people.filter(u=>!u.active&&u.access_status!=='pending').length;
- const requests='<section class="section approval-section"><div class="section-heading"><div><span class="eyebrow">[ ! ] ANTRÄGE</span>'+
+ const requests=shopToggle+'<section class="section approval-section"><div class="section-heading"><div><span class="eyebrow">[ ! ] ANTRÄGE</span>'+
  '<h2>Registrierungsanfragen <span class="pending-bubble">'+pending.length+'</span></h2>'+
  '<p>'+((s.registrationPolicy?.mode==='open')?'Bestehende Bewerbungen können hier weiter geprüft werden. Neue Registrierungen werden momentan direkt freigeschaltet.':'Neue Registrierungen werden erst nach deiner Freigabe aktiviert.')+'</p></div>'+
  '<button class="btn small" type="button" data-action="refresh-admin">Aktualisieren</button></div>'+
@@ -2569,6 +2573,7 @@ async function pollSupportInbox(){
 if(typeof setInterval==='function')setInterval(pollSupportInbox,20000);
 function filterSupportTickets(){const query=String($('#support-search')?.value||'').toLocaleLowerCase('de'),status=$('#support-filter')?.value||'all';document.querySelectorAll('.support-history .support-ticket').forEach(el=>{el.hidden=!!query&&!el.textContent.toLocaleLowerCase('de').includes(query)||status!=='all'&&el.dataset.ticketStatus!==status;});}
 document.addEventListener('click',async function(e){
+ if(e.target.closest('[data-toggle-shop]')){if(s.profile?.role!=='admin')return;const btn=e.target.closest('[data-toggle-shop]');btn.disabled=true;const result=await api.rpc('novalab_set_shop_enabled',{p_enabled:!s.shopEnabled});if(result.error){notice('Shop konnte nicht geändert werden: '+formatError(result.error));btn.disabled=false;return;}s.shopEnabled=result.data===true;render();notice(s.shopEnabled?'Shop ist für alle sichtbar.':'Shop ist für alle ausgeblendet.');return;}
  if(e.target.closest('[data-lang]')&&parseRoute().page==='courses'){Promise.resolve().then(render);return;}
  if(e.target.closest('[data-timer-open]')){openTimer();return;}
  if(e.target.closest('[data-timer-close]')){closeTimer();return;}
@@ -3205,6 +3210,8 @@ async function init(){
  document.head.insertAdjacentHTML('beforeend','<style>.is-auth .sidebar,.is-auth .bottom-nav{display:none}.is-auth .topbar{background:#0d0a19}.is-auth .content{max-width:1100px}.is-auth .app-column{width:100%}</style>');
  if(!window.supabase||!cfg.supabaseUrl||!cfg.supabasePublishableKey){content.innerHTML='<div class="auth-layout panel"><h2>Verbindung nicht verfügbar</h2><p>Supabase konnte nicht geladen werden. Bitte lade die Seite erneut oder überprüfe deine Verbindung.</p></div>';return;}
  try{api=window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+  await refreshShopVisibility();
+  window.setInterval(()=>{void refreshShopVisibility().catch(()=>{});},30000);
   void fetchRegistrationPolicy(false).catch(()=>{});
   void api.rpc('academy_shop_discount').then(res=>{if(!res.error){s.shopDiscount=Number(res.data)||0;if(s.ready&&['plans','admin'].includes(parseRoute().page))render();}}).catch(()=>{});
   void api.rpc('academy_beta_status').then(beta=>{if(!beta.error){s.service.beta_open=beta.data===true;if(!s.ready)login();}}).catch(()=>{});
