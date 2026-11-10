@@ -505,7 +505,7 @@ async function loadXpAwardPages(){
  }
  return {data:null,error:new Error('XP-Protokoll ist größer als die technische Sicherheitsgrenze.')};
 }
-async function refreshShopVisibility(){const result=await api.rpc('novalab_shop_enabled');if(result.error)throw result.error;const next=result.data===true;if(next!==s.shopEnabled){s.shopEnabled=next;if(s.ready)render();}return next;}
+async function refreshShopVisibility(){const result=await api.rpc('novalab_shop_enabled');if(result.error)throw result.error;const next=result.data===true;document.body.classList.toggle('novalab-shop-hidden',!next);if(next!==s.shopEnabled){s.shopEnabled=next;if(s.ready)render();}return next;}
 async function loadData(){
  await refreshShopVisibility();
  var all=await Promise.all([
@@ -2573,7 +2573,7 @@ async function pollSupportInbox(){
 if(typeof setInterval==='function')setInterval(pollSupportInbox,20000);
 function filterSupportTickets(){const query=String($('#support-search')?.value||'').toLocaleLowerCase('de'),status=$('#support-filter')?.value||'all';document.querySelectorAll('.support-history .support-ticket').forEach(el=>{el.hidden=!!query&&!el.textContent.toLocaleLowerCase('de').includes(query)||status!=='all'&&el.dataset.ticketStatus!==status;});}
 document.addEventListener('click',async function(e){
- if(e.target.closest('[data-toggle-shop]')){if(s.profile?.role!=='admin')return;const btn=e.target.closest('[data-toggle-shop]');btn.disabled=true;const result=await api.rpc('novalab_set_shop_enabled',{p_enabled:!s.shopEnabled});if(result.error){notice('Shop konnte nicht geändert werden: '+formatError(result.error));btn.disabled=false;return;}s.shopEnabled=result.data===true;render();notice(s.shopEnabled?'Shop ist für alle sichtbar.':'Shop ist für alle ausgeblendet.');return;}
+ if(e.target.closest('[data-toggle-shop]')){if(s.profile?.role!=='admin')return;const btn=e.target.closest('[data-toggle-shop]');btn.disabled=true;const result=await api.rpc('novalab_set_shop_enabled',{p_enabled:!s.shopEnabled});if(result.error){notice('Shop konnte nicht geändert werden: '+formatError(result.error));btn.disabled=false;return;}s.shopEnabled=result.data===true;document.body.classList.toggle('novalab-shop-hidden',!s.shopEnabled);render();notice(s.shopEnabled?'Shop ist für alle sichtbar.':'Shop ist für alle ausgeblendet.');return;}
  if(e.target.closest('[data-lang]')&&parseRoute().page==='courses'){Promise.resolve().then(render);return;}
  if(e.target.closest('[data-timer-open]')){openTimer();return;}
  if(e.target.closest('[data-timer-close]')){closeTimer();return;}
