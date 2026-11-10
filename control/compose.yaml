@@ -1,0 +1,81 @@
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: novalab
+      POSTGRES_USER: novalab
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U novalab -d novalab"]
+      interval: 5s
+      timeout: 4s
+      retries: 10
+  migrate:
+    build: .
+    env_file: .env
+    command: [npm, run, migrate]
+    depends_on:
+      db:
+        condition: service_healthy
+  api:
+    build: .
+    env_file: .env
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://localhost:3000/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+  bot:
+    build: .
+    env_file: .env
+    restart: unless-stopped
+    command: [npm, run, bot]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+  https:
+    image: caddy:2
+    restart: unless-stopped
+    environment:
+      CONTROL_HOST: ${CONTROL_HOST:?Set CONTROL_HOST}
+    ports: ["80:80","443:443","443:443/udp"]
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy:/data
+    depends_on:
+      api:
+        condition: service_healthy
+  backup:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes:
+      - ./backups:/backups
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    entrypoint: [/bin/sh, -c]
+    command:
+      - |
+        umask 077
+        while true; do
+          name="/backups/control-$$(date -u +%Y%m%dT%H%M%SZ).dump"
+          if pg_dump -h db -U novalab -Fc -f "$$name.tmp" novalab; then
+            mv "$$name.tmp" "$$name"
+            find /backups -name 'control-*.dump' -mtime +14 -delete
+          else
+            rm -f "$$name.tmp"
+          fi
+          sleep 86400
+        done
+volumes:
+  postgres:
+  caddy:

@@ -184,3 +184,7 @@ Die aktuelle Version der Academy (v19) steht auch über den öffentlichen Supaba
 https://ekgxotvvhkmeuxvuwbei.supabase.co/functions/v1/academy-preview/
 
 Diese Vorschau liefert die gebündelten, identischen v19-Website-Dateien einschließlich Logo, Originalbanner, Layout, Kurslogik und 2FA-Frontend direkt aus Supabase aus. Das reguläre Repository und GitHub-Pages-Deployment bleiben unverändert die primäre Versionsquelle. Der Streak wird per `academy_streak_claim` erst auf ausdrücklichen Klick serverseitig eingelöst; eine bloße Anmeldung zählt nicht als Claim.
+
+## NovaLab Control
+
+Der Discord-Bot und das Web-Dashboard befinden sich in [`control/`](control/README.md). Dort stehen die Einrichtung für den VPS und die Verbindung mit dem Academy-Support.

@@ -34,6 +34,6 @@ assert.match(d.searchTerms({id:'python'}),/Leicht/);
 for(const name of ['index.html','v21.html','v31.html']){
  const html=fs.readFileSync(path.join(__dirname,'../site/'+name),'utf8');
  assert(html.includes('academy-difficulty.js?build=20261108v55'),name+' chart module cache key');
- assert(html.includes('academy-v21.js?build=20261109v74'),name+' app script cache key');
+ assert.match(html,/academy-v21\.js\?build=20261109(?:v74|-control1)/,name+' app script cache key');
 }
 console.log('Difficulty: all 52 courses, descriptions, DE/EN labels and chart search terms verified.');

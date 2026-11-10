@@ -11,7 +11,7 @@ const fakeNode=()=>({innerHTML:'',textContent:'',classList:{add(){},remove(){},t
 const fakeNodes={'#content':fakeNode(),'#sidebar':fakeNode(),'#bottom-nav':fakeNode(),'#toast':fakeNode()};
 const sandbox={
  window:{LL_CONFIG:{},addEventListener(){}},
- document:{querySelector(s){return fakeNodes[s]||null},querySelectorAll(){return[]},addEventListener(){},body:{classList:{toggle(){}}}},
+ URL,document:{documentElement:{lang:'de'},querySelector(s){return fakeNodes[s]||null},querySelectorAll(){return[]},addEventListener(){},body:{classList:{toggle(){}}}},
  location:{hash:'#lesson/python-01'},
  localStorage:{getItem(k){return mocks.get(k)||null},setItem(k,v){mocks.set(k,v)},removeItem(k){mocks.delete(k)}},
  console,setTimeout(){},clearTimeout(){},setInterval(){return 1},clearInterval(){},confirm(){return true},FormData:class{},
@@ -64,6 +64,14 @@ assert(app.friendsPage().includes('friend-navigation'),'Friends tabs rendered');
 state.social={friends:[{id:'friend-1',username:'testfreund',display_name:'Testfreund'}],requests:[],titles:['Developer']};
 assert(app.friendsPage().includes('friend-list-search'),'Friend list search rendered');
 assert(app.supportPage().includes('support-ticket'),'In-app support form rendered');
+assert(!app.supportPage().includes('NOVALAB CONTROL'),'Discord portal is hidden when not configured');
+sandbox.window.NOVALAB_CONTROL={origin:'https://control.example.com',guildId:'123456789012345678'};
+assert.match(app.supportPage(),/https:\/\/control\.example\.com\/support\?guild=123456789012345678&amp;lang=de/);
+assert(app.supportPage().includes('support-ticket'),'Academy support stays available');
+sandbox.window.NOVALAB_CONTROL={origin:'http://control.example.com',guildId:'123456789012345678'};
+assert(!app.supportPage().includes('NOVALAB CONTROL'),'Invalid origin does not produce a support link');
+delete sandbox.window.NOVALAB_CONTROL;
+
 state.tier='free';state.service={beta_open:false,mine:[],admin:[]};
 assert(!app.supportPage().includes('value="plan"'),'Beta requests hidden after closure');
 assert(app.plansPage().includes('Aktuell keine Anfragen'),'Closed beta prevents plan requests');
