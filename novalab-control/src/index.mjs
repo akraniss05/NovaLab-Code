@@ -5,6 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {token,equal,validId,cleanText,parseCookies,cookie} from './security.mjs';
 import {initStore,getStore,changeStore,logEvent} from './store.mjs';
 import {publishPanel} from './panels.mjs';
+import {registerInteractions} from './interactions.mjs';
 
 const env=process.env;
 const required=['DISCORD_BOT_TOKEN','DISCORD_GUILD_ID','DISCORD_CLIENT_ID','DISCORD_CLIENT_SECRET','PUBLIC_URL','SESSION_SECRET'];
@@ -112,6 +113,7 @@ const staticDir=join(dirname(fileURLToPath(import.meta.url)),'../public');
 app.use(express.static(staticDir,{index:'index.html',maxAge:0}));
 app.use((err,_req,res,_next)=>{console.error(err);failure(res,400,'Ungültige Anfrage');});
 await initStore();
+registerInteractions(client);
 await client.login(env.DISCORD_BOT_TOKEN);
 const port=Number(env.PORT||3100);
 const server=app.listen(port,env.HOST||'127.0.0.1',()=>console.log('NovaLab Control V2 ready on port '+port));
