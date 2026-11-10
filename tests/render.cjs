@@ -41,6 +41,7 @@ assert(/kursbibliothek/i.test(app.coursesPage()),'Catalog rendered');
 assert(app.trackPage('python').includes('Variablen'),'Learning track rendered');
 assert(app.trackPage('python').includes('status-ring'),'Reference-style lesson status rings rendered');
 assert(app.examsPage().includes('Prüfungen'),'Exams visible on Free');
+state.shopEnabled=true;
 state.tier='pro';assert(app.scriptPage().includes('sh_shop'),'Script project unlocked on Plus');
 assert(app.scriptPage().includes('file-tabs'),'File tabs rendered');
 assert(app.referencePage().includes('gesperrt'),'Reference should be locked on Plus');
