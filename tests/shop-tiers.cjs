@@ -10,7 +10,7 @@ vm.createContext(context);
 vm.runInContext(src.replace(footer,"\nwindow.__shop={s,offerFor,plansPage,shopDiscountAdminSection,examCap,fullAccess,allowed};\n})();"),context);
 const a=context.window.__shop,s=a.s;
 s.ready=true;s.profile={role:'student',username:'test'};s.user={id:'test'};s.courses=[];s.lessons=[];s.service={mine:[],admin:[],beta_open:true};
-s.tier='free';s.daily={daily_limit:5,used_today:0};s.shopMonths=1;
+s.tier='free';s.shopEnabled=true;s.daily={daily_limit:5,used_today:0};s.shopMonths=1;
 assert.equal(a.offerFor('pro',1).total_cents,199);
 assert.equal(a.offerFor('ultimate',3).total_cents,1797);
 assert.equal(a.offerFor('max',12).total_cents,13669,'12 month 5% discount, rounded to cents');
@@ -26,6 +26,7 @@ assert.equal(a.examCap(),2);assert.equal(a.fullAccess(),false);
 s.tier='pro';assert.equal(a.examCap(),4);
 s.tier='ultimate';assert.equal(a.examCap(),8);assert.equal(a.fullAccess(),false);
 s.tier='max';assert.equal(a.examCap(),-1);assert.equal(a.fullAccess(),true);
+s.shopEnabled=false;s.tier='free';assert.equal(a.examCap(),-1);assert.equal(a.fullAccess(),true,'Shop disabled: all learning limits lifted');s.shopEnabled=true;
 const sql=fs.readFileSync(path.join(__dirname,'../supabase/migrations/20261109_v71_max_tier_shop_offers.sql'),'utf8');
 for(const rule of ["when 'max' then 2147483647","when 'ultimate' then 30 when 'pro' then 20","when 'ultimate' then 15","when 'ultimate' then 8 else -1","academy_private.is_admin()","REVOKE ALL ON FUNCTION public.academy_shop_offers","term_months","quoted_cents"])
  assert(sql.includes(rule),'Missing required server quota/security: '+rule);
