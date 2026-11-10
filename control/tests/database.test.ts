@@ -18,7 +18,10 @@ test('PostgreSQL serializes limits and claims, preserves deduplication, and excl
   assert.equal(await db.message.count({where:{id}}),1);
   assert.equal(await db.job.count({where:{id:{in:['message:'+id,'message:'+privateId]}}}),1);
   assert.equal(await db.message.count({where:{ticketId:first.id,internal:false}}),2);
+  await assert.rejects(writeMessage(guildId,first.id,ownerId,id,'changed payload','web'));
   await actOnTicket(guildId,first.id,'close',ownerId,false);
+  const receipt=await writeMessage(guildId,first.id,ownerId,id,'public','web');
+  assert.equal(receipt.id,id);
   await assert.rejects(writeMessage(guildId,first.id,ownerId,crypto.randomUUID(),'after close','web'));
  }finally{
   await db.ticket.deleteMany({where:{guildId}});await db.job.deleteMany({where:{guildId}});await db.audit.deleteMany({where:{guildId}});await db.$disconnect();

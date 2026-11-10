@@ -160,8 +160,8 @@ async function ticketAccess(req:FastifyRequest){
 }
 app.get('/api/guild/:guild/ticket/:id',async req=>{
  const c=await ticketAccess(req);
- const messages=await db.message.findMany({where:{ticketId:c.ticket.id,...(c.staff?{}:{internal:false})},orderBy:{createdAt:'asc'},take:2000});
- return {...c.ticket,messages,staff:c.staff};
+ const messages=await db.message.findMany({where:{ticketId:c.ticket.id,...(c.staff?{}:{internal:false})},orderBy:{createdAt:'desc'},take:2000});
+ return {...c.ticket,messages:messages.reverse(),staff:c.staff};
 });
 app.post('/api/guild/:guild/ticket/:id/message',async req=>{
  const c=await ticketAccess(req),data=z.object({id:z.uuid(),body:replyText,internal:z.boolean().default(false)}).parse(req.body);
@@ -179,7 +179,7 @@ app.post('/api/guild/:guild/ticket/:id/action',async req=>{
 });
 app.get('/api/guild/:guild/ticket/:id/transcript',async(req,reply)=>{
  const c=await ticketAccess(req);
- const messages=await db.message.findMany({where:{ticketId:c.ticket.id,internal:false},orderBy:{createdAt:'asc'},take:2000});
+ const messages=await db.message.findMany({where:{ticketId:c.ticket.id,internal:false},orderBy:[{createdAt:'asc'},{id:'asc'}]});
  const number=ticketNumber(c.ticket.id);
  return reply.header('content-disposition','attachment; filename="'+number+'.html"').type('text/html; charset=utf-8').send('<!doctype html><meta charset="utf-8"><title>'+number+'</title><h1>'+number+' · '+escapeHtml(c.ticket.title)+'</h1><p>'+escapeHtml(c.ticket.status)+' · '+escapeHtml(c.ticket.assignee??'—')+'</p>'+messages.map(m=>'<article><time>'+m.createdAt.toISOString()+'</time> · '+escapeHtml(m.source)+'<p>'+escapeHtml(m.body)+'</p></article>').join(''));
 });

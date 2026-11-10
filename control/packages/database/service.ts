@@ -31,12 +31,13 @@ export function openTicket(input:{guildId:string;ownerId:string;source:string;ca
 export function writeMessage(guildId:string,ticketId:number,authorId:string,id:string,body:string,source:string,internal=false){
  return lock('conversation:'+ticketId,async tx=>{
   const ticket=await tx.ticket.findFirst({where:{id:ticketId,guildId}});
-  if(!ticket||!activeTicket(ticket.status))throw new Failure(409,'Ticket unavailable');
+  if(!ticket)throw new Failure(404,'Ticket unavailable');
   const existing=await tx.message.findUnique({where:{id}});
   if(existing){
-   if(existing.ticketId!==ticketId||existing.authorId!==authorId)throw new Failure(409,'Message identifier already used');
+   if(existing.ticketId!==ticketId||existing.authorId!==authorId||existing.body!==body||existing.internal!==internal||existing.source!==source)throw new Failure(409,'Message identifier already used');
    return existing;
   }
+  if(!activeTicket(ticket.status))throw new Failure(409,'Ticket unavailable');
   const message=await tx.message.create({data:{id,ticketId,authorId,body,source,internal}});
   await tx.ticket.update({where:{id:ticketId},data:{updatedAt:new Date()}});
   if(['web','staff'].includes(source)&&!internal)await tx.job.create({data:{id:'message:'+id,guildId,kind:'message',data:{ticketId,messageId:id}}});
