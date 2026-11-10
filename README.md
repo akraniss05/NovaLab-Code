@@ -7,7 +7,7 @@
 Neue responsive NovaLab-Lernplattform für Programmiersprachen, FiveM und Blender. Dunkles Violett, mobile Bottom-Navigation, Kurskarten und XP wie in den Designreferenzen.
 
 Live: https://akraniss05.github.io/liverylab-academy/  
-Discord: https://discord.gg/livery-lab  
+Discord: https://discord.gg/SZhYa6Nnmy  
 Kontakt: nyxatheris
 
 ## Funktionen
@@ -36,7 +36,7 @@ Die Kurszugriffe werden in Supabase per **Row Level Security** auf der Tabelle l
 
 Der serverseitige Admin-Endpunkt legt ein verwaltetes Konto mit internem E-Mail-Alias an. Der Nutzer braucht nur **Benutzernamen und Passwort**. Bestehende Admin-Accounts können nötigenfalls die zuvor hinterlegte E-Mail-Adresse ins selbe Benutzername-Feld eintragen.
 
-Keine öffentlichen Registrierungen. Schreib nyxatheris auf Discord oder besuche https://discord.gg/livery-lab.
+Keine öffentlichen Registrierungen. Schreib nyxatheris auf Discord oder besuche https://discord.gg/SZhYa6Nnmy.
 
 ## Projektstruktur
 
