@@ -29,7 +29,7 @@ for(const token of ['ADMINISTRATION · NUR DEIN KONTO','data-form="admin-self-xp
  assert(html.includes(token),'Missing admin self controls: '+token);
 }
 assert(a.adminPage().includes('data-go="admin/self"'),'Admin self tab must be reachable');
-s.tier='free';
+s.tier='free';s.shopEnabled=true; // Test tier restrictions only while the shop is active.
 assert.equal(a.fullAccess(),false,'Admin must be able to preview Free restrictions');
 assert.equal(a.hasScript(),false,'Free admin self-plan should restrict script tools');
 assert.equal(a.allowed({course_id:'lua',required_plan:'pro'}),false,'Premium lessons protected by selected tier');
