@@ -22,7 +22,7 @@ s.courses=[
  {id:'lua',name:'Lua',category:'Sprachen',level:'beginner',difficulty:2},
  {id:'blender-fundamentals',name:'Blender Fundamentals',category:'3D & Blender',level:'beginner',difficulty:2}
 ];
-s.tier='free';s.entitledCourses=['lua','blender-fundamentals'];
+s.tier='free';s.shopEnabled=true;s.entitledCourses=['lua','blender-fundamentals']; // Test tier restrictions with the shop explicitly enabled.
 s.lessons=[
  ...Array.from({length:5},(_,i)=>({id:'lua-'+String(i+1).padStart(2,'0'),course_id:'lua',
  chapter:i<4?'01 · Einstieg & Verstehen':'02 · Lua-Projekte',position:i+1,
@@ -54,6 +54,10 @@ assert.equal((track.match(/class="lesson-card/g)||[]).length,5,'All five Lua les
 assert.equal((track.match(/class="ll-map-entry is-complete"/g)||[]).length,3,'Three lessons are completed');
 assert.match(track,/class="ll-map-entry is-current"[\s\S]*?Datentypen/,'Next lesson must glow violet');
 assert.match(track,/class="ll-map-entry locked"[\s\S]*?Schleifen/,'Paid content remains locked by plan');
+s.shopEnabled=false;
+const openTrack=trackPage('lua');
+assert(!openTrack.includes('class="ll-map-entry locked"'),'All lessons remain accessible when the shop is disabled');
+s.shopEnabled=true;
 assert(track.includes('3 / 5')&&track.includes('60%'),'Track progress must reflect real data');
 assert(!track.includes('[ 01 ] 01 · Einstieg'),'Chapter labels must not duplicate numbering');
 assert(track.includes('data-go="lesson/lua-04"'),'Next lesson must keep working navigation');
