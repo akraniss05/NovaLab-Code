@@ -5,6 +5,7 @@ COPY package*.json ./
 RUN npm install --omit=dev --no-audit --no-fund
 COPY src ./src
 COPY public ./public
+RUN mkdir -p /app/data && chown -R node:node /app/data
 USER node
 EXPOSE 3100
 CMD ["node","src/index.mjs"]
