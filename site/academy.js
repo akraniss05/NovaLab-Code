@@ -25,7 +25,7 @@ function allowed(l){return !!s.profile&&(s.profile.role==='admin'||(!s.entitledC
 function fullAccess(){return s.profile?.role==='admin'||s.tier==='ultimate';}
 function hasScript(){return s.profile?.role==='admin'||s.tier==='pro'||s.tier==='ultimate';}
 function examCap(){return fullAccess()?-1:s.tier==='pro'?4:2;}
-function paywall(feature,tier,description){return '<section class="feature-gate"><span class="feature-lock">🔒</span><span class="eyebrow">'+esc(tier)+'-MITGLIEDSCHAFT</span><h1>'+esc(feature)+' ist gesperrt.</h1><p class="lede">'+esc(description)+'</p><div class="feature-gate-actions"><button type="button" data-go="plans" class="btn primary">Tarif ansehen →</button><a class="btn discord" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Auf Discord anfragen</a></div><p class="micro">Schreibe NyxAtheris eine DM oder eröffne im Discord ein Ticket und erwähne @nyxatheris mit dem Grund.</p></section>';}
+function paywall(feature,tier,description){return '<section class="feature-gate"><span class="feature-lock">🔒</span><span class="eyebrow">'+esc(tier)+'-MITGLIEDSCHAFT</span><h1>'+esc(feature)+' ist gesperrt.</h1><p class="lede">'+esc(description)+'</p><div class="feature-gate-actions"><button type="button" data-go="plans" class="btn primary">Tarif ansehen →</button><a class="btn discord" href="https://discord.gg/SZhYa6Nnmy" target="_blank" rel="noopener noreferrer">Auf Discord anfragen</a></div><p class="micro">Schreibe NyxAtheris eine DM oder eröffne im Discord ein Ticket und erwähne @nyxatheris mit dem Grund.</p></section>';}
 function badge(t){return '<span class="chip '+esc(t)+'">'+tierLabel(t)+'</span>';}
 function levelText(l){var x=String(l||'beginner').toLowerCase();return /beginner|anfänger/.test(x)?'Anfänger':/intermediate|mittelstufe/.test(x)?'Aufbau':'Fortgeschritten';}
 
@@ -90,7 +90,7 @@ function frame(){
   '<div class="side-bottom"><span class="eyebrow">DEIN PROFIL</span><strong>'+
   esc(s.profile.display_name||s.profile.username||'Developer')+'</strong>'+
   '<small>'+esc(plans[s.tier]||'Free')+' · '+((s.progress.done||[]).length*30)+' XP</small>'+
-  '<a class="discord-small" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord Community</a></div>';
+  '<a class="discord-small" href="https://discord.gg/SZhYa6Nnmy" target="_blank" rel="noopener noreferrer">Discord Community</a></div>';
   const nav=[['home','home','Home'],['courses','learn','Lernen'],['script','code','Script'],['exams','exam','Prüfung'],['profile','profile','Profil']];
   bottom.innerHTML=nav.map(([id,icon,label])=>'<button type="button" data-go="'+id+'" class="bottom-item'+
    ((route===id||(id==='courses'&&['track','lesson'].includes(route))||(id==='exams'&&route==='exam'))?' active':'')+
@@ -134,7 +134,7 @@ function login(){
  '<h1>Registrierung <span class="gradient">eingegangen.</span></h1>'+
  '<p class="lede">'+(s.registrationManual?'Deine Registrierungsanfrage ist eingegangen. NyxAtheris muss deinen Zugang zunächst genehmigen. Deine Kontakt-E-Mail wurde bei dieser Anmeldung nicht automatisch überprüft.':'Deine Registrierungsanfrage wurde gesendet. Bestätige deine E-Mail-Adresse über den Link, den Supabase dir sendet. Erst nach der Freigabe kannst du die Academy benutzen.')+'</p>'+
  '<button class="btn primary block" type="button" data-action="show-login">Zur Anmeldung →</button>'+
- '<a class="btn ghost block" style="margin-top:10px" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord-Support</a></section></div>';return;
+ '<a class="btn ghost block" style="margin-top:10px" href="https://discord.gg/SZhYa6Nnmy" target="_blank" rel="noopener noreferrer">Discord-Support</a></section></div>';return;
  }
  content.innerHTML='<div class="auth-layout"><section class="auth-card">'+brand+
  '<span class="eyebrow">[ 01 ] DEVELOPER ACADEMY</span><h1>Lernen. Entwickeln.<br><span class="gradient">Weiterkommen.</span></h1>'+
@@ -146,7 +146,7 @@ function login(){
  '<button class="btn primary block" type="submit">Anmelden →</button></form>'+
  '<div class="auth-secondary"><span>Noch kein Konto?</span><button type="button" class="btn" data-action="show-register">Jetzt registrieren →</button></div>'+
  '<p class="micro">NovaLab ist aktuell eine betreute Test-Academy. Dein Konto muss freigegeben werden. Für Plus/Pro: Schreib NyxAtheris per Discord-DM oder eröffne ein Ticket mit dem Grund und erwähne @nyxatheris.</p>'+
- '<a class="btn discord block discord-block" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord beitreten</a>'+
+ '<a class="btn discord block discord-block" href="https://discord.gg/SZhYa6Nnmy" target="_blank" rel="noopener noreferrer">Discord beitreten</a>'+
  '<p class="smallprint" style="text-align:center;margin-top:19px">Made with 💙 from NyxAtheris (NovaLab Academy)</p></section></div>';
 }
 async function registerAccount(fd){
@@ -200,7 +200,7 @@ function waitingApproval(status){
  '<p class="lede">'+(pending?'Dein Konto ist angelegt. Der Administrator muss deine Registrierungsanfrage zuerst genehmigen. Bitte kontrolliere außerdem, ob du deine E-Mail-Adresse bestätigt hast.':'Der Administrator hat den Zugriff auf dieses Konto gesperrt. Du kannst derzeit keine Lektionen, Prüfungen oder Projektdaten abrufen.')+'</p>'+
  '<button class="btn primary block" type="button" data-action="retry-access">Freigabe erneut prüfen →</button>'+
  '<button class="btn ghost block" style="margin-top:9px" type="button" data-action="logout">Abmelden</button>'+
- '<a class="btn discord block" style="margin-top:9px" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Support auf Discord</a></section></div>';
+ '<a class="btn discord block" style="margin-top:9px" href="https://discord.gg/SZhYa6Nnmy" target="_blank" rel="noopener noreferrer">Support auf Discord</a></section></div>';
 }
 async function signIn(fd,button){
  var identifier=String(fd.get('username')||'').trim().toLowerCase();
@@ -258,7 +258,7 @@ async function boot(){
   s.profile=r.data;
   if(s.profile.needs_password_change){passwordChangeRequired();return;}
   await loadData();
- }catch(e){s.ready=false;frame();content.innerHTML='<div class="auth-layout panel"><h2>Kein Zugriff</h2><p class="muted">'+esc(formatError(e))+'</p><a class="btn discord" href="https://discord.gg/livery-lab" target="_blank" rel="noopener">Discord-Support</a><button type="button" data-action="logout" class="btn ghost">Abmelden</button></div>';}
+ }catch(e){s.ready=false;frame();content.innerHTML='<div class="auth-layout panel"><h2>Kein Zugriff</h2><p class="muted">'+esc(formatError(e))+'</p><a class="btn discord" href="https://discord.gg/SZhYa6Nnmy" target="_blank" rel="noopener">Discord-Support</a><button type="button" data-action="logout" class="btn ghost">Abmelden</button></div>';}
 }
 async function loadData(){
  var all=await Promise.all([
@@ -562,7 +562,7 @@ function lessonPage(id){
  '<h1>'+esc(l.title)+'</h1><p class="lede" style="margin:auto">'+esc(l.summary)+'</p>'+
  '<p>Diese Lektion ist mit <strong>'+tierLabel(l.required_plan)+'</strong> freigeschaltet.</p>'+
  '<div class="hero-actions" style="justify-content:center"><button class="btn primary" data-go="plans">Stufen vergleichen</button>'+
- '<a class="btn discord" rel="noopener noreferrer" target="_blank" href="https://discord.gg/livery-lab">Freischaltung anfragen</a></div></section>';
+ '<a class="btn discord" rel="noopener noreferrer" target="_blank" href="https://discord.gg/SZhYa6Nnmy">Freischaltung anfragen</a></div></section>';
  if(!s.lesson){const daily=s.lessonGate?.reason==='daily_limit';return back+'<section class="lesson-gate"><span class="gate-icon">'+(daily?'◷':'🔒')+'</span><span class="eyebrow">'+(daily?'TAGESLIMIT ERREICHT':'LEKTION NICHT VERFÜGBAR')+'</span><h2>'+(daily?'Für heute geschafft.':'Lektion nicht geladen')+'</h2><p>'+(daily?'Du hast heute alle '+safeNumber(s.daily?.daily_limit)+' neuen Lernstationen geöffnet. Morgen geht es weiter. Bereits geöffnete Stationen bleiben zugänglich.':esc(s.lessonGate?.error||'Prüfe deine Freischaltung und Verbindung.'))+'</p><div class="actions-pair"><button class="btn" data-go="track/'+esc(l.course_id)+'">← Lernpfad</button><button class="btn primary" data-go="plans">Tarife ansehen →</button></div></section>';}
  var p=s.lesson.payload||{},video=s.lesson.video_id,info=videoInfo(video),options=Array.isArray(p.options)?p.options:[],finished=doneIds().has(id),isBlender=c?.category==='3D & Blender';
  var validVideo=video&&/^[a-zA-Z0-9_-]{11}$/.test(video),url=validVideo?'https://www.youtube.com/watch?v='+video+'&t='+Math.max(0,Number(s.lesson.video_start)||0)+'s':null;
@@ -679,7 +679,7 @@ function dailyStrip(){
 function membershipHelp(){
  return '<section class="membership-help-callout"><div class="membership-help-spark">✦</div><span class="eyebrow">NOVALAB ACADEMY · BETA</span><h2>Plus oder Pro testen?</h2>'+
  '<p>Schreib <strong>NyxAtheris</strong> eine Discord-DM oder eröffne ein <strong>Ticket</strong> auf dem NovaLab-Discord-Server. Erwähne dort <strong>@nyxatheris</strong> und teile mit, warum du Zugang möchtest. Wir schalten Testmitglieder manuell frei.</p>'+
- '<div class="membership-help-actions"><a class="btn primary" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Ticket auf Discord eröffnen ↗</a>'+
+ '<div class="membership-help-actions"><a class="btn primary" href="https://discord.gg/SZhYa6Nnmy" target="_blank" rel="noopener noreferrer">Ticket auf Discord eröffnen ↗</a>'+
  '<button class="btn" data-go="plans">Mitgliedschaften vergleichen →</button></div></section>';
 }
 
@@ -695,7 +695,7 @@ function plansPage(){
    '<ul class="membership-benefits">'+benefits.map(x=>'<li>'+x+'</li>').join('')+'</ul>'+
    (current?'<div class="membership-own">✓ Dein aktueller Tarif</div>':
    included?'<div class="membership-included">✓ In deinem Tarif enthalten</div>':
-   '<a class="btn primary block" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">'+name+' anfragen →</a>')+
+   '<a class="btn primary block" href="https://discord.gg/SZhYa6Nnmy" target="_blank" rel="noopener noreferrer">'+name+' anfragen →</a>')+
    '</article>';
  }
  const quote=s.discount;
@@ -1151,7 +1151,7 @@ function settingsPage(){
  '<span><b>Abmelden</b><p>Beendet die aktuelle Sitzung auf diesem Gerät.</p></span></div><button class="btn small" data-action="logout">Abmelden</button></div>'+
  '<div class="settings-row"><div class="setting-info"><span class="setting-icon">♡</span>'+
  '<span><b>Discord-Support</b><p>Schreibe NyxAtheris eine DM oder öffne ein Ticket und erwähne @nyxatheris.</p></span></div>'+
- '<a class="btn small discord" href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord ↗</a></div></div></section>'+
+ '<a class="btn small discord" href="https://discord.gg/SZhYa6Nnmy" target="_blank" rel="noopener noreferrer">Discord ↗</a></div></div></section>'+
  '<section class="section panel"><span class="eyebrow">NOVALAB ACADEMY</span><h3>Über die Academy</h3>'+
  '<p class="micro">Developer-Lernplattform mit Kursen, sicheren Accounts, Profilen, Freunden und Erfolgen. Version 18.</p>'+
  '<a href="./privacy.html">Datenschutzhinweise ansehen ↗</a><p class="smallprint" style="margin-top:16px">Made with 💙 from NyxAtheris (NovaLab Academy)</p></section>';
