@@ -33,6 +33,11 @@ async function handleLocal(request){
   if(!stat.isFile()||stat.size>30*1024*1024)return new Response('Unsupported',{status:413});
   const ext=path.extname(real).toLowerCase();
   if(!MIME[ext])return new Response('Unsupported media',{status:415});
+  if(ext==='.html' && path.basename(real)==='index.html') {
+    const original=await fs.readFile(real,'utf8');
+    const patched=original.replace('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js','./vendor/supabase.min.js');
+    return new Response(patched,{status:200,headers:{'content-type':MIME[ext],'x-content-type-options':'nosniff','cache-control':'no-store'}});
+  }
   const stream=Readable.toWeb(createReadStream(real));
   return new Response(stream,{status:200,headers:{'content-type':MIME[ext],'x-content-type-options':'nosniff','cache-control':'no-store'}});
  }catch{return new Response('Resource not found',{status:404});}
