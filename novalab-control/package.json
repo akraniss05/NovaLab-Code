@@ -4,10 +4,10 @@
   "type": "module",
   "scripts": {
     "start": "node src/index.mjs",
-    "check": "node --check src/index.mjs && node --test tests/*.test.mjs"
+    "check": "node --check src/index.mjs && node --check src/interactions.mjs && node --check src/panels.mjs && node --check src/store.mjs && node --check src/security.mjs && node --check public/app.js && node --test tests/*.test.mjs"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=24.17.0"
   },
   "dependencies": {
     "discord.js": "^14.22.0",
