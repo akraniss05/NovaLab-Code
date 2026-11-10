@@ -12,7 +12,7 @@ const MIME={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=u
  '.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp','.jpg':'image/jpeg',
  '.jpeg':'image/jpeg','.gif':'image/gif','.ico':'image/x-icon','.woff':'font/woff',
  '.woff2':'font/woff2','.ttf':'font/ttf','.mp3':'audio/mpeg','.ogg':'audio/ogg',
- '.wav':'audio/wav','.wasm':'application/wasm'};
+ '.wav':'audio/wav','.wasm':'application/wasm','.zip':'application/zip','.whl':'application/zip','.data':'application/octet-stream','.bin':'application/octet-stream'};
 protocol.registerSchemesAsPrivileged([{
  scheme:SCHEME,privileges:{standard:true,secure:true,supportFetchAPI:true,stream:true,corsEnabled:true}
 }]);
