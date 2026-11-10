@@ -32,14 +32,14 @@ async function guild(){if(!client.isReady())throw Error('Discord Gateway ist nic
 function route(fn){return async(req,res)=>{try{res.json(await fn(req));}catch(e){console.error('API error:',e);failure(res,503,'Discord-Aktion fehlgeschlagen: '+e.message);}};}
 app.get('/api/health',(_req,res)=>res.status(client.isReady()?200:503).json({ready:client.isReady()}));
 app.get('/auth/login',(req,res)=>{
- const state=token();pending.set(state,Date.now()+600000);
- const q=new URLSearchParams({client_id:env.DISCORD_CLIENT_ID,redirect_uri:redirect,response_type:'code',scope:'identify guilds',state,prompt:'none'});
+ const state=token();pending.set(state,Date.now()+600000);res.set('Set-Cookie',cookie('novalab_oauth',state,600));
+ const q=new URLSearchParams({client_id:env.DISCORD_CLIENT_ID,redirect_uri:redirect,response_type:'code',scope:'identify guilds',state});
  res.redirect('https://discord.com/oauth2/authorize?'+q);
 });
 app.get('/auth/callback',async(req,res)=>{
  const state=String(req.query.state||'');
- const expiry=pending.get(state);pending.delete(state);
- if(!expiry||expiry<Date.now()||typeof req.query.code!=='string')return res.status(400).send('Ungültige oder abgelaufene Anmeldung');
+ const expiry=pending.get(state);pending.delete(state);const cookieState=parseCookies(req).novalab_oauth;res.set('Set-Cookie',cookie('novalab_oauth','',0));
+ if(!expiry||expiry<Date.now()||!equal(cookieState,state)||typeof req.query.code!=='string')return res.status(400).send('Ungültige oder abgelaufene Anmeldung');
  try{
  const body=new URLSearchParams({client_id:env.DISCORD_CLIENT_ID,client_secret:env.DISCORD_CLIENT_SECRET,grant_type:'authorization_code',code:req.query.code,redirect_uri:redirect});
  const t=await fetch('https://discord.com/api/v10/oauth2/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
