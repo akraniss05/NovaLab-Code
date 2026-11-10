@@ -136,7 +136,7 @@ async function renderSettings(node,c){
   button('ll-mfa-refresh','Status aktualisieren')+'</div>'+
   '<div id="ll-mfa-operation-message" class="mfa-message" role="status" aria-live="polite" hidden></div>'+
   '<div id="ll-mfa-enroll-area" aria-live="polite"></div>'+
-  '<p class="micro mfa-support">Verlorener Zugang? Kontaktiere den Academy-Administrator über <a href="https://discord.gg/livery-lab" target="_blank" rel="noopener noreferrer">Discord</a>. Du musst einen verifizierten 2FA-Code eingeben, um einen bestehenden Authenticator zu entfernen.</p>';
+  '<p class="micro mfa-support">Verlorener Zugang? Kontaktiere den Academy-Administrator über <a href="https://discord.gg/SZhYa6Nnmy" target="_blank" rel="noopener noreferrer">Discord</a>. Du musst einen verifizierten 2FA-Code eingeben, um einen bestehenden Authenticator zu entfernen.</p>';
   const result=$('#ll-mfa-operation-message',node);
   $('#ll-mfa-refresh',node).onclick=()=>renderSettings(node,c);
   for(const btn of node.querySelectorAll('[data-mfa-remove]')){
