@@ -1,7 +1,7 @@
 import {readFile,writeFile,rename,mkdir} from 'node:fs/promises';
 import {dirname} from 'node:path';
 const path=process.env.DATA_FILE||'./data/control.json';
-const empty=()=>({panels:[],events:[],settings:{welcome:{enabled:false,channelId:'',message:'Willkommen {user}!'},goodbye:{enabled:false,channelId:'',message:'Auf Wiedersehen, {user}!'},autoroleIds:[]}});
+const empty=()=>({panels:[],tickets:[],applications:[],events:[],settings:{welcome:{enabled:false,channelId:'',message:'Willkommen {user}!'},goodbye:{enabled:false,channelId:'',message:'Auf Wiedersehen, {user}!'},autoroleIds:[]}});
 let state=empty();let pending=Promise.resolve();
 export async function initStore(){try{const data=JSON.parse(await readFile(path,'utf8'));state={...empty(),...data,settings:{...empty().settings,...data.settings}};}catch(e){if(e.code!=='ENOENT')throw e;}}
 export function getStore(){return structuredClone(state);}
