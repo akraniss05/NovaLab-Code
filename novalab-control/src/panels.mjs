@@ -7,7 +7,7 @@ export function validatePanel(v){
  if(!title||!description)throw Error('Titel und Beschreibung sind erforderlich');
  const color=/^#[0-9a-fA-F]{6}$/.test(v.color||'')?v.color:'#7766ee';
  const footer=cleanText(v.footer,150);
- const type=['info','ticket','verify','application'].includes(v.type)?v.type:'info';
+ const type=['info','ticket','verify','application','selfrole'].includes(v.type)?v.type:'info';
  return {channelId:v.channelId,title,description,color,footer,type};
 }
 export async function publishPanel(g,input){
@@ -18,8 +18,9 @@ export async function publishPanel(g,input){
  if(!permissions?.has([PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.EmbedLinks]))throw Error('Bot benötigt Kanalzugriff, Nachrichten senden und Embeds');
  const embed=new EmbedBuilder().setTitle(panel.title).setDescription(panel.description).setColor(panel.color);
  if(panel.footer)embed.setFooter({text:panel.footer});
- // No fake buttons: interactive panel types are explicitly blocked until handlers exist.
- if(panel.type!=='info')throw Error('Interaktive Panels sind noch nicht implementiert. Bitte Info-Panel verwenden.');
- const msg=await channel.send({embeds:[embed]});
- return {...panel,id:crypto.randomUUID(),messageId:msg.id,createdAt:new Date().toISOString()};
+ const {panelButtons,checkPanelConfig}=await import('./interactions.mjs');
+ checkPanelConfig(panel);
+ const record={...panel,id:crypto.randomUUID(),createdAt:new Date().toISOString()};
+ const msg=await channel.send({embeds:[embed],components:panelButtons(record)});
+ return {...record,messageId:msg.id};
 }
