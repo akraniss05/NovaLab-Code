@@ -34,8 +34,11 @@ for(const route of ['courses','script','exams','reference','plans','profile','fr
  assert(menu.includes('data-go="'+route+'"'),'All original destinations must remain: '+route);
 assert(!menu.includes('data-go="admin"'),'No administrator tile for learners');
 assert.match(menu,/id="ll-menu-learn"[\s\S]*data-go="courses"[\s\S]*id="ll-menu-community"[\s\S]*data-go="friends"[\s\S]*id="ll-menu-account"[\s\S]*data-go="support"/);
-s.tier='free';
+s.tier='free';s.shopEnabled=true;
 assert.match(a.neonMenuPage(),/class="ll-neon-menu-tile is-locked" data-go="script"[\s\S]*Tarif erforderlich/);
+s.shopEnabled=false;
+assert(!a.neonMenuPage().includes('class="ll-neon-menu-tile is-locked" data-go="script"'),'Disabled shop unlocks scripts');
+s.shopEnabled=true;
 s.tier='ultimate';
 const script=a.scriptPage();
 contains(script,['ll-atelier-script-stats','ll-atelier-studio-shell','ll-atelier-studio-files','ll-atelier-studio-work',
