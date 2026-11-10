@@ -1,0 +1,65 @@
+{
+  "name": "novalab-code-desktop",
+  "productName": "NovaLab Code",
+  "version": "1.0.0",
+  "description": "NovaLab Code - originale Coding-Lernplattform als Windows-App",
+  "main": "main.cjs",
+  "private": true,
+  "author": "NovaLab Studios",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "check": "node --check main.cjs",
+    "build:win": "electron-builder --win nsis dir --x64 --publish never"
+  },
+  "devDependencies": {
+    "electron": "45.2.3",
+    "electron-builder": "26.18.1"
+  },
+  "build": {
+    "appId": "com.novalabstudios.code",
+    "productName": "NovaLab Code",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.cjs",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../site",
+        "to": "site",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "dir",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/novalab-code.ico",
+      "artifactName": "NovaLab-Code-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}
