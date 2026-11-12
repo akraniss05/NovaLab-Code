@@ -25,7 +25,11 @@ const fixture={
  ],
  progress:{done:['lua-1'],lastLesson:{id:'lua-2'}}
 };
-window.LLStudio.connect({state:()=>fixture,client:()=>null,notice:()=>{},go:()=>{},render:()=>{}});
+const client=()=>({from(table){return {select(){return this},eq(){return this},order(){return this},
+ limit(){return Promise.resolve({data:[],error:null})},
+ maybeSingle(){return Promise.resolve({data:null,error:null})}};}});
+window.LLStudio.connect({state:()=>fixture,client,notice:()=>{},go:()=>{},render:()=>{}});
+(async()=>{await window.LLStudio.load();
 assert.equal(window.LLStudio.level().xp,30);
 assert.equal(window.LLStudio.level().next,470);
 assert.ok(window.LLStudio.levelPage().includes('Aktivieren')===false || window.LLStudio.levelPage().includes('Level'));
@@ -43,8 +47,8 @@ assert.equal(window.LLStudio.level().xp,60);
 vm.runInNewContext(fs.readFileSync(path.join(root,'academy-runtime.js'),'utf8'),box,{filename:'academy-runtime.js'});
 assert.ok(window.LLRuntime.supported.includes('lua'));
 assert.ok(window.LLRuntime.supported.includes('javascript'));
-window.LLRuntime.run('print("Hallo")','python').then(result=>{
- assert.equal(result.available,false);
- assert.equal(result.lines.length,0,'Unsupported output is never faked');
- console.log('Studio: routes, level rewards, portfolio, skilltree, notes, settings, and runtime fallback verified.');
-}).catch(error=>{console.error(error);process.exitCode=1});
+const result=await window.LLRuntime.run('print("Hallo")','python');
+assert.equal(result.available,false);
+assert.equal(result.lines.length,0,'Unsupported output is never faked');
+console.log('Studio: routes, level rewards, portfolio, skilltree, notes, settings, and runtime fallback verified.');
+})().catch(error=>{console.error(error);process.exitCode=1});
