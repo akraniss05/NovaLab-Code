@@ -931,7 +931,7 @@ function homePage(){
  homeShortcut('settings','Einstellungen','Account, Sicherheit und persönliches Design.','settings',false,true)+
  homeShortcut('learn','Hauptmenü','Alle Bereiche der Academy auf einen Blick.','menu',false,false)+
  homeShortcut('profile','Mein Profil','Erfolge ansehen und freigeschalteten Titel wählen.','profile',false,false)+
- homeShortcut('xp','Mitgliedschaften','Free, Plus und Pro vergleichen.','plans',false,false)+
+ (s.shopEnabled?homeShortcut('xp','Mitgliedschaften','Free, Plus, Ultimate und Max vergleichen.','plans',false,false):'')+
  (s.profile?.role==='admin'?homeShortcut('settings','Administration','Freigaben, Mitglieder und Gutscheine verwalten.','admin',false,true):'')+'</div>'+
  '<section class="ll-home-focus"><div><span class="eyebrow">[ ◎ ] DEIN FOKUS</span><h2>Was willst du als Nächstes lernen?</h2><p>Wähle einen Bereich für eine direkte Empfehlung. Die Auswahl bleibt auf diesem Gerät.</p></div><div class="ll-focus-actions">'+[['coding-basics','Programmieren'],['fivem','FiveM'],['blender-fundamentals','Blender']].filter(([id])=>!!courseOf(id)).map(([id,label])=>'<button type="button" class="btn small '+(getChoicePreference('focus','coding-basics')===id?'primary':'')+'" data-focus-course="'+id+'">'+label+'</button>').join('')+'</div>'+
  '<div class="ll-focus-result">'+(function(){const preferred=courseOf(getChoicePreference('focus','coding-basics'))||picks[0];const first=preferred&&lessonsOf(preferred.id).find(l=>allowed(l)&&!completed.has(l.id));return preferred?'<strong>'+esc(preferred.name)+'</strong><span>'+countDone(preferred.id)+' von '+lessonsOf(preferred.id).length+' Lektionen geschafft</span><button type="button" class="btn primary small" data-go="'+(first?'lesson/'+esc(first.id):'track/'+esc(preferred.id))+'">'+(first?'Nächste Lektion':'Kurs öffnen')+' →</button>':''})()+'</div></section>'+
@@ -1471,8 +1471,8 @@ function supportPage(){
  atelierSupportPulse(mine)+
  '<div class="support-grid"><section class="panel support-compose"><span class="eyebrow">[ + ] NEUE ANFRAGE</span><h2>Schreib dem Team</h2>'+
  '<form data-form="support-ticket"><div class="form-group"><label class="form-label" for="support-category">Worum geht es?</label><select class="select" id="support-category" name="category"><option value="support" '+(!s.selectedPlan?'selected':'')+'>Allgemeine Frage</option><option value="bug">Fehler melden</option>'+
- (data.beta_open?'<option value="beta">Beta-Feedback</option><option value="plan" '+(s.selectedPlan?'selected':'')+'>Mitgliedschaft anfragen</option>':'')+'</select></div>'+
- (data.beta_open?'<div class="form-group support-plan-field" '+(s.selectedPlan?'':'hidden')+'><label class="form-label">Gewünschter Tarif</label>'+
+ (data.beta_open?'<option value="beta">Beta-Feedback</option>':'')+(data.beta_open&&s.shopEnabled?'<option value="plan" '+(s.selectedPlan?'selected':'')+'>Mitgliedschaft anfragen</option>':'')+'</select></div>'+
+ (data.beta_open&&s.shopEnabled?'<div class="form-group support-plan-field" '+(s.selectedPlan?'':'hidden')+'><label class="form-label">Gewünschter Tarif</label>'+
  '<select class="select" name="tier">'+[['pro','Plus · 1,99 €'],['ultimate','Ultimate · 5,99 €'],['max','Max · 11,99 €']].map(([tier,name])=>'<option value="'+tier+'" '+(s.selectedPlan===tier?'selected':'')+'>'+name+'</option>').join('')+'</select>'+
  '<label class="form-label">Laufzeit</label><select class="select" name="months">'+[[1,'1 Monat'],[3,'3 Monate'],[12,'12 Monate · 5 % Jahresrabatt']].map(([n,label])=>'<option value="'+n+'" '+(s.selectedMonths===n?'selected':'')+'>'+label+'</option>').join('')+'</select>'+
  '<small>Der Betrag wird serverseitig berechnet, die Freischaltung erfolgt erst nach Bestätigung. Keine automatische Zahlung.</small></div>':'')+
@@ -1497,7 +1497,7 @@ function dailyStrip(){
 }
 
 function membershipHelp(){
- if(s.service?.beta_open===false)return '';
+ if(!s.shopEnabled||s.service?.beta_open===false)return '';
  return '<section class="membership-help-callout"><div class="membership-help-spark">✦</div><span class="eyebrow">NOVALAB ACADEMY · BETA</span><h2>Plus oder Ultimate testen?</h2>'+
  '<p>Schreib <strong>NyxAtheris</strong> eine Discord-DM oder eröffne ein <strong>Ticket</strong> auf dem NovaLab-Discord-Server. Erwähne dort <strong>@nyxatheris</strong> und teile mit, warum du Zugang möchtest. Wir schalten Testmitglieder manuell frei.</p>'+
  '<div class="membership-help-actions"><button class="btn primary" data-go="support">In der App anfragen →</button>'+
@@ -1563,21 +1563,22 @@ function plansPage(){
 }
 function examsPage(){
  const cap=Number(s.examStatus?.limit??examCap()),used=Number(s.examStatus?.used||0);
- const suitable=s.courses.filter(c=>{const ls=lessonsOf(c.id);return ls.length>0&&ls.every(l=>allowed(l));})
+ const suitable=s.courses.filter(c=>lessonsOf(c.id).some(allowed))
  .sort((a,b)=>(countDone(a.id)===lessonsOf(a.id).length?0:1)-(countDone(b.id)===lessonsOf(b.id).length?0:1)||a.name.localeCompare(b.name,'de'));
- const filtered=suitable.filter(c=>{const done=countDone(c.id),total=lessonsOf(c.id).length,passed=!!s.progress.exams?.[c.id];return s.examFilter==='all'||(s.examFilter==='ready'&&done===total&&!passed)||(s.examFilter==='passed'&&passed)||(s.examFilter==='learning'&&done<total);});
+ const filtered=suitable.filter(c=>{const lessons=lessonsOf(c.id).filter(allowed),done=lessons.filter(l=>doneIds().has(l.id)).length,total=lessons.length,passed=!!s.progress.exams?.[c.id];return s.examFilter==='all'||(s.examFilter==='ready'&&done===total&&!passed)||(s.examFilter==='passed'&&passed)||(s.examFilter==='learning'&&done<total);});
  return pageHeading('PRÜFUNGEN','Deine <span class="gradient">Kursprüfungen.</span>','Jede Prüfung gehört zu genau einem freigeschalteten Kurs. Schließe zuerst dessen Lektionen ab.')+
- neonExamOverview()+'<div class="exam-quota"><strong>✦ '+(cap<0?'Unbegrenzt':Math.max(0,cap-used)+' von '+cap)+' Prüfungen heute übrig</strong><small>Free: 2 · Plus: 4 · Ultimate: 8 · Max: unbegrenzt. Reset um Mitternacht (Berlin).</small><button class="btn small" data-go="plans">Tarife →</button></div>'+
+ neonExamOverview()+'<div class="exam-quota"><strong>✦ '+(cap<0?'Unbegrenzt':Math.max(0,cap-used)+' von '+cap)+' Prüfungen heute übrig</strong><small>'+(s.shopEnabled?'Free: 2 · Plus: 4 · Ultimate: 8 · Max: unbegrenzt.':'Alle Prüfungen ohne Tageslimit.')+' Reset um Mitternacht (Berlin).</small>'+(s.shopEnabled?'<button class="btn small" data-go="plans">Tarife →</button>':'')+'</div>'+
  '<section class="section"><div class="section-heading"><div><span class="eyebrow">DEINE KURSE</span><h2>'+suitable.length+' passende Prüfungen</h2></div></div><div class="exam-filters" role="group" aria-label="Prüfungen filtern">'+[['all','Alle'],['ready','Bereit'],['learning','Noch lernen'],['passed','Bestanden']].map(([key,label])=>'<button class="pill'+(s.examFilter===key?' active':'')+'" type="button" data-exam-filter="'+key+'">'+label+'</button>').join('')+'</div><div class="course-grid">'+(filtered.map(c=>{
-  const ls=lessonsOf(c.id),count=countDone(c.id),ready=count===ls.length,passed=!!s.progress.exams?.[c.id];
+  const ls=lessonsOf(c.id).filter(allowed),count=ls.filter(l=>doneIds().has(l.id)).length,ready=count===ls.length,passed=!!s.progress.exams?.[c.id];
   return '<article class="course-card ll-atelier-exam-card '+(passed?'is-complete':'')+'"><div class="ll-atelier-exam-card-glow" aria-hidden="true"></div><div class="course-head"><span class="course-icon">'+atelierScene(passed?'check':'exam','exam')+'</span><span class="chip '+(passed?'free':'plus')+'">'+(passed?'✓ Bestanden':ready?'Bereit':'Noch gesperrt')+'</span></div><span class="micro">'+esc(c.category)+'</span><h3>'+esc(c.name)+'</h3>'+difficultyBadge(c)+'<div class="ll-atelier-exam-progress"><div><strong>'+pct(count,ls.length)+'%</strong><small>Lernfortschritt</small></div><span>'+count+' / '+ls.length+' Lektionen</span></div><div class="progress"><span style="width:'+pct(count,ls.length)+'%"></span></div><button class="btn block" data-go="'+(ready?'exam/':'track/')+esc(c.id)+'">'+(ready?'Prüfung öffnen →':'Kurs fortsetzen →')+'</button></article>';
  }).join('')||'<div class="empty">Hier sind gerade keine passenden Prüfungen.</div>')+'</div></section>';
 }
 async function loadExam(id){
  s.exam=null;s.examGate=null;
  const ls=lessonsOf(id);
- if(!ls.length||!ls.every(l=>allowed(l))){s.examGate={reason:'tier',error:'Diese Kursprüfung ist für deinen Tarif gesperrt.'};return;}
- if(ls.some(l=>!doneIds().has(l.id)))return;
+ const entitled=ls.filter(allowed);
+ if(!entitled.length){s.examGate={reason:'tier',error:'Diese Kursprüfung ist für deinen Tarif gesperrt.'};return;}
+ if(entitled.some(l=>!doneIds().has(l.id)))return;
  const r=await api.rpc('academy_exam_start',{p_course:id});
  if(r.error){s.examGate={reason:'error',error:formatError(r.error)};return;}
  if(!r.data?.ok){s.examGate=r.data||{reason:'error'};return;}
@@ -1604,7 +1605,7 @@ async function submitExamAnswer(answerIndex){
 }
 function examPage(id){
  const course=courseOf(id);if(!course)return notFound();
- const all=lessonsOf(id),done=countDone(id),ready=done===all.length;
+ const all=lessonsOf(id).filter(allowed),done=all.filter(l=>doneIds().has(l.id)).length,ready=all.length>0&&done===all.length;
  const back='<a class="back" href="#exams">← Prüfungen</a>';
  if(!ready)return back+'<section class="exam-intro"><span class="eyebrow">[ ★ ] ABSCHLUSS</span>'+
  '<h1>Abschlussprüfung</h1>'+difficultyBadge(course)+'<p class="lede">'+esc(course.name)+' · 20 Fragen maximal, bestanden ab 80 %.</p>'+
@@ -2555,6 +2556,7 @@ document.addEventListener('visibilitychange',function(){if(document.visibilitySt
 window.addEventListener('focus',function(){tickTimer();});
 // Light polling keeps both ticket inboxes current without changing the page
 // while somebody is typing. Only active, visible support pages are polled.
+function supportEditorHasDraft(){return [...document.querySelectorAll('form[data-form="ticket-chat"] textarea,form[data-form="support-ticket"] textarea,form[data-form="support-reply"] textarea')].some(field=>!!field.value?.trim());}
 async function pollSupportInbox(){
  if(!s.ready||document.hidden)return;
  const route=parseRoute();
@@ -2564,10 +2566,10 @@ async function pollSupportInbox(){
   await refreshService();
   if(s.chatTicketId)await loadTicketThread(s.chatTicketId);
   const focused=document.activeElement;
-  if(!focused?.closest?.('form[data-form="ticket-chat"],form[data-form="support-ticket"],form[data-form="support-reply"]'))render();
+  if(!supportEditorHasDraft()&&!focused?.closest?.('form[data-form="ticket-chat"],form[data-form="support-ticket"],form[data-form="support-reply"]'))render();
  }catch(error){if(s.ready){s.serviceError=formatError(error);
    const focused=document.activeElement;
-   if(!focused?.closest?.('form[data-form="ticket-chat"],form[data-form="support-ticket"],form[data-form="support-reply"]'))render();
+   if(!supportEditorHasDraft()&&!focused?.closest?.('form[data-form="ticket-chat"],form[data-form="support-ticket"],form[data-form="support-reply"]'))render();
   }}
 }
 if(typeof setInterval==='function')setInterval(pollSupportInbox,20000);
@@ -2763,7 +2765,12 @@ document.addEventListener('click',async function(e){
    s.progress={done:[],watched:[],practiced:[],exams:{}};
    try{
     await saveProgress();
-    for(var l of s.lessons){try{localStorage.removeItem('liverylab-draft-'+l.id)}catch(_){}}
+    for(const lesson of s.lessons){const id=lesson.id;
+      for(const kind of ['draft','quiz','part'])try{localStorage.removeItem(lessonLocalKey(kind,id));}catch(_){}
+      try{localStorage.removeItem('liverylab-draft-'+id);}catch(_){}
+      try{await window.LLLearning?.remove?.(id);}catch(_){}
+     }
+     s.draft='';s.quizPassed=false;s.quizStep=0;s.practiceChecked=false;
     notice('Dein Kursfortschritt wurde zurückgesetzt. Bereits verdiente XP bleiben erhalten.');render();
    }catch(err){s.progress=before;notice('Zurücksetzen fehlgeschlagen: '+formatError(err))}
    return;
@@ -3074,6 +3081,7 @@ document.addEventListener('submit',async function(e){
   if(mode==='support-ticket'){
    const category=String(fd.get('category')),message=String(fd.get('message')||'').trim(),tier=category==='plan'?String(fd.get('tier')):null;
    const months=category==='plan'?Number(fd.get('months')||1):null;
+   if(category==='plan'&&!s.shopEnabled)throw Error('Der Shop ist aktuell deaktiviert.');
    if(category==='plan'&&(!['pro','ultimate','max'].includes(tier)||![1,3,12].includes(months)))throw Error('Bitte gültigen Tarif und Laufzeit wählen.');
    if(message.length<10||message.length>2000)throw Error('Bitte 10 bis 2000 Zeichen schreiben.');
    if(s.supportBusy)return;
