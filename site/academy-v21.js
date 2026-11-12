@@ -256,7 +256,7 @@ function neonMenuPage(){
    ['friends','friends','Freunde','Gemeinsam lernen und Anfragen verwalten',false]
   ]],
   ['account','Konto & Hilfe',[
-   ['plans','xp','Shop','Free, Plus, Ultimate und Gutscheine',false],
+   ...(s.shopEnabled?[['plans','xp','Shop','Free, Plus, Ultimate und Gutscheine',false]]:[]),
    ['support','book','Support','Hilfe, Tickets und Antworten vom Team',false],
    ['settings','settings','Einstellungen','Darstellung, Konto, Timer und Datenschutz',false]
   ]]
@@ -305,7 +305,7 @@ function frame(){
   '<div class="side-label">Navigation</div>'+navHTML(route)+
   '<div class="side-bottom"><span class="eyebrow">DEIN PROFIL</span><strong>'+
   esc(s.profile.display_name||s.profile.username||'Developer')+'</strong>'+
-  '<small>'+esc(plans[s.tier]||'Free')+' · '+xpEarned()+' XP</small>'+
+  '<small>'+(s.shopEnabled?esc(plans[s.tier]||'Free')+' · ':'')+xpEarned()+' XP</small>'+
   '<a class="discord-small" href="https://discord.gg/SZhYa6Nnmy" target="_blank" rel="noopener noreferrer">Discord Community</a></div>';
  const nav=[['home','home','Home'],['courses','learn','Lernen'],['script','code','Script'],['exams','exam','Prüfung'],['reference','book','Referenz']];
   bottom.innerHTML=nav.map(([id,icon,label])=>'<button type="button" data-go="'+id+'" class="bottom-item'+
@@ -1947,7 +1947,7 @@ function profilePage(){
  const streak=Number(s.loginStreak?.current||0),best=Number(s.loginStreak?.best||0),titles=(s.social?.titles||['Developer']).filter(Boolean),selected=s.social?.profile?.title||'Developer';
  return pageHeading('DEIN PROFIL','Dein Lern-<span class="gradient">fortschritt.</span>',
  'Hier siehst du deine wichtigsten Werte und freigeschalteten Erfolge. Persönliche App-Farben und Hintergründe findest du in den Einstellungen.')+
- '<section class="profile-overview-card"><div class="profile-overview-avatar">'+esc(name.slice(0,1).toUpperCase())+'</div><div><span class="eyebrow">NOVALAB DEVELOPER</span><h2>'+esc(name)+'</h2><span class="profile-title-badge">✦ '+esc(selected)+'</span><p>@'+esc(s.profile?.username||'developer')+' · '+esc(plans[s.tier]||'Free')+'</p>'+(s.tier!=='free'?'<p class="plan-expiry">'+(s.planExpires?'Freigeschaltet bis '+esc(new Date(s.planExpires).toLocaleString('de-DE')):'Dauerhaft freigeschaltet')+'</p>':'')+'</div><button class="btn small" data-go="settings">App-Design ändern →</button></section>'+ownPlanCountdownHtml()+atelierProfilePath()+
+ '<section class="profile-overview-card"><div class="profile-overview-avatar">'+esc(name.slice(0,1).toUpperCase())+'</div><div><span class="eyebrow">NOVALAB DEVELOPER</span><h2>'+esc(name)+'</h2><span class="profile-title-badge">✦ '+esc(selected)+'</span><p>@'+esc(s.profile?.username||'developer')+(s.shopEnabled?' · '+esc(plans[s.tier]||'Free'):'')+'</p>'+(s.shopEnabled&&s.tier!=='free'?'<p class="plan-expiry">'+(s.planExpires?'Freigeschaltet bis '+esc(new Date(s.planExpires).toLocaleString('de-DE')):'Dauerhaft freigeschaltet')+'</p>':'')+'</div><button class="btn small" data-go="settings">App-Design ändern →</button></section>'+ownPlanCountdownHtml()+atelierProfilePath()+
  '<section class="profile-title-picker"><div><span class="eyebrow">[ ✦ ] DEIN PROFILTITEL</span><h3>Zeig, was du erreicht hast.</h3><p>Du kannst nur Titel auswählen, die du durch Lektionen, Prüfungen, Freunde oder Streaks freigeschaltet hast.</p></div><form data-form="profile-title"><label class="form-label" for="profile-title">Freigeschalteten Titel auswählen</label><div class="profile-title-row"><select class="select" id="profile-title" name="title">'+titles.map(t=>'<option value="'+esc(t)+'" '+(t===selected?'selected':'')+'>'+esc(t)+'</option>').join('')+'</select><button class="btn primary" type="submit">Titel verwenden</button></div></form></section>'+
  '<section class="profile-quick-stats"><div class="profile-quick-tile"><span>🔥</span><strong>'+streak+'</strong><small>Login-Streak in Tagen</small></div>'+
  '<div class="profile-quick-tile"><span>🏅</span><strong>'+best+'</strong><small>Bisheriger Rekord</small></div>'+
@@ -2133,7 +2133,7 @@ function membershipExpiryText(tier,expiry){
   }).format(value)+' ab';
 }
 function ownPlanCountdownHtml(){
- if(!s.ready)return '';
+ if(!s.ready||!s.shopEnabled)return '';
  const tier=plans[s.tier]||'Free';
  const expiry=s.planExpires;
  return '<section class="ll-own-plan-status" aria-label="Deine Mitgliedschaft und verbleibende Laufzeit">'+
