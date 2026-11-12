@@ -6,6 +6,8 @@ on:
     branches: [main]
     paths:
       - 'desktop/**'
+      - 'site/**'
+      - 'supabase/functions/**'
       - '.github/workflows/novalab-code-desktop.yml'
 
 permissions:
@@ -48,26 +50,26 @@ jobs:
         working-directory: desktop
         run: npm run build:win
       - name: Launcher-kompatibles ZIP und SHA256-Manifest erstellen
-        run: python desktop/scripts/package-build.py 1.0.1
+        run: python desktop/scripts/package-build.py 1.0.2
       - name: Spielbare App in ZIP vollständig prüfen
         shell: bash
         run: |
-          python -c "import json,pathlib,zipfile,hashlib;p=pathlib.Path('desktop/dist/NovaLab-Code-win-x64-v1.0.1.zip');m=json.loads(pathlib.Path('desktop/dist/launcher-manifest.json').read_text());z=zipfile.ZipFile(p);assert z.testzip() is None;assert 'NovaLab Code.exe' in z.namelist();assert 'resources/site/index.html' in z.namelist();assert 'resources/site/vendor/pyodide/pyodide.asm.wasm' in z.namelist();assert 'resources/site/vendor/supabase.min.js' in z.namelist();assert 'resources/site/reference-data.js' not in z.namelist();assert hashlib.sha256(p.read_bytes()).hexdigest()==m['sha256'];print('ZIP, bundled site, EXE and SHA256 verified')"
+          python -c "import json,pathlib,zipfile,hashlib;p=pathlib.Path('desktop/dist/NovaLab-Code-win-x64-v1.0.2.zip');m=json.loads(pathlib.Path('desktop/dist/launcher-manifest.json').read_text());z=zipfile.ZipFile(p);assert z.testzip() is None;assert 'NovaLab Code.exe' in z.namelist();assert 'resources/site/index.html' in z.namelist();assert 'resources/site/vendor/pyodide/pyodide.asm.wasm' in z.namelist();assert 'resources/site/vendor/supabase.min.js' in z.namelist();assert 'resources/site/reference-data.js' not in z.namelist();assert hashlib.sha256(p.read_bytes()).hexdigest()==m['sha256'];print('ZIP, bundled site, EXE and SHA256 verified')"
       - name: Release veröffentlichen (expliziter Commit-Marker)
         if: ${{ github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[publish-code]') }}
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          test -s desktop/dist/NovaLab-Code-win-x64-v1.0.1.zip
-          test -s desktop/dist/NovaLab-Code-Setup-1.0.1.exe
-          gh release create code-v1.0.1 desktop/dist/NovaLab-Code-win-x64-v1.0.1.zip desktop/dist/NovaLab-Code-Setup-1.0.1.exe desktop/dist/launcher-manifest.json desktop/dist/NovaLab-Code-win-x64-v1.0.1.zip.sha256 --target "$GITHUB_SHA" --title "NovaLab Code Desktop 1.0.1 Early Access" --notes "Echte, gebündelte NovaLab-Code-Lernplattform als Desktop-App. Windows 64-bit. Online-Anbindung für Supabase erforderlich. Vorläufig unsigniert; interaktiver Windows-E2E-Test ausstehend."
+          test -s desktop/dist/NovaLab-Code-win-x64-v1.0.2.zip
+          test -s desktop/dist/NovaLab-Code-Setup-1.0.2.exe
+          gh release create code-v1.0.2 desktop/dist/NovaLab-Code-win-x64-v1.0.2.zip desktop/dist/NovaLab-Code-Setup-1.0.2.exe desktop/dist/launcher-manifest.json desktop/dist/NovaLab-Code-win-x64-v1.0.2.zip.sha256 --target "$GITHUB_SHA" --title "NovaLab Code Desktop 1.0.2 Early Access" --notes "Echte, gebündelte NovaLab-Code-Lernplattform als Desktop-App. Windows 64-bit. Online-Anbindung für Supabase erforderlich. Vorläufig unsigniert; interaktiver Windows-E2E-Test ausstehend."
       - name: Windows Preview-Artefakte
         uses: actions/upload-artifact@v4
         with:
           name: NovaLab-Code-Windows-Preview
           path: |
-            desktop/dist/NovaLab-Code-win-x64-v1.0.1.zip
+            desktop/dist/NovaLab-Code-win-x64-v1.0.2.zip
             desktop/dist/launcher-manifest.json
-            desktop/dist/NovaLab-Code-Setup-1.0.1.exe
+            desktop/dist/NovaLab-Code-Setup-1.0.2.exe
           if-no-files-found: error
