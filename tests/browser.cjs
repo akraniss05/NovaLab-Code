@@ -234,7 +234,7 @@ if(name==='focus-timer'){assert.ok(actual.focusBounds.width>220&&actual.focusBou
 if(name==='admin-members'){assert.equal(actual.planManagementWidth,0,'Member details should stay collapsed by default');}
 if(width<820){assert.equal(actual.navRows,1,'Five bottom nav tabs must stay on ONE ROW: '+actual.navRows);}
 if(name==='track'){assert.equal(actual.cardDisplay,'flex','Roadmap lesson cards use flex inside a grid timeline');assert.ok(actual.titleBelow,'Lesson title/description collision');}
-if(name==='lesson'){assert.equal(actual.stepsDisplay,'grid');assert.equal(actual.stepChildren,4);assert.equal(actual.partCount,2,'Lesson navigation must have exactly two tabs');assert.ok(actual.videoRatio>1.65&&actual.videoRatio<1.9,'Video aspect ratio');}
+if(name==='lesson'){assert.equal(actual.stepsDisplay,'grid');assert.equal(actual.stepChildren,5,'The complete five-step lesson must be visible on desktop and mobile');assert.equal(actual.partCount,2,'Lesson navigation must have exactly two tabs');assert.ok(actual.videoRatio>1.65&&actual.videoRatio<1.9,'Video aspect ratio');}
 assert.equal(actual.navDisplay,width<820?'grid':'none');
 if(width===390)await page.screenshot({path:path.join(root,'test-results',name+'.png'),fullPage:true});
 console.log('PASS '+name+' @ '+width+'px '+JSON.stringify(actual));
