@@ -23,7 +23,10 @@ const getId=()=>state()?.user?.id;
 const lessonList=course=>(state()?.lessons||[]).filter(l=>l.course_id===course).sort((a,b)=>a.position-b.position);
 const completed=()=>new Set(state()?.progress?.done||[]);
 const level=()=>{
- const total=completed().size,xp=total*30,number=Math.floor(xp/500)+1,next=(number*500)-xp;
+ const total=completed().size,st=state(),awards=st?.xpAwards;
+ const earned=Array.isArray(awards)?awards.reduce((sum,item)=>sum+Math.max(0,Number(item.xp)||0),0):total*30;
+ const adjusted=st?.profile?.role==='admin'?Number(st?.adminSelf?.xp_adjustment)||0:0;
+ const xp=Math.max(0,earned+adjusted),number=Math.floor(xp/500)+1,next=(number*500)-xp;
  return {total,xp,number,next,within:xp%500,pct:Math.round((xp%500)/5)};
 };
 const available=()=>REWARDS.filter(r=>level().number>=r.level);

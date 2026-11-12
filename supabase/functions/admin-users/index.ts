@@ -7,7 +7,7 @@
  */
 import { createClient } from 'npm:@supabase/supabase-js@2.81.1';
 const origin = Deno.env.get('ACADEMY_ORIGIN') || 'https://akraniss05.github.io';
-const allowedOrigins = new Set([origin,'https://akraniss05.github.io','https://liverylab-academy.dev']);
+const allowedOrigins = new Set([origin,'https://akraniss05.github.io','https://liverylab-academy.dev','novalab-code://app']);
 const headers: Record<string,string> = {
   'Access-Control-Allow-Origin': origin,
   'Vary': 'Origin',

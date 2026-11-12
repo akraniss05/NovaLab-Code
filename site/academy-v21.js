@@ -256,7 +256,7 @@ function neonMenuPage(){
    ['friends','friends','Freunde','Gemeinsam lernen und Anfragen verwalten',false]
   ]],
   ['account','Konto & Hilfe',[
-   ['plans','xp','Shop','Free, Plus, Ultimate und Gutscheine',false],
+   ...(s.shopEnabled?[['plans','xp','Shop','Free, Plus, Ultimate und Gutscheine',false]]:[]),
    ['support','book','Support','Hilfe, Tickets und Antworten vom Team',false],
    ['settings','settings','Einstellungen','Darstellung, Konto, Timer und Datenschutz',false]
   ]]
@@ -286,7 +286,7 @@ function navHTML(route){
  const items=[
   ['home','⌂','Startseite'],['menu','▦','Hauptmenü'],['courses','▦','Lernen'],['script','⌘',hasScript()?'Script':'Script 🔒'],
   ['exams','☆','Prüfung'],['reference','▤',fullAccess()?'Referenz':'Referenz 🔒'],...(s.shopEnabled?[['plans','✦','Shop · Free / Plus / Ultimate / Max']]:[]),
-  ['profile','◉','Mein Profil'],['friends','♡','Freunde'],['support','?','Support'],['settings','⚙','Einstellungen']
+  ['profile','◉','Mein Profil'],['portfolio','▧','Portfolio'],['skilltree','✧','Skilltree'],['notes','✎','Notizen'],['challenges','◎','Challenges'],['calendar','▦','Lernkalender'],['level','✦','Level & Belohnungen'],['friends','♡','Freunde'],['support','?','Support'],['settings','⚙','Einstellungen']
  ];
  if(s.profile?.role==='admin')items.push(['admin','♢','Administration']);
  return items.map(([id,icon,label])=>{
@@ -305,7 +305,7 @@ function frame(){
   '<div class="side-label">Navigation</div>'+navHTML(route)+
   '<div class="side-bottom"><span class="eyebrow">DEIN PROFIL</span><strong>'+
   esc(s.profile.display_name||s.profile.username||'Developer')+'</strong>'+
-  '<small>'+esc(plans[s.tier]||'Free')+' · '+xpEarned()+' XP</small>'+
+  '<small>'+(s.shopEnabled?esc(plans[s.tier]||'Free')+' · ':'')+xpEarned()+' XP</small>'+
   '<a class="discord-small" href="https://discord.gg/SZhYa6Nnmy" target="_blank" rel="noopener noreferrer">Discord Community</a></div>';
  const nav=[['home','home','Home'],['courses','learn','Lernen'],['script','code','Script'],['exams','exam','Prüfung'],['reference','book','Referenz']];
   bottom.innerHTML=nav.map(([id,icon,label])=>'<button type="button" data-go="'+id+'" class="bottom-item'+
@@ -475,6 +475,7 @@ async function boot(){
   s.profile=r.data;
   if(s.profile.needs_password_change){passwordChangeRequired();return;}
   await loadData();
+  void window.LLStudio?.load?.().then(()=>{if(s.ready&&['portfolio','skilltree','notes','challenges','calendar','level'].includes(parseRoute().page))render();}).catch(error=>notice('Studio: '+formatError(error)));
  }catch(e){s.ready=false;frame();content.innerHTML='<div class="auth-layout panel"><h2>Kein Zugriff</h2><p class="muted">'+esc(formatError(e))+'</p><a class="btn discord" href="https://discord.gg/SZhYa6Nnmy" target="_blank" rel="noopener">Discord-Support</a><button type="button" data-action="logout" class="btn ghost">Abmelden</button></div>';}
 }
 // Supabase Data API responses are capped per request. Page through the index so
@@ -565,7 +566,7 @@ async function loadData(){
  }).catch(()=>{});
  await navigateCurrent();
 }
-async function logout(){window.LLI18n?.setAccount?.('');window.LLLearning?.clear?.();try{await api.auth.signOut();}catch(e){}s.authScreen='login';s.ready=false;s.streakModalOpen=false;s.streakError='';s.loginStreak=null;paintStreakModal();s.user=null;s.profile=null;s.lesson=null;s.courses=[];s.lessons=[];location.hash='#home';login();}
+async function logout(){window.LLStudio?.clear?.();window.LLI18n?.setAccount?.('');window.LLLearning?.clear?.();try{await api.auth.signOut();}catch(e){}s.authScreen='login';s.ready=false;s.streakModalOpen=false;s.streakError='';s.loginStreak=null;paintStreakModal();s.user=null;s.profile=null;s.lesson=null;s.courses=[];s.lessons=[];location.hash='#home';login();}
 async function saveProgress(){
  var accountProgress={...s.progress};delete accountProgress.quizProgress;
  var res=await api.from('academy_progress').upsert({user_id:s.user.id,key:'liverylab-v10',payload:accountProgress,updated_at:new Date().toISOString()},{onConflict:'user_id,key'});
@@ -584,7 +585,7 @@ async function navigateCurrent(){
  const isCurrent=()=>s.ready&&request===navigationId&&hash===location.hash;
  var route=parseRoute();s.route=route.page;
  if(route.page==='lesson'){
-   s.choice=null;s.quizStep=0;s.quizPassed=false;s.sectionIndex=0;s.hintStage=0;s.lessonStep=1;s.videoChecked=watchedIds().has(route.id);s.practiceChecked=(s.progress.verifiedPractice||[]).includes(route.id);s.draft=readDraft(route.id);s.videoLoaded=false;s.lesson=null;s.lessonGate=null;
+   s.choice=null;s.quizStep=0;s.quizPassed=false;s.quizAnswers=[];s.sectionIndex=0;s.hintStage=0;s.lessonStep=1;s.videoChecked=watchedIds().has(route.id);s.practiceChecked=(s.progress.verifiedPractice||[]).includes(route.id);s.draft=readDraft(route.id);s.videoLoaded=false;s.lesson=null;s.lessonGate=null;
    frame();content.innerHTML='<div class="center-screen"><div class="spinner"></div><p>Geschützte Lektion wird geladen …</p></div>';
    var meta=s.lessons.find(function(l){return l.id===route.id;});
    if(meta&&allowed(meta)){
@@ -599,8 +600,8 @@ async function navigateCurrent(){
       const quiz=s.lesson.payload||{},bank=quizQuestions(quiz),savedLocal=readQuizLocal(route.id),old=s.progress.quizProgress?.[route.id];
       const savedQuiz=savedLocal||old; // One-time import of previous account quiz state into this browser.
       if(doneIds().has(route.id)){s.quizPassed=true;s.quizStep=Math.max(0,bank.length-1);}
-      else if(savedQuiz&&savedQuiz.total===bank.length&&savedQuiz.version===Number(quiz.quiz_version||1)){
-        s.quizStep=Math.max(0,Math.min(bank.length-1,Number(savedQuiz.step)||0));s.quizPassed=!!savedQuiz.passed;
+      else if(savedQuiz&&savedQuiz.total===bank.length&&savedQuiz.version===Number(quiz.quiz_version||1)&&Array.isArray(savedQuiz.answers)&&savedQuiz.answers.length===(savedQuiz.passed?bank.length:Math.max(0,Number(savedQuiz.step)||0))){
+        s.quizStep=Math.max(0,Math.min(bank.length-1,Number(savedQuiz.step)||0));s.quizPassed=!!savedQuiz.passed;s.quizAnswers=[...savedQuiz.answers];
         if(!savedLocal)saveQuizLocal(route.id,savedQuiz);
       }
       const count=window.LLCurriculum?.parts?.(quiz)?.length||1;
@@ -635,9 +636,9 @@ function render(){
  frame();const r=parseRoute();
  const pages={home:homePage,menu:neonMenuPage,courses:coursesPage,track:()=>trackPage(r.id),lesson:()=>lessonPage(r.id),
   script:()=>hasScript()?scriptPage():paywall('Script-Werkstatt','Plus','Codebeispiele sind ab Plus verfügbar.'),plans:plansPage,exams:examsPage,exam:()=>examPage(r.id),
-  reference:()=>fullAccess()?referencePage():paywall('Code-Referenzen','Max','Die vollständige Sprachbibliothek gehört zum höchsten Tarif.'),profile:profilePage,friends:friendsPage,support:supportPage,settings:settingsPage,admin:adminPage};
+  reference:()=>fullAccess()?referencePage():paywall('Code-Referenzen','Max','Die vollständige Sprachbibliothek gehört zum höchsten Tarif.'),profile:profilePage,portfolio:()=>window.LLStudio?.portfolioPage?.()||'<p>Portfolio wird geladen …</p>',skilltree:()=>window.LLStudio?.skilltreePage?.()||'<p>Skilltree wird geladen …</p>',notes:()=>window.LLStudio?.notesPage?.()||'<p>Notizen werden geladen …</p>',challenges:()=>window.LLStudio?.challengesPage?.()||'<p>Challenges werden geladen …</p>',calendar:()=>window.LLStudio?.calendarPage?.()||'<p>Lernkalender wird geladen …</p>',level:()=>window.LLStudio?.levelPage?.()||'<p>Level werden geladen …</p>',friends:friendsPage,support:supportPage,settings:settingsPage,admin:adminPage};
  const html=(pages[r.page]||homePage)();
- const decorative=['home','menu','script','plans','exams','reference','profile','friends','support','settings','admin'].includes(r.page);
+ const decorative=['home','menu','script','plans','exams','reference','profile','portfolio','skilltree','notes','challenges','calendar','level','friends','support','settings','admin'].includes(r.page);
  content.innerHTML=decorative?'<div class="ll-neon-screen ll-neon-'+r.page+'">'+html+'</div>':html;
  if(r.page==='settings')renderMFA();
  paintStreakModal();
@@ -927,11 +928,14 @@ function homePage(){
  '<span class="ll-shortcut-symbol fire">'+llIcon('fire')+'</span><span class="ll-shortcut-text"><strong>Daily Streak <span class="ll-streak-day-pill">'+streak+' '+(streak===1?'Tag':'Tage')+'</span></strong>'+
  '<small>'+(ready?'Dein Claim ist bereit – sichere deine Serie!':s.loginStreak?.next_claim_at?'Nächster Claim in <span data-streak-countdown>'+durationDisplay(streakRemaining())+'</span>':'Melde dich an und starte deine erste Serie.')+'</small></span>'+llIcon('arrow')+'</button>'+
  homeShortcut('friends','Freunde','Vernetze dich und vergleiche Lernfortschritte.','friends',false,false)+
+  homeShortcut('book','Portfolio','Eigene Projekte und Erfahrungen sammeln.','portfolio',false,false)+
+  homeShortcut('xp','Skilltree','Lernfortschritte nach Themen entdecken.','skilltree',false,false)+
+  homeShortcut('exam','Challenges','Tagesaufgaben und Lernkalender öffnen.','challenges',false,false)+
  homeShortcut('book','Support & Feedback','Fehler melden, Hilfe bekommen und Antworten lesen.','support',false,false)+
  homeShortcut('settings','Einstellungen','Account, Sicherheit und persönliches Design.','settings',false,true)+
  homeShortcut('learn','Hauptmenü','Alle Bereiche der Academy auf einen Blick.','menu',false,false)+
  homeShortcut('profile','Mein Profil','Erfolge ansehen und freigeschalteten Titel wählen.','profile',false,false)+
- homeShortcut('xp','Mitgliedschaften','Free, Plus und Pro vergleichen.','plans',false,false)+
+ (s.shopEnabled?homeShortcut('xp','Mitgliedschaften','Free, Plus, Ultimate und Max vergleichen.','plans',false,false):'')+
  (s.profile?.role==='admin'?homeShortcut('settings','Administration','Freigaben, Mitglieder und Gutscheine verwalten.','admin',false,true):'')+'</div>'+
  '<section class="ll-home-focus"><div><span class="eyebrow">[ ◎ ] DEIN FOKUS</span><h2>Was willst du als Nächstes lernen?</h2><p>Wähle einen Bereich für eine direkte Empfehlung. Die Auswahl bleibt auf diesem Gerät.</p></div><div class="ll-focus-actions">'+[['coding-basics','Programmieren'],['fivem','FiveM'],['blender-fundamentals','Blender']].filter(([id])=>!!courseOf(id)).map(([id,label])=>'<button type="button" class="btn small '+(getChoicePreference('focus','coding-basics')===id?'primary':'')+'" data-focus-course="'+id+'">'+label+'</button>').join('')+'</div>'+
  '<div class="ll-focus-result">'+(function(){const preferred=courseOf(getChoicePreference('focus','coding-basics'))||picks[0];const first=preferred&&lessonsOf(preferred.id).find(l=>allowed(l)&&!completed.has(l.id));return preferred?'<strong>'+esc(preferred.name)+'</strong><span>'+countDone(preferred.id)+' von '+lessonsOf(preferred.id).length+' Lektionen geschafft</span><button type="button" class="btn primary small" data-go="'+(first?'lesson/'+esc(first.id):'track/'+esc(preferred.id))+'">'+(first?'Nächste Lektion':'Kurs öffnen')+' →</button>':''})()+'</div></section>'+
@@ -1372,6 +1376,18 @@ async function markLesson(){
  const alreadyComplete=originalDone.includes(id);
  s.xpClaimBusy=true;
  try{
+  if(!alreadyComplete){
+   const answers=Array.isArray(s.quizAnswers)?s.quizAnswers:[];
+   const proof=await api.rpc('academy_verify_lesson_quiz',{p_lesson:id,p_answers:answers});
+   if(proof.error)throw proof.error;
+   if(proof.data?.ok!==true)throw Error(proof.data?.error||'Bitte beantworte alle Quizfragen erneut.');
+  }
+ }catch(error){
+  s.xpClaimBusy=false;
+  notice('Quizbestätigung fehlgeschlagen: '+formatError(error));
+  return;
+ }
+ try{
   if(!alreadyComplete)s.progress.done.push(id);
   if(!s.progress.completedAt)s.progress.completedAt={};
   if(!s.progress.completedAt[id])s.progress.completedAt[id]=new Date().toISOString();
@@ -1471,8 +1487,8 @@ function supportPage(){
  atelierSupportPulse(mine)+
  '<div class="support-grid"><section class="panel support-compose"><span class="eyebrow">[ + ] NEUE ANFRAGE</span><h2>Schreib dem Team</h2>'+
  '<form data-form="support-ticket"><div class="form-group"><label class="form-label" for="support-category">Worum geht es?</label><select class="select" id="support-category" name="category"><option value="support" '+(!s.selectedPlan?'selected':'')+'>Allgemeine Frage</option><option value="bug">Fehler melden</option>'+
- (data.beta_open?'<option value="beta">Beta-Feedback</option><option value="plan" '+(s.selectedPlan?'selected':'')+'>Mitgliedschaft anfragen</option>':'')+'</select></div>'+
- (data.beta_open?'<div class="form-group support-plan-field" '+(s.selectedPlan?'':'hidden')+'><label class="form-label">Gewünschter Tarif</label>'+
+ (data.beta_open?'<option value="beta">Beta-Feedback</option>':'')+(data.beta_open&&s.shopEnabled?'<option value="plan" '+(s.selectedPlan?'selected':'')+'>Mitgliedschaft anfragen</option>':'')+'</select></div>'+
+ (data.beta_open&&s.shopEnabled?'<div class="form-group support-plan-field" '+(s.selectedPlan?'':'hidden')+'><label class="form-label">Gewünschter Tarif</label>'+
  '<select class="select" name="tier">'+[['pro','Plus · 1,99 €'],['ultimate','Ultimate · 5,99 €'],['max','Max · 11,99 €']].map(([tier,name])=>'<option value="'+tier+'" '+(s.selectedPlan===tier?'selected':'')+'>'+name+'</option>').join('')+'</select>'+
  '<label class="form-label">Laufzeit</label><select class="select" name="months">'+[[1,'1 Monat'],[3,'3 Monate'],[12,'12 Monate · 5 % Jahresrabatt']].map(([n,label])=>'<option value="'+n+'" '+(s.selectedMonths===n?'selected':'')+'>'+label+'</option>').join('')+'</select>'+
  '<small>Der Betrag wird serverseitig berechnet, die Freischaltung erfolgt erst nach Bestätigung. Keine automatische Zahlung.</small></div>':'')+
@@ -1497,7 +1513,7 @@ function dailyStrip(){
 }
 
 function membershipHelp(){
- if(s.service?.beta_open===false)return '';
+ if(!s.shopEnabled||s.service?.beta_open===false)return '';
  return '<section class="membership-help-callout"><div class="membership-help-spark">✦</div><span class="eyebrow">NOVALAB ACADEMY · BETA</span><h2>Plus oder Ultimate testen?</h2>'+
  '<p>Schreib <strong>NyxAtheris</strong> eine Discord-DM oder eröffne ein <strong>Ticket</strong> auf dem NovaLab-Discord-Server. Erwähne dort <strong>@nyxatheris</strong> und teile mit, warum du Zugang möchtest. Wir schalten Testmitglieder manuell frei.</p>'+
  '<div class="membership-help-actions"><button class="btn primary" data-go="support">In der App anfragen →</button>'+
@@ -1563,21 +1579,22 @@ function plansPage(){
 }
 function examsPage(){
  const cap=Number(s.examStatus?.limit??examCap()),used=Number(s.examStatus?.used||0);
- const suitable=s.courses.filter(c=>{const ls=lessonsOf(c.id);return ls.length>0&&ls.every(l=>allowed(l));})
+ const suitable=s.courses.filter(c=>lessonsOf(c.id).some(allowed))
  .sort((a,b)=>(countDone(a.id)===lessonsOf(a.id).length?0:1)-(countDone(b.id)===lessonsOf(b.id).length?0:1)||a.name.localeCompare(b.name,'de'));
- const filtered=suitable.filter(c=>{const done=countDone(c.id),total=lessonsOf(c.id).length,passed=!!s.progress.exams?.[c.id];return s.examFilter==='all'||(s.examFilter==='ready'&&done===total&&!passed)||(s.examFilter==='passed'&&passed)||(s.examFilter==='learning'&&done<total);});
+ const filtered=suitable.filter(c=>{const lessons=lessonsOf(c.id).filter(allowed),done=lessons.filter(l=>doneIds().has(l.id)).length,total=lessons.length,passed=!!s.progress.exams?.[c.id];return s.examFilter==='all'||(s.examFilter==='ready'&&done===total&&!passed)||(s.examFilter==='passed'&&passed)||(s.examFilter==='learning'&&done<total);});
  return pageHeading('PRÜFUNGEN','Deine <span class="gradient">Kursprüfungen.</span>','Jede Prüfung gehört zu genau einem freigeschalteten Kurs. Schließe zuerst dessen Lektionen ab.')+
- neonExamOverview()+'<div class="exam-quota"><strong>✦ '+(cap<0?'Unbegrenzt':Math.max(0,cap-used)+' von '+cap)+' Prüfungen heute übrig</strong><small>Free: 2 · Plus: 4 · Ultimate: 8 · Max: unbegrenzt. Reset um Mitternacht (Berlin).</small><button class="btn small" data-go="plans">Tarife →</button></div>'+
+ neonExamOverview()+'<div class="exam-quota"><strong>✦ '+(cap<0?'Unbegrenzt':Math.max(0,cap-used)+' von '+cap)+' Prüfungen heute übrig</strong><small>'+(s.shopEnabled?'Free: 2 · Plus: 4 · Ultimate: 8 · Max: unbegrenzt.':'Alle Prüfungen ohne Tageslimit.')+' Reset um Mitternacht (Berlin).</small>'+(s.shopEnabled?'<button class="btn small" data-go="plans">Tarife →</button>':'')+'</div>'+
  '<section class="section"><div class="section-heading"><div><span class="eyebrow">DEINE KURSE</span><h2>'+suitable.length+' passende Prüfungen</h2></div></div><div class="exam-filters" role="group" aria-label="Prüfungen filtern">'+[['all','Alle'],['ready','Bereit'],['learning','Noch lernen'],['passed','Bestanden']].map(([key,label])=>'<button class="pill'+(s.examFilter===key?' active':'')+'" type="button" data-exam-filter="'+key+'">'+label+'</button>').join('')+'</div><div class="course-grid">'+(filtered.map(c=>{
-  const ls=lessonsOf(c.id),count=countDone(c.id),ready=count===ls.length,passed=!!s.progress.exams?.[c.id];
+  const ls=lessonsOf(c.id).filter(allowed),count=ls.filter(l=>doneIds().has(l.id)).length,ready=count===ls.length,passed=!!s.progress.exams?.[c.id];
   return '<article class="course-card ll-atelier-exam-card '+(passed?'is-complete':'')+'"><div class="ll-atelier-exam-card-glow" aria-hidden="true"></div><div class="course-head"><span class="course-icon">'+atelierScene(passed?'check':'exam','exam')+'</span><span class="chip '+(passed?'free':'plus')+'">'+(passed?'✓ Bestanden':ready?'Bereit':'Noch gesperrt')+'</span></div><span class="micro">'+esc(c.category)+'</span><h3>'+esc(c.name)+'</h3>'+difficultyBadge(c)+'<div class="ll-atelier-exam-progress"><div><strong>'+pct(count,ls.length)+'%</strong><small>Lernfortschritt</small></div><span>'+count+' / '+ls.length+' Lektionen</span></div><div class="progress"><span style="width:'+pct(count,ls.length)+'%"></span></div><button class="btn block" data-go="'+(ready?'exam/':'track/')+esc(c.id)+'">'+(ready?'Prüfung öffnen →':'Kurs fortsetzen →')+'</button></article>';
  }).join('')||'<div class="empty">Hier sind gerade keine passenden Prüfungen.</div>')+'</div></section>';
 }
 async function loadExam(id){
  s.exam=null;s.examGate=null;
  const ls=lessonsOf(id);
- if(!ls.length||!ls.every(l=>allowed(l))){s.examGate={reason:'tier',error:'Diese Kursprüfung ist für deinen Tarif gesperrt.'};return;}
- if(ls.some(l=>!doneIds().has(l.id)))return;
+ const entitled=ls.filter(allowed);
+ if(!entitled.length){s.examGate={reason:'tier',error:'Diese Kursprüfung ist für deinen Tarif gesperrt.'};return;}
+ if(entitled.some(l=>!doneIds().has(l.id)))return;
  const r=await api.rpc('academy_exam_start',{p_course:id});
  if(r.error){s.examGate={reason:'error',error:formatError(r.error)};return;}
  if(!r.data?.ok){s.examGate=r.data||{reason:'error'};return;}
@@ -1604,7 +1621,7 @@ async function submitExamAnswer(answerIndex){
 }
 function examPage(id){
  const course=courseOf(id);if(!course)return notFound();
- const all=lessonsOf(id),done=countDone(id),ready=done===all.length;
+ const all=lessonsOf(id).filter(allowed),done=all.filter(l=>doneIds().has(l.id)).length,ready=all.length>0&&done===all.length;
  const back='<a class="back" href="#exams">← Prüfungen</a>';
  if(!ready)return back+'<section class="exam-intro"><span class="eyebrow">[ ★ ] ABSCHLUSS</span>'+
  '<h1>Abschlussprüfung</h1>'+difficultyBadge(course)+'<p class="lede">'+esc(course.name)+' · 20 Fragen maximal, bestanden ab 80 %.</p>'+
@@ -1930,7 +1947,7 @@ function profilePage(){
  const streak=Number(s.loginStreak?.current||0),best=Number(s.loginStreak?.best||0),titles=(s.social?.titles||['Developer']).filter(Boolean),selected=s.social?.profile?.title||'Developer';
  return pageHeading('DEIN PROFIL','Dein Lern-<span class="gradient">fortschritt.</span>',
  'Hier siehst du deine wichtigsten Werte und freigeschalteten Erfolge. Persönliche App-Farben und Hintergründe findest du in den Einstellungen.')+
- '<section class="profile-overview-card"><div class="profile-overview-avatar">'+esc(name.slice(0,1).toUpperCase())+'</div><div><span class="eyebrow">NOVALAB DEVELOPER</span><h2>'+esc(name)+'</h2><span class="profile-title-badge">✦ '+esc(selected)+'</span><p>@'+esc(s.profile?.username||'developer')+' · '+esc(plans[s.tier]||'Free')+'</p>'+(s.tier!=='free'?'<p class="plan-expiry">'+(s.planExpires?'Freigeschaltet bis '+esc(new Date(s.planExpires).toLocaleString('de-DE')):'Dauerhaft freigeschaltet')+'</p>':'')+'</div><button class="btn small" data-go="settings">App-Design ändern →</button></section>'+ownPlanCountdownHtml()+atelierProfilePath()+
+ '<section class="profile-overview-card"><div class="profile-overview-avatar">'+esc(name.slice(0,1).toUpperCase())+'</div><div><span class="eyebrow">NOVALAB DEVELOPER</span><h2>'+esc(name)+'</h2><span class="profile-title-badge">✦ '+esc(selected)+'</span><p>@'+esc(s.profile?.username||'developer')+(s.shopEnabled?' · '+esc(plans[s.tier]||'Free'):'')+'</p>'+(s.shopEnabled&&s.tier!=='free'?'<p class="plan-expiry">'+(s.planExpires?'Freigeschaltet bis '+esc(new Date(s.planExpires).toLocaleString('de-DE')):'Dauerhaft freigeschaltet')+'</p>':'')+'</div><button class="btn small" data-go="settings">App-Design ändern →</button></section>'+ownPlanCountdownHtml()+atelierProfilePath()+
  '<section class="profile-title-picker"><div><span class="eyebrow">[ ✦ ] DEIN PROFILTITEL</span><h3>Zeig, was du erreicht hast.</h3><p>Du kannst nur Titel auswählen, die du durch Lektionen, Prüfungen, Freunde oder Streaks freigeschaltet hast.</p></div><form data-form="profile-title"><label class="form-label" for="profile-title">Freigeschalteten Titel auswählen</label><div class="profile-title-row"><select class="select" id="profile-title" name="title">'+titles.map(t=>'<option value="'+esc(t)+'" '+(t===selected?'selected':'')+'>'+esc(t)+'</option>').join('')+'</select><button class="btn primary" type="submit">Titel verwenden</button></div></form></section>'+
  '<section class="profile-quick-stats"><div class="profile-quick-tile"><span>🔥</span><strong>'+streak+'</strong><small>Login-Streak in Tagen</small></div>'+
  '<div class="profile-quick-tile"><span>🏅</span><strong>'+best+'</strong><small>Bisheriger Rekord</small></div>'+
@@ -2116,7 +2133,7 @@ function membershipExpiryText(tier,expiry){
   }).format(value)+' ab';
 }
 function ownPlanCountdownHtml(){
- if(!s.ready)return '';
+ if(!s.ready||!s.shopEnabled)return '';
  const tier=plans[s.tier]||'Free';
  const expiry=s.planExpires;
  return '<section class="ll-own-plan-status" aria-label="Deine Mitgliedschaft und verbleibende Laufzeit">'+
@@ -2392,7 +2409,7 @@ function adminPage(){
  '<div class="form-group"><label class="form-label">Tarif</label><select class="select" name="tier"><option value="free">Free</option><option value="pro">Plus</option><option value="ultimate">Ultimate</option><option value="max">Max</option></select></div></div>'+
  '<button class="btn primary" type="submit">Benutzerkonto erstellen →</button></form></details></section>'+
  '':
- shopDiscountAdminSection()+voucherAdminSection());
+ (s.shopEnabled?shopDiscountAdminSection():'')+voucherAdminSection());
 
 }
 
@@ -2555,6 +2572,7 @@ document.addEventListener('visibilitychange',function(){if(document.visibilitySt
 window.addEventListener('focus',function(){tickTimer();});
 // Light polling keeps both ticket inboxes current without changing the page
 // while somebody is typing. Only active, visible support pages are polled.
+function supportEditorHasDraft(){return [...document.querySelectorAll('form[data-form="ticket-chat"] textarea,form[data-form="support-ticket"] textarea,form[data-form="support-reply"] textarea')].some(field=>!!field.value?.trim());}
 async function pollSupportInbox(){
  if(!s.ready||document.hidden)return;
  const route=parseRoute();
@@ -2564,10 +2582,10 @@ async function pollSupportInbox(){
   await refreshService();
   if(s.chatTicketId)await loadTicketThread(s.chatTicketId);
   const focused=document.activeElement;
-  if(!focused?.closest?.('form[data-form="ticket-chat"],form[data-form="support-ticket"],form[data-form="support-reply"]'))render();
+  if(!supportEditorHasDraft()&&!focused?.closest?.('form[data-form="ticket-chat"],form[data-form="support-ticket"],form[data-form="support-reply"]'))render();
  }catch(error){if(s.ready){s.serviceError=formatError(error);
    const focused=document.activeElement;
-   if(!focused?.closest?.('form[data-form="ticket-chat"],form[data-form="support-ticket"],form[data-form="support-reply"]'))render();
+   if(!supportEditorHasDraft()&&!focused?.closest?.('form[data-form="ticket-chat"],form[data-form="support-ticket"],form[data-form="support-reply"]'))render();
   }}
 }
 if(typeof setInterval==='function')setInterval(pollSupportInbox,20000);
@@ -2729,7 +2747,7 @@ document.addEventListener('click',async function(e){
    const previous=JSON.parse(JSON.stringify(s.progress));
    for(const key of ['done','watched','practiced','verifiedPractice'])s.progress[key]=(s.progress[key]||[]).filter(x=>x!==id);
    if(s.progress.completedAt)delete s.progress.completedAt[id];
-   if(s.progress.quizProgress)delete s.progress.quizProgress[id];
+   if(s.progress.quizProgress)delete s.progress.quizProgress[id];s.quizAnswers=[];
    try{localStorage.removeItem(lessonLocalKey('part',id));localStorage.removeItem(lessonLocalKey('quiz',id));}catch(_){}
    try{await saveProgress();if(window.LLLearning)await window.LLLearning.remove(id);localStorage.removeItem(lessonLocalKey('draft',id));s.draft='';s.lessonStep=1;await navigateCurrent();notice('Diese Lektion wurde neu gestartet.');}
    catch(e){s.progress=previous;notice('Neustart konnte nicht gespeichert werden: '+formatError(e));}return;
@@ -2763,7 +2781,12 @@ document.addEventListener('click',async function(e){
    s.progress={done:[],watched:[],practiced:[],exams:{}};
    try{
     await saveProgress();
-    for(var l of s.lessons){try{localStorage.removeItem('liverylab-draft-'+l.id)}catch(_){}}
+    for(const lesson of s.lessons){const id=lesson.id;
+      for(const kind of ['draft','quiz','part'])try{localStorage.removeItem(lessonLocalKey(kind,id));}catch(_){}
+      try{localStorage.removeItem('liverylab-draft-'+id);}catch(_){}
+      try{await window.LLLearning?.remove?.(id);}catch(_){}
+     }
+     s.draft='';s.quizPassed=false;s.quizStep=0;s.quizAnswers=[];s.practiceChecked=false;
     notice('Dein Kursfortschritt wurde zurückgesetzt. Bereits verdiente XP bleiben erhalten.');render();
    }catch(err){s.progress=before;notice('Zurücksetzen fehlgeschlagen: '+formatError(err))}
    return;
@@ -2811,9 +2834,11 @@ document.addEventListener('click',async function(e){
  }
  var answer=e.target.closest('[data-answer]');if(answer){const qs=quizQuestions(s.lesson?.payload||{}),q=qs[s.quizStep];if(!q||s.quizPassed)return;s.choice=Number(answer.dataset.answer);
  if(s.choice===q.correct){
+  if(!Array.isArray(s.quizAnswers))s.quizAnswers=[];
+  s.quizAnswers[s.quizStep]=s.choice;
   if(s.quizStep===qs.length-1){s.quizPassed=true;window.LLLearning?.mark?.(parseRoute().id,4);notice('Alle '+qs.length+' Fragen richtig beantwortet!');updateLessonControls();}
   else{s.quizStep++;s.choice=null;paintQuiz();notice('Richtig! Jetzt Frage '+(s.quizStep+1)+' von '+qs.length+'.');}
-  saveQuizLocal(parseRoute().id,{step:s.quizStep,total:qs.length,version:Number(s.lesson?.payload?.quiz_version||1),passed:s.quizPassed});
+  saveQuizLocal(parseRoute().id,{step:s.quizStep,total:qs.length,version:Number(s.lesson?.payload?.quiz_version||1),passed:s.quizPassed,answers:[...s.quizAnswers]});
  }else{updateLessonControls();}
  return;}
  var exam=e.target.closest('[data-exam-answer]');if(exam){await submitExamAnswer(Number(exam.dataset.examAnswer));return;}
@@ -3074,6 +3099,7 @@ document.addEventListener('submit',async function(e){
   if(mode==='support-ticket'){
    const category=String(fd.get('category')),message=String(fd.get('message')||'').trim(),tier=category==='plan'?String(fd.get('tier')):null;
    const months=category==='plan'?Number(fd.get('months')||1):null;
+   if(category==='plan'&&!s.shopEnabled)throw Error('Der Shop ist aktuell deaktiviert.');
    if(category==='plan'&&(!['pro','ultimate','max'].includes(tier)||![1,3,12].includes(months)))throw Error('Bitte gültigen Tarif und Laufzeit wählen.');
    if(message.length<10||message.length>2000)throw Error('Bitte 10 bis 2000 Zeichen schreiben.');
    if(s.supportBusy)return;
@@ -3215,7 +3241,8 @@ async function init(){
   void fetchRegistrationPolicy(false).catch(()=>{});
   void api.rpc('academy_shop_discount').then(res=>{if(!res.error){s.shopDiscount=Number(res.data)||0;if(s.ready&&['plans','admin'].includes(parseRoute().page))render();}}).catch(()=>{});
   void api.rpc('academy_beta_status').then(beta=>{if(!beta.error){s.service.beta_open=beta.data===true;if(!s.ready)login();}}).catch(()=>{});
-  window.LLLearning?.attach?.({state:()=>s,client:()=>api,notice,onStep:(id,step)=>{s.lessonStep=step;if(s.progress.lastLesson?.id===id){s.progress.lastLesson.step=step;void saveProgress().catch(()=>{});}}});await boot();}
+  window.LLLearning?.attach?.({state:()=>s,client:()=>api,notice,onStep:(id,step)=>{s.lessonStep=step;if(s.progress.lastLesson?.id===id){s.progress.lastLesson.step=step;void saveProgress().catch(()=>{});}}});
+   window.LLStudio?.connect?.({state:()=>s,client:()=>api,notice,go,render});await boot();}
  catch(err){content.innerHTML='<div class="auth-layout panel"><h2>Academy nicht erreichbar</h2><p class="muted">'+esc(formatError(err))+'</p><button class="btn" onclick="location.reload()">Erneut versuchen</button></div>';}
 }
 init();
