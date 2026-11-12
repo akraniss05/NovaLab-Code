@@ -2409,7 +2409,7 @@ function adminPage(){
  '<div class="form-group"><label class="form-label">Tarif</label><select class="select" name="tier"><option value="free">Free</option><option value="pro">Plus</option><option value="ultimate">Ultimate</option><option value="max">Max</option></select></div></div>'+
  '<button class="btn primary" type="submit">Benutzerkonto erstellen →</button></form></details></section>'+
  '':
- shopDiscountAdminSection()+voucherAdminSection());
+ (s.shopEnabled?shopDiscountAdminSection():'')+voucherAdminSection());
 
 }
 
