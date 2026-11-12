@@ -509,13 +509,14 @@ async function loadXpAwardPages(){
 async function refreshShopVisibility(){const result=await api.rpc('novalab_shop_enabled');if(result.error)throw result.error;const next=result.data===true;document.body.classList.toggle('novalab-shop-hidden',!next);if(next!==s.shopEnabled){s.shopEnabled=next;if(s.ready)render();}return next;}
 async function loadData(){
  const loadingAccount=s.user?.id;
+ await progressWriteTail.catch(()=>{});
  if(!loadingAccount)throw Error('Zum Laden wird ein angemeldetes Konto benötigt.');
  await refreshShopVisibility();
  var all=await Promise.all([
  api.from('ll_courses').select('id,name,category,level,icon,source_url,difficulty'),
  loadLessonIndexPages(),
  api.from('academy_plans').select('tier,expires_at').eq('user_id',s.user.id).maybeSingle(),
- api.from('academy_progress').select('payload').eq('user_id',s.user.id).eq('key','liverylab-v10').maybeSingle(),
+ api.from('academy_progress').select('payload,updated_at').eq('user_id',s.user.id).eq('key','liverylab-v10').maybeSingle(),
  api.rpc('academy_voucher_status'),
  loadXpAwardPages(),
  s.profile?.role==='admin'?api.rpc('academy_admin_self',{p_action:'status',p_payload:{}}):Promise.resolve({data:null,error:null})
@@ -538,6 +539,8 @@ async function loadData(){
  s.xpAwards=(all[5]?.data||[]).filter(row=>row&&typeof row.lesson_id==='string');
  var data=all[3].data?.payload||{};
  s.progress={...data,done:Array.isArray(data.done)?data.done:[],watched:Array.isArray(data.watched)?data.watched:[],exams:data.exams||{},practiced:Array.isArray(data.practiced)?data.practiced:[],verifiedPractice:Array.isArray(data.verifiedPractice)?data.verifiedPractice:[],completedAt:data.completedAt&&typeof data.completedAt==='object'?data.completedAt:{}};
+ s.progressBase=window.LLProgressSync.copy(s.progress);
+ s.progressVersion=all[3].data?.updated_at||null;
  
  // Show the daily reward as soon as the profile and course index are ready.
  // Optional social/exam queries must NEVER postpone or hide the popup.
@@ -581,26 +584,32 @@ async function logout(){
  try{await api.auth.signOut();}catch(e){}
  s.authScreen='login';s.streakModalOpen=false;s.streakError='';s.loginStreak=null;
  s.user=null;s.profile=null;s.lesson=null;s.courses=[];s.lessons=[];s.xpAwards=[];
- s.progress={done:[],watched:[],practiced:[],verifiedPractice:[],exams:{}};
+ s.progress={done:[],watched:[],practiced:[],verifiedPractice:[],exams:{}};s.progressBase=null;s.progressVersion=null;
  s.daily=null;s.adminSelf=null;s.planExpires=null;s.entitledCourses=null;s.vouchers=[];
  s.service={beta_open:true,mine:[],admin:[]};s.serviceError='';s.chatTicketId=null;s.chatMessages=[];
  s.social=null;s.socialMedia={};s.members=[];s.memberPlans={};s.memberExpiry={};s.adminLearner=null;
  s.quizPassed=false;s.quizAnswers=[];s.draft='';s.ready=false;
  paintStreakModal();location.hash='#home';login();
 }
-// Serializing progress writes prevents a delayed older request from clobbering
-// the next lesson, while snapshots preserve the state at the moment of each save.
+// Snapshot each pending edit and reconcile it against the latest revision.
+// A second tab can no longer silently replace newly finished lessons.
 let progressWriteTail=Promise.resolve();
 function saveProgress(){
  const accountId=s.user?.id;
  if(!accountId)return Promise.reject(new Error('Kein angemeldetes Konto für den Lernfortschritt.'));
- const accountProgress=JSON.parse(JSON.stringify(s.progress||{}));
+ const sync=window.LLProgressSync;
+ if(!sync)return Promise.reject(new Error('Fortschritt-Synchronisierung konnte nicht geladen werden.'));
+ const accountProgress=sync.copy(s.progress||{});
  delete accountProgress.quizProgress;
+ const base=sync.copy(s.progressBase||{});
  const write=async()=>{
-  if(s.user?.id!==accountId||!s.ready)throw new Error('Konto während der Speicherung gewechselt.');
-  const result=await api.from('academy_progress').upsert({user_id:accountId,key:'liverylab-v10',payload:accountProgress,updated_at:new Date().toISOString()},{onConflict:'user_id,key'});
-  if(result.error)throw result.error;
-  if(s.user?.id===accountId&&s.ready)frame();
+  if(s.user?.id!==accountId||!s.ready)throw Error('Konto während der Speicherung gewechselt.');
+  const saved=await sync.save(api,accountId,'liverylab-v10',base,accountProgress);
+  if(s.user?.id!==accountId||!s.ready)return;
+  s.progress=sync.merge(accountProgress,s.progress,saved.payload);
+  s.progressBase=sync.copy(saved.payload);
+  s.progressVersion=saved.updated_at;
+  frame();
  };
  const next=progressWriteTail.catch(()=>{}).then(write);
  progressWriteTail=next.catch(()=>{});
