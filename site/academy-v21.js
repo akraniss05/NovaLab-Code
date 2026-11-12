@@ -286,7 +286,7 @@ function navHTML(route){
  const items=[
   ['home','⌂','Startseite'],['menu','▦','Hauptmenü'],['courses','▦','Lernen'],['script','⌘',hasScript()?'Script':'Script 🔒'],
   ['exams','☆','Prüfung'],['reference','▤',fullAccess()?'Referenz':'Referenz 🔒'],...(s.shopEnabled?[['plans','✦','Shop · Free / Plus / Ultimate / Max']]:[]),
-  ['profile','◉','Mein Profil'],['friends','♡','Freunde'],['support','?','Support'],['settings','⚙','Einstellungen']
+  ['profile','◉','Mein Profil'],['portfolio','▧','Portfolio'],['skilltree','✧','Skilltree'],['notes','✎','Notizen'],['challenges','◎','Challenges'],['calendar','▦','Lernkalender'],['level','✦','Level & Belohnungen'],['friends','♡','Freunde'],['support','?','Support'],['settings','⚙','Einstellungen']
  ];
  if(s.profile?.role==='admin')items.push(['admin','♢','Administration']);
  return items.map(([id,icon,label])=>{
@@ -475,6 +475,7 @@ async function boot(){
   s.profile=r.data;
   if(s.profile.needs_password_change){passwordChangeRequired();return;}
   await loadData();
+  void window.LLStudio?.load?.().then(()=>{if(s.ready&&['portfolio','skilltree','notes','challenges','calendar','level'].includes(parseRoute().page))render();}).catch(error=>notice('Studio: '+formatError(error)));
  }catch(e){s.ready=false;frame();content.innerHTML='<div class="auth-layout panel"><h2>Kein Zugriff</h2><p class="muted">'+esc(formatError(e))+'</p><a class="btn discord" href="https://discord.gg/SZhYa6Nnmy" target="_blank" rel="noopener">Discord-Support</a><button type="button" data-action="logout" class="btn ghost">Abmelden</button></div>';}
 }
 // Supabase Data API responses are capped per request. Page through the index so
@@ -565,7 +566,7 @@ async function loadData(){
  }).catch(()=>{});
  await navigateCurrent();
 }
-async function logout(){window.LLI18n?.setAccount?.('');window.LLLearning?.clear?.();try{await api.auth.signOut();}catch(e){}s.authScreen='login';s.ready=false;s.streakModalOpen=false;s.streakError='';s.loginStreak=null;paintStreakModal();s.user=null;s.profile=null;s.lesson=null;s.courses=[];s.lessons=[];location.hash='#home';login();}
+async function logout(){window.LLStudio?.clear?.();window.LLI18n?.setAccount?.('');window.LLLearning?.clear?.();try{await api.auth.signOut();}catch(e){}s.authScreen='login';s.ready=false;s.streakModalOpen=false;s.streakError='';s.loginStreak=null;paintStreakModal();s.user=null;s.profile=null;s.lesson=null;s.courses=[];s.lessons=[];location.hash='#home';login();}
 async function saveProgress(){
  var accountProgress={...s.progress};delete accountProgress.quizProgress;
  var res=await api.from('academy_progress').upsert({user_id:s.user.id,key:'liverylab-v10',payload:accountProgress,updated_at:new Date().toISOString()},{onConflict:'user_id,key'});
@@ -635,9 +636,9 @@ function render(){
  frame();const r=parseRoute();
  const pages={home:homePage,menu:neonMenuPage,courses:coursesPage,track:()=>trackPage(r.id),lesson:()=>lessonPage(r.id),
   script:()=>hasScript()?scriptPage():paywall('Script-Werkstatt','Plus','Codebeispiele sind ab Plus verfügbar.'),plans:plansPage,exams:examsPage,exam:()=>examPage(r.id),
-  reference:()=>fullAccess()?referencePage():paywall('Code-Referenzen','Max','Die vollständige Sprachbibliothek gehört zum höchsten Tarif.'),profile:profilePage,friends:friendsPage,support:supportPage,settings:settingsPage,admin:adminPage};
+  reference:()=>fullAccess()?referencePage():paywall('Code-Referenzen','Max','Die vollständige Sprachbibliothek gehört zum höchsten Tarif.'),profile:profilePage,portfolio:()=>window.LLStudio?.portfolioPage?.()||'<p>Portfolio wird geladen …</p>',skilltree:()=>window.LLStudio?.skilltreePage?.()||'<p>Skilltree wird geladen …</p>',notes:()=>window.LLStudio?.notesPage?.()||'<p>Notizen werden geladen …</p>',challenges:()=>window.LLStudio?.challengesPage?.()||'<p>Challenges werden geladen …</p>',calendar:()=>window.LLStudio?.calendarPage?.()||'<p>Lernkalender wird geladen …</p>',level:()=>window.LLStudio?.levelPage?.()||'<p>Level werden geladen …</p>',friends:friendsPage,support:supportPage,settings:settingsPage,admin:adminPage};
  const html=(pages[r.page]||homePage)();
- const decorative=['home','menu','script','plans','exams','reference','profile','friends','support','settings','admin'].includes(r.page);
+ const decorative=['home','menu','script','plans','exams','reference','profile','portfolio','skilltree','notes','challenges','calendar','level','friends','support','settings','admin'].includes(r.page);
  content.innerHTML=decorative?'<div class="ll-neon-screen ll-neon-'+r.page+'">'+html+'</div>':html;
  if(r.page==='settings')renderMFA();
  paintStreakModal();
@@ -927,6 +928,9 @@ function homePage(){
  '<span class="ll-shortcut-symbol fire">'+llIcon('fire')+'</span><span class="ll-shortcut-text"><strong>Daily Streak <span class="ll-streak-day-pill">'+streak+' '+(streak===1?'Tag':'Tage')+'</span></strong>'+
  '<small>'+(ready?'Dein Claim ist bereit – sichere deine Serie!':s.loginStreak?.next_claim_at?'Nächster Claim in <span data-streak-countdown>'+durationDisplay(streakRemaining())+'</span>':'Melde dich an und starte deine erste Serie.')+'</small></span>'+llIcon('arrow')+'</button>'+
  homeShortcut('friends','Freunde','Vernetze dich und vergleiche Lernfortschritte.','friends',false,false)+
+  homeShortcut('book','Portfolio','Eigene Projekte und Erfahrungen sammeln.','portfolio',false,false)+
+  homeShortcut('xp','Skilltree','Lernfortschritte nach Themen entdecken.','skilltree',false,false)+
+  homeShortcut('exam','Challenges','Tagesaufgaben und Lernkalender öffnen.','challenges',false,false)+
  homeShortcut('book','Support & Feedback','Fehler melden, Hilfe bekommen und Antworten lesen.','support',false,false)+
  homeShortcut('settings','Einstellungen','Account, Sicherheit und persönliches Design.','settings',false,true)+
  homeShortcut('learn','Hauptmenü','Alle Bereiche der Academy auf einen Blick.','menu',false,false)+
@@ -3223,7 +3227,8 @@ async function init(){
   void fetchRegistrationPolicy(false).catch(()=>{});
   void api.rpc('academy_shop_discount').then(res=>{if(!res.error){s.shopDiscount=Number(res.data)||0;if(s.ready&&['plans','admin'].includes(parseRoute().page))render();}}).catch(()=>{});
   void api.rpc('academy_beta_status').then(beta=>{if(!beta.error){s.service.beta_open=beta.data===true;if(!s.ready)login();}}).catch(()=>{});
-  window.LLLearning?.attach?.({state:()=>s,client:()=>api,notice,onStep:(id,step)=>{s.lessonStep=step;if(s.progress.lastLesson?.id===id){s.progress.lastLesson.step=step;void saveProgress().catch(()=>{});}}});await boot();}
+  window.LLLearning?.attach?.({state:()=>s,client:()=>api,notice,onStep:(id,step)=>{s.lessonStep=step;if(s.progress.lastLesson?.id===id){s.progress.lastLesson.step=step;void saveProgress().catch(()=>{});}}});
+   window.LLStudio?.connect?.({state:()=>s,client:()=>api,notice,go,render});await boot();}
  catch(err){content.innerHTML='<div class="auth-layout panel"><h2>Academy nicht erreichbar</h2><p class="muted">'+esc(formatError(err))+'</p><button class="btn" onclick="location.reload()">Erneut versuchen</button></div>';}
 }
 init();
