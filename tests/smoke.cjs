@@ -74,13 +74,13 @@ for(const token of ['academy_shop_discount','salePrice','shop-sale-admin','sale-
 for(const token of ['.shop-sale-banner','.sale-old','.sale-new','.ll-home-tools','.support-faq','.support-controls','.support-admin-stats'])assert(css.includes(token),'Missing v29 styling: '+token);
 assert(read('supabase/migrations/20261107_v29_shop_discount.sql').includes('academy_private.is_admin()'),'Shop discount must be admin-protected');
 
-for(const token of ['practice-engine.js?build=20261109v68','timer-portal','focus-header'])assert(html.includes(token),'Missing v31 entry: '+token);
+for(const token of ['practice-engine.js?build=20261112audit1','timer-portal','focus-header'])assert(html.includes(token),'Missing v31 entry: '+token);
 for(const token of ['LLPractice.evaluate','quizQuestions','practice-actions-simple','weekly-goal','timer-minutes'])assert(js.includes(token),'Missing v31 learning lab: '+token);
 
 for(const entry of ['site/academy-learning-sync.js'])assert(fs.existsSync(path.join(__dirname,'..',entry)),entry+' missing');
-assert(html.includes('academy-learning-sync.js?build=20261107v43'),'Local lesson draft manager is loaded');
-assert(!html.includes('academy-studio.js')&&!html.includes('academy-studio.css')&&!html.includes('academy-learning-extras.css'),'Rejected Studio sections must not load');
-for(const unwanted of ['Level & Belohnungen','Skilltree','Portfolio','Notizen','Challenges','Lernkalender'])assert(!js.includes("['"+unwanted.toLowerCase()+"'"),'Unwanted Studio menu label remains '+unwanted);
+assert(html.includes('academy-learning-sync.js?build=20261112audit1'),'Current local lesson draft manager is loaded');
+assert(html.includes('academy-studio.js?build=20261112audit1')&&html.includes('academy-studio.css?build=20261112audit1'),'Portfolio, skilltree and calendar Studio modules must load');
+for(const route of ['portfolio','skilltree','notes','challenges','calendar','level'])assert(js.includes(route+':()=>window.LLStudio?.'),'Restored Studio route missing '+route);
 assert(!js.includes('practice-console'),'Simplified practice must not render terminal');
 for(const token of ['data-action="complete-practice"','data-action="show-hint"','data-action="show-solution"','practice-actions-simple'])assert(js.includes(token),'Missing simple exercise action '+token);
 assert(!js.includes('data-action="run-practice"'),'Run button must not render');
