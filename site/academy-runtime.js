@@ -11,10 +11,17 @@ const maximum=100;
 scope.onmessage=async function(event){
  const input=event.data||{},lang=String(input.lang||'').toLowerCase(),code=String(input.code||'');
  const lines=[];
+ const send=scope.postMessage.bind(scope);
  const push=(...args)=>{if(lines.length<maximum)lines.push(args.map(v=>v===undefined?'undefined':v===null?'null':typeof v==='object'?JSON.stringify(v):String(v)).join(' '));};
  try{
   if(code.length>15000)throw Error('Maximal 15.000 Zeichen pro Ausführung.');
   if(lang==='javascript'||lang==='js'){
+   // Shadow worker globals as well as function parameters. Blocking only the
+   // unqualified name left self.fetch(), globalThis.fetch(), etc. accessible.
+   for(const key of ['fetch','XMLHttpRequest','WebSocket','EventSource','importScripts','Worker']){
+    try{Object.defineProperty(scope,key,{value:undefined,writable:false,configurable:false});}
+    catch(_){throw Error('Isolierte JavaScript-Laufzeit: '+key+' konnte nicht gesperrt werden.');}
+   }
    const consoleProxy={log:push,info:push,warn:(...x)=>push('WARN:',...x),error:(...x)=>push('ERROR:',...x)};
    // A worker cannot access the app DOM, its localStorage or the Supabase session.
    // Do not supply credentials or privileged capabilities to learner code.
@@ -46,9 +53,9 @@ scope.onmessage=async function(event){
    py.setStderr({batched:line=>push('STDERR:',line)});
    await py.runPythonAsync(code);
   }else throw Error('Für diese Sprache ist noch keine echte Browser-Laufzeit eingerichtet.');
-  scope.postMessage({ok:true,lines:lines.slice(0,maximum),error:'',available:true});
+  send({ok:true,lines:lines.slice(0,maximum),error:'',available:true,nonce:input.nonce});
  }catch(error){
-  scope.postMessage({ok:false,lines:lines.slice(0,maximum),error:String(error?.message||error),available:true});
+  send({ok:false,lines:lines.slice(0,maximum),error:String(error?.message||error),available:true,nonce:input.nonce});
  }
 };
 }
@@ -67,7 +74,14 @@ function run(code,lang){
   let timeout;
   try{
    worker=new Worker(url);
-   worker.onmessage=event=>settle(event.data||{ok:false,lines:[],error:'Keine Antwort vom Interpreter.',available:false});
+   const nonce=typeof crypto!=='undefined'&&typeof crypto.getRandomValues==='function'
+    ?Array.from(crypto.getRandomValues(new Uint32Array(4)),v=>v.toString(16).padStart(8,'0')).join('')
+    :String(Math.random())+String(performance?.now?.()||'');
+   worker.onmessage=event=>{
+    const result=event.data;
+    if(!result||result.nonce!==nonce)return;
+    settle(result);
+   };
    worker.onerror=()=>settle({ok:false,lines:[],error:'Die Ausführungsumgebung konnte nicht starten. Prüfe Browser und Verbindung.',available:false});
    const maxTime=lang==='python'||lang==='py'?45000:lang==='lua'?10000:4000;
    timeout=setTimeout(()=>settle({ok:false,lines:[],error:'Ausführung nach '+(maxTime/1000)+' Sekunden abgebrochen. Prüfe deinen Code auf Endlosschleifen.',available:true}),maxTime);
@@ -75,7 +89,7 @@ function run(code,lang){
    const luaBundleUrl=base?new URL('vendor/fengari-web.bundle.js',base).href:'';
    const pythonBaseUrl=base?new URL('vendor/pyodide/',base).href:'';
    const pythonBundleUrl=base?new URL('vendor/pyodide/pyodide.js',base).href:'';
-   worker.postMessage({code:String(code||''),lang,luaBundleUrl,pythonBaseUrl,pythonBundleUrl});
+   worker.postMessage({code:String(code||''),lang,luaBundleUrl,pythonBaseUrl,pythonBundleUrl,nonce});
   }catch(error){settle({ok:false,lines:[],error:'Laufzeit nicht verfügbar: '+error.message,available:false});}
  });
 }
