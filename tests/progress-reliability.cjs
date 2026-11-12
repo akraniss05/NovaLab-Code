@@ -97,5 +97,26 @@ setClient({from:query,rpc(name){return Promise.resolve({data:name==='novalab_sho
  await retry;
  assert.equal(s.progress.done.join(','),'one,two,temporary,after-error');
 
- console.log('PASS: read failures preserve state, ordered progress saves, rapid resets and lost-write recovery.');
+ // A remote device can finish a lesson during this tab's save. After adopting
+ // that revision, the user must also be able to reset that remote lesson.
+ const refresh=saveProgress();
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(uploads.length,7);
+ const withRemote=sync.copy(uploads[6].snapshot);
+ withRemote.done.push('remote-device');
+ uploads[6].resolve({payload:withRemote,updated_at:'2026-11-12T10:00:00.005Z'});
+ await refresh;
+ assert(s.progress.done.includes('remote-device'),'Remote completion must be adopted');
+
+ s.progress.done=s.progress.done.filter(id=>id!=='remote-device');
+ const remoteReset=saveProgress();
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(uploads.length,8);
+ assert(uploads[7].base.done.includes('remote-device'),
+  'A remote lesson adopted by a completed sync must be removable on the next save');
+ uploads[7].resolve({payload:sync.merge(uploads[7].base,uploads[7].snapshot,withRemote),updated_at:'2026-11-12T10:00:00.006Z'});
+ await remoteReset;
+ assert(!s.progress.done.includes('remote-device'),'Remote completion must remain reset');
+
+ console.log('PASS: no progress resurrection, recover failed writes and reset cross-device completions.');
 })().catch(error=>{console.error(error);process.exitCode=1});
