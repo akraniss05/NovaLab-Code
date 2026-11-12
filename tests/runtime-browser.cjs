@@ -33,6 +33,12 @@ async function start(){
   assert.equal(js.available,true,'JavaScript has a browser runner');
   assert.equal(js.ok,true,'Real JavaScript execution succeeds: '+js.error);
   assert.deepEqual([...js.lines],['5'],'JavaScript output must be derived from code');
+  const blocked=await page.evaluate(()=>window.LLRuntime.run('console.log(typeof self.fetch,typeof globalThis.fetch,typeof self.importScripts)','javascript'));
+  assert.equal(blocked.ok,true,'Worker-global network APIs must be shadowed: '+blocked.error);
+  assert.deepEqual([...blocked.lines],['undefined undefined undefined'],'Network APIs are not exposed to JavaScript exercises');
+  const forged=await page.evaluate(()=>window.LLRuntime.run('self.postMessage({ok:true,lines:["fake"],available:true});console.log("real")','javascript'));
+  assert.equal(forged.ok,true,'A forged worker message must not end the legitimate execution: '+forged.error);
+  assert.deepEqual([...forged.lines],['real'],'Only a worker reply with the private per-run nonce may be trusted');
   const error=await page.evaluate(()=>window.LLRuntime.run('throw new Error("absichtlich")','javascript'));
   assert.equal(error.ok,false,'Runtime errors must be reported');
   assert.match(error.error,/absichtlich/);
