@@ -82,14 +82,15 @@ const blender=trackPage('blender-fundamentals');
 assert(blender.includes('ll-roadmap-lesson-list')&&blender.includes('Ein erster Würfel'),'Roadmap works for Blender');
 const lesson=lessonPage('lua-04');
 for(const token of ['ll-roadmap-lesson','ll-lesson-hero','ll-lesson-road-stages',
- 'lesson-explanation','lesson-video','lesson-practice','quiz-area',
+ 'lesson-explanation','lesson-video','lesson-practice','quiz-area','lesson-summary',
  'practice-input','video-check','finish-lesson','data-action="reset-lesson"'])
  assert(lesson.includes(token),'Lesson action missing '+token);
 for(const htmlFile of ['index.html','v21.html','v31.html']){
  const html=fs.readFileSync(path.join(root,'site',htmlFile),'utf8');
- assert(html.includes('academy-roadmap.css?build=20261108v59'),htmlFile+' does not load new roadmap CSS');
+ assert(html.includes('academy-roadmap.css?build=20261112audit4'),htmlFile+' does not load new roadmap CSS');
 }
 const css=fs.readFileSync(path.join(root,'site/academy-roadmap.css'),'utf8');
+assert(css.includes('grid-template-columns:repeat(5,minmax(0,1fr))'),'Five lesson steps must stay on one responsive row');
 for(const token of ['.ll-journey-steps','.ll-mini-stop','.ll-map-entry.is-current',
  '.ll-map-entry.is-complete','.ll-roadmap-lesson .step-box','@media(max-width:560px)',
  'prefers-reduced-motion'])
