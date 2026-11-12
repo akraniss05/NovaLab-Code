@@ -219,7 +219,7 @@
 .ll-lesson-overview-progress strong{color:#9ee9c8}
 .ll-lesson-overview-progress .progress{height:9px;background:#3e2a51}
 .ll-lesson-overview-progress .progress>span{background:linear-gradient(90deg,#67e4ad,#adffd9)}
-.ll-roadmap-lesson .ll-lesson-road-stages{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:19px}
+.ll-roadmap-lesson .ll-lesson-road-stages{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:19px}
 .ll-roadmap-lesson .ll-lesson-road-stages .lesson-step{position:relative;min-width:0;border-radius:13px;background:#291b3b;border:1px solid #6b4d81;padding:12px 5px;color:#cdbdde;font-size:11px;font-weight:750}
 .ll-roadmap-lesson .ll-lesson-road-stages .step-index{font-size:21px;line-height:1.3;color:#caa5f3;margin:0 0 5px}
 .ll-roadmap-lesson .ll-lesson-road-stages .lesson-step.done{background:#163b32;border-color:#72d3a9;color:#c0ffe3}
