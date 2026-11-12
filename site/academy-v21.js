@@ -716,7 +716,7 @@ function paintEditorLines(){const input=$('#practice-input'),lines=$('#code-line
 
 
 function stats(){
- const done=s.lessons.filter(l=>inMainPath(l)&&doneIds().has(l.id)).length,available=s.lessons.filter(l=>inMainPath(l)&&allowed(l)).length,started=s.courses.filter(c=>countDone(c.id)>0).length;
+ const done=s.lessons.filter(l=>inMainPath(l)&&allowed(l)&&doneIds().has(l.id)).length,available=s.lessons.filter(l=>inMainPath(l)&&allowed(l)).length,started=s.courses.filter(c=>countDone(c.id)>0).length;
  return '<div class="stats-grid">'+
   '<div class="stat-card"><strong>'+done+'<span class="stat-total">/'+available+'</span></strong><small>LEKTIONEN</small></div>'+
   '<div class="stat-card"><strong>'+xpEarned()+'</strong><small>XP</small></div>'+
