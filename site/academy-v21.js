@@ -508,6 +508,8 @@ async function loadXpAwardPages(){
 }
 async function refreshShopVisibility(){const result=await api.rpc('novalab_shop_enabled');if(result.error)throw result.error;const next=result.data===true;document.body.classList.toggle('novalab-shop-hidden',!next);if(next!==s.shopEnabled){s.shopEnabled=next;if(s.ready)render();}return next;}
 async function loadData(){
+ const loadingAccount=s.user?.id;
+ if(!loadingAccount)throw Error('Zum Laden wird ein angemeldetes Konto benötigt.');
  await refreshShopVisibility();
  var all=await Promise.all([
  api.from('ll_courses').select('id,name,category,level,icon,source_url,difficulty'),
@@ -518,9 +520,11 @@ async function loadData(){
  loadXpAwardPages(),
  s.profile?.role==='admin'?api.rpc('academy_admin_self',{p_action:'status',p_payload:{}}):Promise.resolve({data:null,error:null})
  ]);
+ if(s.user?.id!==loadingAccount)return;
  if(all[0].error)throw all[0].error;if(all[1].error)throw all[1].error;
  if(all[2].error)throw new Error('Mitgliedschaft konnte nicht geladen werden: '+formatError(all[2].error));
  if(all[3].error)throw new Error('Lernfortschritt konnte nicht geladen werden: '+formatError(all[3].error));
+ if(all[4].error)throw new Error('Tarif- und Lernkontingent konnten nicht geladen werden: '+formatError(all[4].error));
  if(all[3].data?.payload!==undefined&&(!all[3].data.payload||typeof all[3].data.payload!=='object'||Array.isArray(all[3].data.payload)))throw new Error('Lernfortschritt hat ein ungültiges Format und wurde nicht überschrieben.');
  s.courses=all[0].data||[];s.lessons=all[1].data||[];
  s.tier=['free','pro','ultimate','max'].includes(all[4].data?.tier)?all[4].data.tier:'free';
@@ -537,18 +541,20 @@ async function loadData(){
  
  // Show the daily reward as soon as the profile and course index are ready.
  // Optional social/exam queries must NEVER postpone or hide the popup.
+ const wasLoggedIn=s.ready;
  s.ready=true;
- s.streakModalOpen=true;
- s.loginStreak=null;
- s.streakError='';
- s.streakLoading=true;
+ if(!wasLoggedIn){
+  s.streakModalOpen=true;
+  s.loginStreak=null;
+  s.streakError='';
+  s.streakLoading=true;
+ }
  frame();
  render();
- // Fetch the authoritative streak in the background; the user sees the popup
- // immediately with an accessible loading state instead of an empty page.
- void refreshStreakStatus()
-  .catch(error=>{s.streakError=formatError(error);})
-  .finally(()=>{if(s.ready){paintStreakModal();frame();}});
+ // Show the Streak prompt once per login, not after changing a voucher or plan.
+ if(!wasLoggedIn)void refreshStreakStatus()
+  .catch(error=>{if(s.user?.id===loadingAccount)s.streakError=formatError(error);})
+  .finally(()=>{if(s.ready&&s.user?.id===loadingAccount){paintStreakModal();frame();}});
  void Promise.allSettled([
   api.rpc('academy_exam_status'),
   api.rpc('academy_social_list'),
@@ -557,7 +563,7 @@ async function loadData(){
   api.rpc('academy_service',{p_action:'list',p_payload:{}}),
   api.rpc('academy_shop_offers',{})
  ]).then(results=>{
-  if(!s.ready)return;
+  if(!s.ready||s.user?.id!==loadingAccount)return;
   const data=results.map(x=>x.status==='fulfilled'&&!x.value?.error?x.value?.data:null);
   s.examStatus=data[0]||null;
   s.social=data[1]||null;
@@ -569,7 +575,19 @@ async function loadData(){
  }).catch(()=>{});
  await navigateCurrent();
 }
-async function logout(){window.LLStudio?.clear?.();window.LLI18n?.setAccount?.('');window.LLLearning?.clear?.();try{await api.auth.signOut();}catch(e){}s.authScreen='login';s.ready=false;s.streakModalOpen=false;s.streakError='';s.loginStreak=null;paintStreakModal();s.user=null;s.profile=null;s.lesson=null;s.courses=[];s.lessons=[];location.hash='#home';login();}
+async function logout(){
+ s.ready=false;navigationId++;
+ window.LLStudio?.clear?.();window.LLI18n?.setAccount?.('');window.LLLearning?.clear?.();
+ try{await api.auth.signOut();}catch(e){}
+ s.authScreen='login';s.streakModalOpen=false;s.streakError='';s.loginStreak=null;
+ s.user=null;s.profile=null;s.lesson=null;s.courses=[];s.lessons=[];s.xpAwards=[];
+ s.progress={done:[],watched:[],practiced:[],verifiedPractice:[],exams:{}};
+ s.daily=null;s.adminSelf=null;s.planExpires=null;s.entitledCourses=null;s.vouchers=[];
+ s.service={beta_open:true,mine:[],admin:[]};s.serviceError='';s.chatTicketId=null;s.chatMessages=[];
+ s.social=null;s.socialMedia={};s.members=[];s.memberPlans={};s.memberExpiry={};s.adminLearner=null;
+ s.quizPassed=false;s.quizAnswers=[];s.draft='';s.ready=false;
+ paintStreakModal();location.hash='#home';login();
+}
 // Serializing progress writes prevents a delayed older request from clobbering
 // the next lesson, while snapshots preserve the state at the moment of each save.
 let progressWriteTail=Promise.resolve();
@@ -827,12 +845,14 @@ function durationDisplay(value){
  return [Math.floor(n/3600),Math.floor(n%3600/60),n%60].map(x=>String(x).padStart(2,'0')).join(':');
 }
 async function refreshStreakStatus(){
- if(!api||!s.ready)return;
+ const accountId=s.user?.id;
+ if(!api||!s.ready||!accountId)return;
  s.streakLoading=true;
  try{const r=await api.rpc('academy_streak_status');if(r.error)throw r.error;
+ if(!s.ready||s.user?.id!==accountId)return null;
  s.loginStreak=r.data||null;
  s.streakError='';
- }catch(e){s.streakError=formatError(e);throw e;}finally{s.streakLoading=false;}
+ }catch(e){if(s.user?.id===accountId)s.streakError=formatError(e);throw e;}finally{if(s.user?.id===accountId)s.streakLoading=false;}
  if(s.loginStreak?.server_now)s.streakClockOffsetMs=Date.parse(s.loginStreak.server_now)-Date.now();
  return s.loginStreak;
 }
@@ -1443,8 +1463,10 @@ async function refreshShopOffers(){
 function salePrice(cents){return Math.round(cents*(100-Math.max(0,Math.min(90,Number(s.shopDiscount)||0)))/100)}
 function euro(cents){return (Number(cents||0)/100).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'}
 async function refreshService(){
+ const accountId=s.user?.id;
  try{
   const r=await api.rpc('academy_service',{p_action:'list',p_payload:{}});
+  if(!s.ready||s.user?.id!==accountId)return null;
   if(r.error)throw r.error;
   if(!r.data||!Array.isArray(r.data.mine)||
    (s.profile?.role==='admin'&&!Array.isArray(r.data.admin)))
@@ -1455,12 +1477,14 @@ async function refreshService(){
   return s.service;
  }catch(error){
   // Never present a failed request as a genuinely empty support inbox.
-  s.serviceError=formatError(error);
+  if(s.user?.id===accountId)s.serviceError=formatError(error);
   throw error;
  }
 }
 async function loadTicketThread(id){
+ const accountId=s.user?.id;
  const r=await api.rpc('academy_ticket_chat',{p_action:'thread',p_ticket:id,p_body:null});
+ if(!s.ready||s.user?.id!==accountId)return null;
  if(r.error)throw r.error;
  if(!r.data?.ok||!Array.isArray(r.data.messages))throw Error('Nachrichtenverlauf konnte nicht geladen werden.');
  s.chatTicketId=id;s.chatMessages=r.data.messages;
@@ -1866,7 +1890,7 @@ function friendsPage(){
  content;
 }
 
-async function refreshSocial(){const [r,media]=await Promise.all([api.rpc('academy_social_list'),api.rpc('academy_social_media_list')]);if(r.error)throw r.error;s.social=r.data;if(!media.error)s.socialMedia=media.data||{};return r.data;}
+async function refreshSocial(){const id=s.user?.id;const [r,media]=await Promise.all([api.rpc('academy_social_list'),api.rpc('academy_social_media_list')]);if(!s.ready||s.user?.id!==id)return null;if(r.error)throw r.error;s.social=r.data;if(!media.error)s.socialMedia=media.data||{};return r.data;}
 function socialImageUrl(uid,kind){
  if(!uid||!s.socialMedia?.[uid]?.[kind])return '';
  return api.storage.from('academy-profile-images').getPublicUrl(uid+'/'+kind+'.webp').data.publicUrl+'?v='+encodeURIComponent(String(s.social?.profile?.lessons||0))+'&stamp='+encodeURIComponent(String(s.imageRevision||'1'));
