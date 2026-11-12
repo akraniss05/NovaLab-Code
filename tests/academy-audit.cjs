@@ -23,6 +23,9 @@ for(const route of ['portfolio','skilltree','notes','challenges','calendar','lev
  assert(main.includes(route+':()=>window.LLStudio?.'),'Studio route not linked: '+route);
 }
 assert.match(main,/academy_verify_lesson_quiz/,'Lesson completion must verify quiz server-side');
+assert.match(main,/id="practice-preview-frame"[^\n]*sandbox=""/,'Markup preview must use opaque-origin script-free sandbox');
+assert.match(main,/frame\.srcdoc=htmlCssPreview\(input\.value,lang\)/,'Markup editor changes must update preview');
+assert.match(read('site/academy-v31-layout.css'),/\.ll-practice-preview-frame/,'Preview needs responsive styling');
 assert.match(main,/supportEditorHasDraft/,'Poller must preserve unfinished support messages');
 assert.match(main,/s\.shopEnabled\?homeShortcut/,'Disabled shop must not leave dashboard shortcut');
 assert.match(sync,/for\(const id of records\.keys\(\)\)/,'Visibility listener uses defined map');
