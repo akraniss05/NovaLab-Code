@@ -19,6 +19,7 @@ on:
       - 'site/academy-learning-extras.css'
       - 'site/practice-engine.js'
       - 'tests/academy-audit.cjs'
+      - 'tests/progress-reliability.cjs'
       - 'tests/practice.cjs'
       - 'tests/studio.cjs'
       - 'tests/runtime-browser.cjs'
@@ -55,6 +56,7 @@ on:
       - 'site/academy-learning-extras.css'
       - 'site/practice-engine.js'
       - 'tests/academy-audit.cjs'
+      - 'tests/progress-reliability.cjs'
       - 'tests/practice.cjs'
       - 'tests/studio.cjs'
       - 'tests/runtime-browser.cjs'
@@ -118,6 +120,8 @@ jobs:
         run: node tests/studio.cjs
       - name: Real runtime grading tests
         run: node tests/runtime-grading.cjs
+      - name: Progress reliability and queued writes
+        run: node tests/progress-reliability.cjs
       - name: Account draft autosave tests
         run: node tests/learning-sync.cjs
       - name: Install browser test dependency
