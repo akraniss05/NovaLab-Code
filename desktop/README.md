@@ -6,7 +6,7 @@ cd desktop
 npm install
 npm run check
 npm run build:win
-python scripts/package-build.py 1.0.3
+python scripts/package-build.py 1.0.4
 
 The Windows NSIS installer is in desktop/dist. The launcher downloads the ZIP from GitHub Releases, validates its SHA-256, installs it in the NovaLab managed directory and opens `NovaLab Code.exe`.
 
@@ -20,12 +20,12 @@ The Windows NSIS installer is in desktop/dist. The launcher downloads the ZIP fr
 - Do not market this release as fully offline or as proven working until tested on a Windows device.
 
 ## Release pipeline
-GitHub Actions `.github/workflows/novalab-code-desktop.yml` builds the Windows installer and ZIP. A commit containing `[publish-code]` publishes `code-v1.0.3` with installer, launcher ZIP, SHA-256 and manifest.
+GitHub Actions `.github/workflows/novalab-code-desktop.yml` builds the Windows installer and ZIP. A commit containing `[publish-code]` publishes `code-v1.0.4` with installer, launcher ZIP, SHA-256 and manifest.
 
 To update NovaLab Launcher, copy the exact verified sha256, URL, version and file size from the Release's `launcher-manifest.json` to the `novalab-code` catalog entry. Never use a placeholder SHA-256.
 
-Build target: code-v1.0.3 (Windows x64 Early Access).
+Build target: code-v1.0.4 (Windows x64 Early Access).
 
-Version 1.0.3 vendors Python/Lua learning runtimes and Supabase SDK into the app distribution. The restricted reference-data.js is explicitly excluded to match the production website build. Backend requests still need Internet.
+Version 1.0.4 vendors Python/Lua learning runtimes and Supabase SDK into the app distribution. The restricted reference-data.js is explicitly excluded to match the production website build. Backend requests still need Internet.
 
-Release: code-v1.0.3 · geprüfte Paketstruktur und gebündelte Lern-Laufzeiten.
+Release: code-v1.0.4 · geprüfte Paketstruktur und gebündelte Lern-Laufzeiten.
