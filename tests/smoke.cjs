@@ -5,7 +5,7 @@ const read=file=>fs.readFileSync(path.join(__dirname,'..',file),'utf8');
 const html=read('site/index.html'),js=read('site/academy-v21.js'),css=read('site/app-v21.css');
 for(const file of ['site/reference-data.js','site/app-v21.css','site/app-v12.css','site/config.js','site/auth-mfa-v15.js','site/academy-v21.js','site/privacy.html','site/manifest.webmanifest','site/icon.svg','supabase/functions/academy-signin/index.ts','supabase/functions/admin-users/index.ts'])
  assert(fs.existsSync(path.join(__dirname,'..',file)),file+' missing');
-for(const token of ['app-v21.css?build=20261109v73','academy-v21.js?build=20261112audit1','auth-mfa-v15.js?build=20261109v73','config.js?build=20261107v31','NovaLab Academy'])
+for(const token of ['app-v21.css?build=20261109v73','academy-v21.js?build=20261112audit2','auth-mfa-v15.js?build=20261109v73','config.js?build=20261107v31','NovaLab Academy'])
  assert(html.includes(token),'Versioned asset missing: '+token);
 for(const obsolete of ['styles.css','refined.css','music-studio.js','studio3d-v5.js'])
  assert(!html.includes(obsolete),'Old asset still linked: '+obsolete);
@@ -50,7 +50,7 @@ assert.equal(banner.subarray(8,12).toString(),'WEBP','NovaLab banner invalid');
 for(const selector of ['.ll-home-shortcuts','.ll-home-brand-banner','.ll-streak-modal','.ll-streak-claim','.ll-streak-backdrop'])assert(css.includes(selector),'Missing v19 interface style: '+selector);
 assert(fs.existsSync(path.join(__dirname,'../site/v21.html')),'Physical uncached v20 entry missing');
 assert(read('site/v21.html').includes('academy-v21.js?build='),'Unique iOS entry must load new code');
-assert(read('site/v31.html').includes('academy-v21.js?build=20261112audit1'),'Fresh entry must load current code');
+assert(read('site/v31.html').includes('academy-v21.js?build=20261112audit2'),'Fresh entry must load current code');
 assert(read('site/manifest.webmanifest').includes('v31.html#home'),'Installed app must open fresh entry');
 assert(js.includes("root=document.createElement('div')"),'Old HTML popup fallback missing');
 assert(js.includes("s.streakModalOpen=true;"),'Daily popup must appear after every login');
@@ -74,12 +74,12 @@ for(const token of ['academy_shop_discount','salePrice','shop-sale-admin','sale-
 for(const token of ['.shop-sale-banner','.sale-old','.sale-new','.ll-home-tools','.support-faq','.support-controls','.support-admin-stats'])assert(css.includes(token),'Missing v29 styling: '+token);
 assert(read('supabase/migrations/20261107_v29_shop_discount.sql').includes('academy_private.is_admin()'),'Shop discount must be admin-protected');
 
-for(const token of ['practice-engine.js?build=20261112audit1','timer-portal','focus-header'])assert(html.includes(token),'Missing v31 entry: '+token);
+for(const token of ['practice-engine.js?build=20261112audit2','timer-portal','focus-header'])assert(html.includes(token),'Missing v31 entry: '+token);
 for(const token of ['LLPractice.evaluate','quizQuestions','practice-actions-simple','weekly-goal','timer-minutes'])assert(js.includes(token),'Missing v31 learning lab: '+token);
 
 for(const entry of ['site/academy-learning-sync.js'])assert(fs.existsSync(path.join(__dirname,'..',entry)),entry+' missing');
 assert(html.includes('academy-learning-sync.js?build=20261112audit1'),'Current local lesson draft manager is loaded');
-assert(html.includes('academy-studio.js?build=20261112audit1')&&html.includes('academy-studio.css?build=20261112audit1'),'Portfolio, skilltree and calendar Studio modules must load');
+assert(html.includes('academy-studio.js?build=20261112audit2')&&html.includes('academy-studio.css?build=20261112audit1'),'Portfolio, skilltree and calendar Studio modules must load');
 for(const route of ['portfolio','skilltree','notes','challenges','calendar','level'])assert(js.includes(route+':()=>window.LLStudio?.'),'Restored Studio route missing '+route);
 assert(!js.includes('practice-console'),'Simplified practice must not render terminal');
 for(const token of ['data-action="complete-practice"','data-action="show-hint"','data-action="show-solution"','practice-actions-simple'])assert(js.includes(token),'Missing simple exercise action '+token);
@@ -87,8 +87,8 @@ assert(!js.includes('data-action="run-practice"'),'Run button must not render');
 assert(html.includes('class="focus-center"')&&html.includes('data-timer-open'),'Center timer missing');
 assert(js.includes('localStorage.setItem(timerStorageKey'),'Timer must persist beyond tab reload');
 const layoutRestore=read('site/academy-v31-layout.css');
-assert(html.includes('academy-v31-layout.css?build=20261109v73'),'v31 simplified CSS missing');
-assert(read('site/v31.html').includes('academy-v31-layout.css?build=20261109v73'),'PWA simple CSS missing');
+assert(html.includes('academy-v31-layout.css?build=20261112audit2'),'v31 simplified CSS missing');
+assert(read('site/v31.html').includes('academy-v31-layout.css?build=20261112audit2'),'PWA simple CSS missing');
 for(const selector of ['.ll-home-brand-banner','.topbar','.bottom-nav','.focus-center','.practice-actions-simple'])assert(layoutRestore.includes(selector),'Visual recovery missing '+selector);
 
 const curriculum=read('site/academy-curriculum.js');
@@ -137,7 +137,7 @@ assert(currentI18n.includes('Welche praktische Aufgabe gehört zu'),'New questio
 assert(js.includes('lastSupportReceipt'),'Support must show persisted ticket reference');
 assert(js.includes('r.data?.ok!==true'),'Never claim a support request was sent without server confirmation');
 assert(js.includes('support-submit-status'),'Send errors must be shown inline');
-for(const entry of ['site/index.html','site/v21.html','site/v31.html'])assert(read(entry).includes('academy-v31-layout.css?build=20261109v73'),'Current support CSS missing '+entry);
+for(const entry of ['site/index.html','site/v21.html','site/v31.html'])assert(read(entry).includes('academy-v31-layout.css?build=20261112audit2'),'Current support CSS missing '+entry);
 
 const effectsJs=read('site/academy-effects.js'),effectsCss=read('site/academy-effects.css');
 for(const page of ['site/index.html','site/v21.html','site/v31.html']){
