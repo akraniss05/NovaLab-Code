@@ -519,6 +519,9 @@ async function loadData(){
  s.profile?.role==='admin'?api.rpc('academy_admin_self',{p_action:'status',p_payload:{}}):Promise.resolve({data:null,error:null})
  ]);
  if(all[0].error)throw all[0].error;if(all[1].error)throw all[1].error;
+ if(all[2].error)throw new Error('Mitgliedschaft konnte nicht geladen werden: '+formatError(all[2].error));
+ if(all[3].error)throw new Error('Lernfortschritt konnte nicht geladen werden: '+formatError(all[3].error));
+ if(all[3].data?.payload!==undefined&&(!all[3].data.payload||typeof all[3].data.payload!=='object'||Array.isArray(all[3].data.payload)))throw new Error('Lernfortschritt hat ein ungültiges Format und wurde nicht überschrieben.');
  s.courses=all[0].data||[];s.lessons=all[1].data||[];
  s.tier=['free','pro','ultimate','max'].includes(all[4].data?.tier)?all[4].data.tier:'free';
  s.daily=all[4].error?null:all[4].data;
@@ -567,10 +570,23 @@ async function loadData(){
  await navigateCurrent();
 }
 async function logout(){window.LLStudio?.clear?.();window.LLI18n?.setAccount?.('');window.LLLearning?.clear?.();try{await api.auth.signOut();}catch(e){}s.authScreen='login';s.ready=false;s.streakModalOpen=false;s.streakError='';s.loginStreak=null;paintStreakModal();s.user=null;s.profile=null;s.lesson=null;s.courses=[];s.lessons=[];location.hash='#home';login();}
-async function saveProgress(){
- var accountProgress={...s.progress};delete accountProgress.quizProgress;
- var res=await api.from('academy_progress').upsert({user_id:s.user.id,key:'liverylab-v10',payload:accountProgress,updated_at:new Date().toISOString()},{onConflict:'user_id,key'});
- if(res.error)throw res.error;frame();
+// Serializing progress writes prevents a delayed older request from clobbering
+// the next lesson, while snapshots preserve the state at the moment of each save.
+let progressWriteTail=Promise.resolve();
+function saveProgress(){
+ const accountId=s.user?.id;
+ if(!accountId)return Promise.reject(new Error('Kein angemeldetes Konto für den Lernfortschritt.'));
+ const accountProgress=JSON.parse(JSON.stringify(s.progress||{}));
+ delete accountProgress.quizProgress;
+ const write=async()=>{
+  if(s.user?.id!==accountId||!s.ready)throw new Error('Konto während der Speicherung gewechselt.');
+  const result=await api.from('academy_progress').upsert({user_id:accountId,key:'liverylab-v10',payload:accountProgress,updated_at:new Date().toISOString()},{onConflict:'user_id,key'});
+  if(result.error)throw result.error;
+  if(s.user?.id===accountId&&s.ready)frame();
+ };
+ const next=progressWriteTail.catch(()=>{}).then(write);
+ progressWriteTail=next.catch(()=>{});
+ return next;
 }
 function go(path){var h='#'+path;if(location.hash===h){navigateCurrent();}else{location.hash=h;}sidebar.classList.remove('open');syncBackdrop();}
 function parseRoute(){
