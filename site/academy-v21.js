@@ -585,7 +585,7 @@ async function navigateCurrent(){
  const isCurrent=()=>s.ready&&request===navigationId&&hash===location.hash;
  var route=parseRoute();s.route=route.page;
  if(route.page==='lesson'){
-   s.choice=null;s.quizStep=0;s.quizPassed=false;s.sectionIndex=0;s.hintStage=0;s.lessonStep=1;s.videoChecked=watchedIds().has(route.id);s.practiceChecked=(s.progress.verifiedPractice||[]).includes(route.id);s.draft=readDraft(route.id);s.videoLoaded=false;s.lesson=null;s.lessonGate=null;
+   s.choice=null;s.quizStep=0;s.quizPassed=false;s.quizAnswers=[];s.sectionIndex=0;s.hintStage=0;s.lessonStep=1;s.videoChecked=watchedIds().has(route.id);s.practiceChecked=(s.progress.verifiedPractice||[]).includes(route.id);s.draft=readDraft(route.id);s.videoLoaded=false;s.lesson=null;s.lessonGate=null;
    frame();content.innerHTML='<div class="center-screen"><div class="spinner"></div><p>Geschützte Lektion wird geladen …</p></div>';
    var meta=s.lessons.find(function(l){return l.id===route.id;});
    if(meta&&allowed(meta)){
@@ -600,8 +600,8 @@ async function navigateCurrent(){
       const quiz=s.lesson.payload||{},bank=quizQuestions(quiz),savedLocal=readQuizLocal(route.id),old=s.progress.quizProgress?.[route.id];
       const savedQuiz=savedLocal||old; // One-time import of previous account quiz state into this browser.
       if(doneIds().has(route.id)){s.quizPassed=true;s.quizStep=Math.max(0,bank.length-1);}
-      else if(savedQuiz&&savedQuiz.total===bank.length&&savedQuiz.version===Number(quiz.quiz_version||1)){
-        s.quizStep=Math.max(0,Math.min(bank.length-1,Number(savedQuiz.step)||0));s.quizPassed=!!savedQuiz.passed;
+      else if(savedQuiz&&savedQuiz.total===bank.length&&savedQuiz.version===Number(quiz.quiz_version||1)&&Array.isArray(savedQuiz.answers)&&savedQuiz.answers.length===(savedQuiz.passed?bank.length:Math.max(0,Number(savedQuiz.step)||0))){
+        s.quizStep=Math.max(0,Math.min(bank.length-1,Number(savedQuiz.step)||0));s.quizPassed=!!savedQuiz.passed;s.quizAnswers=[...savedQuiz.answers];
         if(!savedLocal)saveQuizLocal(route.id,savedQuiz);
       }
       const count=window.LLCurriculum?.parts?.(quiz)?.length||1;
@@ -1375,6 +1375,18 @@ async function markLesson(){
  const originalDone=[...(s.progress.done||[])],oldCompleted={...(s.progress.completedAt||{})};
  const alreadyComplete=originalDone.includes(id);
  s.xpClaimBusy=true;
+ try{
+  if(!alreadyComplete){
+   const answers=Array.isArray(s.quizAnswers)?s.quizAnswers:[];
+   const proof=await api.rpc('academy_verify_lesson_quiz',{p_lesson:id,p_answers:answers});
+   if(proof.error)throw proof.error;
+   if(proof.data?.ok!==true)throw Error(proof.data?.error||'Bitte beantworte alle Quizfragen erneut.');
+  }
+ }catch(error){
+  s.xpClaimBusy=false;
+  notice('Quizbestätigung fehlgeschlagen: '+formatError(error));
+  return;
+ }
  try{
   if(!alreadyComplete)s.progress.done.push(id);
   if(!s.progress.completedAt)s.progress.completedAt={};
@@ -2735,7 +2747,7 @@ document.addEventListener('click',async function(e){
    const previous=JSON.parse(JSON.stringify(s.progress));
    for(const key of ['done','watched','practiced','verifiedPractice'])s.progress[key]=(s.progress[key]||[]).filter(x=>x!==id);
    if(s.progress.completedAt)delete s.progress.completedAt[id];
-   if(s.progress.quizProgress)delete s.progress.quizProgress[id];
+   if(s.progress.quizProgress)delete s.progress.quizProgress[id];s.quizAnswers=[];
    try{localStorage.removeItem(lessonLocalKey('part',id));localStorage.removeItem(lessonLocalKey('quiz',id));}catch(_){}
    try{await saveProgress();if(window.LLLearning)await window.LLLearning.remove(id);localStorage.removeItem(lessonLocalKey('draft',id));s.draft='';s.lessonStep=1;await navigateCurrent();notice('Diese Lektion wurde neu gestartet.');}
    catch(e){s.progress=previous;notice('Neustart konnte nicht gespeichert werden: '+formatError(e));}return;
@@ -2774,7 +2786,7 @@ document.addEventListener('click',async function(e){
       try{localStorage.removeItem('liverylab-draft-'+id);}catch(_){}
       try{await window.LLLearning?.remove?.(id);}catch(_){}
      }
-     s.draft='';s.quizPassed=false;s.quizStep=0;s.practiceChecked=false;
+     s.draft='';s.quizPassed=false;s.quizStep=0;s.quizAnswers=[];s.practiceChecked=false;
     notice('Dein Kursfortschritt wurde zurückgesetzt. Bereits verdiente XP bleiben erhalten.');render();
    }catch(err){s.progress=before;notice('Zurücksetzen fehlgeschlagen: '+formatError(err))}
    return;
@@ -2822,9 +2834,11 @@ document.addEventListener('click',async function(e){
  }
  var answer=e.target.closest('[data-answer]');if(answer){const qs=quizQuestions(s.lesson?.payload||{}),q=qs[s.quizStep];if(!q||s.quizPassed)return;s.choice=Number(answer.dataset.answer);
  if(s.choice===q.correct){
+  if(!Array.isArray(s.quizAnswers))s.quizAnswers=[];
+  s.quizAnswers[s.quizStep]=s.choice;
   if(s.quizStep===qs.length-1){s.quizPassed=true;window.LLLearning?.mark?.(parseRoute().id,4);notice('Alle '+qs.length+' Fragen richtig beantwortet!');updateLessonControls();}
   else{s.quizStep++;s.choice=null;paintQuiz();notice('Richtig! Jetzt Frage '+(s.quizStep+1)+' von '+qs.length+'.');}
-  saveQuizLocal(parseRoute().id,{step:s.quizStep,total:qs.length,version:Number(s.lesson?.payload?.quiz_version||1),passed:s.quizPassed});
+  saveQuizLocal(parseRoute().id,{step:s.quizStep,total:qs.length,version:Number(s.lesson?.payload?.quiz_version||1),passed:s.quizPassed,answers:[...s.quizAnswers]});
  }else{updateLessonControls();}
  return;}
  var exam=e.target.closest('[data-exam-answer]');if(exam){await submitExamAnswer(Number(exam.dataset.examAnswer));return;}
