@@ -19,13 +19,16 @@ assert.equal(a.membershipRemainingText('ultimate',new Date(Date.now()-1000).toIS
 assert.equal(a.membershipRemainingText('max',null),'Unbefristet · kein Ablaufdatum');
 assert.match(a.membershipRemainingText('free',null),/Free/);
 assert.match(a.membershipExpiryText('pro',new Date(Date.now()+10000).toISOString()),/Endet am /);
-s.ready=true;s.tier='pro';s.planExpires=new Date(Date.now()+60000).toISOString();s.profile={role:'student'};
+s.ready=true;s.shopEnabled=true;s.tier='pro';s.planExpires=new Date(Date.now()+60000).toISOString();s.profile={role:'student'};
 const html=a.ownPlanCountdownHtml();
 assert.match(html,/data-own-plan-clock/);
 assert.match(html,/role="timer"/);
 assert.match(html,/Verbleibende Laufzeit/);
 assert.match(html,/Plus/);
 assert.match(html,/Tarife ansehen/);
+s.shopEnabled=false;
+assert.equal(a.ownPlanCountdownHtml(),'','Disabled shop must not show subscription countdown');
+s.shopEnabled=true;
 a.updateMembershipClocks();
 assert.equal(nodes[0].textContent,a.membershipRemainingText('pro',s.planExpires));
 assert.equal(nodes[1].textContent,nodes[0].textContent);
