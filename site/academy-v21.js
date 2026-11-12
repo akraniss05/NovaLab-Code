@@ -31,7 +31,7 @@ function allowed(l){if(!s.shopEnabled)return !!s.profile;return !!s.profile&&(!s
 function fullAccess(){return !s.shopEnabled||s.tier==='max';}
 function hasScript(){return !s.shopEnabled||['pro','ultimate','max'].includes(s.tier);}
 function examCap(){return !s.shopEnabled||fullAccess()?-1:s.tier==='ultimate'?8:s.tier==='pro'?4:2;}
-function paywall(feature,tier,description){return '<section class="feature-gate"><span class="feature-lock">🔒</span><span class="eyebrow">'+esc(tier)+'-MITGLIEDSCHAFT</span><h1>'+esc(feature)+' ist gesperrt.</h1><p class="lede">'+esc(description)+'</p><div class="feature-gate-actions"><button type="button" data-go="plans" class="btn primary">Tarif ansehen →</button><a class="btn discord" href="https://discord.gg/SZhYa6Nnmy" target="_blank" rel="noopener noreferrer">Auf Discord anfragen</a></div><p class="micro">Schreibe NyxAtheris eine DM oder eröffne im Discord ein Ticket und erwähne @nyxatheris mit dem Grund.</p></section>';}
+function paywall(feature,tier,description){return '<section class="feature-gate"><span class="feature-lock">🔒</span><span class="eyebrow">'+esc(tier)+'-MITGLIEDSCHAFT</span><h1>'+esc(feature)+' ist gesperrt.</h1><p class="lede">'+esc(description)+'</p><div class="feature-gate-actions">'+(s.shopEnabled?'<button type="button" data-go="plans" class="btn primary">Tarif ansehen →</button>':'')+'<a class="btn discord" href="https://discord.gg/SZhYa6Nnmy" target="_blank" rel="noopener noreferrer">Auf Discord anfragen</a></div><p class="micro">Schreibe NyxAtheris eine DM oder eröffne im Discord ein Ticket und erwähne @nyxatheris mit dem Grund.</p></section>';}
 function badge(t){return '<span class="chip '+esc(t)+'">'+tierLabel(t)+'</span>';}
 function levelText(l){var x=String(l||'beginner').toLowerCase();return /beginner|anfänger/.test(x)?'Anfänger':/intermediate|mittelstufe/.test(x)?'Aufbau':'Fortgeschritten';}
 
@@ -510,6 +510,12 @@ async function refreshShopVisibility(){const result=await api.rpc('novalab_shop_
 async function loadData(){
  const loadingAccount=s.user?.id;
  await progressWriteTail.catch(()=>{});
+ if(s.ready&&progressQueueAccount===loadingAccount&&failedProgressBase){
+  // Recover pending local changes before fetching a remote snapshot. Otherwise
+  // a refresh after a brief outage could make unsaved work disappear.
+  try{await saveProgress();}
+  catch(error){throw Error('Ungespeicherter Lernfortschritt: '+formatError(error)+'. Die Daten wurden nicht überschrieben.');}
+ }
  if(!loadingAccount)throw Error('Zum Laden wird ein angemeldetes Konto benötigt.');
  await refreshShopVisibility();
  var all=await Promise.all([
@@ -541,6 +547,9 @@ async function loadData(){
  s.progress={...data,done:Array.isArray(data.done)?data.done:[],watched:Array.isArray(data.watched)?data.watched:[],exams:data.exams||{},practiced:Array.isArray(data.practiced)?data.practiced:[],verifiedPractice:Array.isArray(data.verifiedPractice)?data.verifiedPractice:[],completedAt:data.completedAt&&typeof data.completedAt==='object'?data.completedAt:{}};
  s.progressBase=window.LLProgressSync.copy(s.progress);
  s.progressVersion=all[3].data?.updated_at||null;
+ progressQueueAccount=loadingAccount;
+ lastQueuedProgress=window.LLProgressSync.copy(s.progress);
+ failedProgressBase=null;progressQueueRevision=0;
  
  // Show the daily reward as soon as the profile and course index are ready.
  // Optional social/exam queries must NEVER postpone or hide the popup.
@@ -579,6 +588,8 @@ async function loadData(){
  await navigateCurrent();
 }
 async function logout(){
+ // Retire in-flight responses before calling the asynchronous auth sign-out.
+ progressSessionEpoch++;progressQueueRevision++;progressQueueAccount=null;lastQueuedProgress=null;failedProgressBase=null;
  s.ready=false;navigationId++;
  window.LLStudio?.clear?.();window.LLI18n?.setAccount?.('');window.LLLearning?.clear?.();
  try{await api.auth.signOut();}catch(e){}
@@ -591,24 +602,45 @@ async function logout(){
  s.quizPassed=false;s.quizAnswers=[];s.draft='';s.ready=false;
  paintStreakModal();location.hash='#home';login();
 }
-// Snapshot each pending edit and reconcile it against the latest revision.
-// A second tab can no longer silently replace newly finished lessons.
+// Each queued snapshot is compared with the PREVIOUS queued snapshot,
+// not the original server state. This preserves a quick reset performed while
+// a completion is still being written and protects unrelated remote changes.
 let progressWriteTail=Promise.resolve();
+let progressQueueAccount=null,lastQueuedProgress=null,failedProgressBase=null,progressSessionEpoch=0,progressQueueRevision=0;
 function saveProgress(){
  const accountId=s.user?.id;
  if(!accountId)return Promise.reject(new Error('Kein angemeldetes Konto für den Lernfortschritt.'));
  const sync=window.LLProgressSync;
  if(!sync)return Promise.reject(new Error('Fortschritt-Synchronisierung konnte nicht geladen werden.'));
+ if(progressQueueAccount!==accountId){
+  progressQueueAccount=accountId;
+  lastQueuedProgress=sync.copy(s.progressBase||{});
+  failedProgressBase=null;progressQueueRevision=0;
+ }
  const accountProgress=sync.copy(s.progress||{});
  delete accountProgress.quizProgress;
- const base=sync.copy(s.progressBase||{});
+ const previousDraft=sync.copy(lastQueuedProgress||s.progressBase||{});
+ lastQueuedProgress=sync.copy(accountProgress);
+ const revision=++progressQueueRevision;
+ const session=progressSessionEpoch;
  const write=async()=>{
-  if(s.user?.id!==accountId||!s.ready)throw Error('Konto während der Speicherung gewechselt.');
-  const saved=await sync.save(api,accountId,'liverylab-v10',base,accountProgress);
-  if(s.user?.id!==accountId||!s.ready)return;
+  if(s.user?.id!==accountId||!s.ready||progressSessionEpoch!==session)throw Error('Konto während der Speicherung gewechselt.');
+  // A rejected earlier write must be incorporated into the next snapshot.
+  const base=sync.copy(failedProgressBase||previousDraft);
+  let saved;
+  try{saved=await sync.save(api,accountId,'liverylab-v10',base,accountProgress);}
+  catch(error){
+   if(s.user?.id===accountId&&progressSessionEpoch===session&&!failedProgressBase)failedProgressBase=sync.copy(base);
+   throw error;
+  }
+  if(s.user?.id!==accountId||!s.ready||progressSessionEpoch!==session)return;
+  failedProgressBase=null;
   s.progress=sync.merge(accountProgress,s.progress,saved.payload);
   s.progressBase=sync.copy(saved.payload);
   s.progressVersion=saved.updated_at;
+  // No newer write is pending: adopt the merged server state as the next
+  // baseline, so a learner can later RESET lessons added by another device.
+  if(revision===progressQueueRevision)lastQueuedProgress=sync.copy(saved.payload);
   frame();
  };
  const next=progressWriteTail.catch(()=>{}).then(write);
@@ -1253,9 +1285,9 @@ function lessonPage(id){
  if(!allowed(l))return back+'<section class="panel locked-panel"><div class="lock-icon">🔒</div><span class="eyebrow">KURSINHALT GESCHÜTZT</span>'+
  '<h1>'+esc(l.title)+'</h1>'+difficultyBadge(c)+'<p class="lede" style="margin:auto">'+esc(l.summary)+'</p>'+
  '<p>Diese Lektion ist mit <strong>'+tierLabel(l.required_plan)+'</strong> freigeschaltet.</p>'+
- '<div class="hero-actions" style="justify-content:center"><button class="btn primary" data-go="plans">Stufen vergleichen</button>'+
+ '<div class="hero-actions" style="justify-content:center">'+(s.shopEnabled?'<button class="btn primary" data-go="plans">Stufen vergleichen</button>':'')+
  '<a class="btn discord" rel="noopener noreferrer" target="_blank" href="https://discord.gg/SZhYa6Nnmy">Freischaltung anfragen</a></div></section>';
- if(!s.lesson){const daily=s.lessonGate?.reason==='daily_limit';return back+'<section class="lesson-gate"><span class="gate-icon">'+(daily?'◷':'🔒')+'</span><span class="eyebrow">'+(daily?'TAGESLIMIT ERREICHT':'LEKTION NICHT VERFÜGBAR')+'</span><h2>'+(daily?'Für heute geschafft.':'Lektion nicht geladen')+'</h2><p>'+(daily?'Du hast heute alle '+safeNumber(s.daily?.daily_limit)+' neuen Lernstationen geöffnet. Morgen geht es weiter. Bereits geöffnete Stationen bleiben zugänglich.':esc(s.lessonGate?.error||'Prüfe deine Freischaltung und Verbindung.'))+'</p><div class="actions-pair"><button class="btn" data-go="track/'+esc(l.course_id)+'">← Lernpfad</button><button class="btn primary" data-go="plans">Tarife ansehen →</button></div></section>';}
+ if(!s.lesson){const daily=s.lessonGate?.reason==='daily_limit';return back+'<section class="lesson-gate"><span class="gate-icon">'+(daily?'◷':'🔒')+'</span><span class="eyebrow">'+(daily?'TAGESLIMIT ERREICHT':'LEKTION NICHT VERFÜGBAR')+'</span><h2>'+(daily?'Für heute geschafft.':'Lektion nicht geladen')+'</h2><p>'+(daily?'Du hast heute alle '+safeNumber(s.daily?.daily_limit)+' neuen Lernstationen geöffnet. Morgen geht es weiter. Bereits geöffnete Stationen bleiben zugänglich.':esc(s.lessonGate?.error||'Prüfe deine Freischaltung und Verbindung.'))+'</p><div class="actions-pair"><button class="btn" data-go="track/'+esc(l.course_id)+'">← Lernpfad</button>'+(s.shopEnabled?'<button class="btn primary" data-go="plans">Tarife ansehen →</button>':'')+'</div></section>';}
  var p=s.lesson.payload||{},video=s.lesson.video_id||p.videoId,info=p.video_guide||videoInfo(video),qs=quizQuestions(p),activeQuiz=qs[Math.min(s.quizStep,qs.length-1)],options=activeQuiz?.options||[],finished=doneIds().has(id),rewarded=xpAwarded(id),isBlender=c?.category==='3D & Blender';
  var videoStart=Math.max(0,Math.floor(safeNumber(s.lesson.video_start??p.videoStart))),validVideo=video&&/^[a-zA-Z0-9_-]{11}$/.test(video),url=validVideo?'https://www.youtube.com/watch?v='+video+'&t='+videoStart+'s':null;
  var search='https://www.youtube.com/results?search_query='+encodeURIComponent(c.name+' '+l.title+' Anleitung Tutorial deutsch');
@@ -1275,11 +1307,11 @@ function lessonPage(id){
  '<strong>'+(index+1)+' / '+all.length+'</strong></div>'+
  '<div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="'+all.length+'" aria-valuenow="'+(index+1)+'" aria-label="'+catalogText('Position im Kurs','Position in course')+'"><span style="width:'+pct(index+1,all.length)+'%"></span></div></div>'+
  '<div class="lesson-steps ll-lesson-road-stages" aria-label="'+catalogText('Lektionsschritte','Lesson steps')+'">'+
- '<div class="lesson-step done"><span class="step-index">◇</span>'+catalogText('Verstehen','Learn')+'</div>'+
- '<div class="lesson-step '+(s.videoChecked?'done':'')+'"><span class="step-index">▷</span>'+catalogText('Video','Video')+'</div>'+
- '<div class="lesson-step '+(isPracticeDone?'done':'')+'"><span class="step-index">⟨/⟩</span>'+catalogText('Praxis','Practice')+'</div>'+
- '<div class="lesson-step '+(s.quizPassed||finished?'done':'')+'"><span class="step-index">✓</span>'+catalogText('Quiz','Quiz')+'</div>'+
- '<div class="lesson-step '+(finished?'done':'')+'"><span class="step-index">✦</span>'+catalogText('Ergebnis','Result')+'</div></div>'+
+ '<button type="button" data-learning-step="1" class="lesson-step done" aria-current="'+(s.lessonStep===1?'step':'false')+'"><span class="step-index">◇</span>'+catalogText('Verstehen','Learn')+'</button>'+
+ '<button type="button" data-learning-step="2" class="lesson-step '+(s.videoChecked?'done':'')+'" aria-current="'+(s.lessonStep===2?'step':'false')+'"><span class="step-index">▷</span>'+catalogText('Video','Video')+'</button>'+
+ '<button type="button" data-learning-step="3" class="lesson-step '+(isPracticeDone?'done':'')+'" aria-current="'+(s.lessonStep===3?'step':'false')+'"><span class="step-index">⟨/⟩</span>'+catalogText('Praxis','Practice')+'</button>'+
+ '<button type="button" data-learning-step="4" class="lesson-step '+(s.quizPassed||finished?'done':'')+'" aria-current="'+(s.lessonStep===4?'step':'false')+'"><span class="step-index">✓</span>'+catalogText('Quiz','Quiz')+'</button>'+
+ '<button type="button" data-learning-step="5" class="lesson-step '+(finished?'done':'')+'" aria-current="'+(s.lessonStep===5?'step':'false')+'"><span class="step-index">✦</span>'+catalogText('Ergebnis','Result')+'</button></div>'+
  '<p class="micro" id="learning-resume" aria-live="polite">5 Schritte: Erklären · Video · Code · Quiz · Ergebnis</p></header>'+
 
  (finished?'<div class="done-banner" style="margin:15px 0"><strong>✓ Lektion abgeschlossen</strong><p>'+(rewarded?'Die 30 XP für diese Lektion hast du bereits erhalten.':'Deine Lektion ist abgeschlossen. Bitte bestätige die XP-Gutschrift.')+'</p>'+(rewarded?'':'<button class="btn small" type="button" data-action="retry-lesson-xp">XP-Gutschrift überprüfen</button>')+'</div>':'')+
@@ -1699,7 +1731,7 @@ function examPage(id){
  '<div class="project-message"><strong>Dein Lernpfad ist noch nicht vollständig.</strong>'+
  '<p>Schließe zuerst alle '+all.length+' Lektionen ab, um die Abschlussprüfung zu starten.</p></div>'+
  '<button class="btn primary" data-go="track/'+esc(id)+'">Zum Lernpfad →</button></section>';
- if(s.examGate)return back+'<section class="feature-gate"><span class="feature-lock">◷</span><h2>'+esc(s.examGate.error||'Prüfung gesperrt')+'</h2><p>'+esc(s.examGate.reason==='daily_limit'?'Morgen sind neue Prüfungen verfügbar.':'Bitte deinen Tarif oder den Kurs prüfen.')+'</p><button class="btn primary" data-go="plans">Tarife ansehen →</button></section>';
+ if(s.examGate)return back+'<section class="feature-gate"><span class="feature-lock">◷</span><h2>'+esc(s.examGate.error||'Prüfung gesperrt')+'</h2><p>'+esc(s.examGate.reason==='daily_limit'?'Morgen sind neue Prüfungen verfügbar.':'Bitte deinen Tarif oder den Kurs prüfen.')+'</p>'+(s.shopEnabled?'<button class="btn primary" data-go="plans">Tarife ansehen →</button>':'')+'</section>';
  if(!s.exam||!s.exam.items.length)return back+'<div class="empty">Keine Prüfungsfragen hinterlegt.</div>';
  const ex=s.exam,finished=ex.at>=ex.items.length;
  if(finished){
