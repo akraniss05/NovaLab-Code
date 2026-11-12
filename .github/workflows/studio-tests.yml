@@ -22,6 +22,7 @@ on:
       - 'tests/progress-reliability.cjs'
       - 'tests/practice.cjs'
       - 'tests/studio.cjs'
+      - 'tests/studio-session.cjs'
       - 'tests/runtime-browser.cjs'
       - 'tests/runtime-grading.cjs'
       - 'tests/simple-academy.cjs'
@@ -59,6 +60,7 @@ on:
       - 'tests/progress-reliability.cjs'
       - 'tests/practice.cjs'
       - 'tests/studio.cjs'
+      - 'tests/studio-session.cjs'
       - 'tests/runtime-browser.cjs'
       - 'tests/runtime-grading.cjs'
       - 'tests/simple-academy.cjs'
@@ -118,6 +120,8 @@ jobs:
         run: node tests/practice.cjs
       - name: New studio regression tests
         run: node tests/studio.cjs
+      - name: Studio account isolation and logout races
+        run: node tests/studio-session.cjs
       - name: Real runtime grading tests
         run: node tests/runtime-grading.cjs
       - name: Progress reliability and queued writes
