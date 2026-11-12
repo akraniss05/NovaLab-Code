@@ -11,7 +11,8 @@ const fake=()=>({innerHTML:'',textContent:'',hidden:false,disabled:false,value:'
 for(const key of ['#content','#sidebar','#bottom-nav','#toast','#focus-header','#focus-clock','#timer-portal','#timer-minutes','#practice-input','#practice-feedback','#practice-status','#practice-workspace','#mark-lesson','[data-action="complete-practice"]','#answer-result','#video-check','#quiz-choices','#quiz-question','#quiz-progress','#quiz-meter-fill','#lesson-explanation'])elements.set(key,fake());
 const answerButtons=['0','1','2'].map(value=>({dataset:{answer:value},disabled:false,classList:classList()}));
 const doc={querySelector(selector){return elements.get(selector)||null},querySelectorAll(selector){return selector==='[data-answer]'?answerButtons:[]},addEventListener(name,fn){(callbacks[name]||(callbacks[name]=[])).push(fn)},body:{classList:classList()}};
-const window={LL_CONFIG:{},LLPractice:require('../site/practice-engine.js').LLPractice,LLCurriculum:require('../site/academy-curriculum.js').LLCurriculum,addEventListener(){}};
+const sync=require('../site/academy-progress-sync.js').LLProgressSync;
+const window={LL_CONFIG:{},LLPractice:require('../site/practice-engine.js').LLPractice,LLCurriculum:require('../site/academy-curriculum.js').LLCurriculum,LLProgressSync:{...sync,save:async(_client,_id,_key,base,snapshot)=>({payload:sync.merge(base,snapshot,{}),updated_at:new Date().toISOString()})},addEventListener(){}};
 window.LLLearning={queue(){},mark(){}};
 window.LLRuntime={async run(text){return {available:true,ok:true,lines:[text.includes('Wrong')?'Wrong':'Hello']}}};
 const sandbox={window,document:doc,localStorage:{getItem:key=>saved.get(key)||null,setItem:(key,value)=>saved.set(key,value),removeItem:key=>saved.delete(key)},sessionStorage:{getItem:()=>null},location:{hash:'#lesson/lua-01'},console,setTimeout,clearTimeout,setInterval(){return 1},clearInterval(){},Date,Math,Number,Promise,Map,Set,Intl,confirm(){return true}};

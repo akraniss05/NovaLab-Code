@@ -509,13 +509,14 @@ async function loadXpAwardPages(){
 async function refreshShopVisibility(){const result=await api.rpc('novalab_shop_enabled');if(result.error)throw result.error;const next=result.data===true;document.body.classList.toggle('novalab-shop-hidden',!next);if(next!==s.shopEnabled){s.shopEnabled=next;if(s.ready)render();}return next;}
 async function loadData(){
  const loadingAccount=s.user?.id;
+ await progressWriteTail.catch(()=>{});
  if(!loadingAccount)throw Error('Zum Laden wird ein angemeldetes Konto benötigt.');
  await refreshShopVisibility();
  var all=await Promise.all([
  api.from('ll_courses').select('id,name,category,level,icon,source_url,difficulty'),
  loadLessonIndexPages(),
  api.from('academy_plans').select('tier,expires_at').eq('user_id',s.user.id).maybeSingle(),
- api.from('academy_progress').select('payload').eq('user_id',s.user.id).eq('key','liverylab-v10').maybeSingle(),
+ api.from('academy_progress').select('payload,updated_at').eq('user_id',s.user.id).eq('key','liverylab-v10').maybeSingle(),
  api.rpc('academy_voucher_status'),
  loadXpAwardPages(),
  s.profile?.role==='admin'?api.rpc('academy_admin_self',{p_action:'status',p_payload:{}}):Promise.resolve({data:null,error:null})
@@ -538,6 +539,8 @@ async function loadData(){
  s.xpAwards=(all[5]?.data||[]).filter(row=>row&&typeof row.lesson_id==='string');
  var data=all[3].data?.payload||{};
  s.progress={...data,done:Array.isArray(data.done)?data.done:[],watched:Array.isArray(data.watched)?data.watched:[],exams:data.exams||{},practiced:Array.isArray(data.practiced)?data.practiced:[],verifiedPractice:Array.isArray(data.verifiedPractice)?data.verifiedPractice:[],completedAt:data.completedAt&&typeof data.completedAt==='object'?data.completedAt:{}};
+ s.progressBase=window.LLProgressSync.copy(s.progress);
+ s.progressVersion=all[3].data?.updated_at||null;
  
  // Show the daily reward as soon as the profile and course index are ready.
  // Optional social/exam queries must NEVER postpone or hide the popup.
@@ -581,26 +584,32 @@ async function logout(){
  try{await api.auth.signOut();}catch(e){}
  s.authScreen='login';s.streakModalOpen=false;s.streakError='';s.loginStreak=null;
  s.user=null;s.profile=null;s.lesson=null;s.courses=[];s.lessons=[];s.xpAwards=[];
- s.progress={done:[],watched:[],practiced:[],verifiedPractice:[],exams:{}};
+ s.progress={done:[],watched:[],practiced:[],verifiedPractice:[],exams:{}};s.progressBase=null;s.progressVersion=null;
  s.daily=null;s.adminSelf=null;s.planExpires=null;s.entitledCourses=null;s.vouchers=[];
  s.service={beta_open:true,mine:[],admin:[]};s.serviceError='';s.chatTicketId=null;s.chatMessages=[];
  s.social=null;s.socialMedia={};s.members=[];s.memberPlans={};s.memberExpiry={};s.adminLearner=null;
  s.quizPassed=false;s.quizAnswers=[];s.draft='';s.ready=false;
  paintStreakModal();location.hash='#home';login();
 }
-// Serializing progress writes prevents a delayed older request from clobbering
-// the next lesson, while snapshots preserve the state at the moment of each save.
+// Snapshot each pending edit and reconcile it against the latest revision.
+// A second tab can no longer silently replace newly finished lessons.
 let progressWriteTail=Promise.resolve();
 function saveProgress(){
  const accountId=s.user?.id;
  if(!accountId)return Promise.reject(new Error('Kein angemeldetes Konto für den Lernfortschritt.'));
- const accountProgress=JSON.parse(JSON.stringify(s.progress||{}));
+ const sync=window.LLProgressSync;
+ if(!sync)return Promise.reject(new Error('Fortschritt-Synchronisierung konnte nicht geladen werden.'));
+ const accountProgress=sync.copy(s.progress||{});
  delete accountProgress.quizProgress;
+ const base=sync.copy(s.progressBase||{});
  const write=async()=>{
-  if(s.user?.id!==accountId||!s.ready)throw new Error('Konto während der Speicherung gewechselt.');
-  const result=await api.from('academy_progress').upsert({user_id:accountId,key:'liverylab-v10',payload:accountProgress,updated_at:new Date().toISOString()},{onConflict:'user_id,key'});
-  if(result.error)throw result.error;
-  if(s.user?.id===accountId&&s.ready)frame();
+  if(s.user?.id!==accountId||!s.ready)throw Error('Konto während der Speicherung gewechselt.');
+  const saved=await sync.save(api,accountId,'liverylab-v10',base,accountProgress);
+  if(s.user?.id!==accountId||!s.ready)return;
+  s.progress=sync.merge(accountProgress,s.progress,saved.payload);
+  s.progressBase=sync.copy(saved.payload);
+  s.progressVersion=saved.updated_at;
+  frame();
  };
  const next=progressWriteTail.catch(()=>{}).then(write);
  progressWriteTail=next.catch(()=>{});
@@ -707,7 +716,7 @@ function paintEditorLines(){const input=$('#practice-input'),lines=$('#code-line
 
 
 function stats(){
- const done=s.lessons.filter(l=>inMainPath(l)&&doneIds().has(l.id)).length,available=s.lessons.filter(l=>inMainPath(l)&&allowed(l)).length,started=s.courses.filter(c=>countDone(c.id)>0).length;
+ const done=s.lessons.filter(l=>inMainPath(l)&&allowed(l)&&doneIds().has(l.id)).length,available=s.lessons.filter(l=>inMainPath(l)&&allowed(l)).length,started=s.courses.filter(c=>countDone(c.id)>0).length;
  return '<div class="stats-grid">'+
   '<div class="stat-card"><strong>'+done+'<span class="stat-total">/'+available+'</span></strong><small>LEKTIONEN</small></div>'+
   '<div class="stat-card"><strong>'+xpEarned()+'</strong><small>XP</small></div>'+
@@ -1269,7 +1278,9 @@ function lessonPage(id){
  '<div class="lesson-step done"><span class="step-index">◇</span>'+catalogText('Verstehen','Learn')+'</div>'+
  '<div class="lesson-step '+(s.videoChecked?'done':'')+'"><span class="step-index">▷</span>'+catalogText('Video','Video')+'</div>'+
  '<div class="lesson-step '+(isPracticeDone?'done':'')+'"><span class="step-index">⟨/⟩</span>'+catalogText('Praxis','Practice')+'</div>'+
- '<div class="lesson-step '+(finished?'done':'')+'"><span class="step-index">✓</span>'+catalogText('Quiz','Quiz')+'</div></div></header>'+
+ '<div class="lesson-step '+(s.quizPassed||finished?'done':'')+'"><span class="step-index">✓</span>'+catalogText('Quiz','Quiz')+'</div>'+
+ '<div class="lesson-step '+(finished?'done':'')+'"><span class="step-index">✦</span>'+catalogText('Ergebnis','Result')+'</div></div>'+
+ '<p class="micro" id="learning-resume" aria-live="polite">5 Schritte: Erklären · Video · Code · Quiz · Ergebnis</p></header>'+
 
  (finished?'<div class="done-banner" style="margin:15px 0"><strong>✓ Lektion abgeschlossen</strong><p>'+(rewarded?'Die 30 XP für diese Lektion hast du bereits erhalten.':'Deine Lektion ist abgeschlossen. Bitte bestätige die XP-Gutschrift.')+'</p>'+(rewarded?'':'<button class="btn small" type="button" data-action="retry-lesson-xp">XP-Gutschrift überprüfen</button>')+'</div>':'')+
  '<section class="step-box" id="lesson-explanation"><span class="eyebrow">SCHRITT 01 · VERSTEHEN</span>'+
@@ -1303,7 +1314,11 @@ function lessonPage(id){
  '<section class="step-box" id="quiz-area"><span class="eyebrow">SCHRITT 04 · WISSENSTEST</span><h2>Wissen anwenden.</h2><span id="quiz-progress">Frage '+Math.min(s.quizStep+1,qs.length)+' von '+qs.length+'</span><div class="ll-quiz-progress"><span id="quiz-meter-fill" style="width:'+Math.round((s.quizStep+(s.quizPassed?1:0))/Math.max(1,qs.length)*100)+'%"></span></div><p id="quiz-question">'+esc(activeQuiz?.question||'Hast du das Thema verstanden?')+'</p><div id="quiz-choices">'+
  options.map((answer,i)=>'<button type="button" class="quiz-choice" data-answer="'+i+'"><span>'+String.fromCharCode(65+i)+'</span>'+esc(answer)+'</button>').join('')+'</div>'+
  '<p class="quiz-feedback micro" id="answer-result" role="status" aria-live="polite">'+(finished?'✓ Bereits abgeschlossen.':'Wähle die richtige Antwort. Danach kannst du die Lektion abschließen.')+'</p>'+
- '<button class="btn primary" id="mark-lesson" data-action="finish-lesson" type="button" disabled>'+(finished?'✓ Lektion abgeschlossen':'Lektion abschließen →')+'</button></section>'+ 
+ '<button class="btn primary" id="mark-lesson" data-action="finish-lesson" type="button" disabled>'+(finished?'✓ Lektion abgeschlossen':'Lektion abschließen →')+'</button></section>'+
+ '<section class="step-box" id="lesson-summary"><span class="eyebrow">SCHRITT 05 · ERGEBNIS</span><h2>'+esc(finished?'Lernziel erreicht!':'Dein Ergebnis')+'</h2>'+
+ '<p>'+esc(finished?'Du hast Video, Praxisaufgabe und Wissenstest abgeschlossen.':'Schließe die Erklärung, deine praktische Aufgabe und alle Quizfragen ab, um dieses Lernziel zu erreichen.')+'</p>'+
+ '<p class="micro">'+(finished?(rewarded?'✓ 30 XP dauerhaft gutgeschrieben.':'Der Abschluss ist gespeichert. Die XP-Gutschrift kann erneut geprüft werden.'):'Noch nicht abgeschlossen – deine bisherigen Schritte bleiben im Lernpfad gespeichert.')+'</p>'+
+ (finished?(next?'<button class="btn primary" data-go="lesson/'+esc(next.id)+'">Mit der nächsten Lektion fortfahren →</button>':'<button class="btn primary" data-go="exam/'+esc(l.course_id)+'">Zur Abschlussprüfung →</button>'):'')+'</section>'+ 
  '<div class="btn-row"><button class="btn" data-go="track/'+esc(l.course_id)+'">← Kursübersicht</button><button class="btn" data-action="reset-lesson">Lektion neu beginnen ↺</button>'+
  (next?'<button class="btn" data-go="lesson/'+esc(next.id)+'">Nächste Lektion →</button>':'<button class="btn" data-go="exam/'+esc(l.course_id)+'">Abschlussprüfung →</button>')+'</div></article>';
 }

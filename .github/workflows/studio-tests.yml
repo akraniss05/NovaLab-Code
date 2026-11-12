@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - 'site/academy-v21.js'
+      - 'site/academy-progress-sync.js'
       - 'site/academy-curriculum.js'
       - 'site/academy-i18n.js'
       - 'site/academy-effects.js'
@@ -20,6 +21,7 @@ on:
       - 'site/practice-engine.js'
       - 'tests/academy-audit.cjs'
       - 'tests/progress-reliability.cjs'
+      - 'tests/progress-sync.cjs'
       - 'tests/practice.cjs'
       - 'tests/studio.cjs'
       - 'tests/studio-session.cjs'
@@ -42,6 +44,7 @@ on:
   pull_request:
     paths:
       - 'site/academy-v21.js'
+      - 'site/academy-progress-sync.js'
       - 'site/academy-curriculum.js'
       - 'site/academy-i18n.js'
       - 'site/academy-effects.js'
@@ -58,6 +61,7 @@ on:
       - 'site/practice-engine.js'
       - 'tests/academy-audit.cjs'
       - 'tests/progress-reliability.cjs'
+      - 'tests/progress-sync.cjs'
       - 'tests/practice.cjs'
       - 'tests/studio.cjs'
       - 'tests/studio-session.cjs'
@@ -89,6 +93,7 @@ jobs:
       - name: Validate JavaScript
         run: |
           node --check site/academy-v21.js
+          node --check site/academy-progress-sync.js
           node --check site/academy-curriculum.js
           node --check site/academy-i18n.js
           node --check site/academy-effects.js
@@ -124,6 +129,8 @@ jobs:
         run: node tests/studio-session.cjs
       - name: Real runtime grading tests
         run: node tests/runtime-grading.cjs
+      - name: Concurrent progress sync and conflict-safe resets
+        run: node tests/progress-sync.cjs
       - name: Progress reliability and queued writes
         run: node tests/progress-reliability.cjs
       - name: Account draft autosave tests

@@ -7,7 +7,9 @@ assert.match(script,footer);
 const element={innerHTML:'',textContent:'',classList:{add(){},remove(){},toggle(){},contains(){return false}},setAttribute(){}};
 const dom={querySelector(){return element;},querySelectorAll(){return [];},addEventListener(){},body:{classList:{toggle(){},add(){},remove(){}}}};
 const storage={getItem(){return null;},setItem(){},removeItem(){}};
-const win={LL_CONFIG:{},addEventListener(){}};
+const {LLProgressSync:sync}=require('../site/academy-progress-sync.js');
+const uploads=[];
+const win={LL_CONFIG:{},LLProgressSync:{...sync,save:async(_client,_account,_key,_base,snapshot)=>new Promise(resolve=>uploads.push({snapshot,resolve}))},addEventListener(){}};
 const context={window:win,document:dom,location:{hash:'#home'},localStorage:storage,sessionStorage:storage,
  console,Promise,JSON,Map,Set,Date,Math,Number,Intl,Error,setTimeout,clearTimeout,setInterval(){return 1},clearInterval(){},confirm(){return true}};
 vm.createContext(context);
@@ -15,7 +17,7 @@ const injected=script.replace(footer,"\nframe=()=>{};render=()=>{};notice=()=>{}
 vm.runInContext(injected,context,{filename:'academy-v21.js'});
 const {s,saveProgress,loadData,setClient}=win.__progressTest;
 s.user={id:'user-a'};s.profile={role:'student'};s.progress={done:['existing'],watched:['existing'],exams:{}};
-let progressFailure=false,planFailure=false,uploads=[];
+let progressFailure=false,planFailure=false;
 function query(table){
  const obj={
   select(){return this;},
@@ -42,7 +44,7 @@ setClient({from:query,rpc(name){return Promise.resolve({data:name==='novalab_sho
  assert.equal(s.progress.done.join(','),'existing');
  planFailure=false;
 
- s.ready=true;s.progress={done:['one'],watched:[],exams:{}};
+ s.ready=true;s.progress={done:['one'],watched:[],exams:{}};s.progressBase={done:[],watched:[],exams:{}};
  const first=saveProgress();
  await new Promise(resolve=>setImmediate(resolve));
  assert.equal(uploads.length,1,'First progress save should begin');
@@ -50,13 +52,13 @@ setClient({from:query,rpc(name){return Promise.resolve({data:name==='novalab_sho
  const second=saveProgress();
  await new Promise(resolve=>setImmediate(resolve));
  assert.equal(uploads.length,1,'Second save should wait for the first');
- assert.equal(uploads[0].value.payload.done.join(','),'one','Snapshot must be fixed at save time');
- uploads[0].resolve({error:null});
+ assert.equal(uploads[0].snapshot.done.join(','),'one','Snapshot must be fixed at save time');
+ uploads[0].resolve({payload:uploads[0].snapshot,updated_at:'2026-11-12T10:00:00.000Z'});
  await first;
  await new Promise(resolve=>setImmediate(resolve));
  assert.equal(uploads.length,2,'Second save starts after first finishes');
- assert.equal(uploads[1].value.payload.done.join(','),'one,two','Later progress must not be overwritten by old snapshot');
- uploads[1].resolve({error:null});
+ assert.equal(uploads[1].snapshot.done.join(','),'one,two','Later progress must not be overwritten by old snapshot');
+ uploads[1].resolve({payload:uploads[1].snapshot,updated_at:'2026-11-12T10:00:00.001Z'});
  await second;
  console.log('PASS: read failures preserve state, sequential snapshots prevent stale in-session overwrite.');
 })().catch(error=>{console.error(error);process.exitCode=1});

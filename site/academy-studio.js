@@ -2,7 +2,7 @@
    Made with 💙 by NyxAtheris (NovaLab Academy). */
 (function(root){
 'use strict';
-let bridge=null,projects=[],prefs={},notes={},ready=false,editing=null,pendingProject=null,selectedMonth=new Date(),loadGeneration=0;
+let bridge=null,projects=[],prefs={},notes={},ready=false,editing=null,pendingProject=null,selectedMonth=new Date(),loadGeneration=0,loadError='';
 const REWARDS=[
  {level:1,name:'Starter',icon:'✦',detail:'Deine erste Entwickler-Karte',frame:'starter'},
  {level:2,name:'Neon',icon:'◈',detail:'Neon-Profilrahmen',frame:'neon'},
@@ -43,7 +43,7 @@ function apply(){
 }
 async function load(){
  const generation=++loadGeneration;
- ready=false;projects=[];notes={};prefs={};editing=null;pendingProject=null;
+ ready=false;projects=[];notes={};prefs={};editing=null;pendingProject=null;loadError='';
  const id=getId(),api=client();if(!id||!api)return;
  const responses=await Promise.allSettled([
   api.from('academy_portfolio_projects').select('id,title,description,category,technologies,project_url,featured,created_at,updated_at').eq('user_id',id).order('created_at',{ascending:false}).limit(120),
@@ -51,15 +51,18 @@ async function load(){
   api.from('academy_lesson_notes').select('lesson_id,body').eq('user_id',id).limit(600)
  ]);
  if(generation!==loadGeneration||getId()!==id||!state()?.ready)return;
- const result=i=>responses[i].status==='fulfilled'?responses[i].value:null;
- if(result(0)?.error)message('Projektportfolio konnte nicht geladen werden: '+result(0).error.message);
- if(result(1)?.error)message('Personalisierung konnte nicht geladen werden.');
- if(!result(0)?.error)projects=result(0)?.data||[];
- if(!result(1)?.error)prefs=result(1)?.data?.prefs||{};
- if(!result(2)?.error)for(const n of result(2)?.data||[])notes[n.lesson_id]=n.body||'';
- ready=true;apply();
+ const failures=responses.map((result,i)=>{
+  if(result.status==='rejected')return ['Portfolio','Einstellungen','Lernnotizen'][i]+': '+String(result.reason?.message||result.reason||'Verbindungsfehler');
+  if(result.value?.error)return ['Portfolio','Einstellungen','Lernnotizen'][i]+': '+String(result.value.error.message||'Daten nicht abrufbar');
+  return '';
+ }).filter(Boolean);
+ if(failures.length){loadError=failures.join(' · ');throw Error('Lernstudio konnte nicht vollständig geladen werden: '+loadError);}
+ projects=responses[0].value.data||[];
+ prefs=responses[1].value.data?.prefs||{};
+ for(const n of responses[2].value.data||[])notes[n.lesson_id]=n.body||'';
+ ready=true;loadError='';apply();
 }
-function clear(){loadGeneration++;projects=[];prefs={};notes={};ready=false;editing=null;pendingProject=null;delete document.body.dataset.studioFrame;document.body.classList.remove('studio-calm','studio-wrap-code');document.documentElement.style.removeProperty('--studio-editor-font');}
+function clear(){loadGeneration++;projects=[];prefs={};notes={};ready=false;loadError='';editing=null;pendingProject=null;delete document.body.dataset.studioFrame;document.body.classList.remove('studio-calm','studio-wrap-code');document.documentElement.style.removeProperty('--studio-editor-font');}
 async function setPref(key,value){
  const id=getId(),api=client();if(!id||!api)return;
  if(key==='frame'&&!available().some(r=>r.frame===value)){message('Dieser Rahmen ist noch gesperrt.');return;}
@@ -265,11 +268,16 @@ function exportPortfolio(){
  message('Portfolio als Markdown exportiert.');
 }
 
+const guardedPage=fn=>(...args)=>ready?fn(...args):
+ '<section class="studio-section"><h2>'+e(loadError?'Lernstudio konnte nicht geladen werden':'Lernstudio wird geladen')+'</h2>'+
+ '<p>'+e(loadError||'Deine Projekte und Notizen werden geschützt aus deinem Konto geladen.')+'</p>'+
+ '<button type="button" class="btn primary" data-studio-retry>Erneut versuchen</button></section>';
 document.addEventListener('click',async ev=>{
  if(!bridge||!state()?.ready)return;
- const clicked=ev.target.closest('[data-studio-frame],[data-studio-edit],[data-studio-delete],[data-studio-cancel],[data-studio-note],[data-studio-from-lesson],[data-studio-export],[data-studio-month]');if(!clicked)return;
+ const clicked=ev.target.closest('[data-studio-frame],[data-studio-edit],[data-studio-delete],[data-studio-cancel],[data-studio-note],[data-studio-from-lesson],[data-studio-export],[data-studio-month],[data-studio-retry]');if(!clicked)return;
  ev.preventDefault();
  try{
+  if(clicked.hasAttribute('data-studio-retry')){await load();redraw();return;}
   if(clicked.hasAttribute('data-studio-from-lesson')){const st=state(),l=(st?.lessons||[]).find(x=>x.id===clicked.dataset.studioFromLesson);const course=(st?.courses||[]).find(x=>x.id===l?.course_id),payload=st?.lesson?.payload||{},category=String(course?.category||'').includes('Blender')?'blender':String(course?.category||'').includes('FiveM')?'fivem':'coding';pendingProject={title:('Meine Übung: '+(l?.title||'Lernprojekt')).slice(0,100),category,description:('Lernziel: '+(payload.goal||l?.summary||'Eigenständiges Lernprojekt')+'\nUmsetzung: ').slice(0,2500),technologies:[String(payload.lang||'').toUpperCase()].filter(Boolean),project_url:'',featured:false};editing=null;go('portfolio');}
   else if(clicked.hasAttribute('data-studio-export')){exportPortfolio();}
   else if(clicked.hasAttribute('data-studio-month')){const move=Number(clicked.dataset.studioMonth)||0;if(Math.abs(move)!==1)return;selectedMonth=new Date(selectedMonth.getFullYear(),selectedMonth.getMonth()+move,1);redraw();}
@@ -298,5 +306,5 @@ document.addEventListener('submit',async ev=>{
  try{await saveProject(form);}catch(err){message(err.message||'Projekt konnte nicht gespeichert werden.');}
  finally{if(button&&button.isConnected)button.disabled=false;}
 },true);
-root.LLStudio={connect:b=>{bridge=b},load,clear,apply,levelPage,skilltreePage,portfolioPage,notesPage,challengesPage,calendarPage,lessonAddon,homeSection,settingsSection,level,rewards:REWARDS};
+root.LLStudio={connect:b=>{bridge=b},load,clear,apply,levelPage:guardedPage(levelPage),skilltreePage:guardedPage(skilltreePage),portfolioPage:guardedPage(portfolioPage),notesPage:guardedPage(notesPage),challengesPage:guardedPage(challengesPage),calendarPage:guardedPage(calendarPage),lessonAddon,homeSection,settingsSection,level,rewards:REWARDS};
 })(window);

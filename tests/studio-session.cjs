@@ -38,6 +38,17 @@ async function run(){
  await first;
  assert.match(window.LLStudio.portfolioPage(),/Private account-b/,'B must remain visible');
  assert.doesNotMatch(window.LLStudio.portfolioPage(),/Private account-a/,'A must never leak into B');
- console.log('PASS: account-switch invalidates stale Studio loads, resets style state.');
+ const offset=waiting.length;
+ const offline=window.LLStudio.load();
+ const pending=waiting.slice(offset);
+ assert.equal(pending.length,3);
+ for(const item of pending)item.resolve(item.table==='academy_lesson_notes'
+  ?{data:null,error:{message:'Lernnotizen-Server offline'}}:response(item.table,item.owner));
+ await assert.rejects(offline,/Lernstudio konnte nicht vollständig geladen/);
+ assert.match(window.LLStudio.portfolioPage(),/Lernstudio konnte nicht geladen/);
+ assert.match(window.LLStudio.portfolioPage(),/data-studio-retry/);
+ assert.doesNotMatch(window.LLStudio.portfolioPage(),/Private account-b/,
+  'A failed Studio refresh must never appear as a valid empty or previous portfolio');
+ console.log('PASS: account-switch isolation, loading failures and retry controls.');
 }
 run().catch(error=>{console.error(error);process.exitCode=1});
