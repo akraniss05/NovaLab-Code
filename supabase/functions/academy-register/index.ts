@@ -13,7 +13,8 @@ import {createClient} from 'npm:@supabase/supabase-js@2.81.1';
 const allowedOrigins = new Set([
   'https://akraniss05.github.io',
   'https://liverylab-academy.dev',
-  'https://github.liverylabacademy.app'
+  'https://github.liverylabacademy.app',
+  'novalab-code://app'
 ]);
 const headersFor=(origin:string)=>({
   'Access-Control-Allow-Origin':allowedOrigins.has(origin)?origin:'https://akraniss05.github.io',
