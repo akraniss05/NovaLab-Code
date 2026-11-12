@@ -675,7 +675,7 @@ async function navigateCurrent(){
       const quiz=s.lesson.payload||{},bank=quizQuestions(quiz),savedLocal=readQuizLocal(route.id),old=s.progress.quizProgress?.[route.id];
       const savedQuiz=savedLocal||old; // One-time import of previous account quiz state into this browser.
       if(doneIds().has(route.id)){s.quizPassed=true;s.quizStep=Math.max(0,bank.length-1);}
-      else if(savedQuiz&&savedQuiz.total===bank.length&&savedQuiz.version===Number(quiz.quiz_version||1)&&Array.isArray(savedQuiz.answers)&&savedQuiz.answers.length===(savedQuiz.passed?bank.length:Math.max(0,Number(savedQuiz.step)||0))){
+      else if(savedQuiz&&savedQuiz.total===bank.length&&savedQuiz.version===Number(quiz.quiz_version||1)&&Array.isArray(savedQuiz.answers)&&savedQuiz.answers.length===(savedQuiz.passed?bank.length:Math.max(0,Number(savedQuiz.step)||0))&&savedQuiz.answers.every((answer,index)=>answer===bank[index]?.correct)){
         s.quizStep=Math.max(0,Math.min(bank.length-1,Number(savedQuiz.step)||0));s.quizPassed=!!savedQuiz.passed;s.quizAnswers=[...savedQuiz.answers];
         if(!savedLocal)saveQuizLocal(route.id,savedQuiz);
       }
@@ -1290,9 +1290,11 @@ function lessonPage(id){
  if(!s.lesson){const daily=s.lessonGate?.reason==='daily_limit';return back+'<section class="lesson-gate"><span class="gate-icon">'+(daily?'◷':'🔒')+'</span><span class="eyebrow">'+(daily?'TAGESLIMIT ERREICHT':'LEKTION NICHT VERFÜGBAR')+'</span><h2>'+(daily?'Für heute geschafft.':'Lektion nicht geladen')+'</h2><p>'+(daily?'Du hast heute alle '+safeNumber(s.daily?.daily_limit)+' neuen Lernstationen geöffnet. Morgen geht es weiter. Bereits geöffnete Stationen bleiben zugänglich.':esc(s.lessonGate?.error||'Prüfe deine Freischaltung und Verbindung.'))+'</p><div class="actions-pair"><button class="btn" data-go="track/'+esc(l.course_id)+'">← Lernpfad</button>'+(s.shopEnabled?'<button class="btn primary" data-go="plans">Tarife ansehen →</button>':'')+'</div></section>';}
  var p=s.lesson.payload||{},video=s.lesson.video_id||p.videoId,info=p.video_guide||videoInfo(video),qs=quizQuestions(p),activeQuiz=qs[Math.min(s.quizStep,qs.length-1)],options=activeQuiz?.options||[],finished=doneIds().has(id),rewarded=xpAwarded(id),isBlender=c?.category==='3D & Blender';
  var videoStart=Math.max(0,Math.floor(safeNumber(s.lesson.video_start??p.videoStart))),validVideo=video&&/^[a-zA-Z0-9_-]{11}$/.test(video),url=validVideo?'https://www.youtube.com/watch?v='+video+'&t='+videoStart+'s':null;
- var search='https://www.youtube.com/results?search_query='+encodeURIComponent(c.name+' '+l.title+' Anleitung Tutorial deutsch');
+ const externalGuide=safeLink(info.url);
+ const search='https://www.youtube.com/results?search_query='+encodeURIComponent(c.name+' '+l.title+' Anleitung Tutorial deutsch');
  var next=all[index+1],d=esc(s.draft),isPracticeDone=s.practiceChecked||finished;
  const showMarkupPreview=['html','css'].includes(String(p.lang||'').toLowerCase());
+ const selfReviewed=p.practice_mode==='guided'||['blender','text'].includes(String(p.lang||'').toLowerCase());
  return '<article class="lesson-article ll-roadmap-lesson">'+back+
  '<header class="ll-lesson-hero"><div class="ll-lesson-hero-glow" aria-hidden="true"></div>'+
  '<div class="ll-lesson-hero-intro"><span class="eyebrow">'+esc(c.name)+' · '+esc(l.chapter)+'</span>'+
@@ -1308,7 +1310,7 @@ function lessonPage(id){
  '<div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="'+all.length+'" aria-valuenow="'+(index+1)+'" aria-label="'+catalogText('Position im Kurs','Position in course')+'"><span style="width:'+pct(index+1,all.length)+'%"></span></div></div>'+
  '<div class="lesson-steps ll-lesson-road-stages" aria-label="'+catalogText('Lektionsschritte','Lesson steps')+'">'+
  '<button type="button" data-learning-step="1" class="lesson-step done" aria-current="'+(s.lessonStep===1?'step':'false')+'"><span class="step-index">◇</span>'+catalogText('Verstehen','Learn')+'</button>'+
- '<button type="button" data-learning-step="2" class="lesson-step '+(s.videoChecked?'done':'')+'" aria-current="'+(s.lessonStep===2?'step':'false')+'"><span class="step-index">▷</span>'+catalogText('Video','Video')+'</button>'+
+ '<button type="button" data-learning-step="2" class="lesson-step '+(s.videoChecked?'done':'')+'" aria-current="'+(s.lessonStep===2?'step':'false')+'"><span class="step-index">▷</span>'+((validVideo||externalGuide!=='#')?catalogText('Video','Video'):catalogText('Lernmaterial','Learning material'))+'</button>'+
  '<button type="button" data-learning-step="3" class="lesson-step '+(isPracticeDone?'done':'')+'" aria-current="'+(s.lessonStep===3?'step':'false')+'"><span class="step-index">⟨/⟩</span>'+catalogText('Praxis','Practice')+'</button>'+
  '<button type="button" data-learning-step="4" class="lesson-step '+(s.quizPassed||finished?'done':'')+'" aria-current="'+(s.lessonStep===4?'step':'false')+'"><span class="step-index">✓</span>'+catalogText('Quiz','Quiz')+'</button>'+
  '<button type="button" data-learning-step="5" class="lesson-step '+(finished?'done':'')+'" aria-current="'+(s.lessonStep===5?'step':'false')+'"><span class="step-index">✦</span>'+catalogText('Ergebnis','Result')+'</button></div>'+
@@ -1326,29 +1328,34 @@ function lessonPage(id){
  '<button type="button" class="btn primary" data-action="load-video">Video abspielen →</button>'+
  '<small>Der externe Player wird erst auf deinen Klick geladen.</small></div></div>'+
  '<div class="video-source"><p class="micro">Quelle: '+esc(info.author)+(videoStart?' · Einstieg bei '+Math.floor(videoStart/60)+':'+String(videoStart%60).padStart(2,'0'):'')+'</p><a href="'+url+'" target="_blank" rel="noopener noreferrer">Auf YouTube öffnen ↗</a></div>':
- '<p class="muted">Für dieses Spezialthema gibt es noch keinen einzeln geprüften Videoguide. Öffne eine gezielte Suche, wähle ein Tutorial und arbeite das passende Thema durch.</p>'+
- '<div class="video-frame"><div class="video-placeholder"><div class="play">▷</div><strong>Ein Tutorial zum Thema finden</strong>'+
- '<small>'+esc(c.name)+' · '+esc(l.title)+'</small><a href="'+search+'" class="btn primary" target="_blank" rel="noopener noreferrer">Passendes Lernvideo suchen ↗</a></div></div>')+
- '<label class="video-check"><input type="checkbox" id="video-check" '+(s.videoChecked?'checked':'')+'><span>Ich habe die passende Erklärung angesehen und verstanden.'+
- '<small class="micro" style="display:block">Deine eigene Bestätigung – die Videowiedergabe lässt sich nicht verlässlich messen.</small></span></label></section>'+
+ externalGuide!=='#'?
+ '<p class="muted">'+esc(info.focus||'Achte auf das Thema dieser Lektion.')+'</p>'+
+ '<div class="video-frame"><div class="video-placeholder"><div class="play">▷</div><strong>'+esc(info.name)+'</strong>'+
+ '<small>'+esc(info.author)+' · '+esc(info.language)+'</small><a href="'+externalGuide+'" class="btn primary" target="_blank" rel="noopener noreferrer">Tutorial öffnen ↗</a></div></div>':
+ '<p class="muted">Bearbeite die Erklärung und das Beispiel aus Schritt 1. Wenn dir eine zusätzliche Erklärung hilft, kannst du ein Tutorial zum Thema suchen.</p>'+
+ '<p><a href="'+search+'" class="btn" target="_blank" rel="noopener noreferrer">Lernvideo suchen ↗</a></p>')+
+ '<label class="video-check"><input type="checkbox" id="video-check" '+(s.videoChecked?'checked':'')+'><span>'+
+ (validVideo||externalGuide!=='#'?'Ich habe das Tutorial oder die Erklärung mit Beispiel durchgearbeitet.':'Ich habe die Erklärung und das Beispiel durchgearbeitet.')+
+ '</span></label></section>'+
  '<section class="step-box" id="lesson-practice"><span class="eyebrow">SCHRITT 03 · SELBST AUSPROBIEREN</span><h2>'+(isBlender?'Dein Arbeitsschritt.':'Löse diese Aufgabe im Editor.')+'</h2>'+
  '<p>'+esc(p.task||'Setze die Erklärung eigenständig in einem Beispiel um.')+'</p>'+
- (p.practice_mode==='guided'?'<p class="muted">Begleitete Praxis: Schreibe den eigenen Code oder deine konkreten Schritte auf und erkläre die Wirkung. Diese neue Übung wird noch nicht automatisch kompiliert oder fachlich bewertet; prüfe sie selbst in deiner Entwicklungsumgebung.</p>':'')+
+ (selfReviewed?'<p class="muted">Selbstprüfung · '+esc(p.practice_instruction||(isBlender?'Führe die Aufgabe in Blender aus und vergleiche dein Ergebnis mit den beschriebenen Schritten.':'Bearbeite die Aufgabe in der dafür vorgesehenen Umgebung. Halte deinen Test und das beobachtete Ergebnis fest.'))+'</p>':'')+
  '<div class="practice-workspace'+(isPracticeDone?' is-complete':'')+'" id="practice-workspace"><div class="practice-title"><strong>'+(isBlender?'Deine Umsetzung':'Dein Code-Entwurf')+'</strong>'+
  '<span class="practice-status" id="practice-status">'+(isPracticeDone?'✓ Praxis erledigt':'Nur auf diesem Gerät gespeichert')+'</span></div>'+
  '<label class="micro" for="practice-input">'+(isBlender?'Beschreibe, was du in Blender umgesetzt hast:':'Datei: '+esc(p.filename||({lua:'client.lua',python:'main.py',javascript:'main.js'}[String(p.lang||'').toLowerCase()]||'lösung.txt')))+'</label>'+
  '<div class="code-editor"><div class="code-lines" id="code-lines" aria-hidden="true">1</div><textarea class="exercise-textarea" id="practice-input" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" wrap="off" rows="7" maxlength="10000" placeholder="'+(isBlender?'Welche Schritte hast du ausgeführt und was ist dabei entstanden?':'Schreibe hier deine Lösung …')+'">'+d+'</textarea></div>'+
  (showMarkupPreview?'<div class="ll-practice-preview"><div class="ll-preview-label">Sichere Vorschau · HTML / CSS</div><iframe id="practice-preview-frame" class="ll-practice-preview-frame" title="Vorschau deiner HTML- oder CSS-Datei" sandbox="" referrerpolicy="no-referrer" loading="lazy"></iframe><p class="micro">Vorschau ohne Skriptausführung oder Zugriff auf dein Academy-Konto.</p></div>':'')+
- '<p class="practice-tip">'+(isBlender?'Beschreibe deine Umsetzung und vergleiche sie mit den Schritten.':'Schreibe deine Lösung und tippe auf „Prüfen“. Das Ergebnis wird grün oder rot angezeigt.')+'</p>'+
+ (selfReviewed?'<label class="video-check"><input type="checkbox" id="practice-self-reviewed" '+(isPracticeDone?'checked':'')+'><span>Ich habe meine Umsetzung geprüft und das Ergebnis im Entwurf festgehalten.</span></label>':
+ '<p class="practice-tip">Schreibe deine Lösung und tippe auf „Prüfen“. Das Ergebnis wird grün oder rot angezeigt.</p>')+
  '<div class="practice-feedback" id="practice-feedback" role="status" aria-live="polite" hidden></div>'+
- '<div class="practice-actions practice-actions-simple"><button class="btn primary" type="button" data-action="complete-practice">✓ Prüfen</button><button class="btn" type="button" data-action="show-hint">Tipp</button><button class="btn" type="button" data-action="show-solution">Lösung anzeigen</button></div>'+
+ '<div class="practice-actions practice-actions-simple"><button class="btn primary" type="button" data-action="complete-practice">'+(selfReviewed?'✓ Selbstprüfung speichern':'✓ Prüfen')+'</button><button class="btn" type="button" data-action="show-hint">Tipp</button><button class="btn" type="button" data-action="show-solution">Lösung anzeigen</button></div>'+
  '</div></section>'+
  '<section class="step-box" id="quiz-area"><span class="eyebrow">SCHRITT 04 · WISSENSTEST</span><h2>Wissen anwenden.</h2><span id="quiz-progress">Frage '+Math.min(s.quizStep+1,qs.length)+' von '+qs.length+'</span><div class="ll-quiz-progress"><span id="quiz-meter-fill" style="width:'+Math.round((s.quizStep+(s.quizPassed?1:0))/Math.max(1,qs.length)*100)+'%"></span></div><p id="quiz-question">'+esc(activeQuiz?.question||'Hast du das Thema verstanden?')+'</p><div id="quiz-choices">'+
  options.map((answer,i)=>'<button type="button" class="quiz-choice" data-answer="'+i+'"><span>'+String.fromCharCode(65+i)+'</span>'+esc(answer)+'</button>').join('')+'</div>'+
  '<p class="quiz-feedback micro" id="answer-result" role="status" aria-live="polite">'+(finished?'✓ Bereits abgeschlossen.':'Wähle die richtige Antwort. Danach kannst du die Lektion abschließen.')+'</p>'+
  '<button class="btn primary" id="mark-lesson" data-action="finish-lesson" type="button" disabled>'+(finished?'✓ Lektion abgeschlossen':'Lektion abschließen →')+'</button></section>'+
  '<section class="step-box" id="lesson-summary"><span class="eyebrow">SCHRITT 05 · ERGEBNIS</span><h2>'+esc(finished?'Lernziel erreicht!':'Dein Ergebnis')+'</h2>'+
- '<p>'+esc(finished?'Du hast Video, Praxisaufgabe und Wissenstest abgeschlossen.':'Schließe die Erklärung, deine praktische Aufgabe und alle Quizfragen ab, um dieses Lernziel zu erreichen.')+'</p>'+
+ '<p>'+esc(finished?'Du hast das Lernmaterial, die Praxisaufgabe und den Wissenstest abgeschlossen.':'Schließe die Erklärung, deine praktische Aufgabe und alle Quizfragen ab, um dieses Lernziel zu erreichen.')+'</p>'+
  '<p class="micro">'+(finished?(rewarded?'✓ 30 XP dauerhaft gutgeschrieben.':'Der Abschluss ist gespeichert. Die XP-Gutschrift kann erneut geprüft werden.'):'Noch nicht abgeschlossen – deine bisherigen Schritte bleiben im Lernpfad gespeichert.')+'</p>'+
  (finished?(next?'<button class="btn primary" data-go="lesson/'+esc(next.id)+'">Mit der nächsten Lektion fortfahren →</button>':'<button class="btn primary" data-go="exam/'+esc(l.course_id)+'">Zur Abschlussprüfung →</button>'):'')+'</section>'+ 
  '<div class="btn-row"><button class="btn" data-go="track/'+esc(l.course_id)+'">← Kursübersicht</button><button class="btn" data-action="reset-lesson">Lektion neu beginnen ↺</button>'+
@@ -1367,12 +1374,12 @@ function updateLessonControls(){
  var status=$('#answer-result');
  if(status&&!finished){status.classList.toggle('quiz-incorrect',s.choice!==null&&!s.quizPassed);status.classList.toggle('quiz-correct',s.quizPassed);status.textContent=
   !questions.length?'Quizdaten fehlen. Bitte melde diese Lektion.':
-  s.quizPassed&&!s.videoChecked?'✓ Quiz bestanden! Bestätige noch das Video.':
+  s.quizPassed&&!s.videoChecked?'✓ Quiz bestanden! Bestätige noch, dass du das Lernmaterial bearbeitet hast.':
   s.quizPassed&&!s.practiceChecked?'✓ Quiz bestanden! Prüfe noch deinen Code.':
   s.quizPassed?'✓ Alle '+questions.length+' Fragen richtig! Du kannst die Lektion abschließen.':
   s.choice==null?'Wähle eine Antwort und löse die Schritte darüber.':
   s.choice!==correct?'Noch nicht richtig. '+String(questions[Math.min(s.quizStep,questions.length-1)]?.explanation||'Lies den passenden Lernteil noch einmal.'):
-  !s.videoChecked?'Richtige Antwort ✓ · Sieh noch das Tutorial an und bestätige es.':
+  !s.videoChecked?'Richtige Antwort ✓ · Bestätige noch den Lernmaterial-Schritt.':
   !s.practiceChecked?'Richtige Antwort ✓ · Schließe noch deinen eigenen Praxisschritt ab.':
   '✓ Richtig! Du kannst die Lektion abschließen.';}
  var video=$('#video-check'),practice=$('#practice-workspace');
@@ -1396,15 +1403,22 @@ function showPracticeResult(ok,message,kind){
 async function completePractice(){
  const id=parseRoute().id,box=$('#practice-input');
  if(!box||!s.lesson)return;
- const value=box.value.trim(),button=$('[data-action="complete-practice"]');
+ const value=box.value.trim(),button=$('[data-action="complete-practice"]'),lesson=s.lesson;
+ const accountId=s.user?.id;
+ const sameAccount=()=>s.user?.id===accountId;
+ const stillEditing=()=>sameAccount()&&s.lesson===lesson&&parseRoute().id===id&&box.isConnected&&box.value.trim()===value;
+ const label=button?.textContent;
  if(button){button.disabled=true;button.textContent='Prüft …';button.setAttribute('aria-busy','true');}
  try{
   if(value.length<5){showPracticeResult(false,'✕ Schreibe zuerst deine eigene Lösung.');box.focus();return;}
   const payload=s.lesson.payload||{},lang=String(payload.lang||'').toLowerCase();
-  const guided=payload.practice_mode==='guided';
-  const visual=guided||lang==='blender'||lang==='text';
+  const visual=payload.practice_mode==='guided'||lang==='blender'||lang==='text';
+  if(visual&&!$('#practice-self-reviewed')?.checked){
+   showPracticeResult(false,'✕ Prüfe deine Umsetzung, notiere das Ergebnis und bestätige die Selbstprüfung.');
+   return;
+  }
   let result=visual
-   ?{ok:value.length>=(guided?80:60),diagnostic:value.length>=(guided?80:60)?(guided?'Dein Codeentwurf und deine Erklärung sind dokumentiert. Teste sie selbst in der passenden Entwicklungsumgebung.':'Deine Arbeitsschritte wurden dokumentiert. Prüfe dein Blender-Ergebnis selbst.'):(guided?'Schreibe mindestens 80 Zeichen: eigenen Code beziehungsweise Arbeitsschritte und eine verständliche Erklärung.':'Beschreibe mindestens 60 Zeichen mit konkreten Arbeitsschritten.')}
+   ?{ok:true,diagnostic:'Selbstprüfung gespeichert.'}
    :window.LLPractice.evaluate(value,payload);
   if(!visual&&window.LLRuntime&&['lua','python','py','javascript','js'].includes(lang)){
    const runtime=await window.LLRuntime.run(value,lang);
@@ -1421,6 +1435,7 @@ async function completePractice(){
     if(result.ok)result={...result,diagnostic:'Statische Prüfung bestanden (keine echte Ausführung verfügbar).'};
    }
   }
+  if(!stillEditing())return;
   if(result.ok){
    saveDraft(id,value);
    window.LLLearning?.queue?.(id,value,4);
@@ -1431,26 +1446,30 @@ async function completePractice(){
    if(!s.progress.verifiedPractice.includes(id))s.progress.verifiedPractice.push(id);
    try{await saveProgress();}
    catch(error){
-    s.practiceChecked=false;
+    if(!sameAccount())return;
     s.progress.verifiedPractice=s.progress.verifiedPractice.filter(x=>x!==id);
     s.progress.practiced=s.progress.practiced.filter(x=>x!==id);
+    if(!stillEditing())return;
+    s.practiceChecked=false;
     showPracticeResult(false,'✕ Das Ergebnis konnte nicht gespeichert werden: '+formatError(error));
     updateLessonControls();
     return;
    }
-   showPracticeResult(true,payload.practice_mode==='guided'?'✓ Eigenständiger Lernschritt dokumentiert. Bitte überprüfe den Code selbst in der Entwicklungsumgebung.':'✓ Richtig! Deine Lösung wurde gespeichert.');
-   const status=$('#practice-status');if(status)status.textContent='✓ Praxis erledigt';
+   if(!stillEditing())return;
+   showPracticeResult(true,visual?'✓ Selbstprüfung gespeichert.':'✓ '+String(result.diagnostic||'Deine Lösung wurde gespeichert.').replace(/^✓\s*/, ''));
    window.LLLearning?.mark?.(id,4);
+   const status=$('#practice-status');if(status)status.textContent='✓ Praxis erledigt';
   }else{
    s.practiceChecked=false;
    showPracticeResult(false,'✕ Noch nicht richtig. '+String(result.diagnostic||'Vergleiche deine Lösung mit dem Tipp.'));
   }
   updateLessonControls();
  }catch(error){
+  if(!stillEditing())return;
   s.practiceChecked=false;
   showPracticeResult(false,'✕ Prüfung fehlgeschlagen: '+formatError(error));
   updateLessonControls();
- }finally{if(button&&button.isConnected){button.disabled=false;button.textContent='✓ Prüfen';button.setAttribute('aria-busy','false');}}
+ }finally{if(button&&button.isConnected){button.disabled=false;button.textContent=label;button.setAttribute('aria-busy','false');}}
 }
 async function grantLessonXP(id){
  const response=await api.rpc('academy_claim_lesson_xp',{p_lesson:id});
@@ -1468,7 +1487,7 @@ async function markLesson(){
  const id=parseRoute().id,l=s.lessons.find(x=>x.id===id);
  if(!l||!s.lesson||!allowed(l)||s.xpClaimBusy)return;
  if(!s.videoChecked||!s.practiceChecked||!s.quizPassed){
-  notice('Bitte Video, praktische Übung und Quiz abschließen.');return;
+  notice('Bitte Lernmaterial, praktische Übung und Quiz abschließen.');return;
  }
  const originalDone=[...(s.progress.done||[])],oldCompleted={...(s.progress.completedAt||{})};
  const alreadyComplete=originalDone.includes(id);
@@ -1478,7 +1497,12 @@ async function markLesson(){
    const answers=Array.isArray(s.quizAnswers)?s.quizAnswers:[];
    const proof=await api.rpc('academy_verify_lesson_quiz',{p_lesson:id,p_answers:answers});
    if(proof.error)throw proof.error;
-   if(proof.data?.ok!==true)throw Error(proof.data?.error||'Bitte beantworte alle Quizfragen erneut.');
+   if(proof.data?.ok!==true){
+    s.quizPassed=false;s.quizStep=0;s.choice=null;s.quizAnswers=[];
+    try{localStorage.removeItem(lessonLocalKey('quiz',id));}catch(_){}
+    paintQuiz();
+    throw Error(proof.data?.error||'Bitte beantworte alle Quizfragen erneut.');
+   }
   }
  }catch(error){
   s.xpClaimBusy=false;
@@ -3074,6 +3098,7 @@ document.addEventListener('input',function(e){
   s.draft=e.target.value;saveDraft(parseRoute().id,s.draft);window.LLLearning?.queue?.(parseRoute().id,s.draft,3);
   paintEditorLines();scheduleMarkupPreview();
   const live=$('#practice-feedback'),workspace=$('#practice-workspace');if(live){live.textContent='';live.hidden=true;live.classList.remove('error','is-success','is-error','is-tip');}if(workspace)workspace.classList.remove('practice-correct','practice-incorrect');
+  const selfReview=$('#practice-self-reviewed');if(selfReview)selfReview.checked=false;
   if(s.practiceChecked){s.practiceChecked=false;s.progress.verifiedPractice=(s.progress.verifiedPractice||[]).filter(id=>id!==parseRoute().id);void saveProgress().catch(()=>{});const workspace=$('#practice-workspace');if(workspace)workspace.classList.remove('is-complete');updateLessonControls()}
   var status=$('#practice-status');if(status&&!s.practiceChecked)status.textContent='✓ Nur auf diesem Gerät gespeichert';
  }

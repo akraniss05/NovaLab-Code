@@ -47,6 +47,12 @@ function output(code,lang){const vars=Object.create(null),lines=[];let supported
   supported=false;error='Diese Anweisung kann die Browser-Konsole noch nicht ausführen.';break}
  return {lines,supported,error,vars}}
 function matches(code,rule){try{return new RegExp(rule,'im').test(code)}catch(_){return code.includes(rule)}}
+function checkRule(rule,code,source,lang){
+ if(lang==='lua'&&rule.startsWith('--')){
+  return clean(code).split('\n').some(line=>line.trimStart().startsWith('--')&&matches(line,rule));
+ }
+ return matches(source,rule);
+}
 function describe(rule){let m=rule.match(/local\\s\+([a-zA-Z_]\w*)/);if(m)return 'lokale Variable „'+m[1]+'“';
  if(/tonumber/.test(rule))return 'tonumber(…)';if(/tostring/.test(rule))return 'tostring(…)';if(/type/.test(rule))return 'type(…)';if(/print/.test(rule))return 'print(…) wie in der Aufgabe';if(/\\\+/.test(rule))return 'Addition wie in der Aufgabe';return 'ein geforderter Schritt'}
 function tokens(s){return new Set(String(s||'').match(/[a-zA-Z_$][\w$]*|\d+|["'][^"']*["']/g)||[])}
@@ -97,6 +103,11 @@ function evaluateMarkup(candidate,solution,lang){
    return {counts,valid:stack.length===0&&counts.size>0};
   };
   const user=inspect(candidate),reference=inspect(solution);
+  const withoutComments=text=>text.replace(/<!--[\s\S]*?-->/g,'');
+  const doctype=/^\s*<!doctype\s+html\s*>/i;
+  const rootLang=/<html\b[^>]*\s+lang\s*=\s*(?:"[^"]+"|'[^']+'|[^\s>]+)/i;
+  if(doctype.test(withoutComments(solution))&&!doctype.test(withoutComments(candidate)))return verdict(false,'Beginne das Dokument mit <!doctype html>.');
+  if(rootLang.test(withoutComments(solution))&&!rootLang.test(withoutComments(candidate)))return verdict(false,'Gib am html-Element die Sprache an, zum Beispiel lang="de".');
   if(!user.valid)return verdict(false,'HTML-Struktur ist unvollständig: prüfe öffnende und schließende Tags. Kommentare zählen nicht als HTML.');
   const missing=[...reference.counts].filter(([tag,count])=>(user.counts.get(tag)||0)<count).map(([tag])=>tag);
   if(missing.length)return verdict(false,'Diese HTML-Elemente fehlen oder kommen zu selten vor: '+missing.join(', ')+'.');
@@ -137,7 +148,7 @@ function evaluate(source,payload){const code=clean(source),lang=String(payload.l
  if(!code)return {ok:false,diagnostic:'Schreibe zuerst deine Lösung.',output:[]};
  const error=syntax(code,lang);if(error)return {ok:false,diagnostic:error,output:[]};
  const required=(Array.isArray(payload.checks)?payload.checks:[]).filter(x=>typeof x==='string'&&x.trim());
- const missing=required.filter(x=>!matches(x.startsWith('--')?code:candidate,x)),out=output(code,lang),expected=output(solution,lang);
+ const missing=required.filter(x=>!checkRule(x,code,candidate,lang)),out=output(code,lang),expected=output(solution,lang);
  if(missing.length)return {ok:false,diagnostic:'Prüfe diese Schritte: '+missing.slice(0,3).map(describe).join(', ')+'.',output:out.lines};
  if(lang==='html'||lang==='css')return evaluateMarkup(candidate,solution,lang);
  if(['lua','javascript','python'].includes(lang)&&expected.supported&&expected.lines.length&&out.supported){
@@ -161,7 +172,7 @@ function evaluateRuntime(code,payload,actual,expected){
  if(!source)return {ok:false,diagnostic:'Schreibe zuerst deinen eigenen Code.',output:actual.lines||[]};
  if(!expected?.ok)return {ok:false,diagnostic:'Die Musterlösung konnte nicht zuverlässig geprüft werden. Bitte melde die Aufgabe.',output:actual.lines||[]};
  const required=(Array.isArray(payload.checks)?payload.checks:[]).filter(x=>typeof x==='string'&&x.trim());
- const missing=required.filter(rule=>!matches(source,rule));
+ const missing=required.filter(rule=>!checkRule(rule,code,source,lang));
  if(missing.length)return {ok:false,diagnostic:'Es fehlt noch: '+missing.slice(0,3).map(describe).join(', ')+'.',output:actual.lines||[]};
  // Requiring the learning concept prevents passing advanced tasks with a bare print.
  const concepts=[];

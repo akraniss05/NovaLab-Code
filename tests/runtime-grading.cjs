@@ -29,3 +29,8 @@ assert.equal(check('local spielerName="Mia"\nlocal level=25\nprint(spielerName,l
  'Live Lua runtime must allow own variable values');
 assert.equal(check('local spielerName="Mia"\nlocal level=25\nprint("egal")',ownVariables,['egal'],['Luca\t1']).ok,false,
  'Live Lua runtime must reject hardcoded irrelevant output');
+
+const comments={lang:'lua',task:'Schreibe einen Kommentar, der die Startmeldung erklärt.',
+ checks:['--[^\\n]+','print\\s*\\('],solution:'-- Start sichtbar machen\nprint("Bereit")'};
+assert.equal(check(comments.solution,comments,['Bereit'],['Bereit']).ok,true);
+assert.equal(check('print("-- Bereit")',comments,['-- Bereit'],['Bereit']).ok,false);

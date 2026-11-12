@@ -33,3 +33,6 @@ const enriched=LLCurriculum.render({title:'print in Lua',lang:'lua',theory:'prin
  example_notes:['In diesem Beispiel erscheinen zwei eigene Ausgaben nacheinander.']},0,escape,()=> '#');
 assert.match(enriched,/Das solltest du dir merken/,'Additional specific facts must be visible');
 assert.match(enriched,/So wirkt das im Beispiel/,'Brief theory must show the corresponding example outcome');
+
+const caseSensitive={question:'Was gibt string.lower("ABC") aus?',options:['abc','ABC','123'],correct:0};
+assert.equal(LLCurriculum.questions({quiz_version:3,quiz_items:[caseSensitive,valid]}).length,2);

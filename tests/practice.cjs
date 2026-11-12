@@ -29,3 +29,8 @@ assert.equal(p.evaluate('local spielerName = "Mia"\nlocal level = 25\nprint(spie
 assert.equal(p.evaluate('local spielerName = "Mia"\nlocal level = "hoch"\nprint(spielerName, level)',variables).ok,false,'Wrong value types must still fail');
 assert.equal(p.evaluate('local spielerName = "Mia"\nlocal level = 25\nprint("egal")',variables).ok,false,'Hard-coded output must not bypass learning variables');
 assert.equal(p.evaluate('print("Anderes")',{lang:'lua',solution:'print("Vorgabe")',checks:['print']}).ok,false,'Fixed output stays fixed');
+
+const htmlDocument={lang:'html',checks:[],solution:'<!doctype html><html lang="de"><body><h1>Titel</h1></body></html>'};
+assert.equal(p.evaluate('<html lang="de"><body><h1>Titel</h1></body></html>',htmlDocument).ok,false);
+assert.equal(p.evaluate('<!doctype html><html><body><h1>Titel</h1></body></html>',htmlDocument).ok,false);
+assert.equal(p.evaluate('<!DOCTYPE html><html lang="en"><body><h1>Title</h1></body></html>',htmlDocument).ok,true);

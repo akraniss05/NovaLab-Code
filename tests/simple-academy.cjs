@@ -8,7 +8,7 @@ const exposed=source.replace(end,"\nwindow.__appTest={s,quizQuestions,paintTimer
 const saved=new Map(),callbacks={},elements=new Map();
 function classList(){const set=new Set();return {add(...names){names.forEach(n=>set.add(n))},remove(...names){names.forEach(n=>set.delete(n))},toggle(name,state){if(state===undefined)state=!set.has(name);state?set.add(name):set.delete(name)},contains(name){return set.has(name)}};}
 const fake=()=>({innerHTML:'',textContent:'',hidden:false,disabled:false,value:'',dataset:{},style:{width:'',setProperty(){}},classList:classList(),setAttribute(){},focus(){},querySelector(){return null},replaceChildren(){},isConnected:true});
-for(const key of ['#content','#sidebar','#bottom-nav','#toast','#focus-header','#focus-clock','#timer-portal','#timer-minutes','#practice-input','#practice-feedback','#practice-status','#practice-workspace','#mark-lesson','[data-action="complete-practice"]','#answer-result','#video-check','#quiz-choices','#quiz-question','#quiz-progress','#quiz-meter-fill','#lesson-explanation'])elements.set(key,fake());
+for(const key of ['#content','#sidebar','#bottom-nav','#toast','#focus-header','#focus-clock','#timer-portal','#timer-minutes','#practice-input','#practice-feedback','#practice-self-reviewed','#practice-status','#practice-workspace','#mark-lesson','[data-action="complete-practice"]','#answer-result','#video-check','#quiz-choices','#quiz-question','#quiz-progress','#quiz-meter-fill','#lesson-explanation'])elements.set(key,fake());
 const answerButtons=['0','1','2'].map(value=>({dataset:{answer:value},disabled:false,classList:classList()}));
 const doc={querySelector(selector){return elements.get(selector)||null},querySelectorAll(selector){return selector==='[data-answer]'?answerButtons:[]},addEventListener(name,fn){(callbacks[name]||(callbacks[name]=[])).push(fn)},body:{classList:classList()}};
 const sync=require('../site/academy-progress-sync.js').LLProgressSync;
@@ -96,6 +96,19 @@ async function click(selector,node){for(const fn of callbacks.click||[])await fn
  assert.equal(s.progress.quizProgress,undefined,'Quiz in-progress data is not sent to account progress');
  assert.match(elements.get('#quiz-progress').textContent,/Frage 3 von 3/);
  assert.equal(elements.get('#mark-lesson').disabled,false,'All quiz questions unlock lesson completion');
+ const originalLesson=s.lesson;
+ s.lesson={payload:{lang:'lua',practice_mode:'guided',task:'Teste die Resource lokal.'}};
+ s.practiceChecked=false;
+ const selfReview=elements.get('#practice-self-reviewed');
+ elements.get('#practice-input').value='Resource startet; keine Fehler in der Konsole.';
+ selfReview.checked=false;
+ await app.completePractice();
+ assert.equal(s.practiceChecked,false,'Guided mode requires an explicit confirmation');
+ selfReview.checked=true;
+ await app.completePractice();
+ assert.equal(s.practiceChecked,true,'Confirmed local test can complete guided practice');
+ assert.match(elements.get('#practice-feedback').textContent,/Selbstprüfung gespeichert/);
+ s.lesson=originalLesson;
  // The redesigned timer keeps the old controls and adds presets/ring.
  assert.match(elements.get('#timer-portal').innerHTML,/ll-focus-ring/,'Streak-style circular countdown present');
  assert.match(elements.get('#timer-portal').innerHTML,/data-timer-preset="25"/,'Quick preset controls present');

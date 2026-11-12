@@ -20,12 +20,12 @@ function questions(p){
   originalOptions.every(x=>x.trim().length>0)&&
   validAnswerIndex(p?.correct,originalOptions.length)?
   [{question:String(p.quiz||'Welche Aussage ist richtig?'),options:originalOptions,
-    correct:originalCorrect,explanation:''}]:[];
+    correct:originalCorrect,explanation:String(p.quiz_explanation||'')}]:[];
  const bank=Array.isArray(p?.quiz_items)?p.quiz_items:[];
  const valid=bank.filter(q=>q&&typeof q.question==='string'&&q.question.trim().length>=8&&
   Array.isArray(q.options)&&q.options.length>=2&&q.options.length<=6&&
   q.options.every(x=>typeof x==='string'&&x.trim().length>0)&&
-  new Set(q.options.map(x=>x.trim().toLocaleLowerCase())).size===q.options.length&&
+  new Set(q.options.map(x=>x.trim())).size===q.options.length&&
   validAnswerIndex(q.correct,q.options.length)
  ).map(q=>({question:String(q.question),options:q.options.map(String),
    correct:Number(q.correct),explanation:String(q.explanation||'')}));
