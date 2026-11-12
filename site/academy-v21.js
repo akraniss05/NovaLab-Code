@@ -1278,7 +1278,9 @@ function lessonPage(id){
  '<div class="lesson-step done"><span class="step-index">◇</span>'+catalogText('Verstehen','Learn')+'</div>'+
  '<div class="lesson-step '+(s.videoChecked?'done':'')+'"><span class="step-index">▷</span>'+catalogText('Video','Video')+'</div>'+
  '<div class="lesson-step '+(isPracticeDone?'done':'')+'"><span class="step-index">⟨/⟩</span>'+catalogText('Praxis','Practice')+'</div>'+
- '<div class="lesson-step '+(finished?'done':'')+'"><span class="step-index">✓</span>'+catalogText('Quiz','Quiz')+'</div></div></header>'+
+ '<div class="lesson-step '+(s.quizPassed||finished?'done':'')+'"><span class="step-index">✓</span>'+catalogText('Quiz','Quiz')+'</div>'+
+ '<div class="lesson-step '+(finished?'done':'')+'"><span class="step-index">✦</span>'+catalogText('Ergebnis','Result')+'</div></div>'+
+ '<p class="micro" id="learning-resume" aria-live="polite">5 Schritte: Erklären · Video · Code · Quiz · Ergebnis</p></header>'+
 
  (finished?'<div class="done-banner" style="margin:15px 0"><strong>✓ Lektion abgeschlossen</strong><p>'+(rewarded?'Die 30 XP für diese Lektion hast du bereits erhalten.':'Deine Lektion ist abgeschlossen. Bitte bestätige die XP-Gutschrift.')+'</p>'+(rewarded?'':'<button class="btn small" type="button" data-action="retry-lesson-xp">XP-Gutschrift überprüfen</button>')+'</div>':'')+
  '<section class="step-box" id="lesson-explanation"><span class="eyebrow">SCHRITT 01 · VERSTEHEN</span>'+
@@ -1312,7 +1314,11 @@ function lessonPage(id){
  '<section class="step-box" id="quiz-area"><span class="eyebrow">SCHRITT 04 · WISSENSTEST</span><h2>Wissen anwenden.</h2><span id="quiz-progress">Frage '+Math.min(s.quizStep+1,qs.length)+' von '+qs.length+'</span><div class="ll-quiz-progress"><span id="quiz-meter-fill" style="width:'+Math.round((s.quizStep+(s.quizPassed?1:0))/Math.max(1,qs.length)*100)+'%"></span></div><p id="quiz-question">'+esc(activeQuiz?.question||'Hast du das Thema verstanden?')+'</p><div id="quiz-choices">'+
  options.map((answer,i)=>'<button type="button" class="quiz-choice" data-answer="'+i+'"><span>'+String.fromCharCode(65+i)+'</span>'+esc(answer)+'</button>').join('')+'</div>'+
  '<p class="quiz-feedback micro" id="answer-result" role="status" aria-live="polite">'+(finished?'✓ Bereits abgeschlossen.':'Wähle die richtige Antwort. Danach kannst du die Lektion abschließen.')+'</p>'+
- '<button class="btn primary" id="mark-lesson" data-action="finish-lesson" type="button" disabled>'+(finished?'✓ Lektion abgeschlossen':'Lektion abschließen →')+'</button></section>'+ 
+ '<button class="btn primary" id="mark-lesson" data-action="finish-lesson" type="button" disabled>'+(finished?'✓ Lektion abgeschlossen':'Lektion abschließen →')+'</button></section>'+
+ '<section class="step-box" id="lesson-summary"><span class="eyebrow">SCHRITT 05 · ERGEBNIS</span><h2>'+esc(finished?'Lernziel erreicht!':'Dein Ergebnis')+'</h2>'+
+ '<p>'+esc(finished?'Du hast Video, Praxisaufgabe und Wissenstest abgeschlossen.':'Schließe die Erklärung, deine praktische Aufgabe und alle Quizfragen ab, um dieses Lernziel zu erreichen.')+'</p>'+
+ '<p class="micro">'+(finished?(rewarded?'✓ 30 XP dauerhaft gutgeschrieben.':'Der Abschluss ist gespeichert. Die XP-Gutschrift kann erneut geprüft werden.'):'Noch nicht abgeschlossen – deine bisherigen Schritte bleiben im Lernpfad gespeichert.')+'</p>'+
+ (finished?(next?'<button class="btn primary" data-go="lesson/'+esc(next.id)+'">Mit der nächsten Lektion fortfahren →</button>':'<button class="btn primary" data-go="exam/'+esc(l.course_id)+'">Zur Abschlussprüfung →</button>'):'')+'</section>'+ 
  '<div class="btn-row"><button class="btn" data-go="track/'+esc(l.course_id)+'">← Kursübersicht</button><button class="btn" data-action="reset-lesson">Lektion neu beginnen ↺</button>'+
  (next?'<button class="btn" data-go="lesson/'+esc(next.id)+'">Nächste Lektion →</button>':'<button class="btn" data-go="exam/'+esc(l.course_id)+'">Abschlussprüfung →</button>')+'</div></article>';
 }
