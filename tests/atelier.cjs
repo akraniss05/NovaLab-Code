@@ -30,11 +30,13 @@ contains(home,['ll-atelier-mission-strip','ll-atelier-course-rail','ll-atelier-r
 assert(home.includes('1 / 1 Lektionen abgeschlossen'),'Home uses real course progress');
 const menu=a.neonMenuPage();
 contains(menu,['ll-atelier-menu-lede','ll-atelier-scene','ll-atelier-tile-kicker','ll-atelier-mission-strip'],'Menu');
-for(const route of ['courses','script','exams','reference','plans','profile','friends','support','settings'])
- assert(menu.includes('data-go="'+route+'"'),'All original destinations must remain: '+route);
+for(const route of ['courses','script','exams','reference','profile','friends','support','settings'])
+ assert(menu.includes('data-go="'+route+'"'),'All always-visible destinations must remain: '+route);
+assert(!menu.includes('data-go="plans"'),'Disabled shop should not leak a plans tile');
 assert(!menu.includes('data-go="admin"'),'No administrator tile for learners');
 assert.match(menu,/id="ll-menu-learn"[\s\S]*data-go="courses"[\s\S]*id="ll-menu-community"[\s\S]*data-go="friends"[\s\S]*id="ll-menu-account"[\s\S]*data-go="support"/);
 s.tier='free';s.shopEnabled=true;
+assert(a.neonMenuPage().includes('data-go="plans"'),'Enabling shop must restore plans tile');
 assert.match(a.neonMenuPage(),/class="ll-neon-menu-tile is-locked" data-go="script"[\s\S]*Tarif erforderlich/);
 s.shopEnabled=false;
 assert(!a.neonMenuPage().includes('class="ll-neon-menu-tile is-locked" data-go="script"'),'Disabled shop unlocks scripts');
