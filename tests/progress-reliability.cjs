@@ -9,7 +9,7 @@ const dom={querySelector(){return element;},querySelectorAll(){return [];},addEv
 const storage={getItem(){return null;},setItem(){},removeItem(){}};
 const {LLProgressSync:sync}=require('../site/academy-progress-sync.js');
 const uploads=[];
-const win={LL_CONFIG:{},LLProgressSync:{...sync,save:async(_client,_account,_key,_base,snapshot)=>new Promise(resolve=>uploads.push({snapshot,resolve}))},addEventListener(){}};
+const win={LL_CONFIG:{},LLProgressSync:{...sync,save:async(_client,_account,_key,base,snapshot)=>new Promise((resolve,reject)=>uploads.push({base,snapshot,resolve,reject}))},addEventListener(){}};
 const context={window:win,document:dom,location:{hash:'#home'},localStorage:storage,sessionStorage:storage,
  console,Promise,JSON,Map,Set,Date,Math,Number,Intl,Error,setTimeout,clearTimeout,setInterval(){return 1},clearInterval(){},confirm(){return true}};
 vm.createContext(context);
@@ -58,7 +58,44 @@ setClient({from:query,rpc(name){return Promise.resolve({data:name==='novalab_sho
  await new Promise(resolve=>setImmediate(resolve));
  assert.equal(uploads.length,2,'Second save starts after first finishes');
  assert.equal(uploads[1].snapshot.done.join(','),'one,two','Later progress must not be overwritten by old snapshot');
+ assert.equal(uploads[1].base.done.join(','),'one','The second queued write must use the previous draft as its baseline');
  uploads[1].resolve({payload:uploads[1].snapshot,updated_at:'2026-11-12T10:00:00.001Z'});
  await second;
- console.log('PASS: read failures preserve state, sequential snapshots prevent stale in-session overwrite.');
+
+ // Regression: an unfinished completion and its immediate reset are both
+ // queued. Comparing the reset with the OLD server baseline wrongly revives it.
+ s.progress.done.push('three');
+ const third=saveProgress();
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(uploads.length,3);
+ s.progress.done=s.progress.done.filter(id=>id!=='three');
+ const reset=saveProgress();
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(uploads.length,3,'Reset must wait for the pending completion');
+ uploads[2].resolve({payload:uploads[2].snapshot,updated_at:'2026-11-12T10:00:00.002Z'});
+ await third;
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(uploads.length,4);
+ assert.equal(uploads[3].base.done.join(','),'one,two,three','Reset must remove the pending completion from its actual baseline');
+ assert.equal(uploads[3].snapshot.done.join(','),'one,two');
+ uploads[3].resolve({payload:sync.merge(uploads[3].base,uploads[3].snapshot,uploads[2].snapshot),updated_at:'2026-11-12T10:00:00.003Z'});
+ await reset;
+ assert.equal(s.progress.done.join(','),'one,two','An immediate reset must persist instead of resurrecting a lesson');
+
+ // Failed writes must be folded into the next save rather than disappearing.
+ s.progress.done.push('temporary');
+ const failed=saveProgress();
+ await new Promise(resolve=>setImmediate(resolve));
+ s.progress.done.push('after-error');
+ const retry=saveProgress();
+ await new Promise(resolve=>setImmediate(resolve));
+ uploads[4].reject(new Error('Temporary network failure'));
+ await assert.rejects(failed,/Temporary network failure/);
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(uploads[5].base.done.join(','),'one,two','Retry must include the earliest failed edit');
+ uploads[5].resolve({payload:sync.merge(uploads[5].base,uploads[5].snapshot,uploads[3].snapshot),updated_at:'2026-11-12T10:00:00.004Z'});
+ await retry;
+ assert.equal(s.progress.done.join(','),'one,two,temporary,after-error');
+
+ console.log('PASS: read failures preserve state, ordered progress saves, rapid resets and lost-write recovery.');
 })().catch(error=>{console.error(error);process.exitCode=1});
