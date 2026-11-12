@@ -679,7 +679,7 @@ function render(){
  paintTimer();
  updateMembershipClocks();
  paintEditorLines();
- if(r.page==='lesson'&&s.lesson)updateLessonControls();
+ if(r.page==='lesson'&&s.lesson){updateLessonControls();paintMarkupPreview();}
  window.LLI18n?.apply?.();
 }
 function htmlCssPreview(code,lang){
@@ -689,6 +689,19 @@ function htmlCssPreview(code,lang){
  if(lang==='html')return '<!doctype html>'+reset+csp+source;
  const css=source.replace(/<\/style/ig,'<\\/style');
  return '<!doctype html><html><head>'+reset+csp+'<style>body{font:16px system-ui;padding:20px;color:#17131f;background:#fff} .demo{border:1px dashed #c9bddb;padding:24px;border-radius:12px}'+css+'</style></head><body><div class="demo"><h1>CSS-Vorschau</h1><p>Diese Elemente zeigen deine Farben, Schriften und Abstände.</p><button>Beispielbutton</button><ul><li>Erster Eintrag</li><li>Zweiter Eintrag</li></ul></div></body></html>';
+}
+let markupPreviewTimer=null;
+function paintMarkupPreview(){
+ const frame=$('#practice-preview-frame'),input=$('#practice-input');
+ if(!frame||!input||!s.lesson)return;
+ const lang=String(s.lesson.payload?.lang||'').toLowerCase();
+ if(lang!=='html'&&lang!=='css')return;
+ // srcdoc is inert inside an opaque-origin iframe without allow-scripts.
+ frame.srcdoc=htmlCssPreview(input.value,lang);
+}
+function scheduleMarkupPreview(){
+ clearTimeout(markupPreviewTimer);
+ markupPreviewTimer=setTimeout(paintMarkupPreview,250);
 }
 function paintEditorLines(){const input=$('#practice-input'),lines=$('#code-lines');if(input&&lines&&typeof input.value==='string')lines.textContent=Array.from({length:Math.max(1,input.value.split('\n').length)},(_,i)=>i+1).join('\n')}
 
@@ -1238,6 +1251,7 @@ function lessonPage(id){
  var videoStart=Math.max(0,Math.floor(safeNumber(s.lesson.video_start??p.videoStart))),validVideo=video&&/^[a-zA-Z0-9_-]{11}$/.test(video),url=validVideo?'https://www.youtube.com/watch?v='+video+'&t='+videoStart+'s':null;
  var search='https://www.youtube.com/results?search_query='+encodeURIComponent(c.name+' '+l.title+' Anleitung Tutorial deutsch');
  var next=all[index+1],d=esc(s.draft),isPracticeDone=s.practiceChecked||finished;
+ const showMarkupPreview=['html','css'].includes(String(p.lang||'').toLowerCase());
  return '<article class="lesson-article ll-roadmap-lesson">'+back+
  '<header class="ll-lesson-hero"><div class="ll-lesson-hero-glow" aria-hidden="true"></div>'+
  '<div class="ll-lesson-hero-intro"><span class="eyebrow">'+esc(c.name)+' · '+esc(l.chapter)+'</span>'+
@@ -1281,6 +1295,7 @@ function lessonPage(id){
  '<span class="practice-status" id="practice-status">'+(isPracticeDone?'✓ Praxis erledigt':'Nur auf diesem Gerät gespeichert')+'</span></div>'+
  '<label class="micro" for="practice-input">'+(isBlender?'Beschreibe, was du in Blender umgesetzt hast:':'Datei: '+esc(p.filename||({lua:'client.lua',python:'main.py',javascript:'main.js'}[String(p.lang||'').toLowerCase()]||'lösung.txt')))+'</label>'+
  '<div class="code-editor"><div class="code-lines" id="code-lines" aria-hidden="true">1</div><textarea class="exercise-textarea" id="practice-input" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" wrap="off" rows="7" maxlength="10000" placeholder="'+(isBlender?'Welche Schritte hast du ausgeführt und was ist dabei entstanden?':'Schreibe hier deine Lösung …')+'">'+d+'</textarea></div>'+
+ (showMarkupPreview?'<div class="ll-practice-preview"><div class="ll-preview-label">Sichere Vorschau · HTML / CSS</div><iframe id="practice-preview-frame" class="ll-practice-preview-frame" title="Vorschau deiner HTML- oder CSS-Datei" sandbox="" referrerpolicy="no-referrer" loading="lazy"></iframe><p class="micro">Vorschau ohne Skriptausführung oder Zugriff auf dein Academy-Konto.</p></div>':'')+
  '<p class="practice-tip">'+(isBlender?'Beschreibe deine Umsetzung und vergleiche sie mit den Schritten.':'Schreibe deine Lösung und tippe auf „Prüfen“. Das Ergebnis wird grün oder rot angezeigt.')+'</p>'+
  '<div class="practice-feedback" id="practice-feedback" role="status" aria-live="polite" hidden></div>'+
  '<div class="practice-actions practice-actions-simple"><button class="btn primary" type="button" data-action="complete-practice">✓ Prüfen</button><button class="btn" type="button" data-action="show-hint">Tipp</button><button class="btn" type="button" data-action="show-solution">Lösung anzeigen</button></div>'+
@@ -3010,7 +3025,7 @@ document.addEventListener('input',function(e){
  }
  if(e.target.id==='practice-input'){
   s.draft=e.target.value;saveDraft(parseRoute().id,s.draft);window.LLLearning?.queue?.(parseRoute().id,s.draft,3);
-  paintEditorLines();
+  paintEditorLines();scheduleMarkupPreview();
   const live=$('#practice-feedback'),workspace=$('#practice-workspace');if(live){live.textContent='';live.hidden=true;live.classList.remove('error','is-success','is-error','is-tip');}if(workspace)workspace.classList.remove('practice-correct','practice-incorrect');
   if(s.practiceChecked){s.practiceChecked=false;s.progress.verifiedPractice=(s.progress.verifiedPractice||[]).filter(id=>id!==parseRoute().id);void saveProgress().catch(()=>{});const workspace=$('#practice-workspace');if(workspace)workspace.classList.remove('is-complete');updateLessonControls()}
   var status=$('#practice-status');if(status&&!s.practiceChecked)status.textContent='✓ Nur auf diesem Gerät gespeichert';
