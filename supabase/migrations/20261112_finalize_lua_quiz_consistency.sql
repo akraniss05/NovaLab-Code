@@ -19,5 +19,5 @@ FROM fixes f WHERE c.lesson_id=f.id AND length(f.fact)>15;
 UPDATE public.ll_lesson_content
 SET payload=jsonb_set(payload,'{checks}',
  regexp_replace((payload->'checks')::text,'LiveryLab','NovaLab','g')::jsonb,true)
-WHERE lesson_id='nui-11' AND payload->'checks'::text IS NOT NULL
- AND payload->'checks'::text LIKE '%LiveryLab%';
+WHERE lesson_id='nui-11' AND payload ? 'checks'
+ AND (payload->'checks')::text LIKE '%LiveryLab%';
