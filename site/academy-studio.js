@@ -2,7 +2,7 @@
    Made with 💙 by NyxAtheris (NovaLab Academy). */
 (function(root){
 'use strict';
-let bridge=null,projects=[],prefs={},notes={},ready=false,editing=null,pendingProject=null,selectedMonth=new Date();
+let bridge=null,projects=[],prefs={},notes={},ready=false,editing=null,pendingProject=null,selectedMonth=new Date(),loadGeneration=0;
 const REWARDS=[
  {level:1,name:'Starter',icon:'✦',detail:'Deine erste Entwickler-Karte',frame:'starter'},
  {level:2,name:'Neon',icon:'◈',detail:'Neon-Profilrahmen',frame:'neon'},
@@ -42,6 +42,7 @@ function apply(){
  const avatar=$('.avatar-btn');if(avatar)avatar.dataset.studioFrame=choice;
 }
 async function load(){
+ const generation=++loadGeneration;
  ready=false;projects=[];notes={};prefs={};editing=null;pendingProject=null;
  const id=getId(),api=client();if(!id||!api)return;
  const responses=await Promise.allSettled([
@@ -49,6 +50,7 @@ async function load(){
   api.from('academy_studio_settings').select('prefs').eq('user_id',id).maybeSingle(),
   api.from('academy_lesson_notes').select('lesson_id,body').eq('user_id',id).limit(600)
  ]);
+ if(generation!==loadGeneration||getId()!==id||!state()?.ready)return;
  const result=i=>responses[i].status==='fulfilled'?responses[i].value:null;
  if(result(0)?.error)message('Projektportfolio konnte nicht geladen werden: '+result(0).error.message);
  if(result(1)?.error)message('Personalisierung konnte nicht geladen werden.');
@@ -57,7 +59,7 @@ async function load(){
  if(!result(2)?.error)for(const n of result(2)?.data||[])notes[n.lesson_id]=n.body||'';
  ready=true;apply();
 }
-function clear(){projects=[];prefs={};notes={};ready=false;editing=null;pendingProject=null;delete document.body.dataset.studioFrame;}
+function clear(){loadGeneration++;projects=[];prefs={};notes={};ready=false;editing=null;pendingProject=null;delete document.body.dataset.studioFrame;document.body.classList.remove('studio-calm','studio-wrap-code');document.documentElement.style.removeProperty('--studio-editor-font');}
 async function setPref(key,value){
  const id=getId(),api=client();if(!id||!api)return;
  if(key==='frame'&&!available().some(r=>r.frame===value)){message('Dieser Rahmen ist noch gesperrt.');return;}
@@ -65,6 +67,7 @@ async function setPref(key,value){
  if(!allowed.includes(key))return;
  const before={...prefs};prefs={...prefs,[key]:value};apply();
  const response=await api.from('academy_studio_settings').upsert({user_id:id,prefs,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+ if(getId()!==id)return;
  if(response.error){prefs=before;apply();message('Einstellung konnte nicht gespeichert werden: '+response.error.message);}
  else message('Einstellung gespeichert.');
 }
@@ -178,17 +181,23 @@ async function saveProject(form){
  if(editing)response=await api.from('academy_portfolio_projects').update(value).eq('id',editing).eq('user_id',id).select();
  else response=await api.from('academy_portfolio_projects').insert({...value,user_id:id}).select();
  if(response.error)throw response.error;
+ if(getId()!==id)return;
  if(!response.data?.length)throw Error('Änderung nicht bestätigt.');
  editing=null;pendingProject=null;await refreshProjects();redraw();message('Projekt erfolgreich gespeichert.');
 }
 async function refreshProjects(){
- const r=await client().from('academy_portfolio_projects').select('id,title,description,category,technologies,project_url,featured,created_at,updated_at').eq('user_id',getId()).order('created_at',{ascending:false}).limit(120);
+ const id=getId(),generation=loadGeneration;
+ if(!id)return;
+ const r=await client().from('academy_portfolio_projects').select('id,title,description,category,technologies,project_url,featured,created_at,updated_at').eq('user_id',id).order('created_at',{ascending:false}).limit(120);
+ if(id!==getId()||generation!==loadGeneration)return;
  if(r.error)throw r.error;projects=r.data||[];
 }
 async function saveNote(id){
  if(!(state()?.lessons||[]).some(l=>l.id===id))return;
  const body=String($('#studio-lesson-note')?.value||'').trim();if(body.length>12000)throw Error('Notiz darf höchstens 12.000 Zeichen enthalten.');
- const r=await client().from('academy_lesson_notes').upsert({user_id:getId(),lesson_id:id,body,updated_at:new Date().toISOString()},{onConflict:'user_id,lesson_id'});
+ const accountId=getId();
+ const r=await client().from('academy_lesson_notes').upsert({user_id:accountId,lesson_id:id,body,updated_at:new Date().toISOString()},{onConflict:'user_id,lesson_id'});
+ if(accountId!==getId())return;
  if(r.error)throw r.error;notes[id]=body;message('Lernnotiz gespeichert.');
 }
 
@@ -270,7 +279,9 @@ document.addEventListener('click',async ev=>{
   else if(clicked.hasAttribute('data-studio-delete')){
    const p=projects.find(x=>x.id===clicked.dataset.studioDelete);
    if(!p||!confirm('Projekt „'+p.title+'“ endgültig löschen?'))return;
-   const r=await client().from('academy_portfolio_projects').delete().eq('user_id',getId()).eq('id',p.id).select('id');
+   const owner=getId();
+   const r=await client().from('academy_portfolio_projects').delete().eq('user_id',owner).eq('id',p.id).select('id');
+   if(owner!==getId())return;
    if(r.error)throw r.error;if(!r.data?.length)throw Error('Projekt konnte nicht gelöscht werden.');
    if(editing===p.id)editing=null;await refreshProjects();redraw();message('Projekt gelöscht.');
   }else if(clicked.hasAttribute('data-studio-note'))await saveNote(clicked.dataset.studioNote);

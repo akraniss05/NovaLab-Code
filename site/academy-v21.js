@@ -508,6 +508,8 @@ async function loadXpAwardPages(){
 }
 async function refreshShopVisibility(){const result=await api.rpc('novalab_shop_enabled');if(result.error)throw result.error;const next=result.data===true;document.body.classList.toggle('novalab-shop-hidden',!next);if(next!==s.shopEnabled){s.shopEnabled=next;if(s.ready)render();}return next;}
 async function loadData(){
+ const loadingAccount=s.user?.id;
+ if(!loadingAccount)throw Error('Zum Laden wird ein angemeldetes Konto benötigt.');
  await refreshShopVisibility();
  var all=await Promise.all([
  api.from('ll_courses').select('id,name,category,level,icon,source_url,difficulty'),
@@ -518,7 +520,12 @@ async function loadData(){
  loadXpAwardPages(),
  s.profile?.role==='admin'?api.rpc('academy_admin_self',{p_action:'status',p_payload:{}}):Promise.resolve({data:null,error:null})
  ]);
+ if(s.user?.id!==loadingAccount)return;
  if(all[0].error)throw all[0].error;if(all[1].error)throw all[1].error;
+ if(all[2].error)throw new Error('Mitgliedschaft konnte nicht geladen werden: '+formatError(all[2].error));
+ if(all[3].error)throw new Error('Lernfortschritt konnte nicht geladen werden: '+formatError(all[3].error));
+ if(all[4].error)throw new Error('Tarif- und Lernkontingent konnten nicht geladen werden: '+formatError(all[4].error));
+ if(all[3].data?.payload!==undefined&&(!all[3].data.payload||typeof all[3].data.payload!=='object'||Array.isArray(all[3].data.payload)))throw new Error('Lernfortschritt hat ein ungültiges Format und wurde nicht überschrieben.');
  s.courses=all[0].data||[];s.lessons=all[1].data||[];
  s.tier=['free','pro','ultimate','max'].includes(all[4].data?.tier)?all[4].data.tier:'free';
  s.daily=all[4].error?null:all[4].data;
@@ -534,18 +541,20 @@ async function loadData(){
  
  // Show the daily reward as soon as the profile and course index are ready.
  // Optional social/exam queries must NEVER postpone or hide the popup.
+ const wasLoggedIn=s.ready;
  s.ready=true;
- s.streakModalOpen=true;
- s.loginStreak=null;
- s.streakError='';
- s.streakLoading=true;
+ if(!wasLoggedIn){
+  s.streakModalOpen=true;
+  s.loginStreak=null;
+  s.streakError='';
+  s.streakLoading=true;
+ }
  frame();
  render();
- // Fetch the authoritative streak in the background; the user sees the popup
- // immediately with an accessible loading state instead of an empty page.
- void refreshStreakStatus()
-  .catch(error=>{s.streakError=formatError(error);})
-  .finally(()=>{if(s.ready){paintStreakModal();frame();}});
+ // Show the Streak prompt once per login, not after changing a voucher or plan.
+ if(!wasLoggedIn)void refreshStreakStatus()
+  .catch(error=>{if(s.user?.id===loadingAccount)s.streakError=formatError(error);})
+  .finally(()=>{if(s.ready&&s.user?.id===loadingAccount){paintStreakModal();frame();}});
  void Promise.allSettled([
   api.rpc('academy_exam_status'),
   api.rpc('academy_social_list'),
@@ -554,7 +563,7 @@ async function loadData(){
   api.rpc('academy_service',{p_action:'list',p_payload:{}}),
   api.rpc('academy_shop_offers',{})
  ]).then(results=>{
-  if(!s.ready)return;
+  if(!s.ready||s.user?.id!==loadingAccount)return;
   const data=results.map(x=>x.status==='fulfilled'&&!x.value?.error?x.value?.data:null);
   s.examStatus=data[0]||null;
   s.social=data[1]||null;
@@ -566,11 +575,36 @@ async function loadData(){
  }).catch(()=>{});
  await navigateCurrent();
 }
-async function logout(){window.LLStudio?.clear?.();window.LLI18n?.setAccount?.('');window.LLLearning?.clear?.();try{await api.auth.signOut();}catch(e){}s.authScreen='login';s.ready=false;s.streakModalOpen=false;s.streakError='';s.loginStreak=null;paintStreakModal();s.user=null;s.profile=null;s.lesson=null;s.courses=[];s.lessons=[];location.hash='#home';login();}
-async function saveProgress(){
- var accountProgress={...s.progress};delete accountProgress.quizProgress;
- var res=await api.from('academy_progress').upsert({user_id:s.user.id,key:'liverylab-v10',payload:accountProgress,updated_at:new Date().toISOString()},{onConflict:'user_id,key'});
- if(res.error)throw res.error;frame();
+async function logout(){
+ s.ready=false;navigationId++;
+ window.LLStudio?.clear?.();window.LLI18n?.setAccount?.('');window.LLLearning?.clear?.();
+ try{await api.auth.signOut();}catch(e){}
+ s.authScreen='login';s.streakModalOpen=false;s.streakError='';s.loginStreak=null;
+ s.user=null;s.profile=null;s.lesson=null;s.courses=[];s.lessons=[];s.xpAwards=[];
+ s.progress={done:[],watched:[],practiced:[],verifiedPractice:[],exams:{}};
+ s.daily=null;s.adminSelf=null;s.planExpires=null;s.entitledCourses=null;s.vouchers=[];
+ s.service={beta_open:true,mine:[],admin:[]};s.serviceError='';s.chatTicketId=null;s.chatMessages=[];
+ s.social=null;s.socialMedia={};s.members=[];s.memberPlans={};s.memberExpiry={};s.adminLearner=null;
+ s.quizPassed=false;s.quizAnswers=[];s.draft='';s.ready=false;
+ paintStreakModal();location.hash='#home';login();
+}
+// Serializing progress writes prevents a delayed older request from clobbering
+// the next lesson, while snapshots preserve the state at the moment of each save.
+let progressWriteTail=Promise.resolve();
+function saveProgress(){
+ const accountId=s.user?.id;
+ if(!accountId)return Promise.reject(new Error('Kein angemeldetes Konto für den Lernfortschritt.'));
+ const accountProgress=JSON.parse(JSON.stringify(s.progress||{}));
+ delete accountProgress.quizProgress;
+ const write=async()=>{
+  if(s.user?.id!==accountId||!s.ready)throw new Error('Konto während der Speicherung gewechselt.');
+  const result=await api.from('academy_progress').upsert({user_id:accountId,key:'liverylab-v10',payload:accountProgress,updated_at:new Date().toISOString()},{onConflict:'user_id,key'});
+  if(result.error)throw result.error;
+  if(s.user?.id===accountId&&s.ready)frame();
+ };
+ const next=progressWriteTail.catch(()=>{}).then(write);
+ progressWriteTail=next.catch(()=>{});
+ return next;
 }
 function go(path){var h='#'+path;if(location.hash===h){navigateCurrent();}else{location.hash=h;}sidebar.classList.remove('open');syncBackdrop();}
 function parseRoute(){
@@ -645,7 +679,7 @@ function render(){
  paintTimer();
  updateMembershipClocks();
  paintEditorLines();
- if(r.page==='lesson'&&s.lesson)updateLessonControls();
+ if(r.page==='lesson'&&s.lesson){updateLessonControls();paintMarkupPreview();}
  window.LLI18n?.apply?.();
 }
 function htmlCssPreview(code,lang){
@@ -655,6 +689,19 @@ function htmlCssPreview(code,lang){
  if(lang==='html')return '<!doctype html>'+reset+csp+source;
  const css=source.replace(/<\/style/ig,'<\\/style');
  return '<!doctype html><html><head>'+reset+csp+'<style>body{font:16px system-ui;padding:20px;color:#17131f;background:#fff} .demo{border:1px dashed #c9bddb;padding:24px;border-radius:12px}'+css+'</style></head><body><div class="demo"><h1>CSS-Vorschau</h1><p>Diese Elemente zeigen deine Farben, Schriften und Abstände.</p><button>Beispielbutton</button><ul><li>Erster Eintrag</li><li>Zweiter Eintrag</li></ul></div></body></html>';
+}
+let markupPreviewTimer=null;
+function paintMarkupPreview(){
+ const frame=$('#practice-preview-frame'),input=$('#practice-input');
+ if(!frame||!input||!s.lesson)return;
+ const lang=String(s.lesson.payload?.lang||'').toLowerCase();
+ if(lang!=='html'&&lang!=='css')return;
+ // srcdoc is inert inside an opaque-origin iframe without allow-scripts.
+ frame.srcdoc=htmlCssPreview(input.value,lang);
+}
+function scheduleMarkupPreview(){
+ clearTimeout(markupPreviewTimer);
+ markupPreviewTimer=setTimeout(paintMarkupPreview,250);
 }
 function paintEditorLines(){const input=$('#practice-input'),lines=$('#code-lines');if(input&&lines&&typeof input.value==='string')lines.textContent=Array.from({length:Math.max(1,input.value.split('\n').length)},(_,i)=>i+1).join('\n')}
 
@@ -811,12 +858,14 @@ function durationDisplay(value){
  return [Math.floor(n/3600),Math.floor(n%3600/60),n%60].map(x=>String(x).padStart(2,'0')).join(':');
 }
 async function refreshStreakStatus(){
- if(!api||!s.ready)return;
+ const accountId=s.user?.id;
+ if(!api||!s.ready||!accountId)return;
  s.streakLoading=true;
  try{const r=await api.rpc('academy_streak_status');if(r.error)throw r.error;
+ if(!s.ready||s.user?.id!==accountId)return null;
  s.loginStreak=r.data||null;
  s.streakError='';
- }catch(e){s.streakError=formatError(e);throw e;}finally{s.streakLoading=false;}
+ }catch(e){if(s.user?.id===accountId)s.streakError=formatError(e);throw e;}finally{if(s.user?.id===accountId)s.streakLoading=false;}
  if(s.loginStreak?.server_now)s.streakClockOffsetMs=Date.parse(s.loginStreak.server_now)-Date.now();
  return s.loginStreak;
 }
@@ -1202,6 +1251,7 @@ function lessonPage(id){
  var videoStart=Math.max(0,Math.floor(safeNumber(s.lesson.video_start??p.videoStart))),validVideo=video&&/^[a-zA-Z0-9_-]{11}$/.test(video),url=validVideo?'https://www.youtube.com/watch?v='+video+'&t='+videoStart+'s':null;
  var search='https://www.youtube.com/results?search_query='+encodeURIComponent(c.name+' '+l.title+' Anleitung Tutorial deutsch');
  var next=all[index+1],d=esc(s.draft),isPracticeDone=s.practiceChecked||finished;
+ const showMarkupPreview=['html','css'].includes(String(p.lang||'').toLowerCase());
  return '<article class="lesson-article ll-roadmap-lesson">'+back+
  '<header class="ll-lesson-hero"><div class="ll-lesson-hero-glow" aria-hidden="true"></div>'+
  '<div class="ll-lesson-hero-intro"><span class="eyebrow">'+esc(c.name)+' · '+esc(l.chapter)+'</span>'+
@@ -1245,6 +1295,7 @@ function lessonPage(id){
  '<span class="practice-status" id="practice-status">'+(isPracticeDone?'✓ Praxis erledigt':'Nur auf diesem Gerät gespeichert')+'</span></div>'+
  '<label class="micro" for="practice-input">'+(isBlender?'Beschreibe, was du in Blender umgesetzt hast:':'Datei: '+esc(p.filename||({lua:'client.lua',python:'main.py',javascript:'main.js'}[String(p.lang||'').toLowerCase()]||'lösung.txt')))+'</label>'+
  '<div class="code-editor"><div class="code-lines" id="code-lines" aria-hidden="true">1</div><textarea class="exercise-textarea" id="practice-input" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" wrap="off" rows="7" maxlength="10000" placeholder="'+(isBlender?'Welche Schritte hast du ausgeführt und was ist dabei entstanden?':'Schreibe hier deine Lösung …')+'">'+d+'</textarea></div>'+
+ (showMarkupPreview?'<div class="ll-practice-preview"><div class="ll-preview-label">Sichere Vorschau · HTML / CSS</div><iframe id="practice-preview-frame" class="ll-practice-preview-frame" title="Vorschau deiner HTML- oder CSS-Datei" sandbox="" referrerpolicy="no-referrer" loading="lazy"></iframe><p class="micro">Vorschau ohne Skriptausführung oder Zugriff auf dein Academy-Konto.</p></div>':'')+
  '<p class="practice-tip">'+(isBlender?'Beschreibe deine Umsetzung und vergleiche sie mit den Schritten.':'Schreibe deine Lösung und tippe auf „Prüfen“. Das Ergebnis wird grün oder rot angezeigt.')+'</p>'+
  '<div class="practice-feedback" id="practice-feedback" role="status" aria-live="polite" hidden></div>'+
  '<div class="practice-actions practice-actions-simple"><button class="btn primary" type="button" data-action="complete-practice">✓ Prüfen</button><button class="btn" type="button" data-action="show-hint">Tipp</button><button class="btn" type="button" data-action="show-solution">Lösung anzeigen</button></div>'+
@@ -1427,8 +1478,10 @@ async function refreshShopOffers(){
 function salePrice(cents){return Math.round(cents*(100-Math.max(0,Math.min(90,Number(s.shopDiscount)||0)))/100)}
 function euro(cents){return (Number(cents||0)/100).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'}
 async function refreshService(){
+ const accountId=s.user?.id;
  try{
   const r=await api.rpc('academy_service',{p_action:'list',p_payload:{}});
+  if(!s.ready||s.user?.id!==accountId)return null;
   if(r.error)throw r.error;
   if(!r.data||!Array.isArray(r.data.mine)||
    (s.profile?.role==='admin'&&!Array.isArray(r.data.admin)))
@@ -1439,12 +1492,14 @@ async function refreshService(){
   return s.service;
  }catch(error){
   // Never present a failed request as a genuinely empty support inbox.
-  s.serviceError=formatError(error);
+  if(s.user?.id===accountId)s.serviceError=formatError(error);
   throw error;
  }
 }
 async function loadTicketThread(id){
+ const accountId=s.user?.id;
  const r=await api.rpc('academy_ticket_chat',{p_action:'thread',p_ticket:id,p_body:null});
+ if(!s.ready||s.user?.id!==accountId)return null;
  if(r.error)throw r.error;
  if(!r.data?.ok||!Array.isArray(r.data.messages))throw Error('Nachrichtenverlauf konnte nicht geladen werden.');
  s.chatTicketId=id;s.chatMessages=r.data.messages;
@@ -1850,7 +1905,7 @@ function friendsPage(){
  content;
 }
 
-async function refreshSocial(){const [r,media]=await Promise.all([api.rpc('academy_social_list'),api.rpc('academy_social_media_list')]);if(r.error)throw r.error;s.social=r.data;if(!media.error)s.socialMedia=media.data||{};return r.data;}
+async function refreshSocial(){const id=s.user?.id;const [r,media]=await Promise.all([api.rpc('academy_social_list'),api.rpc('academy_social_media_list')]);if(!s.ready||s.user?.id!==id)return null;if(r.error)throw r.error;s.social=r.data;if(!media.error)s.socialMedia=media.data||{};return r.data;}
 function socialImageUrl(uid,kind){
  if(!uid||!s.socialMedia?.[uid]?.[kind])return '';
  return api.storage.from('academy-profile-images').getPublicUrl(uid+'/'+kind+'.webp').data.publicUrl+'?v='+encodeURIComponent(String(s.social?.profile?.lessons||0))+'&stamp='+encodeURIComponent(String(s.imageRevision||'1'));
@@ -2970,7 +3025,7 @@ document.addEventListener('input',function(e){
  }
  if(e.target.id==='practice-input'){
   s.draft=e.target.value;saveDraft(parseRoute().id,s.draft);window.LLLearning?.queue?.(parseRoute().id,s.draft,3);
-  paintEditorLines();
+  paintEditorLines();scheduleMarkupPreview();
   const live=$('#practice-feedback'),workspace=$('#practice-workspace');if(live){live.textContent='';live.hidden=true;live.classList.remove('error','is-success','is-error','is-tip');}if(workspace)workspace.classList.remove('practice-correct','practice-incorrect');
   if(s.practiceChecked){s.practiceChecked=false;s.progress.verifiedPractice=(s.progress.verifiedPractice||[]).filter(id=>id!==parseRoute().id);void saveProgress().catch(()=>{});const workspace=$('#practice-workspace');if(workspace)workspace.classList.remove('is-complete');updateLessonControls()}
   var status=$('#practice-status');if(status&&!s.practiceChecked)status.textContent='✓ Nur auf diesem Gerät gespeichert';

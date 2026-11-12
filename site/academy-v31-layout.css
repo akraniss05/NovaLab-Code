@@ -671,3 +671,10 @@ body:not(.is-auth) .topbar > .top-right{position:relative;z-index:4}
 body:not(.is-auth) .topbar .brand{min-width:0;max-width:100%;overflow:hidden}
 body:not(.is-auth) .topbar .brand>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media(max-width:430px){body:not(.is-auth) .topbar .brand{font-size:12px;letter-spacing:-.02em}}
+
+/* Read-only, opaque-origin HTML/CSS exercise preview. */
+.ll-practice-preview{margin:16px 0;padding:12px;border:1px solid rgba(190,170,240,.28);border-radius:14px;background:rgba(20,18,38,.38)}
+.ll-preview-label{font-weight:700;margin-bottom:10px;color:var(--text,#f2ebff)}
+.ll-practice-preview-frame{display:block;width:100%;min-height:280px;border:0;border-radius:9px;background:white}
+.ll-practice-preview .micro{margin:8px 2px 0}
+@media(max-width:560px){.ll-practice-preview{padding:9px}.ll-practice-preview-frame{min-height:220px}}

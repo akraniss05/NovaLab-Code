@@ -74,22 +74,62 @@ function customizedOutput(source,payload,out,expected,solution){
  return true;
 }
 function evaluateMarkup(candidate,solution,lang){
+ const verdict=(ok,diagnostic)=>({ok,diagnostic,output:[]});
  if(lang==='html'){
-  const tags=text=>[...text.matchAll(/<([a-z][\w-]*)\b[^>]*>/gi)].map(match=>match[1].toLowerCase());
-  const actual=tags(candidate),required=[...new Set(tags(solution))];
-  const missing=required.filter(tag=>!actual.includes(tag));
-  if(!actual.length||missing.length)return {ok:false,diagnostic:'HTML-Struktur prüfen: '+(missing.join(', ')||'gültige HTML-Tags')+' fehlen.',output:[]};
-  const voidTags=new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
-  const unclosed=[...new Set(actual)].filter(tag=>!voidTags.has(tag)&&!new RegExp('</'+tag+'\\s*>','i').test(candidate));
-  if(unclosed.length)return {ok:false,diagnostic:'Diese HTML-Elemente sind nicht geschlossen: '+unclosed.join(', ')+'.',output:[]};
-  return {ok:true,diagnostic:'✓ Die erforderlichen HTML-Elemente sind vorhanden. Inhalte und Attribute dürfen eigenständig angepasst werden.',output:[]};
+  const inspect=text=>{
+   // Markup inside HTML comments or JavaScript strings is not an HTML element.
+   const stripped=String(text||'').replace(/<!--[\s\S]*?-->/g,'')
+    .replace(/(<(?:script|style)\b[^>]*>)[\s\S]*?(<\/(?:script|style)\s*>)/gi,'$1$2');
+   const tokens=stripped.match(/<![^>]*>|<\/?[a-z][^>]*>/gi)||[];
+   const voidTags=new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
+   const stack=[],counts=new Map();
+   for(const token of tokens){
+    if(/^<!/.test(token))continue;
+    const closing=/^<\//.test(token),name=token.match(/^<\/?\s*([a-z][\w:-]*)/i)?.[1]?.toLowerCase();
+    if(!name)continue;
+    if(closing){
+     if(stack.pop()!==name)return {counts,valid:false};
+    }else{
+     counts.set(name,(counts.get(name)||0)+1);
+     if(!voidTags.has(name)&&!token.endsWith('/>'))stack.push(name);
+    }
+   }
+   return {counts,valid:stack.length===0&&counts.size>0};
+  };
+  const user=inspect(candidate),reference=inspect(solution);
+  if(!user.valid)return verdict(false,'HTML-Struktur ist unvollständig: prüfe öffnende und schließende Tags. Kommentare zählen nicht als HTML.');
+  const missing=[...reference.counts].filter(([tag,count])=>(user.counts.get(tag)||0)<count).map(([tag])=>tag);
+  if(missing.length)return verdict(false,'Diese HTML-Elemente fehlen oder kommen zu selten vor: '+missing.join(', ')+'.');
+  return verdict(true,'✓ Gültige Grundstruktur und die erforderlichen HTML-Elemente sind vorhanden.');
  }
  if(lang==='css'){
-  const blocks=candidate.match(/[^{}]+\{[^{}]*\}/g)||[],original=solution.match(/[^{}]+\{[^{}]*\}/g)||[];
-  if(!blocks.length||blocks.length<original.length)return {ok:false,diagnostic:'CSS-Regeln und geschweifte Klammern überprüfen.',output:[]};
-  const declarations=blocks.join('\n').match(/[\w-]+\s*:\s*[^;{}]+/g)||[];
-  if(!declarations.length)return {ok:false,diagnostic:'Es fehlen gültige CSS-Eigenschaften und Werte.',output:[]};
-  return {ok:true,diagnostic:'✓ Die CSS-Regeln sind strukturell vorhanden. Prüfe das Ergebnis zusätzlich in der Vorschau.',output:[]};
+  const clean=String(candidate).replace(/\/\*[\s\S]*?\*\//g,'');
+  const reference=String(solution).replace(/\/\*[\s\S]*?\*\//g,'');
+  const balance=text=>{
+   let depth=0,quote='',escaped=false;
+   for(const ch of text){
+    if(quote){if(escaped)escaped=false;else if(ch==='\\')escaped=true;else if(ch===quote)quote='';continue;}
+    if(ch==='"'||ch==="'"){quote=ch;continue;}
+    if(ch==='{')depth++;
+    if(ch==='}'&&--depth<0)return false;
+   }
+   return depth===0&&!quote;
+  };
+  if(!balance(clean))return verdict(false,'CSS-Klammern oder Zeichenketten sind nicht korrekt geschlossen.');
+  const rules=text=>[...text.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+   .filter(m=>!m[1].trim().startsWith('@')).map(m=>({selector:m[1].trim(),body:m[2].trim()}));
+  const actual=rules(clean),expected=rules(reference);
+  if(!actual.length)return verdict(false,'Es fehlen gültige CSS-Regelblöcke.');
+  for(const rule of actual){
+   if(!rule.selector||!rule.body)return verdict(false,'Ein CSS-Regelblock benötigt einen Selektor und Eigenschaften.');
+   const declarations=rule.body.split(';').map(x=>x.trim()).filter(Boolean);
+   if(!declarations.length||declarations.some(x=>!/^[-\w]+\s*:\s*\S[\s\S]*$/.test(x)))
+    return verdict(false,'Ungültige CSS-Eigenschaft: verwende z. B. color: blue;');
+  }
+  const missing=expected.map(x=>x.selector).filter(sel=>!actual.some(x=>x.selector===sel));
+  if(missing.length)return verdict(false,'Diese CSS-Selektoren werden benötigt: '+missing.join(', ')+'.');
+  if(actual.length<expected.length)return verdict(false,'Noch nicht alle geforderten CSS-Regelblöcke vorhanden.');
+  return verdict(true,'✓ CSS-Selektoren und Eigenschaftsdeklarationen sind vorhanden. Prüfe die Darstellung zusätzlich in der Vorschau.');
  }
  return null;
 }
