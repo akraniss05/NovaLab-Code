@@ -510,6 +510,7 @@ async function refreshShopVisibility(){const result=await api.rpc('novalab_shop_
 async function loadData(){
  const loadingAccount=s.user?.id;
  await progressWriteTail.catch(()=>{});
+ if(s.ready&&progressQueueAccount===loadingAccount&&failedProgressBase)throw Error('Deine letzten Lernänderungen konnten nicht gespeichert werden. Bitte überprüfe die Verbindung und speichere erneut, bevor du neu lädst.');
  if(!loadingAccount)throw Error('Zum Laden wird ein angemeldetes Konto benötigt.');
  await refreshShopVisibility();
  var all=await Promise.all([
@@ -541,6 +542,9 @@ async function loadData(){
  s.progress={...data,done:Array.isArray(data.done)?data.done:[],watched:Array.isArray(data.watched)?data.watched:[],exams:data.exams||{},practiced:Array.isArray(data.practiced)?data.practiced:[],verifiedPractice:Array.isArray(data.verifiedPractice)?data.verifiedPractice:[],completedAt:data.completedAt&&typeof data.completedAt==='object'?data.completedAt:{}};
  s.progressBase=window.LLProgressSync.copy(s.progress);
  s.progressVersion=all[3].data?.updated_at||null;
+ progressQueueAccount=loadingAccount;
+ lastQueuedProgress=window.LLProgressSync.copy(s.progress);
+ failedProgressBase=null;
  
  // Show the daily reward as soon as the profile and course index are ready.
  // Optional social/exam queries must NEVER postpone or hide the popup.
@@ -579,6 +583,8 @@ async function loadData(){
  await navigateCurrent();
 }
 async function logout(){
+ // Retire in-flight responses before calling the asynchronous auth sign-out.
+ progressSessionEpoch++;progressQueueAccount=null;lastQueuedProgress=null;failedProgressBase=null;
  s.ready=false;navigationId++;
  window.LLStudio?.clear?.();window.LLI18n?.setAccount?.('');window.LLLearning?.clear?.();
  try{await api.auth.signOut();}catch(e){}
@@ -591,21 +597,38 @@ async function logout(){
  s.quizPassed=false;s.quizAnswers=[];s.draft='';s.ready=false;
  paintStreakModal();location.hash='#home';login();
 }
-// Snapshot each pending edit and reconcile it against the latest revision.
-// A second tab can no longer silently replace newly finished lessons.
+// Each queued snapshot is compared with the PREVIOUS queued snapshot,
+// not the original server state. This preserves a quick reset performed while
+// a completion is still being written and protects unrelated remote changes.
 let progressWriteTail=Promise.resolve();
+let progressQueueAccount=null,lastQueuedProgress=null,failedProgressBase=null,progressSessionEpoch=0;
 function saveProgress(){
  const accountId=s.user?.id;
  if(!accountId)return Promise.reject(new Error('Kein angemeldetes Konto für den Lernfortschritt.'));
  const sync=window.LLProgressSync;
  if(!sync)return Promise.reject(new Error('Fortschritt-Synchronisierung konnte nicht geladen werden.'));
+ if(progressQueueAccount!==accountId){
+  progressQueueAccount=accountId;
+  lastQueuedProgress=sync.copy(s.progressBase||{});
+  failedProgressBase=null;
+ }
  const accountProgress=sync.copy(s.progress||{});
  delete accountProgress.quizProgress;
- const base=sync.copy(s.progressBase||{});
+ const previousDraft=sync.copy(lastQueuedProgress||s.progressBase||{});
+ lastQueuedProgress=sync.copy(accountProgress);
+ const session=progressSessionEpoch;
  const write=async()=>{
-  if(s.user?.id!==accountId||!s.ready)throw Error('Konto während der Speicherung gewechselt.');
-  const saved=await sync.save(api,accountId,'liverylab-v10',base,accountProgress);
-  if(s.user?.id!==accountId||!s.ready)return;
+  if(s.user?.id!==accountId||!s.ready||progressSessionEpoch!==session)throw Error('Konto während der Speicherung gewechselt.');
+  // A rejected earlier write must be incorporated into the next snapshot.
+  const base=sync.copy(failedProgressBase||previousDraft);
+  let saved;
+  try{saved=await sync.save(api,accountId,'liverylab-v10',base,accountProgress);}
+  catch(error){
+   if(s.user?.id===accountId&&progressSessionEpoch===session&&!failedProgressBase)failedProgressBase=sync.copy(base);
+   throw error;
+  }
+  if(s.user?.id!==accountId||!s.ready||progressSessionEpoch!==session)return;
+  failedProgressBase=null;
   s.progress=sync.merge(accountProgress,s.progress,saved.payload);
   s.progressBase=sync.copy(saved.payload);
   s.progressVersion=saved.updated_at;
