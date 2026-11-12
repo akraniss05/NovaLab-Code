@@ -544,7 +544,7 @@ async function loadData(){
  s.progressVersion=all[3].data?.updated_at||null;
  progressQueueAccount=loadingAccount;
  lastQueuedProgress=window.LLProgressSync.copy(s.progress);
- failedProgressBase=null;
+ failedProgressBase=null;progressQueueRevision=0;
  
  // Show the daily reward as soon as the profile and course index are ready.
  // Optional social/exam queries must NEVER postpone or hide the popup.
@@ -584,7 +584,7 @@ async function loadData(){
 }
 async function logout(){
  // Retire in-flight responses before calling the asynchronous auth sign-out.
- progressSessionEpoch++;progressQueueAccount=null;lastQueuedProgress=null;failedProgressBase=null;
+ progressSessionEpoch++;progressQueueRevision++;progressQueueAccount=null;lastQueuedProgress=null;failedProgressBase=null;
  s.ready=false;navigationId++;
  window.LLStudio?.clear?.();window.LLI18n?.setAccount?.('');window.LLLearning?.clear?.();
  try{await api.auth.signOut();}catch(e){}
@@ -601,7 +601,7 @@ async function logout(){
 // not the original server state. This preserves a quick reset performed while
 // a completion is still being written and protects unrelated remote changes.
 let progressWriteTail=Promise.resolve();
-let progressQueueAccount=null,lastQueuedProgress=null,failedProgressBase=null,progressSessionEpoch=0;
+let progressQueueAccount=null,lastQueuedProgress=null,failedProgressBase=null,progressSessionEpoch=0,progressQueueRevision=0;
 function saveProgress(){
  const accountId=s.user?.id;
  if(!accountId)return Promise.reject(new Error('Kein angemeldetes Konto für den Lernfortschritt.'));
@@ -610,12 +610,13 @@ function saveProgress(){
  if(progressQueueAccount!==accountId){
   progressQueueAccount=accountId;
   lastQueuedProgress=sync.copy(s.progressBase||{});
-  failedProgressBase=null;
+  failedProgressBase=null;progressQueueRevision=0;
  }
  const accountProgress=sync.copy(s.progress||{});
  delete accountProgress.quizProgress;
  const previousDraft=sync.copy(lastQueuedProgress||s.progressBase||{});
  lastQueuedProgress=sync.copy(accountProgress);
+ const revision=++progressQueueRevision;
  const session=progressSessionEpoch;
  const write=async()=>{
   if(s.user?.id!==accountId||!s.ready||progressSessionEpoch!==session)throw Error('Konto während der Speicherung gewechselt.');
@@ -632,6 +633,9 @@ function saveProgress(){
   s.progress=sync.merge(accountProgress,s.progress,saved.payload);
   s.progressBase=sync.copy(saved.payload);
   s.progressVersion=saved.updated_at;
+  // No newer write is pending: adopt the merged server state as the next
+  // baseline, so a learner can later RESET lessons added by another device.
+  if(revision===progressQueueRevision)lastQueuedProgress=sync.copy(saved.payload);
   frame();
  };
  const next=progressWriteTail.catch(()=>{}).then(write);
