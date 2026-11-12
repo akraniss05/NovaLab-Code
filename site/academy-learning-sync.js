@@ -128,6 +128,6 @@ document.addEventListener('click',event=>{
  const element=document.getElementById(anchor(step));
  if(element)element.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});
 });
-if(typeof document!=='undefined')document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')for(const id of timers.keys())void flush(id);});
+if(typeof document!=='undefined')document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')for(const id of records.keys())void flush(id);});
 root.LLLearning={attach,clear,load,queue,mark,flush,remove,stepBar,restore,step:clampStep,anchor};
 })(window);

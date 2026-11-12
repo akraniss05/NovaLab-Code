@@ -73,12 +73,33 @@ function customizedOutput(source,payload,out,expected,solution){
  if(/\btype\s*\(/.test(solution)&&JSON.stringify(out.lines)!==JSON.stringify(expected.lines))return false;
  return true;
 }
+function evaluateMarkup(candidate,solution,lang){
+ if(lang==='html'){
+  const tags=text=>[...text.matchAll(/<([a-z][\w-]*)\b[^>]*>/gi)].map(match=>match[1].toLowerCase());
+  const actual=tags(candidate),required=[...new Set(tags(solution))];
+  const missing=required.filter(tag=>!actual.includes(tag));
+  if(!actual.length||missing.length)return {ok:false,diagnostic:'HTML-Struktur prüfen: '+(missing.join(', ')||'gültige HTML-Tags')+' fehlen.',output:[]};
+  const voidTags=new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
+  const unclosed=[...new Set(actual)].filter(tag=>!voidTags.has(tag)&&!new RegExp('</'+tag+'\\s*>','i').test(candidate));
+  if(unclosed.length)return {ok:false,diagnostic:'Diese HTML-Elemente sind nicht geschlossen: '+unclosed.join(', ')+'.',output:[]};
+  return {ok:true,diagnostic:'✓ Die erforderlichen HTML-Elemente sind vorhanden. Inhalte und Attribute dürfen eigenständig angepasst werden.',output:[]};
+ }
+ if(lang==='css'){
+  const blocks=candidate.match(/[^{}]+\{[^{}]*\}/g)||[],original=solution.match(/[^{}]+\{[^{}]*\}/g)||[];
+  if(!blocks.length||blocks.length<original.length)return {ok:false,diagnostic:'CSS-Regeln und geschweifte Klammern überprüfen.',output:[]};
+  const declarations=blocks.join('\n').match(/[\w-]+\s*:\s*[^;{}]+/g)||[];
+  if(!declarations.length)return {ok:false,diagnostic:'Es fehlen gültige CSS-Eigenschaften und Werte.',output:[]};
+  return {ok:true,diagnostic:'✓ Die CSS-Regeln sind strukturell vorhanden. Prüfe das Ergebnis zusätzlich in der Vorschau.',output:[]};
+ }
+ return null;
+}
 function evaluate(source,payload){const code=clean(source),lang=String(payload.lang||'').toLowerCase(),solution=significant(payload.solution||payload.example||'',lang),candidate=significant(code,lang);
  if(!code)return {ok:false,diagnostic:'Schreibe zuerst deine Lösung.',output:[]};
  const error=syntax(code,lang);if(error)return {ok:false,diagnostic:error,output:[]};
  const required=(Array.isArray(payload.checks)?payload.checks:[]).filter(x=>typeof x==='string'&&x.trim());
  const missing=required.filter(x=>!matches(x.startsWith('--')?code:candidate,x)),out=output(code,lang),expected=output(solution,lang);
  if(missing.length)return {ok:false,diagnostic:'Prüfe diese Schritte: '+missing.slice(0,3).map(describe).join(', ')+'.',output:out.lines};
+ if(lang==='html'||lang==='css')return evaluateMarkup(candidate,solution,lang);
  if(['lua','javascript','python'].includes(lang)&&expected.supported&&expected.lines.length&&out.supported){
   const personal=/(?:eigenen|deinen) Namen/i.test(payload.task||'');
   const flexible=allowsOwnValues(payload);
@@ -117,6 +138,7 @@ function evaluateRuntime(code,payload,actual,expected){
   if(expectedAssignments&&actualAssignments<expectedAssignments)return {ok:false,diagnostic:'Nutze die geforderten Variablen und Zuweisungen aus der Übung.',output:actual.lines||[]};
  }
  const lines=actual.lines||[],expectedLines=expected.lines||[];
+ if(!lines.length&&!expectedLines.length&&source!==solution)return {ok:false,diagnostic:'Ohne Ausgabe oder messbare Tests lässt sich diese geänderte Lösung nicht zuverlässig prüfen. Ergänze einen sichtbaren Test oder vergleiche den Code mit der Erklärung.',output:lines};
  const personal=/(?:eigenen|deinen) Namen/i.test(payload.task||''),customize=allowsOwnValues(payload);
  let accepted;
  if(personal){
