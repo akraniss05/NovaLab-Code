@@ -29,8 +29,12 @@ function has(html,selectors,label){for(const fragment of selectors)assert(html.i
 const home=a.homePage();
 has(home,['ll-neon-custom-hero','ll-home-brand-banner','ll-home-shortcuts','ll-home-continue','data-go="menu"','study-goal','weekly-goal'],'Home');
 const menu=a.neonMenuPage();
-for(const route of ['courses','script','exams','reference','plans','profile','friends','support','settings'])
+for(const route of ['courses','script','exams','reference','profile','friends','support','settings'])
  assert(menu.includes('data-go="'+route+'"'), 'Menu must preserve all current sections: '+route);
+assert(!menu.includes('data-go="plans"'),'Shop must be absent when globally disabled');
+s.shopEnabled=true;
+assert(a.neonMenuPage().includes('data-go="plans"'),'Shop menu returns when admin enables sales');
+s.shopEnabled=false;
 assert(!menu.includes('data-go="admin"'),'Admin must be hidden from normal accounts');
 s.profile.role='admin';
 assert(a.neonMenuPage().includes('data-go="admin"'),'Admin can open administration');
