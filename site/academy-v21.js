@@ -1298,11 +1298,11 @@ function lessonPage(id){
  '<strong>'+(index+1)+' / '+all.length+'</strong></div>'+
  '<div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="'+all.length+'" aria-valuenow="'+(index+1)+'" aria-label="'+catalogText('Position im Kurs','Position in course')+'"><span style="width:'+pct(index+1,all.length)+'%"></span></div></div>'+
  '<div class="lesson-steps ll-lesson-road-stages" aria-label="'+catalogText('Lektionsschritte','Lesson steps')+'">'+
- '<div class="lesson-step done"><span class="step-index">◇</span>'+catalogText('Verstehen','Learn')+'</div>'+
- '<div class="lesson-step '+(s.videoChecked?'done':'')+'"><span class="step-index">▷</span>'+catalogText('Video','Video')+'</div>'+
- '<div class="lesson-step '+(isPracticeDone?'done':'')+'"><span class="step-index">⟨/⟩</span>'+catalogText('Praxis','Practice')+'</div>'+
- '<div class="lesson-step '+(s.quizPassed||finished?'done':'')+'"><span class="step-index">✓</span>'+catalogText('Quiz','Quiz')+'</div>'+
- '<div class="lesson-step '+(finished?'done':'')+'"><span class="step-index">✦</span>'+catalogText('Ergebnis','Result')+'</div></div>'+
+ '<button type="button" data-learning-step="1" class="lesson-step done" aria-current="'+(s.lessonStep===1?'step':'false')+'"><span class="step-index">◇</span>'+catalogText('Verstehen','Learn')+'</button>'+
+ '<button type="button" data-learning-step="2" class="lesson-step '+(s.videoChecked?'done':'')+'" aria-current="'+(s.lessonStep===2?'step':'false')+'"><span class="step-index">▷</span>'+catalogText('Video','Video')+'</button>'+
+ '<button type="button" data-learning-step="3" class="lesson-step '+(isPracticeDone?'done':'')+'" aria-current="'+(s.lessonStep===3?'step':'false')+'"><span class="step-index">⟨/⟩</span>'+catalogText('Praxis','Practice')+'</button>'+
+ '<button type="button" data-learning-step="4" class="lesson-step '+(s.quizPassed||finished?'done':'')+'" aria-current="'+(s.lessonStep===4?'step':'false')+'"><span class="step-index">✓</span>'+catalogText('Quiz','Quiz')+'</button>'+
+ '<button type="button" data-learning-step="5" class="lesson-step '+(finished?'done':'')+'" aria-current="'+(s.lessonStep===5?'step':'false')+'"><span class="step-index">✦</span>'+catalogText('Ergebnis','Result')+'</button></div>'+
  '<p class="micro" id="learning-resume" aria-live="polite">5 Schritte: Erklären · Video · Code · Quiz · Ergebnis</p></header>'+
 
  (finished?'<div class="done-banner" style="margin:15px 0"><strong>✓ Lektion abgeschlossen</strong><p>'+(rewarded?'Die 30 XP für diese Lektion hast du bereits erhalten.':'Deine Lektion ist abgeschlossen. Bitte bestätige die XP-Gutschrift.')+'</p>'+(rewarded?'':'<button class="btn small" type="button" data-action="retry-lesson-xp">XP-Gutschrift überprüfen</button>')+'</div>':'')+
