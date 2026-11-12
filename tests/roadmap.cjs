@@ -83,7 +83,8 @@ assert(blender.includes('ll-roadmap-lesson-list')&&blender.includes('Ein erster 
 const lesson=lessonPage('lua-04');
 for(const token of ['ll-roadmap-lesson','ll-lesson-hero','ll-lesson-road-stages',
  'lesson-explanation','lesson-video','lesson-practice','quiz-area','lesson-summary',
- 'practice-input','video-check','finish-lesson','data-action="reset-lesson"'])
+ 'practice-input','video-check','finish-lesson','data-action="reset-lesson"',
+ 'data-learning-step="1"','data-learning-step="2"','data-learning-step="3"','data-learning-step="4"','data-learning-step="5"'])
  assert(lesson.includes(token),'Lesson action missing '+token);
 for(const htmlFile of ['index.html','v21.html','v31.html']){
  const html=fs.readFileSync(path.join(root,'site',htmlFile),'utf8');
