@@ -18,6 +18,7 @@ on:
       - 'site/academy-learning-sync.js'
       - 'site/academy-learning-extras.css'
       - 'site/practice-engine.js'
+      - 'tests/academy-audit.cjs'
       - 'tests/practice.cjs'
       - 'tests/studio.cjs'
       - 'tests/runtime-browser.cjs'
@@ -53,6 +54,7 @@ on:
       - 'site/academy-learning-sync.js'
       - 'site/academy-learning-extras.css'
       - 'site/practice-engine.js'
+      - 'tests/academy-audit.cjs'
       - 'tests/practice.cjs'
       - 'tests/studio.cjs'
       - 'tests/runtime-browser.cjs'
@@ -108,6 +110,8 @@ jobs:
         run: node tests/shop-tiers.cjs
       - name: Seven-character registration contract
         run: node tests/registration-v21.cjs
+      - name: Academy audit regression suite
+        run: node tests/academy-audit.cjs
       - name: Existing practice tests
         run: node tests/practice.cjs
       - name: New studio regression tests
