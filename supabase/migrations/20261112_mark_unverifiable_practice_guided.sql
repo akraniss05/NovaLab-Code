@@ -1,0 +1,5 @@
+-- A code exercise must not claim automatic correctness when its own stored reference cannot be verified.
+-- Move these 43 audited lessons to an explicitly disclosed self-reviewed/guided mode.
+-- All existing course IDs, lessons, quiz answers and learner progress are preserved.
+UPDATE public.ll_lesson_content SET payload=jsonb_set(payload,'{practice_mode}',to_jsonb('guided'::text),true)
+WHERE lesson_id=ANY(ARRAY['browsergames-01','browsergames-02','browsergames-03','browsergames-04','browsergames-05','browsergames-06','browsergames-07','browsergames-08','cpp-07','csharp-08','fivem-02','fullstack-pro-lab-02','fullstack-pro-lab-05','fullstack-pro-lab-06','go-07','javascript-11','lua-masterlab-04','nodejs-02','nodejs-03','nodejs-07','nodejs-08','proskills-01','proskills-02','proskills-03','proskills-04','proskills-05','proskills-06','proskills-07','proskills-08','react-08','rust-07','security-06','testing-03','testing-05','testing-07','webapps-01','webapps-02','webapps-03','webapps-04','webapps-05','webapps-06','webapps-07','webapps-08']);
