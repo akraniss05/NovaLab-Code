@@ -510,7 +510,12 @@ async function refreshShopVisibility(){const result=await api.rpc('novalab_shop_
 async function loadData(){
  const loadingAccount=s.user?.id;
  await progressWriteTail.catch(()=>{});
- if(s.ready&&progressQueueAccount===loadingAccount&&failedProgressBase)throw Error('Deine letzten Lernänderungen konnten nicht gespeichert werden. Bitte überprüfe die Verbindung und speichere erneut, bevor du neu lädst.');
+ if(s.ready&&progressQueueAccount===loadingAccount&&failedProgressBase){
+  // Recover pending local changes before fetching a remote snapshot. Otherwise
+  // a refresh after a brief outage could make unsaved work disappear.
+  try{await saveProgress();}
+  catch(error){throw Error('Ungespeicherter Lernfortschritt: '+formatError(error)+'. Die Daten wurden nicht überschrieben.');}
+ }
  if(!loadingAccount)throw Error('Zum Laden wird ein angemeldetes Konto benötigt.');
  await refreshShopVisibility();
  var all=await Promise.all([
