@@ -8,11 +8,12 @@ const exposed=source.replace(end,"\nwindow.__appTest={s,quizQuestions,paintTimer
 const saved=new Map(),callbacks={},elements=new Map();
 function classList(){const set=new Set();return {add(...names){names.forEach(n=>set.add(n))},remove(...names){names.forEach(n=>set.delete(n))},toggle(name,state){if(state===undefined)state=!set.has(name);state?set.add(name):set.delete(name)},contains(name){return set.has(name)}};}
 const fake=()=>({innerHTML:'',textContent:'',hidden:false,disabled:false,value:'',dataset:{},style:{width:'',setProperty(){}},classList:classList(),setAttribute(){},focus(){},querySelector(){return null},replaceChildren(){},isConnected:true});
-for(const key of ['#content','#sidebar','#bottom-nav','#toast','#focus-header','#focus-clock','#timer-portal','#timer-minutes','#practice-input','#practice-feedback','#practice-self-reviewed','#practice-status','#practice-workspace','#mark-lesson','[data-action="complete-practice"]','#answer-result','#video-check','#quiz-choices','#quiz-question','#quiz-progress','#quiz-meter-fill','#lesson-explanation'])elements.set(key,fake());
+for(const key of ['#content','#sidebar','#bottom-nav','#toast','#focus-header','#focus-clock','#timer-portal','#timer-minutes','#practice-input','#practice-feedback','#practice-self-reviewed','#practice-status','#practice-workspace','#mark-lesson','[data-action="complete-practice"]','#answer-result','#video-check','#video-check-status','#quiz-choices','#quiz-question','#quiz-progress','#quiz-meter-fill','#lesson-explanation'])elements.set(key,fake());
 const answerButtons=['0','1','2'].map(value=>({dataset:{answer:value},disabled:false,classList:classList()}));
 const doc={querySelector(selector){return elements.get(selector)||null},querySelectorAll(selector){return selector==='[data-answer]'?answerButtons:[]},addEventListener(name,fn){(callbacks[name]||(callbacks[name]=[])).push(fn)},body:{classList:classList()}};
 const sync=require('../site/academy-progress-sync.js').LLProgressSync;
-const window={LL_CONFIG:{},LLPractice:require('../site/practice-engine.js').LLPractice,LLCurriculum:require('../site/academy-curriculum.js').LLCurriculum,LLProgressSync:{...sync,save:async(_client,_id,_key,base,snapshot)=>({payload:sync.merge(base,snapshot,{}),updated_at:new Date().toISOString()})},addEventListener(){}};
+let remoteProgress={};
+const window={LL_CONFIG:{},LLPractice:require('../site/practice-engine.js').LLPractice,LLCurriculum:require('../site/academy-curriculum.js').LLCurriculum,LLProgressSync:{...sync,save:async(_client,_id,_key,base,snapshot)=>({payload:remoteProgress=sync.merge(base,snapshot,remoteProgress),updated_at:new Date().toISOString()})},addEventListener(){}};
 window.LLLearning={queue(){},mark(){}};
 window.LLRuntime={async run(text){return {available:true,ok:true,lines:[text.includes('Wrong')?'Wrong':'Hello']}}};
 const sandbox={window,document:doc,localStorage:{getItem:key=>saved.get(key)||null,setItem:(key,value)=>saved.set(key,value),removeItem:key=>saved.delete(key)},sessionStorage:{getItem:()=>null},location:{hash:'#lesson/lua-01'},console,setTimeout,clearTimeout,setInterval(){return 1},clearInterval(){},Date,Math,Number,Promise,Map,Set,Intl,confirm(){return true}};
@@ -109,6 +110,40 @@ async function click(selector,node){for(const fn of callbacks.click||[])await fn
  assert.equal(s.practiceChecked,true,'Confirmed local test can complete guided practice');
  assert.match(elements.get('#practice-feedback').textContent,/Selbstprüfung gespeichert/);
  s.lesson=originalLesson;
+ const originalSave=window.LLProgressSync.save;
+ const confirmMaterial=()=>click('[data-action]',{dataset:{action:'confirm-lesson-material'}});
+ const confirmationButton=elements.get('#video-check');
+ s.videoChecked=false;
+ assert.equal((s.progress.watched||[]).length,0);
+ let releaseMaterialSave;
+ window.LLProgressSync.save=async(...args)=>{
+  await new Promise(resolve=>{releaseMaterialSave=resolve;});
+  return originalSave(...args);
+ };
+ const confirmation=confirmMaterial();
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(confirmationButton.disabled,true,'Prevent repeated taps during a save');
+ assert.equal(elements.get('#mark-lesson').disabled,true,'Completion waits for confirmation to be saved');
+ await confirmMaterial();
+ releaseMaterialSave();
+ await confirmation;
+ assert.equal(s.videoChecked,true);
+ assert.deepEqual(Array.from(s.progress.watched),['lua-01']);
+ assert.equal(confirmationButton.disabled,false);
+ assert.equal(elements.get('#mark-lesson').disabled,false);
+ assert.match(elements.get('#video-check-status').textContent,/gespeichert/);
+ window.LLProgressSync.save=originalSave;
+ await confirmMaterial();
+ assert.equal(s.videoChecked,false,'Confirmation can be undone');
+ assert.equal((s.progress.watched||[]).length,0);
+ window.LLProgressSync.save=async()=>{throw Error('Offline');};
+ await confirmMaterial();
+ assert.equal(s.videoChecked,false,'An unsuccessful write preserves the previous confirmation state');
+ assert.equal(confirmationButton.disabled,false,'Failed writes leave the button available for retry');
+ assert.match(elements.get('#video-check-status').textContent,/fehlgeschlagen/);
+ window.LLProgressSync.save=originalSave;
+ await confirmMaterial();
+ assert.equal(s.videoChecked,true,'Confirmation can be retried successfully');
  // The redesigned timer keeps the old controls and adds presets/ring.
  assert.match(elements.get('#timer-portal').innerHTML,/ll-focus-ring/,'Streak-style circular countdown present');
  assert.match(elements.get('#timer-portal').innerHTML,/data-timer-preset="25"/,'Quick preset controls present');

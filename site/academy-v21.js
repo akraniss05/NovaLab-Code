@@ -1291,6 +1291,7 @@ function lessonPage(id){
  var p=s.lesson.payload||{},video=s.lesson.video_id||p.videoId,info=p.video_guide||videoInfo(video),qs=quizQuestions(p),activeQuiz=qs[Math.min(s.quizStep,qs.length-1)],options=activeQuiz?.options||[],finished=doneIds().has(id),rewarded=xpAwarded(id),isBlender=c?.category==='3D & Blender';
  var videoStart=Math.max(0,Math.floor(safeNumber(s.lesson.video_start??p.videoStart))),validVideo=video&&/^[a-zA-Z0-9_-]{11}$/.test(video),url=validVideo?'https://www.youtube.com/watch?v='+video+'&t='+videoStart+'s':null;
  const externalGuide=safeLink(info.url);
+ const hasTutorial=!!validVideo||externalGuide!=='#';
  const search='https://www.youtube.com/results?search_query='+encodeURIComponent(c.name+' '+l.title+' Anleitung Tutorial deutsch');
  var next=all[index+1],d=esc(s.draft),isPracticeDone=s.practiceChecked||finished;
  const showMarkupPreview=['html','css'].includes(String(p.lang||'').toLowerCase());
@@ -1310,7 +1311,7 @@ function lessonPage(id){
  '<div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="'+all.length+'" aria-valuenow="'+(index+1)+'" aria-label="'+catalogText('Position im Kurs','Position in course')+'"><span style="width:'+pct(index+1,all.length)+'%"></span></div></div>'+
  '<div class="lesson-steps ll-lesson-road-stages" aria-label="'+catalogText('Lektionsschritte','Lesson steps')+'">'+
  '<button type="button" data-learning-step="1" class="lesson-step done" aria-current="'+(s.lessonStep===1?'step':'false')+'"><span class="step-index">◇</span>'+catalogText('Verstehen','Learn')+'</button>'+
- '<button type="button" data-learning-step="2" class="lesson-step '+(s.videoChecked?'done':'')+'" aria-current="'+(s.lessonStep===2?'step':'false')+'"><span class="step-index">▷</span>'+((validVideo||externalGuide!=='#')?catalogText('Video','Video'):catalogText('Lernmaterial','Learning material'))+'</button>'+
+ '<button type="button" data-learning-step="2" class="lesson-step '+(s.videoChecked?'done':'')+'" aria-current="'+(s.lessonStep===2?'step':'false')+'"><span class="step-index">▷</span>'+(hasTutorial?catalogText('Video','Video'):catalogText('Lernmaterial','Learning material'))+'</button>'+
  '<button type="button" data-learning-step="3" class="lesson-step '+(isPracticeDone?'done':'')+'" aria-current="'+(s.lessonStep===3?'step':'false')+'"><span class="step-index">⟨/⟩</span>'+catalogText('Praxis','Practice')+'</button>'+
  '<button type="button" data-learning-step="4" class="lesson-step '+(s.quizPassed||finished?'done':'')+'" aria-current="'+(s.lessonStep===4?'step':'false')+'"><span class="step-index">✓</span>'+catalogText('Quiz','Quiz')+'</button>'+
  '<button type="button" data-learning-step="5" class="lesson-step '+(finished?'done':'')+'" aria-current="'+(s.lessonStep===5?'step':'false')+'"><span class="step-index">✦</span>'+catalogText('Ergebnis','Result')+'</button></div>'+
@@ -1334,9 +1335,9 @@ function lessonPage(id){
  '<small>'+esc(info.author)+' · '+esc(info.language)+'</small><a href="'+externalGuide+'" class="btn primary" target="_blank" rel="noopener noreferrer">Tutorial öffnen ↗</a></div></div>':
  '<p class="muted">Bearbeite die Erklärung und das Beispiel aus Schritt 1. Wenn dir eine zusätzliche Erklärung hilft, kannst du ein Tutorial zum Thema suchen.</p>'+
  '<p><a href="'+search+'" class="btn" target="_blank" rel="noopener noreferrer">Lernvideo suchen ↗</a></p>')+
- '<label class="video-check"><input type="checkbox" id="video-check" '+(s.videoChecked?'checked':'')+'><span>'+
- (validVideo||externalGuide!=='#'?'Ich habe das Tutorial oder die Erklärung mit Beispiel durchgearbeitet.':'Ich habe die Erklärung und das Beispiel durchgearbeitet.')+
- '</span></label></section>'+
+ '<p class="micro">'+(hasTutorial?catalogText('Bestätige den Schritt, wenn du das Tutorial angesehen oder das Beispiel durchgearbeitet hast.','Confirm after watching the tutorial or working through the example.'):catalogText('Bestätige den Schritt, wenn du die Erklärung und das Beispiel durchgearbeitet hast.','Confirm after working through the explanation and example.'))+'</p>'+
+ '<button type="button" class="btn '+(s.videoChecked?'':'primary')+'" id="video-check" data-action="confirm-lesson-material" aria-pressed="'+s.videoChecked+'">'+lessonMaterialLabel(s.videoChecked)+'</button>'+
+ '<p class="micro" id="video-check-status" role="status"></p></section>'+
  '<section class="step-box" id="lesson-practice"><span class="eyebrow">SCHRITT 03 · SELBST AUSPROBIEREN</span><h2>'+(isBlender?'Dein Arbeitsschritt.':'Löse diese Aufgabe im Editor.')+'</h2>'+
  '<p>'+esc(p.task||'Setze die Erklärung eigenständig in einem Beispiel um.')+'</p>'+
  (selfReviewed?'<p class="muted">Selbstprüfung · '+esc(p.practice_instruction||(isBlender?'Führe die Aufgabe in Blender aus und vergleiche dein Ergebnis mit den beschriebenen Schritten.':'Bearbeite die Aufgabe in der dafür vorgesehenen Umgebung. Halte deinen Test und das beobachtete Ergebnis fest.'))+'</p>':'')+
@@ -1361,10 +1362,45 @@ function lessonPage(id){
  '<div class="btn-row"><button class="btn" data-go="track/'+esc(l.course_id)+'">← Kursübersicht</button><button class="btn" data-action="reset-lesson">Lektion neu beginnen ↺</button>'+
  (next?'<button class="btn" data-go="lesson/'+esc(next.id)+'">Nächste Lektion →</button>':'<button class="btn" data-go="exam/'+esc(l.course_id)+'">Abschlussprüfung →</button>')+'</div></article>';
 }
+const pendingMaterialSaves=new Map();
+function lessonMaterialLabel(confirmed){
+ return confirmed?catalogText('✓ Lernmaterial bestätigt','✓ Learning material confirmed'):catalogText('Lernmaterial als erledigt bestätigen','Confirm learning material');
+}
+async function confirmLessonMaterial(){
+ const {page,id}=parseRoute(),session=progressSessionEpoch;
+ if(page!=='lesson'||!s.lesson||!s.ready||s.xpClaimBusy||pendingMaterialSaves.get(id)===session)return;
+ const previous=watchedIds(),confirmed=!previous.has(id);
+ const watched=new Set(previous);
+ if(confirmed)watched.add(id);else watched.delete(id);
+ pendingMaterialSaves.set(id,session);
+ s.progress.watched=[...watched];
+ updateLessonControls();
+ let message='';
+ try{
+  await saveProgress();
+  message=confirmed?catalogText('Bestätigung gespeichert.','Confirmation saved.'):catalogText('Bestätigung zurückgenommen.','Confirmation removed.');
+ }catch(error){
+  if(progressSessionEpoch!==session)return;
+  const current=watchedIds();
+  if(confirmed)current.delete(id);else current.add(id);
+  s.progress.watched=[...current];
+  message=catalogText('Speichern fehlgeschlagen. Tippe erneut auf die Schaltfläche.','Saving failed. Tap the button again.');
+  console.warn('Lernmaterial-Bestätigung:',formatError(error));
+ }finally{
+  if(pendingMaterialSaves.get(id)===session)pendingMaterialSaves.delete(id);
+  const route=parseRoute();
+  if(progressSessionEpoch===session&&route.page==='lesson'&&route.id===id&&s.lesson){
+   s.videoChecked=watchedIds().has(id);
+   updateLessonControls();
+   const status=$('#video-check-status');if(status)status.textContent=message;
+  }
+ }
+}
 function updateLessonControls(){
  var id=parseRoute().id,l=s.lessons.find(x=>x.id===id);if(!l||!s.lesson)return;
  var questions=quizQuestions(s.lesson.payload||{}),correct=questions[Math.min(s.quizStep,questions.length-1)]?.correct,finished=doneIds().has(id);
- var ready=s.videoChecked&&s.practiceChecked&&s.quizPassed;
+ const savingMaterial=pendingMaterialSaves.get(id)===progressSessionEpoch;
+ var ready=s.videoChecked&&!savingMaterial&&s.practiceChecked&&s.quizPassed;
  document.querySelectorAll('[data-answer]').forEach(b=>{
   var selected=Number(b.dataset.answer)===s.choice;
   b.classList.toggle('selected',selected);b.classList.toggle('good',selected&&s.choice===correct);
@@ -1384,7 +1420,14 @@ function updateLessonControls(){
   '✓ Richtig! Du kannst die Lektion abschließen.';}
  var video=$('#video-check'),practice=$('#practice-workspace');
  const meter=$('#quiz-meter-fill');if(meter)meter.style.width=Math.round((s.quizStep+(s.quizPassed?1:0))/Math.max(1,questions.length)*100)+'%';
- if(video)video.checked=s.videoChecked;
+ if(video){
+  video.disabled=savingMaterial;
+  video.setAttribute('aria-pressed',String(s.videoChecked));
+  video.textContent=savingMaterial?catalogText('Wird gespeichert …','Saving …'):lessonMaterialLabel(s.videoChecked);
+  video.classList.toggle('primary',!s.videoChecked);
+ }
+ const materialStep=$('[data-learning-step="2"]');if(materialStep)materialStep.classList.toggle('done',s.videoChecked);
+ const materialStatus=$('#video-check-status');if(savingMaterial&&materialStatus)materialStatus.textContent='';
  if(practice)practice.classList.toggle('is-complete',s.practiceChecked);
 }
 function showPracticeResult(ok,message,kind){
@@ -1485,7 +1528,7 @@ async function grantLessonXP(id){
 }
 async function markLesson(){
  const id=parseRoute().id,l=s.lessons.find(x=>x.id===id);
- if(!l||!s.lesson||!allowed(l)||s.xpClaimBusy)return;
+ if(!l||!s.lesson||!allowed(l)||s.xpClaimBusy||pendingMaterialSaves.get(id)===progressSessionEpoch)return;
  if(!s.videoChecked||!s.practiceChecked||!s.quizPassed){
   notice('Bitte Lernmaterial, praktische Übung und Quiz abschließen.');return;
  }
@@ -2868,7 +2911,7 @@ document.addEventListener('click',async function(e){
    return;
   }
   if(name==='reset-lesson'){
-   const id=parseRoute().id;if(!id||!s.lessons.some(l=>l.id===id))return;
+   const id=parseRoute().id;if(!id||!s.lessons.some(l=>l.id===id)||pendingMaterialSaves.get(id)===progressSessionEpoch)return;
    if(!confirm('Nur diese Lektion neu beginnen? Ihr Abschluss und die Übung werden zurückgesetzt.'))return;
    const previous=JSON.parse(JSON.stringify(s.progress));
    for(const key of ['done','watched','practiced','verifiedPractice'])s.progress[key]=(s.progress[key]||[]).filter(x=>x!==id);
@@ -2918,6 +2961,7 @@ document.addEventListener('click',async function(e){
    return;
   }
   if(['refresh-admin','admin-prev','admin-next'].includes(name)){await adminAction(name,action);return;}
+  if(name==='confirm-lesson-material'){await confirmLessonMaterial();return;}
   if(name==='load-video'){
    var video=s.lesson?.video_id||s.lesson?.payload?.videoId;if(!/^[a-zA-Z0-9_-]{11}$/.test(String(video||'')))return;
    var frame=$('#video-frame');
@@ -3153,21 +3197,6 @@ document.addEventListener('change',async function(e){
   const box=e.target;try{const r=await api.rpc('academy_service',{p_action:'set_beta',p_payload:{enabled:box.checked}});if(r.error)throw r.error;await refreshService();render();notice('Beta-Anfragen '+(box.checked?'aktiviert.':'geschlossen.'));}catch(err){box.checked=!box.checked;notice(formatError(err))}return;
  }
 
- if(e.target.id==='video-check'){
-  window.LLLearning?.mark?.(parseRoute().id,2);
-  const id=parseRoute().id,previous=s.videoChecked;
-  s.videoChecked=e.target.checked;
-  if(!Array.isArray(s.progress.watched))s.progress.watched=[];
-  const oldWatched=s.progress.watched.slice();
-  if(s.videoChecked&&!s.progress.watched.includes(id))s.progress.watched.push(id);
-  if(!s.videoChecked)s.progress.watched=s.progress.watched.filter(x=>x!==id);
-  updateLessonControls();
-  try{await saveProgress()}catch(err){
-   s.videoChecked=previous;s.progress.watched=oldWatched;
-   updateLessonControls();notice('Video-Fortschritt konnte nicht gespeichert werden.');
-  }
-  return;
- }
  if(e.target.hasAttribute('data-pref')){setPreference(e.target.dataset.pref,e.target.checked);return;}
  if(e.target.hasAttribute('data-admin-role')){
   const field=e.target,member=s.members.find(u=>u.id===field.dataset.adminRole),old=member?.role||'student';

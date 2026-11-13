@@ -169,6 +169,29 @@ scenes.push(['focus-timer',
 s.ready=false;s.authScreen='register';app.login();
 scenes.push(['registration',fakeNodes['#content'].innerHTML,['form[data-form="register"]','.auth-card']]);
 s.ready=true;s.profile.role='student';
+const material=await browser.newPage({viewport:{width:390,height:850},isMobile:true,hasTouch:true});
+await material.setContent('<main id="content"></main><aside id="sidebar"></aside><nav id="bottom-nav"></nav><div id="toast"></div><style>'+css+'</style>');
+await material.evaluate(()=>{location.hash='#lesson/fivem-01';window.LL_CONFIG={};});
+await material.addScriptTag({path:path.join(root,'site/academy-progress-sync.js')});
+await material.addScriptTag({content:source.replace(/\ninit\(\);\n\}\)\(\);\s*$/, '\nwindow.__materialTest={s,lessonPage,updateLessonControls};\n})();')});
+await material.evaluate(({courses,lessons,lesson})=>{
+ const {s,lessonPage,updateLessonControls}=window.__materialTest;
+ Object.assign(s,{ready:true,user:{id:'learner'},profile:{role:'student'},courses,lessons,lesson,
+  progress:{done:[],watched:[],exams:{}},practiceChecked:true,quizPassed:true});
+ window.LLProgressSync.save=async(_api,_id,_key,_base,draft)=>({payload:draft,updated_at:new Date().toISOString()});
+ document.querySelector('#content').innerHTML=lessonPage('fivem-01');
+ updateLessonControls();
+},{courses:s.courses,lessons:s.lessons,lesson:s.lesson});
+const confirmation=material.getByRole('button',{name:'Lernmaterial als erledigt bestätigen'});
+await confirmation.tap();
+await material.locator('#video-check[aria-pressed="true"]').waitFor();
+assert.equal(await material.locator('#mark-lesson').isEnabled(),true,'Tapping on mobile unlocks completion after saving');
+assert.equal(await material.locator('[data-learning-step="2"].done').count(),1);
+await material.locator('#video-check').tap();
+await material.locator('#video-check[aria-pressed="false"]').waitFor();
+assert.equal(await material.locator('#mark-lesson').isDisabled(),true,'Undo disables completion');
+await material.close();
+
 for(const width of [320,390,430,768,1280]){
 const page=await browser.newPage({viewport:{width,height:850},deviceScaleFactor:1});
 for(const [name,markup,selectors] of scenes){
