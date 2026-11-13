@@ -38,7 +38,7 @@ function expression(raw,vars){const text=raw.trim();if(!text)return INVALID;
  return INVALID}
 function output(code,lang){const vars=Object.create(null),lines=[],lineTypes=[];let supported=true,error='';
  const print=lang==='lua'||lang==='python'?/^print\s*\((.*)\)\s*;?$/:/^(?:console\.log|alert)\s*\((.*)\)\s*;?$/;
- for(const raw of String(code||'').split('\n')){let line=raw.trim();if(!line||/^(--|#|\/\/)/.test(line))continue;
+ for(const raw of String(code||'').split('\n')){let line=raw.trim();if(lang==='lua'){const comment=luaLineComment(line);if(comment)line=line.slice(0,-comment.length).trim();}if(!line||/^(--|#|\/\/)/.test(line))continue;
   const inline=lang==='lua'&&line.match(/^if\s+([\w$]+)\s+then\s+(.+?)\s+end\s*$/);
   if(inline){if(!Object.prototype.hasOwnProperty.call(vars,inline[1])){supported=false;error='Die Variable „'+inline[1]+'“ ist nicht definiert.';break}if(vars[inline[1]]===false||vars[inline[1]]===null)continue;line=inline[2]}
   const assign=line.match(/^(?:(?:local|let|const|var)\s+)?([a-zA-Z_$][\w$]*)\s*=\s*(.+?)\s*;?$/);
@@ -47,13 +47,35 @@ function output(code,lang){const vars=Object.create(null),lines=[],lineTypes=[];
   supported=false;error='Diese Anweisung kann die Browser-Konsole noch nicht ausführen.';break}
  return {lines,lineTypes,supported,error,vars}}
 function matches(code,rule){try{return new RegExp(rule,'im').test(code)}catch(_){return code.includes(rule)}}
+function luaLineComment(line){
+ let quote='';
+ for(let i=0;i<line.length;i++){
+  const ch=line[i];
+  if(quote){
+   if(ch==='\\')i++;
+   else if(ch===quote)quote='';
+  }else if(ch==='"'||ch==="'")quote=ch;
+  else if(ch==='['){
+   const opening=line.slice(i).match(/^\[(=*)\[/);
+   if(opening){
+    const close=']'+opening[1]+']',end=line.indexOf(close,i+opening[0].length);
+    if(end<0)return '';
+    i=end+close.length-1;
+   }
+  }else if(line.startsWith('--',i))return line.slice(i);
+ }
+ return '';
+}
 function checkRule(rule,code,source,lang){
  if(lang==='lua'&&rule.startsWith('--')){
-  return clean(code).split('\n').some(line=>line.trimStart().startsWith('--')&&matches(line,rule));
+  return clean(code).split('\n').some(line=>{
+   const comment=luaLineComment(line);
+   return comment&&!/^--\[=*\[/.test(comment)&&comment.slice(2).trim()&&matches(comment,rule);
+  });
  }
  return matches(source,rule);
 }
-function describe(rule){let m=rule.match(/local\\s\+([a-zA-Z_]\w*)/);if(m)return 'lokale Variable „'+m[1]+'“';
+function describe(rule){if(rule.startsWith('--'))return 'ein Lua-Zeilenkommentar mit einer kurzen Erklärung';let m=rule.match(/local\\s\+([a-zA-Z_]\w*)/);if(m)return 'lokale Variable „'+m[1]+'“';
  if(/tonumber/.test(rule))return 'tonumber(…)';if(/tostring/.test(rule))return 'tostring(…)';if(/type/.test(rule))return 'type(…)';if(/print/.test(rule))return 'print(…) wie in der Aufgabe';if(/\\\+/.test(rule))return 'Addition wie in der Aufgabe';return 'ein geforderter Schritt'}
 function tokens(s){return new Set(String(s||'').match(/[a-zA-Z_$][\w$]*|\d+|["'][^"']*["']/g)||[])}
 function allowsOwnValues(payload){

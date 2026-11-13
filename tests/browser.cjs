@@ -182,6 +182,18 @@ await material.evaluate(({courses,lessons,lesson})=>{
  document.querySelector('#content').innerHTML=lessonPage('fivem-01');
  updateLessonControls();
 },{courses:s.courses,lessons:s.lessons,lesson:s.lesson});
+await material.evaluate(()=>{
+ window.LLRuntime={supported:['lua'],run:async code=>({ok:true,lines:[code.includes('Luca')?'Hallo Luca':'Test']})};
+ window.__materialTest.s.lesson.payload.lang="lua";
+ const {s,lessonPage,updateLessonControls}=window.__materialTest;
+ document.querySelector('#content').innerHTML=lessonPage(s.lessons[0].id);
+ updateLessonControls();
+});
+await material.locator('#practice-input').fill('print("Hallo Luca")');
+await material.getByRole('button',{name:'Ausführen',exact:true}).tap();
+await material.locator('#practice-console-output').getByText('Hallo Luca',{exact:true}).waitFor();
+assert.equal(await material.evaluate(()=>window.__materialTest.s.progress.verifiedPractice?.length||0),0,'Running code must not grant practice credit');
+ await material.evaluate(()=>{window.__materialTest.s.practiceChecked=true;window.__materialTest.updateLessonControls();});
 const confirmation=material.getByRole('button',{name:'Lernmaterial als erledigt bestätigen'});
 await confirmation.tap();
 await material.locator('#video-check[aria-pressed="true"]').waitFor();

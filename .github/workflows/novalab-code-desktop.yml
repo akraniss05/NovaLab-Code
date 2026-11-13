@@ -38,7 +38,7 @@ jobs:
       - name: Original Academy Lern-Laufzeiten und Supabase SDK lokal bereitstellen
         shell: bash
         run: |
-          npm install --no-save --ignore-scripts --no-package-lock fengari-web@0.1.4 pyodide@0.27.8
+          npm install --no-save --ignore-scripts --no-package-lock fengari-web@0.1.4 pyodide@0.27.8 sql.js@1.13.0 typescript@5.9.3
           mkdir -p site/vendor/pyodide
           cp node_modules/fengari-web/dist/fengari-web.bundle.js site/vendor/fengari-web.bundle.js
           cp -R node_modules/pyodide/. site/vendor/pyodide/
@@ -46,6 +46,10 @@ jobs:
           test -s site/vendor/supabase.min.js
           test -s site/vendor/pyodide/pyodide.asm.wasm
           test -s site/vendor/fengari-web.bundle.js
+          mkdir -p site/vendor/sql
+          cp node_modules/sql.js/dist/sql-wasm.js node_modules/sql.js/dist/sql-wasm.wasm site/vendor/sql/
+          cp node_modules/typescript/lib/typescript.js site/vendor/typescript.js
+          bash scripts/fetch-java-runtime.sh
       - name: Windows-App und Installer bauen
         working-directory: desktop
         run: npm run build:win

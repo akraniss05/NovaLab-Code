@@ -588,6 +588,7 @@ async function loadData(){
 }
 async function logout(){
  // Retire in-flight responses before calling the asynchronous auth sign-out.
+ practiceExecution?.abort();practiceExecution=null;
  progressSessionEpoch++;progressQueueRevision++;progressQueueAccount=null;lastQueuedProgress=null;failedProgressBase=null;
  s.ready=false;navigationId++;
  window.LLI18n?.setAccount?.('');window.LLLearning?.clear?.();
@@ -656,6 +657,7 @@ const removedPages=new Set(['portfolio','skilltree','notes','challenges','calend
 let navigationId=0;
 async function navigateCurrent(){
  if(!s.ready)return;
+ practiceExecution?.abort();practiceExecution=null;
  if(removedPages.has(parseRoute().page))history.replaceState(null,'','#home');
  const request=++navigationId,hash=location.hash;
  const isCurrent=()=>s.ready&&request===navigationId&&hash===location.hash;
@@ -1276,6 +1278,76 @@ function paintQuiz(){const p=s.lesson?.payload||{},qs=quizQuestions(p),q=qs[Math
  if(choices)choices.innerHTML=q.options.map((answer,i)=>'<button type="button" class="quiz-choice" data-answer="'+i+'"><span>'+String.fromCharCode(65+i)+'</span>'+esc(answer)+'</button>').join('');
  updateLessonControls();
 }
+const practiceFiles={
+ lua:['main.lua','lua main.lua'],python:['main.py','python main.py'],py:['main.py','python main.py'],
+ javascript:['main.js','node main.js'],js:['main.js','node main.js'],typescript:['main.ts','tsc main.ts && node main.js'],
+ java:['Main.java','java Main.java'],c:['main.c','cc main.c -o main && ./main'],cpp:['main.cpp','c++ main.cpp -o main && ./main'],
+ csharp:['Program.cs','dotnet run'],rust:['main.rs','rustc main.rs && ./main'],go:['main.go','go run main.go'],
+ kotlin:['Main.kt','kotlinc Main.kt -include-runtime -d main.jar && java -jar main.jar'],
+ php:['index.php','php index.php'],ruby:['main.rb','ruby main.rb'],perl:['main.pl','perl main.pl'],
+ bash:['main.sh','bash main.sh'],powershell:['main.ps1','pwsh -File main.ps1'],
+ r:['main.R','Rscript main.R'],julia:['main.jl','julia main.jl'],zig:['main.zig','zig run main.zig'],
+ dart:['main.dart','dart run main.dart'],swift:['main.swift','swift main.swift'],scala:['Main.scala','scala run Main.scala'],
+ elixir:['main.exs','elixir main.exs'],haskell:['Main.hs','runghc Main.hs'],
+ sql:['query.sql','sqlite3 < query.sql'],json:['data.json',''],html:['index.html',''],css:['style.css',''],
+ jsx:['App.jsx','npm run dev'],docker:['Dockerfile','docker build .'],git:['befehle.txt','']
+};
+function practiceFile(payload){
+ const lang=String(payload.lang||'').toLowerCase();
+ const fallback=practiceFiles[lang]?.[0]||'entwurf.txt';
+ const filename=String(payload.filename||fallback);
+ return /^[a-zA-Z0-9_.-]{1,100}$/.test(filename)&&filename!=='.'&&filename!=='..'?filename:fallback;
+}
+function practiceTerminal(payload,courseId){
+ const lang=String(payload.lang||'').toLowerCase();
+ const runnable=window.LLRuntime?.supported?.includes(lang);
+ if(lang==='text'||lang==='blender')return '';
+ const command=practiceFiles[lang]?.[1];
+ const local=(payload.practice_mode==='guided'||!runnable)&&!['html','css'].includes(lang);
+ const fiveM=/^(fivem|esx|qbcore|ox|nui)(-|$)/.test(courseId||'');
+ const showInput=runnable&&['lua','python','py','javascript','js','typescript','ts'].includes(lang);
+ return '<section class="practice-console" aria-label="'+catalogText('Terminal','Terminal')+'"><div class="practice-title"><strong>Terminal</strong>'+
+ '<button class="btn small" type="button" data-action="download-practice">'+catalogText('Datei herunterladen','Download file')+'</button></div>'+
+ (runnable?'<p class="micro">'+(lang==='sql'?catalogText('SQLite-Testdatenbank. Jeder Lauf beginnt leer. Lege Tabellen und Testdaten im Editor vor deiner Abfrage an.','Each run starts with an empty SQLite database. Create tables and test data above your query.'):['typescript','ts'].includes(lang)?catalogText('TypeScript wird in JavaScript umgewandelt. Für eine vollständige Typprüfung nutze tsc lokal.','TypeScript is converted to JavaScript. Run tsc locally for full type checking.'):catalogText('Probiere deinen Code aus. „Prüfen“ bewertet danach die Aufgabe.','Try your code here. Use Check to grade the exercise.'))+'</p>'+
+ (lang==='java'?'<p class="micro">'+catalogText('Führe einzelne Klassen mit einer main-Methode aus. Eine leere Klasse kannst du als Gerüst einsetzen. Für Maven, Gradle und Konsoleneingaben nutze dein lokales JDK.','Run a single class with a main method. Insert an empty class to get started. Use a local JDK for Maven, Gradle and console input.')+'</p><button class="btn small" type="button" data-action="practice-java-starter">'+catalogText('Java-Gerüst einsetzen','Insert Java starter')+'</button>':'')+
+ (showInput?'<details><summary>'+catalogText('Teste mit eigenen Eingaben','Test with your own input')+'</summary><label class="micro" for="practice-stdin">'+catalogText('Eine Eingabe pro Zeile','One input per line')+'</label><textarea class="input" id="practice-stdin" rows="2" maxlength="2000" spellcheck="false"></textarea></details>':'')+
+ '<div class="practice-actions"><button type="button" class="btn" data-action="run-practice">'+catalogText('Ausführen','Run')+'</button><button type="button" class="btn" data-action="stop-practice" hidden>'+catalogText('Stoppen','Stop')+'</button></div>'+
+ '<pre id="practice-console-output" role="log" aria-live="polite" tabindex="0">'+catalogText('Hier erscheinen Ausgabe und Fehler.','Output and errors appear here.')+'</pre>':'')+
+ (local?'<p class="micro">'+(fiveM?catalogText('Für FiveM-Funktionen brauchst du deine eigene Resource auf einem FXServer.','FiveM functions require your own resource on an FXServer.'):catalogText('Für diese Aufgabe steht die lokale Entwicklungsumgebung zur Verfügung. Speichere deinen Code als Datei und teste ihn dort.','Download your file and test this exercise in your local development environment.'))+'</p>'+
+ (!fiveM&&command?'<code>'+esc(command.replaceAll(practiceFiles[lang][0],practiceFile(payload)))+'</code>':''):'')+'</section>';
+}
+let practiceExecution=null;
+async function runPractice(){
+ const editor=$('#practice-input'),output=$('#practice-console-output'),run=$('[data-action="run-practice"]'),stop=$('[data-action="stop-practice"]');
+ const lesson=s.lesson,hash=location.hash;
+ if(!editor||!output||!lesson||practiceExecution)return;
+ if(!editor.value.trim()){output.textContent=catalogText('Schreibe zuerst deinen Code.','Enter your code first.');editor.focus();return;}
+ const controller=new AbortController();
+ practiceExecution=controller;
+ run.disabled=true;stop.hidden=false;
+ output.textContent=catalogText('Code wird ausgeführt …','Running code …');
+ try{
+  const result=await window.LLRuntime.run(editor.value,lesson.payload?.lang,{stdin:$('#practice-stdin')?.value,signal:controller.signal});
+  if(lesson!==s.lesson||location.hash!==hash||!output.isConnected)return;
+  const lines=(result.lines||[]).join('\n');
+  output.textContent=result.ok
+   ?(lines||catalogText('Ausgeführt. Das Programm hat keine Ausgabe erzeugt.','Finished. The program produced no output.'))
+   :[lines,result.error||catalogText('Ausführung fehlgeschlagen.','Execution failed.')].filter(Boolean).join('\n');
+ }catch(error){
+  if(output.isConnected)output.textContent=formatError(error);
+ }finally{
+  if(practiceExecution===controller)practiceExecution=null;
+  run.disabled=false;stop.hidden=true;
+ }
+}
+function downloadPractice(){
+ const editor=$('#practice-input');
+ if(!editor||!s.lesson||!editor.value.trim()){notice(catalogText('Schreibe zuerst deinen Code.','Enter your code first.'));return;}
+ const url=URL.createObjectURL(new Blob([editor.value],{type:'text/plain;charset=utf-8'}));
+ const link=document.createElement('a');
+ link.href=url;link.download=practiceFile(s.lesson.payload||{});link.click();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
 function lessonPage(id){
  var l=s.lessons.find(x=>x.id===id);if(!l)return notFound();
  var c=courseOf(l.course_id),all=lessonsOf(l.course_id),index=all.findIndex(x=>x.id===id);
@@ -1341,11 +1413,12 @@ function lessonPage(id){
  (selfReviewed?'<p class="muted">Selbstprüfung · '+esc(p.practice_instruction||(isBlender?'Führe die Aufgabe in Blender aus und vergleiche dein Ergebnis mit den beschriebenen Schritten.':'Bearbeite die Aufgabe in der dafür vorgesehenen Umgebung. Halte deinen Test und das beobachtete Ergebnis fest.'))+'</p>':p.practice_instruction?'<p class="muted">'+esc(p.practice_instruction)+'</p>':'')+
  '<div class="practice-workspace'+(isPracticeDone?' is-complete':'')+'" id="practice-workspace"><div class="practice-title"><strong>'+(isBlender?'Deine Umsetzung':'Dein Code-Entwurf')+'</strong>'+
  '<span class="practice-status" id="practice-status">'+(isPracticeDone?'✓ Praxis erledigt':'Nur auf diesem Gerät gespeichert')+'</span></div>'+
- '<label class="micro" for="practice-input">'+(isBlender?'Beschreibe, was du in Blender umgesetzt hast:':'Datei: '+esc(p.filename||({lua:'client.lua',python:'main.py',javascript:'main.js'}[String(p.lang||'').toLowerCase()]||'lösung.txt')))+'</label>'+
+ '<label class="micro" for="practice-input">'+(isBlender?'Beschreibe, was du in Blender umgesetzt hast:':'Datei: '+esc(practiceFile(p)))+'</label>'+
  '<div class="code-editor"><div class="code-lines" id="code-lines" aria-hidden="true">1</div><textarea class="exercise-textarea" id="practice-input" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" wrap="off" rows="7" maxlength="10000" placeholder="'+(isBlender?'Welche Schritte hast du ausgeführt und was ist dabei entstanden?':'Schreibe hier deine Lösung …')+'">'+d+'</textarea></div>'+
  (showMarkupPreview?'<div class="ll-practice-preview"><div class="ll-preview-label">Sichere Vorschau · HTML / CSS</div><iframe id="practice-preview-frame" class="ll-practice-preview-frame" title="Vorschau deiner HTML- oder CSS-Datei" sandbox="" referrerpolicy="no-referrer" loading="lazy"></iframe><p class="micro">Vorschau ohne Skriptausführung oder Zugriff auf dein Academy-Konto.</p></div>':'')+
  (selfReviewed?'<label class="video-check"><input type="checkbox" id="practice-self-reviewed" '+(isPracticeDone?'checked':'')+'><span>Ich habe meine Umsetzung geprüft und das Ergebnis im Entwurf festgehalten.</span></label>':
  '<p class="practice-tip">Schreibe deine Lösung und tippe auf „Prüfen“. Das Ergebnis wird grün oder rot angezeigt.</p>')+
+ practiceTerminal(p,l.course_id)+
  '<div class="practice-feedback" id="practice-feedback" role="status" aria-live="polite" hidden></div>'+
  '<div class="practice-actions practice-actions-simple"><button class="btn primary" type="button" data-action="complete-practice">'+(selfReviewed?'✓ Selbstprüfung speichern':'✓ Prüfen')+'</button><button class="btn" type="button" data-action="show-hint">Tipp</button><button class="btn" type="button" data-action="show-solution">Lösung anzeigen</button></div>'+
  '</div></section>'+
@@ -2942,6 +3015,15 @@ document.addEventListener('click',async function(e){
   if(name==='more-courses'){
    s.catalogLimit=Math.min(filteredCourses().length,s.catalogLimit+9);
    var wrap=$('#catalog-container');if(wrap)wrap.innerHTML=catalogItems();return;
+  }
+  if(name==='run-practice'){await runPractice();return;}
+  if(name==='stop-practice'){practiceExecution?.abort();return;}
+  if(name==='download-practice'){downloadPractice();return;}
+  if(name==='practice-java-starter'){
+   const box=$('#practice-input');if(!box||!s.lesson)return;
+   if(box.value.trim()){notice(catalogText('Das Gerüst kannst du in einen leeren Entwurf einsetzen.','Insert the starter into an empty draft.'));return;}
+   box.value='public class Main {\n    public static void main(String[] args) {\n        \n    }\n}';
+   box.dispatchEvent(new Event('input',{bubbles:true}));box.focus();return;
   }
   if(name==='complete-practice'){await completePractice();return;}
   if(name==='retry-lesson-xp'){

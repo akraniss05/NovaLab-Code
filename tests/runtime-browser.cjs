@@ -13,6 +13,15 @@ const server=http.createServer((req,res)=>{
  if(req.url==='/practice.js'){res.writeHead(200,{'Content-Type':'text/javascript'});res.end(fs.readFileSync(path.join(root,'practice-engine.js')));return;}
  if(req.url==='/runtime.js'){res.writeHead(200,{'Content-Type':'text/javascript'});res.end(source);return;}
  if(req.url==='/vendor/fengari-web.bundle.js'){const file=path.join(root,'vendor/fengari-web.bundle.js');if(!fs.existsSync(file)){res.writeHead(404);res.end('missing bundled Lua runtime');return;}res.writeHead(200,{'Content-Type':'text/javascript'});res.end(fs.readFileSync(file));return;}
+ if(['/vendor/sql/sql-wasm.js','/vendor/sql/sql-wasm.wasm','/vendor/typescript.js'].includes(req.url)){
+  res.writeHead(200,{'Content-Type':req.url.endsWith('.wasm')?'application/wasm':'text/javascript'});
+  res.end(fs.readFileSync(path.join(root,req.url)));return;
+ }
+ if(req.url?.startsWith('/vendor/java/')){
+  const filename=path.basename(req.url);
+  res.writeHead(200,{'Content-Type':filename.endsWith('.wasm')?'application/wasm':filename.endsWith('.js')?'text/javascript':'application/octet-stream'});
+  res.end(fs.readFileSync(path.join(root,'vendor/java',filename)));return;
+ }
  if(req.url?.startsWith('/vendor/pyodide/')){
   const filename=path.basename(req.url),filepath=path.join(root,'vendor/pyodide',filename);
   if(!fs.existsSync(filepath)){res.writeHead(404);res.end('Pyodide file not found: '+filename);return;}
@@ -74,9 +83,37 @@ async function start(){
   assert.equal(python.available,true,'Python WebAssembly runner is available');
   assert.equal(python.ok,true,'Python must execute successfully: '+JSON.stringify(python));
   assert.deepEqual([...python.lines],['LiveryLab 3'],'Python output must originate from interpreter');
-  const unsupported=await page.evaluate(()=>window.LLRuntime.run('SELECT 1','sql'));
-  assert.equal(unsupported.available,false,'Unimplemented SQL must not simulate execution');
-  console.log('PASS: real JavaScript, Lua 5.3 and Python outputs; explicit unsupported SQL.');
+  const sql=await page.evaluate(()=>window.LLRuntime.run("CREATE TABLE pets (name TEXT); INSERT INTO pets VALUES ('Luna'); SELECT name FROM pets;",'sql'));
+  assert.equal(sql.ok,true,sql.error);
+  assert.deepEqual(sql.lines,['name','Luna']);
+  const ts=await page.evaluate(()=>window.LLRuntime.run('const score: number = 5; console.log(score + 1);','typescript'));
+  assert.equal(ts.ok,true,ts.error);
+  assert.deepEqual(ts.lines,['6']);
+  const json=await page.evaluate(()=>window.LLRuntime.run('{"score":5}','json'));
+  assert.equal(json.ok,true,json.error);
+  assert.equal(JSON.parse(json.lines[0]).score,5);
+  const input=await page.evaluate(()=>Promise.all([
+   window.LLRuntime.run('print(io.read())','lua',{stdin:'Luca'}),
+   window.LLRuntime.run('print(input().upper())','python',{stdin:'nova'}),
+   window.LLRuntime.run('console.log(prompt())','javascript',{stdin:'Hallo'})
+  ]));
+  assert.deepEqual(input.map(result=>result.lines),[['Luca'],['NOVA'],['Hallo']]);
+  const interrupted=await page.evaluate(async()=>{
+   const controller=new AbortController();
+   const result=window.LLRuntime.run('while(true){}','javascript',{signal:controller.signal});
+   setTimeout(()=>controller.abort(),100);
+   return result;
+  });
+  assert.match(interrupted.error,/gestoppt/);
+  const java=await page.evaluate(()=>window.LLRuntime.run('public class Main { public static void main(String[] args) { System.out.println("NovaLab " + (2 + 3)); } }','java'));
+  assert.equal(java.ok,true,java.error);
+  assert.deepEqual(java.lines,['NovaLab 5']);
+  const javaError=await page.evaluate(()=>window.LLRuntime.run('class Main { public static void main(String[] args) { System.out.println(unknown); } }','java'));
+  assert.equal(javaError.ok,false);
+  assert.match(javaError.error,/Zeile 1|unknown/);
+  const unsupported=await page.evaluate(()=>window.LLRuntime.run('fn main() {}','rust'));
+  assert.equal(unsupported.available,false,'An unsupported language must not simulate execution');
+  console.log('PASS: browser execution, input, output, stop, SQL, TypeScript, Java and JSON.');
   await page.close();
  }finally{await browser.close();}
 }

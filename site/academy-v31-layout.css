@@ -678,3 +678,11 @@ body:not(.is-auth) .topbar .brand>span:last-child{overflow:hidden;text-overflow:
 .ll-practice-preview-frame{display:block;width:100%;min-height:280px;border:0;border-radius:9px;background:white}
 .ll-practice-preview .micro{margin:8px 2px 0}
 @media(max-width:560px){.ll-practice-preview{padding:9px}.ll-practice-preview-frame{min-height:220px}}
+
+.practice-console{margin:16px 0;padding:14px;border:1px solid var(--stroke);border-radius:14px;background:var(--panel)}
+.practice-console pre{margin:12px 0 0;padding:12px;min-height:4rem;max-height:16rem;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font:14px/1.5 ui-monospace,monospace;background:#100b1b;color:#eee3fa;border-radius:9px}
+.practice-console summary{cursor:pointer;min-height:32px}
+.practice-console textarea{display:block;width:100%;font-family:ui-monospace,monospace}
+.practice-console code{display:block;overflow-wrap:anywhere}
+.practice-console .practice-actions{margin-top:8px}
+.practice-console [hidden]{display:none}

@@ -24,8 +24,8 @@ assert.equal(app.quizQuestions({quiz:'Richtig?',options:['Ja','Nein'],correct:0}
 assert.equal(app.quizQuestions({quiz:'Defekt',options:['A'],correct:3}).length,0,'Bad quiz data not accepted');
 assert.equal(app.quizQuestions({quiz:'Wofür?',options:['A','B'],correct:0,quiz_version:2,goal:'Lernziel verstehen.',task:'Erstelle eine konkrete Übung und kontrolliere die Ausgabe.'}).length,1,'Old generated quiz banks must fall back to the original verified question');
 assert.equal(app.quizQuestions({quiz:'Wofür?',options:['A','B'],correct:0,quiz_version:3,quiz_items:Array.from({length:8},(_,i)=>({question:'Welche Aussage gehört zu Lektion '+i+'?',options:['A','B'],correct:0}))}).length,3,'Curated banks never overwhelm a lesson');
-assert.equal(source.includes('data-action="run-practice"'),false,'Visible terminal action removed');
-assert.equal(source.includes('practice-console'),false,'Terminal UI removed');
+assert.equal(source.includes('data-action="run-practice"'),true,'Supported exercises have a run action');
+assert.equal(source.includes('practice-console'),true,'Terminal UI renders');
 assert.equal(app.quizQuestions({quiz:'Richtig?',options:['Ja','Nein'],correct:0})[0].correct,0);
 app.paintTimer();
 assert.equal(elements.get('#focus-header').hidden,false,'Timer always visible');

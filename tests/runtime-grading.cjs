@@ -34,3 +34,10 @@ const comments={lang:'lua',task:'Schreibe einen Kommentar, der die Startmeldung 
  checks:['--[^\\n]+','print\\s*\\('],solution:'-- Start sichtbar machen\nprint("Bereit")'};
 assert.equal(check(comments.solution,comments,['Bereit'],['Bereit']).ok,true);
 assert.equal(check('print("-- Bereit")',comments,['-- Bereit'],['Bereit']).ok,false);
+
+const inlineExercise={...comments,practice_output:'text-lines',practice_line_count:1};
+const inlineResult={available:true,ok:true,lines:['liverylab'],lineTypes:['string']};
+assert.equal(p.evaluate('print("liverylab") -- Hilft uns beim Debuggen',inlineExercise).ok,true);
+assert.equal(p.evaluateRuntime('print("liverylab") -- Hilft uns beim Debuggen',inlineExercise,inlineResult,{ok:true}).ok,true);
+assert.equal(p.evaluateRuntime('print("liverylab -- kein Kommentar")',inlineExercise,inlineResult,{ok:true}).ok,false);
+assert.match(p.evaluate('print("liverylab")',inlineExercise).diagnostic,/Zeilenkommentar/);
