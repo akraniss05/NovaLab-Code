@@ -1338,7 +1338,7 @@ function lessonPage(id){
  '<p class="micro" id="video-check-status" role="status"></p></section>'+
  '<section class="step-box" id="lesson-practice"><span class="eyebrow">SCHRITT 03 · SELBST AUSPROBIEREN</span><h2>'+(isBlender?'Dein Arbeitsschritt.':'Löse diese Aufgabe im Editor.')+'</h2>'+
  '<p>'+esc(p.task||'Setze die Erklärung eigenständig in einem Beispiel um.')+'</p>'+
- (selfReviewed?'<p class="muted">Selbstprüfung · '+esc(p.practice_instruction||(isBlender?'Führe die Aufgabe in Blender aus und vergleiche dein Ergebnis mit den beschriebenen Schritten.':'Bearbeite die Aufgabe in der dafür vorgesehenen Umgebung. Halte deinen Test und das beobachtete Ergebnis fest.'))+'</p>':'')+
+ (selfReviewed?'<p class="muted">Selbstprüfung · '+esc(p.practice_instruction||(isBlender?'Führe die Aufgabe in Blender aus und vergleiche dein Ergebnis mit den beschriebenen Schritten.':'Bearbeite die Aufgabe in der dafür vorgesehenen Umgebung. Halte deinen Test und das beobachtete Ergebnis fest.'))+'</p>':p.practice_instruction?'<p class="muted">'+esc(p.practice_instruction)+'</p>':'')+
  '<div class="practice-workspace'+(isPracticeDone?' is-complete':'')+'" id="practice-workspace"><div class="practice-title"><strong>'+(isBlender?'Deine Umsetzung':'Dein Code-Entwurf')+'</strong>'+
  '<span class="practice-status" id="practice-status">'+(isPracticeDone?'✓ Praxis erledigt':'Nur auf diesem Gerät gespeichert')+'</span></div>'+
  '<label class="micro" for="practice-input">'+(isBlender?'Beschreibe, was du in Blender umgesetzt hast:':'Datei: '+esc(p.filename||({lua:'client.lua',python:'main.py',javascript:'main.js'}[String(p.lang||'').toLowerCase()]||'lösung.txt')))+'</label>'+
@@ -1466,7 +1466,7 @@ async function completePractice(){
    if(runtime.available){
     if(!runtime.ok)result={ok:false,diagnostic:'Laufzeitfehler: '+runtime.error};
     else if(payload.solution&&typeof window.LLPractice?.evaluateRuntime==='function'){
-     const expected=await window.LLRuntime.run(payload.solution,lang);
+     const expected=payload.practice_output==='text-lines'||payload.practice_output==='prefix'?{ok:true,lines:[]}:await window.LLRuntime.run(payload.solution,lang);
      result=window.LLPractice.evaluateRuntime(value,payload,runtime,expected);
     }
    }else{

@@ -11,6 +11,7 @@ const maximum=100;
 scope.onmessage=async function(event){
  const input=event.data||{},lang=String(input.lang||'').toLowerCase(),code=String(input.code||'');
  const lines=[];
+ let lineTypes;
  const send=scope.postMessage.bind(scope);
  const push=(...args)=>{if(lines.length<maximum)lines.push(args.map(v=>v===undefined?'undefined':v===null?'null':typeof v==='object'?JSON.stringify(v):String(v)).join(' '));};
  try{
@@ -22,13 +23,19 @@ scope.onmessage=async function(event){
     try{Object.defineProperty(scope,key,{value:undefined,writable:false,configurable:false});}
     catch(_){throw Error('Isolierte JavaScript-Laufzeit: '+key+' konnte nicht gesperrt werden.');}
    }
-   const consoleProxy={log:push,info:push,warn:(...x)=>push('WARN:',...x),error:(...x)=>push('ERROR:',...x)};
+   lineTypes=[];
+   const log=(...args)=>{
+    if(lines.length<maximum)lineTypes.push(args.map(value=>Array.isArray(value)?'array':typeof value).join(' '));
+    push(...args);
+   };
+   const consoleProxy={log,info:log,warn:(...x)=>push('WARN:',...x),error:(...x)=>push('ERROR:',...x)};
    // A worker cannot access the app DOM, its localStorage or the Supabase session.
    // Do not supply credentials or privileged capabilities to learner code.
    const fn=new Function('console','fetch','XMLHttpRequest','WebSocket','EventSource','importScripts',
     '"use strict";\n'+code);
    const result=fn(consoleProxy,undefined,undefined,undefined,undefined,undefined);
    if(result&&typeof result.then==='function')await result;
+   await new Promise(resolve=>setTimeout(resolve,0));
   }else if(lang==='lua'){
    // The npm bundle exports through CommonJS; give it a local module object.
    scope.module={exports:{}};
@@ -37,10 +44,24 @@ scope.onmessage=async function(event){
    const fengari=scope.fengari||scope.module.exports?.fengari||scope.module.exports?.default||scope.module.exports;
    if(!fengari||typeof fengari.load!=='function')throw Error('Lua-Interpreter konnte nicht initialisiert werden.');
    const evalLua=fengari.load;
-   evalLua("LL_OUTPUT = {}\nprint = function(...) local a={} for i=1, select('#', ...) do a[#a+1]=tostring(select(i,...)) end LL_OUTPUT[#LL_OUTPUT+1]=table.concat(a, '\\t') end")();
+   evalLua(`LL_TYPES = {}
+LL_OUTPUT = {}
+print = function(...)
+ local values, types = {}, {}
+ if #LL_OUTPUT >= 100 then return end
+ for i = 1, select('#', ...) do
+  local value = select(i, ...)
+  values[i] = tostring(value)
+  types[i] = type(value)
+ end
+ LL_OUTPUT[#LL_OUTPUT + 1] = table.concat(values, '\\t')
+ LL_TYPES[#LL_TYPES + 1] = table.concat(types, ' ')
+end`)();
    evalLua(code,'lesson.lua')();
-   const out=String(evalLua("return table.concat(LL_OUTPUT, '\\n')")()||'');
-   if(out)lines.push(...out.split('\n').slice(0,maximum));
+   const count=evalLua("return #LL_OUTPUT")();
+   for(let i=1;i<=Math.min(count,maximum);i++)lines.push(String(evalLua('return LL_OUTPUT['+i+']')()));
+   lineTypes=[];
+   for(let i=1;i<=Math.min(count,maximum);i++)lineTypes.push(String(evalLua('return LL_TYPES['+i+']')()));
   }else if(lang==='python'||lang==='py'){
    if(!input.pythonBundleUrl||!input.pythonBaseUrl)throw Error('Python-Laufzeit nicht eingerichtet.');
    // Support both browser-global and CommonJS-distributed Pyodide bootstrap bundles.
@@ -53,7 +74,7 @@ scope.onmessage=async function(event){
    py.setStderr({batched:line=>push('STDERR:',line)});
    await py.runPythonAsync(code);
   }else throw Error('Für diese Sprache ist noch keine echte Browser-Laufzeit eingerichtet.');
-  send({ok:true,lines:lines.slice(0,maximum),error:'',available:true,nonce:input.nonce});
+  send({ok:true,lines:lines.slice(0,maximum),lineTypes,error:'',available:true,nonce:input.nonce});
  }catch(error){
   send({ok:false,lines:lines.slice(0,maximum),error:String(error?.message||error),available:true,nonce:input.nonce});
  }

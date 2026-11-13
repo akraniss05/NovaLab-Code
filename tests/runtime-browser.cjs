@@ -10,6 +10,7 @@ const source=fs.readFileSync(path.join(root,'academy-runtime.js'),'utf8');
 const chrome=[process.env.CHROME_BIN,'/usr/bin/google-chrome','/opt/google/chrome/chrome','/usr/bin/chromium'].filter(Boolean).find(p=>fs.existsSync(p));
 if(!chrome)throw Error('Chrome/Chromium not available for live runtime verification.');
 const server=http.createServer((req,res)=>{
+ if(req.url==='/practice.js'){res.writeHead(200,{'Content-Type':'text/javascript'});res.end(fs.readFileSync(path.join(root,'practice-engine.js')));return;}
  if(req.url==='/runtime.js'){res.writeHead(200,{'Content-Type':'text/javascript'});res.end(source);return;}
  if(req.url==='/vendor/fengari-web.bundle.js'){const file=path.join(root,'vendor/fengari-web.bundle.js');if(!fs.existsSync(file)){res.writeHead(404);res.end('missing bundled Lua runtime');return;}res.writeHead(200,{'Content-Type':'text/javascript'});res.end(fs.readFileSync(file));return;}
  if(req.url?.startsWith('/vendor/pyodide/')){
@@ -20,7 +21,7 @@ const server=http.createServer((req,res)=>{
   res.end(fs.readFileSync(filepath));return;
  }
  res.writeHead(200,{'Content-Type':'text/html;charset=utf-8'});
- res.end('<!doctype html><html><head><title>LL Runtime test</title></head><body><script src="/runtime.js"></script></body></html>');
+ res.end('<!doctype html><html><head><title>LL Runtime test</title></head><body><script src="/runtime.js"></script><script src="/practice.js"></script></body></html>');
 });
 async function start(){
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
@@ -47,6 +48,28 @@ async function start(){
   assert.equal(lua.ok,true,'Lua must really run: '+JSON.stringify(lua));
   assert.equal(lua.lines.length,1);
   assert.equal(lua.lines[0],'number\tboolean\tstring','Lua print reflects real Lua types');
+  const custom=await page.evaluate(async()=>{
+   const exercise={lang:'lua',practice_output:'text-lines',practice_line_count:2,
+    checks:['\\bprint\\s*\\('],solution:'print("Alex")\nprint("Heute lerne ich Lua.")'};
+   const inputs=[
+    "print('luca')\nprint('ich mag amg')",
+    'print("luca")\nprint("ich mag amg")',
+    'print("Luca \\n Zweite Zeile")\nprint("Hallo")',
+    'print(123)\nprint("Hallo")',
+    'print("Luca", "Hallo")',
+    'print("Luca")\nprint("")',
+    'print("Luca")'
+   ];
+   const results=[];
+   for(const code of inputs){
+    const actual=await window.LLRuntime.run(code,'lua');
+    results.push(window.LLPractice.evaluateRuntime(code,exercise,actual,{ok:true,lines:[]}).ok);
+   }
+   return results;
+  });
+  assert.deepEqual(custom,[true,true,true,false,false,false,false],'Free text exercises grade the requested print calls and both quote styles');
+  const promise=await page.evaluate(()=>window.LLRuntime.run('Promise.resolve(42).then(value => console.log(value))','javascript'));
+  assert.deepEqual(promise.lines,['42'],'Promise callbacks finish before output is graded');
   const python=await page.evaluate(()=>window.LLRuntime.run('name = "LiveryLab"\nlevel = 3\nprint(name,level)','python'));
   assert.equal(python.available,true,'Python WebAssembly runner is available');
   assert.equal(python.ok,true,'Python must execute successfully: '+JSON.stringify(python));
