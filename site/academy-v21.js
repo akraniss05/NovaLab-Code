@@ -7,7 +7,7 @@
 'use strict';
 var cfg=window.LL_CONFIG||{}, $=function(q,root){return (root||document).querySelector(q);};
 var content=$('#content'), sidebar=$('#sidebar'), bottom=$('#bottom-nav'), toastNode=$('#toast');
-var api=null, s={shopEnabled:false,adminSelf:null,adminSelfBusy:false,adminSelfError:'',shopDiscount:0,shopMonths:1,shopOffers:[],selectedPlan:null,selectedMonths:1,service:{beta_open:true,mine:[],admin:[]},serviceError:'',serviceLastUpdated:0,lastSupportReceipt:null,supportBusy:false,chatTicketId:null,chatMessages:[],chatBusy:false,chatLoading:false,streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],xpAwards:[],xpClaimBusy:false,progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',difficultyFilter:'all',lesson:null,choice:null,quizStep:0,quizPassed:false,sectionIndex:0,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},memberExpiry:{},adminPage:1,adminFilter:'all',adminSearch:'',registrationPolicy:{mode:'approval',loaded:false},registrationManual:true,adminLearner:null,adminProgressBusy:false,adminProgressSearch:'',adminProgressFilter:'all',catalogLimit:9,practiceChecked:false,draft:'',lessonStep:1,hintStage:0,prefs:null,projectTab:0,projectSource:'',projectLoading:false};
+var api=null, s={shopEnabled:false,adminSelf:null,adminSelfBusy:false,adminSelfError:'',shopDiscount:0,shopMonths:1,shopOffers:[],selectedPlan:null,selectedMonths:1,service:{beta_open:true,mine:[],admin:[]},serviceError:'',serviceLastUpdated:0,lastSupportReceipt:null,supportBusy:false,chatTicketId:null,chatMessages:[],chatBusy:false,chatLoading:false,chatRevision:0,streakModalOpen:false,streakBusy:false,streakClockOffsetMs:0,streakRefreshBusy:false,streakError:'',streakLoading:false,loginStreak:null,friendTab:'friends',examFilter:'all',authScreen:'login',refLang:'lua',refSearch:'',refGroup:'Alle',daily:null,planExpires:null,discount:null,vouchers:[],lessonGate:null,user:null,profile:null,tier:'free',ready:false,courses:[],lessons:[],xpAwards:[],xpClaimBusy:false,progress:{done:[],watched:[],exams:{}},route:'home',filter:'Alle',search:'',difficultyFilter:'all',lesson:null,choice:null,quizStep:0,quizPassed:false,sectionIndex:0,videoChecked:false,videoLoaded:false,exam:null,examStatus:null,examGate:null,referenceData:null,social:null,socialMedia:{},isOwner:false,entitledCourses:null,members:[],memberPlans:{},memberExpiry:{},adminPage:1,adminFilter:'all',adminSearch:'',registrationPolicy:{mode:'approval',loaded:false},registrationManual:true,adminLearner:null,adminProgressBusy:false,adminProgressSearch:'',adminProgressFilter:'all',catalogLimit:9,practiceChecked:false,draft:'',lessonStep:1,hintStage:0,prefs:null,projectTab:0,projectSource:'',projectLoading:false};
 var plans={free:'Free',pro:'Plus',ultimate:'Ultimate',max:'Max'};
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];});}
 function safeLink(url){return /^https:\/\/[^\s<>"]+$/i.test(String(url||''))?esc(url):'#';}
@@ -596,7 +596,7 @@ async function logout(){
  s.user=null;s.profile=null;s.lesson=null;s.courses=[];s.lessons=[];s.xpAwards=[];
  s.progress={done:[],watched:[],practiced:[],verifiedPractice:[],exams:{}};s.progressBase=null;s.progressVersion=null;
  s.daily=null;s.adminSelf=null;s.planExpires=null;s.entitledCourses=null;s.vouchers=[];
- s.service={beta_open:true,mine:[],admin:[]};s.serviceError='';s.chatTicketId=null;s.chatMessages=[];
+ s.service={beta_open:true,mine:[],admin:[]};s.serviceError='';s.chatTicketId=null;s.chatMessages=[];s.chatBusy=false;s.chatLoading=false;s.chatRevision++;
  s.social=null;s.socialMedia={};s.members=[];s.memberPlans={};s.memberExpiry={};s.adminLearner=null;
  s.quizPassed=false;s.quizAnswers=[];s.draft='';s.ready=false;
  paintStreakModal();location.hash='#home';login();
@@ -1589,11 +1589,12 @@ async function refreshShopOffers(){
 }
 function salePrice(cents){return Math.round(cents*(100-Math.max(0,Math.min(90,Number(s.shopDiscount)||0)))/100)}
 function euro(cents){return (Number(cents||0)/100).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'}
+let serviceRequest=0;
 async function refreshService(){
- const accountId=s.user?.id;
+ const accountId=s.user?.id,request=++serviceRequest;
  try{
   const r=await api.rpc('academy_service',{p_action:'list',p_payload:{}});
-  if(!s.ready||s.user?.id!==accountId)return null;
+  if(!s.ready||s.user?.id!==accountId||request!==serviceRequest)return null;
   if(r.error)throw r.error;
   if(!r.data||!Array.isArray(r.data.mine)||
    (s.profile?.role==='admin'&&!Array.isArray(r.data.admin)))
@@ -1604,33 +1605,47 @@ async function refreshService(){
   return s.service;
  }catch(error){
   // Never present a failed request as a genuinely empty support inbox.
-  if(s.user?.id===accountId)s.serviceError=formatError(error);
+  if(s.ready&&s.user?.id===accountId&&request===serviceRequest)s.serviceError=formatError(error);
   throw error;
  }
 }
+function updateTicketStatus(id,status){
+ for(const list of [s.service?.mine,s.service?.admin]){
+  const ticket=list?.find(entry=>entry.id===id);
+  if(ticket&&typeof status==='string')ticket.status=status;
+ }
+}
 async function loadTicketThread(id){
- const accountId=s.user?.id;
+ const accountId=s.user?.id,hash=location.hash,revision=++s.chatRevision;
  const r=await api.rpc('academy_ticket_chat',{p_action:'thread',p_ticket:id,p_body:null});
- if(!s.ready||s.user?.id!==accountId)return null;
+ if(!s.ready||s.user?.id!==accountId||location.hash!==hash||s.chatRevision!==revision)return null;
  if(r.error)throw r.error;
  if(!r.data?.ok||!Array.isArray(r.data.messages))throw Error('Nachrichtenverlauf konnte nicht geladen werden.');
  s.chatTicketId=id;s.chatMessages=r.data.messages;
+ updateTicketStatus(id,r.data.status);
  return r.data;
 }
-function ticketChatPanel(isAdmin){
- const entries=isAdmin?s.service?.admin:s.service?.mine;
- const ticket=Array.isArray(entries)?entries.find(x=>x.id===s.chatTicketId):null;
- if(!ticket)return '';
- const messages=(s.chatMessages||[]).map(msg=>{
+function scrollTicketMessages(){
+ const log=$('#academy-chat-panel .ll-chat-messages');
+ if(log)log.scrollTop=log.scrollHeight;
+}
+function ticketChatMessages(isAdmin){
+ return (s.chatMessages||[]).map(msg=>{
   const own=(isAdmin?msg.role==='admin':msg.role==='member');
   const d=new Date(msg.at||0);
   const when=Number.isNaN(d.getTime())?'':d.toLocaleString('de-DE',{dateStyle:'short',timeStyle:'short'});
   return '<div class="ll-chat-message '+(own?'is-mine':'is-other')+'"><span class="ll-chat-sender">'+esc(msg.role==='admin'?'NovaLab Team':'Mitglied')+'</span>'+
   '<p>'+esc(msg.body||'')+'</p><small>'+esc(when)+'</small></div>';
  }).join('');
+}
+function ticketChatPanel(isAdmin){
+ const entries=isAdmin?s.service?.admin:s.service?.mine;
+ const ticket=Array.isArray(entries)?entries.find(x=>x.id===s.chatTicketId):null;
+ if(!ticket)return '';
+ const messages=ticketChatMessages(isAdmin);
  const approval=isAdmin&&ticket.category==='plan'&&ticket.status!=='approved';
- const management=isAdmin?'<form data-form="support-reply" data-ticket-id="'+esc(ticket.id)+'" class="ll-chat-status">'+
-  '<label>Status <select class="select" name="status"><option value="answered">Beantwortet</option><option value="closed">Schließen</option><option value="rejected">Ablehnen</option>'+
+ const management=isAdmin&&ticket.status!=='approved'?'<form data-form="support-reply" data-ticket-id="'+esc(ticket.id)+'" class="ll-chat-status">'+
+  '<label>Status <select class="select" name="status"><option value="answered" '+(ticket.status==='answered'?'selected':'')+'>Beantwortet</option><option value="closed" '+(ticket.status==='closed'?'selected':'')+'>Schließen</option><option value="rejected" '+(ticket.status==='rejected'?'selected':'')+'>Ablehnen</option>'+
   (approval?'<option value="approved">Mitgliedschaft freigeben</option>':'')+'</select></label>'+
   (approval?(ticket.term_months?'<p class="micro">Angefragt: '+Number(ticket.term_months)+' Monate · '+euro(ticket.quoted_cents||0)+' (Preis zum Anfragezeitpunkt; Zahlung separat bestätigen)</p>':'<label>Laufzeit (Tage) <input class="input" name="days" type="number" min="1" max="3650" value="30"></label>'):'')+
   '<button type="submit" class="btn small">Status speichern</button></form>':'';
@@ -1642,7 +1657,7 @@ function ticketChatPanel(isAdmin){
   '<form data-form="ticket-chat" data-ticket-id="'+esc(ticket.id)+'" class="ll-chat-compose">'+
   '<label class="form-label" for="chat-message">Nachricht an '+(isAdmin?'das Mitglied':'das Team')+'</label>'+
   '<textarea id="chat-message" class="input" name="body" rows="3" required maxlength="2000" placeholder="Deine Nachricht …"></textarea>'+
-  '<div class="ll-chat-compose-footer"><small>Im Supportticket gespeichert.</small>'+
+  '<div class="ll-chat-compose-footer"><small id="ticket-chat-status" role="status">Im Supportticket gespeichert.</small>'+
   '<button class="btn primary" type="submit" '+(s.chatBusy?'disabled':'')+'>Nachricht senden →</button></div></form>'+management+'</section>';
 }
 function supportPage(){
@@ -1660,7 +1675,7 @@ function supportPage(){
  '<label class="form-label">Laufzeit</label><select class="select" name="months">'+[[1,'1 Monat'],[3,'3 Monate'],[12,'12 Monate · 5 % Jahresrabatt']].map(([n,label])=>'<option value="'+n+'" '+(s.selectedMonths===n?'selected':'')+'>'+label+'</option>').join('')+'</select>'+
  '<small>Der Betrag wird serverseitig berechnet, die Freischaltung erfolgt erst nach Bestätigung. Keine automatische Zahlung.</small></div>':'')+
  '<div class="form-group"><label class="form-label" for="support-message">Deine Nachricht</label><textarea class="input" id="support-message" name="message" minlength="10" maxlength="2000" rows="6" required placeholder="Beschreibe dein Anliegen möglichst genau …"></textarea></div><p class="support-submit-status" id="support-submit-status" role="status" aria-live="polite">'+(s.lastSupportReceipt?'✓ Anfrage gespeichert · Ticket '+esc(s.lastSupportReceipt.slice(0,8)):'Deine Nachricht wird im Support-Posteingang gespeichert.')+'</p><button class="btn primary block" type="submit" '+(s.supportBusy?'disabled':'')+'>'+(s.supportBusy?'Wird gesendet …':'Anfrage senden →')+'</button></form><p class="micro">Bis zu fünf Anfragen innerhalb von 24 Stunden. Bitte sende keine Passwörter.</p></section>'+
- '<section class="panel support-history">'+(s.serviceError?'<p class="support-submit-status error" role="alert">Anfragen konnten nicht geladen werden: '+esc(s.serviceError)+'</p>':'')+'<div class="support-faq"><strong>Schnelle Hilfe</strong><details><summary>Wie erhalte ich Plus oder Ultimate?</summary><p>Eröffne während der Beta eine Tarif-Anfrage. Das Team gibt sie manuell frei.</p></details><details><summary>Wo sehe ich die Antwort?</summary><p>Hier in deinem Posteingang. Lade die App bei Bedarf neu.</p></details><details><summary>Wie melde ich einen Fehler?</summary><p>Wähle Fehler melden und beschreibe Gerät und Schritte.</p></details></div><span class="eyebrow">[ ◷ ] DEIN POSTEINGANG</span><h2>Deine Anfragen</h2><div class="support-controls"><input class="input" type="search" id="support-search" placeholder="Anfragen suchen …" aria-label="Anfragen suchen"><select class="select" id="support-filter"><option value="all">Alle Status</option><option value="open">Offen</option><option value="answered">Beantwortet</option><option value="approved">Genehmigt</option><option value="closed">Geschlossen</option></select></div>'+
+ '<section class="panel support-history">'+(s.serviceError?'<p class="support-submit-status error" role="alert">Anfragen konnten nicht geladen werden: '+esc(s.serviceError)+'</p>':'')+'<div class="support-faq"><strong>Schnelle Hilfe</strong><details><summary>Wie erhalte ich Plus oder Ultimate?</summary><p>Eröffne während der Beta eine Tarif-Anfrage. Das Team gibt sie manuell frei.</p></details><details><summary>Wo sehe ich die Antwort?</summary><p>Hier in deinem Posteingang. Lade die App bei Bedarf neu.</p></details><details><summary>Wie melde ich einen Fehler?</summary><p>Wähle Fehler melden und beschreibe Gerät und Schritte.</p></details></div><span class="eyebrow">[ ◷ ] DEIN POSTEINGANG</span><h2>Deine Anfragen</h2><div class="support-controls"><input class="input" type="search" id="support-search" placeholder="Anfragen suchen …" aria-label="Anfragen suchen"><select class="select" id="support-filter"><option value="all">Alle Status</option><option value="open">Offen</option><option value="answered">Beantwortet</option><option value="approved">Genehmigt</option><option value="closed">Geschlossen</option><option value="rejected">Abgelehnt</option></select><button type="button" class="btn small" data-action="refresh-support">↻ Aktualisieren</button></div>'+
  (mine.length?mine.map(t=>'<article class="support-ticket" data-ticket-status="'+esc(t.status||'open')+'"><div><strong>'+esc(names[t.category]||'Anfrage')+'</strong><span class="chip '+(t.status==='approved'?'free':'plus')+'">'+esc(t.status||'open')+'</span></div>'+
  '<small>'+new Date(t.updated_at||t.created_at).toLocaleString('de-DE')+'</small><p>'+esc((t.reply||t.message||'').slice(0,175))+'</p>'+
  '<button type="button" class="btn small" data-chat-open="'+esc(t.id)+'">Gespräch öffnen →</button></article>').join(''):'<p class="muted">Noch keine Anfragen. Deine Antwort erscheint später hier.</p>')+
@@ -2740,20 +2755,45 @@ window.addEventListener('focus',function(){tickTimer();});
 // Light polling keeps both ticket inboxes current without changing the page
 // while somebody is typing. Only active, visible support pages are polled.
 function supportEditorHasDraft(){return [...document.querySelectorAll('form[data-form="ticket-chat"] textarea,form[data-form="support-ticket"] textarea,form[data-form="support-reply"] textarea')].some(field=>!!field.value?.trim());}
-async function pollSupportInbox(){
- if(!s.ready||document.hidden)return;
- const route=parseRoute();
- if(route.page!=='support'&&!(route.page==='admin'&&route.id==='support'))return;
- if(s.supportBusy||s.chatBusy)return;
+let supportRefreshing=false;
+async function syncSupportInbox(manual=false){
+ if(!s.ready||supportRefreshing||s.supportBusy||s.chatBusy||s.chatLoading)return;
+ const accountId=s.user?.id,hash=location.hash,revision=s.chatRevision;
+ const current=()=>s.ready&&s.user?.id===accountId&&location.hash===hash;
+ const canRender=()=>!s.chatBusy&&!s.chatLoading&&!s.supportBusy&&!supportEditorHasDraft()&&
+  !document.activeElement?.closest?.('form[data-form="ticket-chat"],form[data-form="support-ticket"],form[data-form="support-reply"],.support-controls');
+ supportRefreshing=true;
  try{
   await refreshService();
-  if(s.chatTicketId)await loadTicketThread(s.chatTicketId);
-  const focused=document.activeElement;
-  if(!supportEditorHasDraft()&&!focused?.closest?.('form[data-form="ticket-chat"],form[data-form="support-ticket"],form[data-form="support-reply"]'))render();
- }catch(error){if(s.ready){s.serviceError=formatError(error);
-   const focused=document.activeElement;
-   if(!supportEditorHasDraft()&&!focused?.closest?.('form[data-form="ticket-chat"],form[data-form="support-ticket"],form[data-form="support-reply"]'))render();
-  }}
+  if(!current()||s.chatRevision!==revision||s.chatBusy||s.chatLoading||s.supportBusy)return;
+  if(s.chatTicketId&&!await loadTicketThread(s.chatTicketId))return;
+  if(current()&&canRender()){
+   const search=$('#support-search')?.value,filter=$('#support-filter')?.value;
+   render();
+   if($('#support-search'))$('#support-search').value=search||'';
+   if($('#support-filter'))$('#support-filter').value=filter||'all';
+   filterSupportTickets();
+   if(s.chatTicketId)scrollTicketMessages();
+  }else if(current()&&s.chatTicketId){
+   const log=$('#academy-chat-panel .ll-chat-messages');
+   if(log){
+    const atBottom=log.scrollHeight-log.scrollTop-log.clientHeight<20;
+    const messages=ticketChatMessages(parseRoute().page==='admin');
+    if(log.innerHTML!==messages)log.innerHTML=messages||'<p class="muted">Noch keine Nachrichten.</p>';
+    if(atBottom)scrollTicketMessages();
+   }
+  }
+  if(manual&&current())notice('Support-Posteingang aktualisiert.');
+ }catch(error){
+  if(!current())return;
+  if(canRender())render();
+  if(manual)notice('Support: '+formatError(error));
+ }finally{supportRefreshing=false;}
+}
+async function pollSupportInbox(){
+ if(document.hidden)return;
+ const route=parseRoute();
+ if(route.page==='support'||(route.page==='admin'&&route.id==='support'))await syncSupportInbox();
 }
 if(typeof setInterval==='function')setInterval(pollSupportInbox,20000);
 function filterSupportTickets(){const query=String($('#support-search')?.value||'').toLocaleLowerCase('de'),status=$('#support-filter')?.value||'all';document.querySelectorAll('.support-history .support-ticket').forEach(el=>{el.hidden=!!query&&!el.textContent.toLocaleLowerCase('de').includes(query)||status!=='all'&&el.dataset.ticketStatus!==status;});}
@@ -2790,17 +2830,22 @@ document.addEventListener('click',async function(e){
  const chatOpen=e.target.closest('[data-chat-open]');
  if(chatOpen){
   const id=chatOpen.dataset.chatOpen;
-  if(!/^[0-9a-f-]{36}$/i.test(id))return;
-  chatOpen.disabled=true;
+  if(!/^[0-9a-f-]{36}$/i.test(id)||s.chatBusy||s.chatLoading||s.supportBusy)return;
+  if(supportEditorHasDraft()&&!confirm('Gespräch öffnen und den ungesendeten Entwurf verwerfen?'))return;
+  s.chatLoading=true;chatOpen.disabled=true;
   try{
-   await loadTicketThread(id);render();
-   const panel=$('#academy-chat-panel');
-   if(panel?.scrollIntoView)panel.scrollIntoView({behavior:'smooth',block:'nearest'});
-  }catch(error){notice('Chat konnte nicht geöffnet werden: '+formatError(error));chatOpen.disabled=false;}
+   if(!await loadTicketThread(id))return;
+   s.chatLoading=false;
+   render();scrollTicketMessages();
+   $('#academy-chat-panel')?.scrollIntoView?.({behavior:'smooth',block:'start'});
+  }catch(error){notice('Chat konnte nicht geöffnet werden: '+formatError(error));}
+  finally{s.chatLoading=false;chatOpen.disabled=false;}
   return;
  }
  if(e.target.closest('[data-chat-close]')){
-  s.chatTicketId=null;s.chatMessages=[];render();return;
+  if(s.chatBusy||s.chatLoading||s.supportBusy)return;
+  if(supportEditorHasDraft()&&!confirm('Chat schließen und den ungesendeten Entwurf verwerfen?'))return;
+  s.chatRevision++;s.chatTicketId=null;s.chatMessages=[];render();return;
  }
  if(s.profile?.role==='admin'){
   const progressOpen=e.target.closest('[data-view-progress]');
@@ -2843,7 +2888,7 @@ document.addEventListener('click',async function(e){
   if(!['pro','ultimate','max'].includes(tier))return;
   s.selectedPlan=tier;s.selectedMonths=s.shopMonths;go('support');return;
  }
- if(e.target.closest('[data-action="refresh-support"]')){try{await refreshService();render();notice('Support-Posteingang aktualisiert.');}catch(err){render();notice('Support: '+formatError(err))}return;}
+ if(e.target.closest('[data-action="refresh-support"]')){await syncSupportInbox(true);return;}
  var friendAction=e.target.closest('[data-friend-action]');
  if(friendAction){
   const command=friendAction.dataset.friendAction,id=friendAction.dataset.friendId;
@@ -3272,27 +3317,57 @@ document.addEventListener('submit',async function(e){
     s.supportBusy=false;s.selectedPlan=null;render();notice('Anfrage erfolgreich gespeichert · Ticket '+r.data.id.slice(0,8));return;
    }finally{s.supportBusy=false;}
   }
-  if(mode==='ticket-chat'){
-   const id=form.dataset.ticketId,body=String(fd.get('body')||'').trim();
-   if(id!==s.chatTicketId||!body||body.length>2000)throw Error('Bitte eine gültige Nachricht schreiben.');
-   if(s.chatBusy)return;
-   s.chatBusy=true;button.textContent='Wird gesendet …';
+  if(mode==='ticket-chat'||mode==='support-reply'){
+   const id=form.dataset.ticketId,accountId=s.user?.id,hash=location.hash;
+   const isMessage=mode==='ticket-chat';
+   const current=()=>s.ready&&s.user?.id===accountId&&location.hash===hash&&s.chatTicketId===id;
+   const body=String(fd.get('body')||'').trim();
+   if(!current())throw Error('Öffne das Ticket erneut.');
+   if(s.chatBusy||s.chatLoading||s.supportBusy)return;
+   if(isMessage&&(!body||body.length>2000))throw Error('Bitte 1 bis 2000 Zeichen schreiben.');
+   const status=String(fd.get('status')),days=fd.get('days')?Number(fd.get('days')):null;
+   if(!isMessage){
+    if(s.profile?.role!=='admin')throw Error('Nur Administratoren');
+    const ticket=s.service?.admin?.find(t=>t.id===id);
+    if(!ticket||ticket.status==='approved')throw Error('Dieses Ticket wurde bereits genehmigt oder ist nicht verfügbar.');
+    if(status==='approved'&&!confirm('Mitgliedschaft für '+(days?days+' Tage':Number(ticket.term_months||1)+' Monate')+' freigeben? Zahlung separat prüfen.'))return;
+   }
+   const originalLabel=button.textContent;
+   s.chatRevision++;s.chatBusy=true;
+   button.textContent=isMessage?'Wird gesendet …':'Wird gespeichert …';
+   const editor=$('#chat-message');
+   if(isMessage&&editor)editor.readOnly=true;
+   let saved=false;
    try{
-    const reply=await api.rpc('academy_ticket_chat',{p_action:'send',p_ticket:id,p_body:body});
-    if(reply.error)throw reply.error;
-    if(reply.data?.ok!==true||!reply.data.sent_id||!Array.isArray(reply.data.messages))throw Error('Nachricht wurde vom Server nicht bestätigt.');
-    s.chatMessages=reply.data.messages;
-    try{await refreshService();}catch(_){}
-    render();notice('Nachricht gesendet und im Ticket gespeichert.');return;
-   }finally{s.chatBusy=false;}
-  }
-  if(mode==='support-reply'){
-   if(s.profile?.role!=='admin')throw Error('Nur Administratoren');
-   const status=String(fd.get('status')),days=fd.get('days')?Number(fd.get('days')):null,reply=String(fd.get('reply')||'').trim();
-   const selectedTicket=(s.service?.admin||[]).find(t=>t.id===form.dataset.ticketId);
-   if(status==='approved'&&!confirm('Mitgliedschaft für '+(days?days+' Tage':Number(selectedTicket?.term_months||1)+' Monate')+' freigeben? Zahlung separat prüfen.'))return;
-   const r=await api.rpc('academy_service',{p_action:'respond',p_payload:{id:form.dataset.ticketId,status,days,reply}});
-   if(r.error)throw r.error;await refreshService();await loadTicketThread(form.dataset.ticketId);render();notice('Anfrage aktualisiert.');return;
+    const result=isMessage
+     ?await api.rpc('academy_ticket_chat',{p_action:'send',p_ticket:id,p_body:body})
+     :await api.rpc('academy_service',{p_action:'respond',p_payload:{id,status,days,reply:''}});
+    if(result.error)throw result.error;
+    if(result.data?.ok!==true||(isMessage&&(!result.data.sent_id||!Array.isArray(result.data.messages))))
+     throw Error('Der Server hat die Änderung nicht bestätigt.');
+    if(!current())return;
+    saved=true;
+    if(isMessage)s.chatMessages=result.data.messages;
+    updateTicketStatus(id,result.data.status);
+    try{
+     await refreshService();
+     if(!isMessage&&current())await loadTicketThread(id);
+    }catch(_){}
+   }finally{
+    if(s.user?.id===accountId)s.chatBusy=false;
+    if(button.isConnected)button.textContent=originalLabel;
+    if(editor)editor.readOnly=false;
+   }
+   if(saved&&current()){
+    const draft=isMessage?'':editor?.value;
+    const request=$('#support-message')?.value;
+    render();
+    if(draft&&$('#chat-message'))$('#chat-message').value=draft;
+    if(request&&$('#support-message'))$('#support-message').value=request;
+    scrollTicketMessages();
+    notice(isMessage?'Nachricht gesendet und im Ticket gespeichert.':'Anfrage aktualisiert.');
+   }
+   return;
   }
   if(mode==='set-username'){
    var chosen=String(fd.get('username')||'').trim();
@@ -3379,6 +3454,9 @@ document.addEventListener('submit',async function(e){
     const status=$('#support-submit-status');
     if(status){status.textContent='Anfrage nicht bestätigt: '+formatError(err);status.classList.add('error');}
     s.supportBusy=false;
+   }
+   if(mode==='ticket-chat'&&form.isConnected){
+    const status=$('#ticket-chat-status');if(status)status.textContent='Nachricht nicht bestätigt: '+formatError(err);
    }
    notice(formatError(err));
  }finally{button.disabled=false;if(mode==='support-ticket'&&button.isConnected)button.textContent='Anfrage senden →';}

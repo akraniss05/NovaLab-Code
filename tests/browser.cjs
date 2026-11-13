@@ -173,7 +173,7 @@ const material=await browser.newPage({viewport:{width:390,height:850},isMobile:t
 await material.setContent('<main id="content"></main><aside id="sidebar"></aside><nav id="bottom-nav"></nav><div id="toast"></div><style>'+css+'</style>');
 await material.evaluate(()=>{location.hash='#lesson/fivem-01';window.LL_CONFIG={};});
 await material.addScriptTag({path:path.join(root,'site/academy-progress-sync.js')});
-await material.addScriptTag({content:source.replace(/\ninit\(\);\n\}\)\(\);\s*$/, '\nwindow.__materialTest={s,lessonPage,updateLessonControls};\n})();')});
+await material.addScriptTag({content:source.replace(/\ninit\(\);\n\}\)\(\);\s*$/, '\nwindow.__materialTest={s,lessonPage,updateLessonControls};window.__setSupportApi=client=>{api=client;};\n})();')});
 await material.evaluate(({courses,lessons,lesson})=>{
  const {s,lessonPage,updateLessonControls}=window.__materialTest;
  Object.assign(s,{ready:true,user:{id:'learner'},profile:{role:'student'},courses,lessons,lesson,
@@ -195,6 +195,53 @@ for(const route of ['portfolio','skilltree','notes','challenges','calendar','lev
  await material.waitForFunction(()=>location.hash==='#home'&&document.querySelector('.ll-home-shortcuts'));
  assert.equal(await material.locator('[data-go="'+route+'"]').count(),0,route+' must stay out of the menu and dashboard');
 }
+await material.evaluate(()=>{
+ const {s}=window.__materialTest;
+ const ticket={id:'11111111-1111-4111-8111-111111111111',category:'support',status:'open',
+  username:'Testmitglied',message:'Die Lektion lädt bei mir nicht.',created_at:'2026-11-13T08:00:00Z'};
+ s.profile.role='admin';
+ const inbox={beta_open:true,mine:[],admin:[ticket]};
+ let messages=[{id:'original',role:'member',body:ticket.message,at:ticket.created_at}];
+ window.__setSupportApi({rpc:async(name,args)=>{
+  if(name==='academy_service'&&args.p_action==='list')return {data:inbox};
+  if(name==='academy_ticket_chat'&&args.p_action==='thread')return {data:{ok:true,status:ticket.status,messages}};
+  if(name==='academy_ticket_chat'&&args.p_action==='send'){
+   if(args.p_body==='Erster Versuch offline')return {error:{message:'Verbindung unterbrochen'}};
+   const sent_id=String(messages.length);
+   messages=[...messages,{id:sent_id,role:'admin',body:args.p_body,at:ticket.created_at}];
+   ticket.status='answered';
+   return {data:{ok:true,sent_id,status:ticket.status,messages}};
+  }
+  if(name==='academy_service'&&args.p_action==='respond'){
+   ticket.status=args.p_payload.status;
+   return {data:{ok:true,status:ticket.status}};
+  }
+  return {data:[]};
+ }});
+ location.hash='#admin/support';
+});
+await material.getByRole('button',{name:'Chat öffnen →'}).tap();
+const chat=material.locator('#academy-chat-panel');
+const send=chat.getByRole('button',{name:'Nachricht senden →'});
+await chat.locator('textarea').fill('Erster Versuch offline');
+await send.tap();
+await chat.getByText('Nachricht nicht bestätigt: Verbindung unterbrochen').waitFor();
+assert.equal(await chat.locator('textarea').inputValue(),'Erster Versuch offline');
+for(const body of ['Ich schaue mir deine Lektion an.','Das Problem ist jetzt behoben.']){
+ await chat.locator('textarea').fill(body);
+ await send.tap();
+ await chat.getByText(body,{exact:true}).waitFor();
+ assert.equal(await send.isEnabled(),true,'A successful reply must leave the next send button enabled');
+ assert.equal(await chat.locator('textarea').inputValue(),'');
+}
+await chat.locator('textarea').fill('Ungesendeter Entwurf');
+await material.locator('[data-action="refresh-support"]').tap();
+await material.getByText('Support-Posteingang aktualisiert.',{exact:true}).waitFor();
+assert.equal(await chat.locator('textarea').inputValue(),'Ungesendeter Entwurf');
+await chat.locator('select[name="status"]').selectOption('closed');
+await chat.getByRole('button',{name:'Status speichern'}).tap();
+await chat.getByText(/support · closed/).waitFor();
+assert.equal(await chat.locator('textarea').inputValue(),'Ungesendeter Entwurf');
 await material.close();
 
 for(const width of [320,390,430,768,1280]){
