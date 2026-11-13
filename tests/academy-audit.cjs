@@ -1,4 +1,4 @@
-/* NovaLab audit regressions: code grading, hidden shop, studio wiring and quiz proof. */
+/* NovaLab audit regressions: code grading, hidden shop, removed studio assets and quiz proof. */
 'use strict';
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path');
@@ -17,11 +17,10 @@ const noOutput=(code)=>grader.evaluateRuntime(code,{lang:'javascript',solution:'
 assert.equal(noOutput('const amount=999;').ok,false,'Unobservable changed code must never be blindly accepted');
 assert.equal(noOutput('const amount=2;').ok,true,'Identical zero-output reference remains valid');
 const main=read('site/academy-v21.js'),index=read('site/index.html'),sync=read('site/academy-learning-sync.js');
-assert.match(index,/academy-studio\.js/,'Studio module must actually load');
-assert.match(index,/academy-studio\.css/,'Studio styles must actually load');
-for(const route of ['portfolio','skilltree','notes','challenges','calendar','level']){
- assert(main.includes(route+':()=>window.LLStudio?.'),'Studio route not linked: '+route);
+for(const entry of [index,read('site/v21.html'),read('site/v31.html')]){
+ assert.doesNotMatch(entry,/academy-studio\.(js|css)/);
 }
+assert.doesNotMatch(main,/window\.LLStudio/);
 assert.match(main,/academy_verify_lesson_quiz/,'Lesson completion must verify quiz server-side');
 assert.match(main,/id="lesson-summary"/,'Fifth lesson stage must have the real result anchor');
 assert.match(main,/id="learning-resume"/,'Resume status must be visible in the lesson header');
@@ -33,4 +32,4 @@ assert.match(main,/supportEditorHasDraft/,'Poller must preserve unfinished suppo
 assert.match(main,/s\.shopEnabled\?homeShortcut/,'Disabled shop must not leave dashboard shortcut');
 assert.match(sync,/for\(const id of records\.keys\(\)\)/,'Visibility listener uses defined map');
 assert.doesNotMatch(sync,/timers\.keys\(\)/,'Undefined timers variable must not recur');
-console.log('PASS: Academy audit regressions - markup, unobservable JS, studio wiring, hidden shop and quiz proof.');
+console.log('PASS: Academy audit regressions - markup, unobservable JS, removed studio assets, hidden shop and quiz proof.');

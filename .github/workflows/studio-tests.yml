@@ -1,4 +1,4 @@
-name: Studio smoke tests
+name: Academy smoke tests
 on:
   push:
     branches: [main]
@@ -14,7 +14,6 @@ on:
       - 'site/academy-atelier.css'
       - 'site/academy-v31-layout.css'
       - 'supabase/functions/admin-users/index.ts'
-      - 'site/academy-studio.js'
       - 'site/academy-runtime.js'
       - 'site/academy-learning-sync.js'
       - 'site/academy-learning-extras.css'
@@ -23,8 +22,6 @@ on:
       - 'tests/progress-reliability.cjs'
       - 'tests/progress-sync.cjs'
       - 'tests/practice.cjs'
-      - 'tests/studio.cjs'
-      - 'tests/studio-session.cjs'
       - 'tests/runtime-browser.cjs'
       - 'tests/runtime-grading.cjs'
       - 'tests/simple-academy.cjs'
@@ -54,7 +51,6 @@ on:
       - 'site/academy-atelier.css'
       - 'site/academy-v31-layout.css'
       - 'supabase/functions/admin-users/index.ts'
-      - 'site/academy-studio.js'
       - 'site/academy-runtime.js'
       - 'site/academy-learning-sync.js'
       - 'site/academy-learning-extras.css'
@@ -63,8 +59,6 @@ on:
       - 'tests/progress-reliability.cjs'
       - 'tests/progress-sync.cjs'
       - 'tests/practice.cjs'
-      - 'tests/studio.cjs'
-      - 'tests/studio-session.cjs'
       - 'tests/runtime-browser.cjs'
       - 'tests/runtime-grading.cjs'
       - 'tests/simple-academy.cjs'
@@ -97,7 +91,6 @@ jobs:
           node --check site/academy-curriculum.js
           node --check site/academy-i18n.js
           node --check site/academy-effects.js
-          node --check site/academy-studio.js
           node --check site/academy-runtime.js
           node --check site/academy-learning-sync.js
           node --check site/practice-engine.js
@@ -123,10 +116,6 @@ jobs:
         run: node tests/academy-audit.cjs
       - name: Existing practice tests
         run: node tests/practice.cjs
-      - name: New studio regression tests
-        run: node tests/studio.cjs
-      - name: Studio account isolation and logout races
-        run: node tests/studio-session.cjs
       - name: Real runtime grading tests
         run: node tests/runtime-grading.cjs
       - name: Concurrent progress sync and conflict-safe resets

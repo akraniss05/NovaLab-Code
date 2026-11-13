@@ -190,6 +190,11 @@ assert.equal(await material.locator('[data-learning-step="2"].done').count(),1);
 await material.locator('#video-check').tap();
 await material.locator('#video-check[aria-pressed="false"]').waitFor();
 assert.equal(await material.locator('#mark-lesson').isDisabled(),true,'Undo disables completion');
+for(const route of ['portfolio','skilltree','notes','challenges','calendar','level']){
+ await material.evaluate(path=>{location.hash='#'+path;},route);
+ await material.waitForFunction(()=>location.hash==='#home'&&document.querySelector('.ll-home-shortcuts'));
+ assert.equal(await material.locator('[data-go="'+route+'"]').count(),0,route+' must stay out of the menu and dashboard');
+}
 await material.close();
 
 for(const width of [320,390,430,768,1280]){

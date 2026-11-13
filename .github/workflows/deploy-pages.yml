@@ -35,7 +35,6 @@ jobs:
           node --check site/academy-curriculum.js
           node --check site/academy-i18n.js
           node --check site/academy-effects.js
-          node --check site/academy-studio.js
           node --check site/academy-runtime.js
           node --check site/auth-mfa-v15.js
           node --check site/config.js
