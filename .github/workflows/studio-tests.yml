@@ -15,6 +15,7 @@ on:
       - 'site/academy-v31-layout.css'
       - 'supabase/functions/admin-users/index.ts'
       - 'site/academy-runtime.js'
+      - 'site/native/**'
       - 'scripts/fetch-java-runtime.sh'
       - 'site/academy-learning-sync.js'
       - 'site/academy-learning-extras.css'
@@ -53,6 +54,7 @@ on:
       - 'site/academy-v31-layout.css'
       - 'supabase/functions/admin-users/index.ts'
       - 'site/academy-runtime.js'
+      - 'site/native/**'
       - 'scripts/fetch-java-runtime.sh'
       - 'site/academy-learning-sync.js'
       - 'site/academy-learning-extras.css'
@@ -127,7 +129,7 @@ jobs:
       - name: Account draft autosave tests
         run: node tests/learning-sync.cjs
       - name: Install browser test dependency
-        run: npm install --no-save --ignore-scripts --no-package-lock playwright-core@1.56.1 fengari-web@0.1.4 pyodide@0.27.8 sql.js@1.13.0 typescript@5.9.3
+        run: npm install --no-save --ignore-scripts --no-package-lock playwright-core@1.56.1 fengari-web@0.1.4 pyodide@0.27.8 sql.js@1.13.0 typescript@5.9.3 @yowasp/clang@21.1.4-3
       - name: Prepare local Lua runtime
         run: |
           mkdir -p site/vendor
@@ -137,6 +139,8 @@ jobs:
           cp node_modules/sql.js/dist/sql-wasm.{js,wasm} site/vendor/sql/
           cp node_modules/typescript/lib/typescript.js site/vendor/typescript.js
           bash scripts/fetch-java-runtime.sh
+          mkdir -p site/vendor/clang
+          cp -R node_modules/@yowasp/clang/gen site/vendor/clang/
       - name: Prepare Python WebAssembly runtime
         run: |
           mkdir -p site/vendor/pyodide

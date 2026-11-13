@@ -1298,6 +1298,11 @@ function practiceFile(payload){
  const filename=String(payload.filename||fallback);
  return /^[a-zA-Z0-9_.-]{1,100}$/.test(filename)&&filename!=='.'&&filename!=='..'?filename:fallback;
 }
+function practiceValueNote(payload,local){
+ if(payload.practice_output==='exact')return catalogText('Halte die geforderten Werte und Ausgaben ein. Deinen Lösungsweg kannst du selbst wählen.','Keep the required values and output. Choose your own approach.');
+ if(payload.practice_output||local)return catalogText('Wähle eigene Texte, Zahlen oder Namen, wo die Aufgabe sie freilässt. Halte genannte Testfälle, Typen und Vorgaben ein.','Choose your own text, numbers or names wherever the task leaves them open. Keep the stated test cases, types and requirements.');
+ return catalogText('Halte die Vorgaben der Aufgabe ein. Nutze das Terminal oder die Vorschau, um Varianten vor dem Prüfen auszuprobieren.','Follow the task requirements. Use the terminal or preview to try alternatives before checking.');
+}
 function practiceTerminal(payload,courseId){
  const lang=String(payload.lang||'').toLowerCase();
  const runnable=window.LLRuntime?.supported?.includes(lang);
@@ -1305,10 +1310,11 @@ function practiceTerminal(payload,courseId){
  const command=practiceFiles[lang]?.[1];
  const local=(payload.practice_mode==='guided'||!runnable)&&!['html','css'].includes(lang);
  const fiveM=/^(fivem|esx|qbcore|ox|nui)(-|$)/.test(courseId||'');
- const showInput=runnable&&['lua','python','py','javascript','js','typescript','ts'].includes(lang);
+ const showInput=runnable&&['lua','python','py','javascript','js','typescript','ts','c','cpp'].includes(lang);
  return '<section class="practice-console" aria-label="'+catalogText('Terminal','Terminal')+'"><div class="practice-title"><strong>Terminal</strong>'+
  '<button class="btn small" type="button" data-action="download-practice">'+catalogText('Datei herunterladen','Download file')+'</button></div>'+
  (runnable?'<p class="micro">'+(lang==='sql'?catalogText('SQLite-Testdatenbank. Jeder Lauf beginnt leer. Lege Tabellen und Testdaten im Editor vor deiner Abfrage an.','Each run starts with an empty SQLite database. Create tables and test data above your query.'):['typescript','ts'].includes(lang)?catalogText('TypeScript wird in JavaScript umgewandelt. Für eine vollständige Typprüfung nutze tsc lokal.','TypeScript is converted to JavaScript. Run tsc locally for full type checking.'):catalogText('Probiere deinen Code aus. „Prüfen“ bewertet danach die Aufgabe.','Try your code here. Use Check to grade the exercise.'))+'</p>'+
+ (['c','cpp'].includes(lang)?'<p class="micro">'+catalogText('Clang kompiliert eine einzelne Quelldatei. Beim ersten Lauf lädt der Browser den Compiler.','Clang compiles one source file. The first run downloads the compiler.')+'</p>':'')+
  (lang==='java'?'<p class="micro">'+catalogText('Führe einzelne Klassen mit einer main-Methode aus. Eine leere Klasse kannst du als Gerüst einsetzen. Für Maven, Gradle und Konsoleneingaben nutze dein lokales JDK.','Run a single class with a main method. Insert an empty class to get started. Use a local JDK for Maven, Gradle and console input.')+'</p><button class="btn small" type="button" data-action="practice-java-starter">'+catalogText('Java-Gerüst einsetzen','Insert Java starter')+'</button>':'')+
  (showInput?'<details><summary>'+catalogText('Teste mit eigenen Eingaben','Test with your own input')+'</summary><label class="micro" for="practice-stdin">'+catalogText('Eine Eingabe pro Zeile','One input per line')+'</label><textarea class="input" id="practice-stdin" rows="2" maxlength="2000" spellcheck="false"></textarea></details>':'')+
  '<div class="practice-actions"><button type="button" class="btn" data-action="run-practice">'+catalogText('Ausführen','Run')+'</button><button type="button" class="btn" data-action="stop-practice" hidden>'+catalogText('Stoppen','Stop')+'</button></div>'+
@@ -1410,6 +1416,7 @@ function lessonPage(id){
  '<p class="micro" id="video-check-status" role="status"></p></section>'+
  '<section class="step-box" id="lesson-practice"><span class="eyebrow">SCHRITT 03 · SELBST AUSPROBIEREN</span><h2>'+(isBlender?'Dein Arbeitsschritt.':'Löse diese Aufgabe im Editor.')+'</h2>'+
  '<p>'+esc(p.task||'Setze die Erklärung eigenständig in einem Beispiel um.')+'</p>'+
+ '<p class="micro">'+esc(practiceValueNote(p,selfReviewed))+'</p>'+
  (selfReviewed?'<p class="muted">Selbstprüfung · '+esc(p.practice_instruction||(isBlender?'Führe die Aufgabe in Blender aus und vergleiche dein Ergebnis mit den beschriebenen Schritten.':'Bearbeite die Aufgabe in der dafür vorgesehenen Umgebung. Halte deinen Test und das beobachtete Ergebnis fest.'))+'</p>':p.practice_instruction?'<p class="muted">'+esc(p.practice_instruction)+'</p>':'')+
  '<div class="practice-workspace'+(isPracticeDone?' is-complete':'')+'" id="practice-workspace"><div class="practice-title"><strong>'+(isBlender?'Deine Umsetzung':'Dein Code-Entwurf')+'</strong>'+
  '<span class="practice-status" id="practice-status">'+(isPracticeDone?'✓ Praxis erledigt':'Nur auf diesem Gerät gespeichert')+'</span></div>'+
@@ -1533,15 +1540,19 @@ async function completePractice(){
   }
   let result=visual
    ?{ok:true,diagnostic:'Selbstprüfung gespeichert.'}
-   :window.LLPractice.evaluate(value,payload);
-  if(!visual&&window.LLRuntime&&['lua','python','py','javascript','js'].includes(lang)){
-   const runtime=await window.LLRuntime.run(value,lang);
+   :payload.practice_output==='criteria'
+    ?{ok:false,diagnostic:'Die automatische Prüfung braucht die Laufzeit. Lade die Seite neu, falls sie fehlt.'}
+    :window.LLPractice.evaluate(value,payload);
+  if(!visual&&window.LLRuntime&&(['lua','python','py','javascript','js'].includes(lang)||payload.practice_output==='criteria')){
+   const runtime=await window.LLRuntime.run(value,lang,payload.practice_output==='criteria'?{stdin:payload.practice_test_input||''}:undefined);
    if(runtime.available){
     if(!runtime.ok)result={ok:false,diagnostic:'Laufzeitfehler: '+runtime.error};
-    else if(payload.solution&&typeof window.LLPractice?.evaluateRuntime==='function'){
-     const expected=payload.practice_output==='text-lines'||payload.practice_output==='prefix'?{ok:true,lines:[]}:await window.LLRuntime.run(payload.solution,lang);
+    else if((payload.solution||payload.practice_output==='criteria')&&typeof window.LLPractice?.evaluateRuntime==='function'){
+     const expected=['text-lines','prefix','criteria'].includes(payload.practice_output)?{ok:true,lines:[]}:await window.LLRuntime.run(payload.solution,lang);
      result=window.LLPractice.evaluateRuntime(value,payload,runtime,expected);
     }
+   }else if(payload.practice_output==='criteria'){
+    result={ok:false,diagnostic:runtime.error||'Die Laufzeit konnte nicht gestartet werden. Lade die Seite neu.'};
    }else{
     // No runtime (offline, blocked worker or missing bundle): retain the structural
     // static verdict instead of rejecting valid personal strings and variable values.

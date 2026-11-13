@@ -3,7 +3,7 @@
    Made with 💙 by NyxAtheris (NovaLab Academy). */
 (function(root){
 'use strict';
-const supported=new Set(['javascript','js','lua','python','py','sql','typescript','ts','json','java']);
+const supported=new Set(['javascript','js','lua','python','py','sql','typescript','ts','json','java','c','cpp']);
 function workerEnvironment(scope){
 'use strict';
 const maximum=100;
@@ -16,7 +16,10 @@ scope.onmessage=async function(event){
  const push=(...args)=>{if(lines.length<maximum)lines.push(args.map(v=>v===undefined?'undefined':v===null?'null':typeof v==='object'?JSON.stringify(v):String(v)).join(' ').slice(0,4000));};
  try{
   if(code.length>15000)throw Error('Maximal 15.000 Zeichen pro Ausführung.');
-  if(lang==='java'){
+  if(lang==='c'||lang==='cpp'){
+   const {runNative}=await import(input.nativeModuleUrl);
+   await runNative(code,lang,String(input.stdin||''),push);
+  }else if(lang==='java'){
    const {load}=await import(input.javaBaseUrl+'compiler.wasm-runtime.js');
    const base=input.javaBaseUrl;
    const binary=async name=>{
@@ -184,7 +187,7 @@ function run(code,lang,{stdin='',signal}={}){
     settle(result);
    };
    worker.onerror=()=>settle({ok:false,lines:[],error:'Die Ausführungsumgebung konnte nicht starten. Prüfe Browser und Verbindung.',available:false});
-   const maxTime=['python','py','java'].includes(lang)?45000:['lua','sql','typescript','ts'].includes(lang)?12000:4000;
+   const maxTime=['python','py','java','c','cpp'].includes(lang)?60000:['lua','sql','typescript','ts'].includes(lang)?12000:4000;
    timeout=setTimeout(()=>settle({ok:false,lines:[],error:'Ausführung nach '+(maxTime/1000)+' Sekunden abgebrochen. Prüfe deinen Code auf Endlosschleifen.',available:true}),maxTime);
    const base=(typeof document!=='undefined'&&document.baseURI)||(typeof location!=='undefined'?location.href:'');
    const luaBundleUrl=base?new URL('vendor/fengari-web.bundle.js',base).href:'';
@@ -193,7 +196,8 @@ function run(code,lang,{stdin='',signal}={}){
    const sqlBaseUrl=base?new URL('vendor/sql/',base).href:'';
    const typescriptUrl=base?new URL('vendor/typescript.js',base).href:'';
    const javaBaseUrl=base?new URL('vendor/java/',base).href:'';
-   worker.postMessage({code:String(code||''),lang,luaBundleUrl,pythonBaseUrl,pythonBundleUrl,sqlBaseUrl,typescriptUrl,javaBaseUrl,stdin:String(stdin).slice(0,2000),nonce});
+   const nativeModuleUrl=base?new URL('native/compiler.mjs',base).href:'';
+   worker.postMessage({code:String(code||''),lang,nativeModuleUrl,luaBundleUrl,pythonBaseUrl,pythonBundleUrl,sqlBaseUrl,typescriptUrl,javaBaseUrl,stdin:String(stdin).slice(0,2000),nonce});
   }catch(error){settle({ok:false,lines:[],error:'Laufzeit nicht verfügbar: '+error.message,available:false});}
  });
 }

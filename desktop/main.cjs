@@ -7,12 +7,12 @@ const {Readable}=require('node:stream');
 const ROOT=()=>app.isPackaged?path.join(process.resourcesPath,'site'):path.join(__dirname,'..','site');
 const SCHEME='novalab-code';
 const HOST='app';
-const MIME={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8',
+const MIME={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8',
  '.css':'text/css; charset=utf-8','.json':'application/json','.webmanifest':'application/manifest+json',
  '.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp','.jpg':'image/jpeg',
  '.jpeg':'image/jpeg','.gif':'image/gif','.ico':'image/x-icon','.woff':'font/woff',
  '.woff2':'font/woff2','.ttf':'font/ttf','.mp3':'audio/mpeg','.ogg':'audio/ogg',
- '.wav':'audio/wav','.wasm':'application/wasm','.zip':'application/zip','.whl':'application/zip','.data':'application/octet-stream','.bin':'application/octet-stream'};
+ '.wav':'audio/wav','.wasm':'application/wasm','.zip':'application/zip','.whl':'application/zip','.data':'application/octet-stream','.bin':'application/octet-stream','.tar':'application/octet-stream'};
 protocol.registerSchemesAsPrivileged([{
  scheme:SCHEME,privileges:{standard:true,secure:true,supportFetchAPI:true,stream:true,corsEnabled:true}
 }]);
@@ -30,7 +30,7 @@ async function handleLocal(request){
   const real=await fs.realpath(requested);
   if(!real.startsWith(root+path.sep))return new Response('Forbidden',{status:403});
   const stat=await fs.stat(real);
-  if(!stat.isFile()||stat.size>30*1024*1024)return new Response('Unsupported',{status:413});
+  if(!stat.isFile()||stat.size>80*1024*1024)return new Response('Unsupported',{status:413});
   const ext=path.extname(real).toLowerCase();
   if(!MIME[ext])return new Response('Unsupported media',{status:415});
   if(ext==='.html' && path.basename(real)==='index.html') {

@@ -17,6 +17,11 @@ const server=http.createServer((req,res)=>{
   res.writeHead(200,{'Content-Type':req.url.endsWith('.wasm')?'application/wasm':'text/javascript'});
   res.end(fs.readFileSync(path.join(root,req.url)));return;
  }
+ if(/^\/(native\/(?:compiler\.mjs|wasi-host\.mjs|eh\.cpp)|vendor\/clang\/gen\/[a-zA-Z0-9_.-]+)$/.test(req.url)){
+  const file=path.join(root,req.url),ext=path.extname(file);
+  res.writeHead(200,{'Content-Type':ext==='.wasm'?'application/wasm':['.mjs','.js'].includes(ext)?'text/javascript':'application/octet-stream'});
+  res.end(fs.readFileSync(file));return;
+ }
  if(req.url?.startsWith('/vendor/java/')){
   const filename=path.basename(req.url);
   res.writeHead(200,{'Content-Type':filename.endsWith('.wasm')?'application/wasm':filename.endsWith('.js')?'text/javascript':'application/octet-stream'});
@@ -111,6 +116,18 @@ async function start(){
   const javaError=await page.evaluate(()=>window.LLRuntime.run('class Main { public static void main(String[] args) { System.out.println(unknown); } }','java'));
   assert.equal(javaError.ok,false);
   assert.match(javaError.error,/Zeile 1|unknown/);
+  const native=await page.evaluate(async()=>{
+   const c=await window.LLRuntime.run('#include <stdio.h>\nint main(void){ int x; if(scanf("%d",&x)==1) printf("%d", x*2); return 0; }','c',{stdin:'7'});
+   const cpp=await window.LLRuntime.run('#include <iostream>\nint main(){ std::cout << "Mein eigener Text" << std::endl; }','cpp');
+   const invalid=await window.LLRuntime.run('int main(){ missing(); }','cpp');
+   return {c,cpp,invalid};
+  });
+  assert.equal(native.c.ok,true,native.c.error);
+  assert.deepEqual(native.c.lines,['14']);
+  assert.equal(native.cpp.ok,true,native.cpp.error);
+  assert.deepEqual(native.cpp.lines,['Mein eigener Text']);
+  assert.equal(native.invalid.ok,false);
+  assert.match(native.invalid.error,/missing/);
   const unsupported=await page.evaluate(()=>window.LLRuntime.run('fn main() {}','rust'));
   assert.equal(unsupported.available,false,'An unsupported language must not simulate execution');
   console.log('PASS: browser execution, input, output, stop, SQL, TypeScript, Java and JSON.');

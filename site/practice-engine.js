@@ -88,6 +88,11 @@ function allowsOwnValues(payload){
 function checkFlexibleOutput(payload,actual,expected){
  const rule=payload.practice_output;
  const lines=actual.lines||[];
+ if(rule==='criteria'){
+  const criteria=payload.practice_lines||[];
+  const ok=lines.length===criteria.length&&criteria.every((pattern,index)=>matches(lines[index],pattern));
+  return {ok,diagnostic:ok?'Deine Ausgabe erfüllt die Vorgaben.':'Prüfe Anzahl, Reihenfolge und Art der Ausgaben in der Aufgabenbeschreibung.',output:lines};
+ }
  if(rule==='text-lines'){
   const count=payload.practice_line_count;
   const types=actual.lineTypes;
@@ -230,10 +235,11 @@ function evaluateRuntime(code,payload,actual,expected){
  const lang=String(payload.lang||'').toLowerCase(),source=significant(code,lang),solution=significant(payload.solution||'',lang);
  if(!actual?.available||!actual.ok)return {ok:false,diagnostic:'Der Code konnte nicht erfolgreich ausgeführt werden.',output:actual?.lines||[]};
  if(!source)return {ok:false,diagnostic:'Schreibe zuerst deinen eigenen Code.',output:actual.lines||[]};
- if(!expected?.ok)return {ok:false,diagnostic:'Die Musterlösung konnte nicht zuverlässig geprüft werden. Bitte melde die Aufgabe.',output:actual.lines||[]};
+ if(payload.practice_output!=='criteria'&&!expected?.ok)return {ok:false,diagnostic:'Die Musterlösung konnte nicht zuverlässig geprüft werden. Bitte melde die Aufgabe.',output:actual.lines||[]};
  const required=(Array.isArray(payload.checks)?payload.checks:[]).filter(x=>typeof x==='string'&&x.trim());
  const missing=required.filter(rule=>!checkRule(rule,code,source,lang));
- if(missing.length)return {ok:false,diagnostic:'Es fehlt noch: '+missing.slice(0,3).map(describe).join(', ')+'.',output:actual.lines||[]};
+ if(missing.length)return {ok:false,diagnostic:payload.practice_instruction||'Es fehlt noch: '+missing.slice(0,3).map(describe).join(', ')+'.',output:actual.lines||[]};
+ if(payload.practice_output==='criteria')return checkFlexibleOutput(payload,actual);
  // Requiring the learning concept prevents passing advanced tasks with a bare print.
  const concepts=[];
  const structure={

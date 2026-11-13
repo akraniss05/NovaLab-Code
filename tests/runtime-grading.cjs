@@ -41,3 +41,10 @@ assert.equal(p.evaluate('print("liverylab") -- Hilft uns beim Debuggen',inlineEx
 assert.equal(p.evaluateRuntime('print("liverylab") -- Hilft uns beim Debuggen',inlineExercise,inlineResult,{ok:true}).ok,true);
 assert.equal(p.evaluateRuntime('print("liverylab -- kein Kommentar")',inlineExercise,inlineResult,{ok:true}).ok,false);
 assert.match(p.evaluate('print("liverylab")',inlineExercise).diagnostic,/Zeilenkommentar/);
+
+const compiledExercise={lang:'cpp',practice_output:'criteria',checks:['cout\\s*<<'],practice_lines:['^\\S.*$']};
+const compiled=(source,lines)=>p.evaluateRuntime(source,compiledExercise,{available:true,ok:true,lines});
+assert.equal(compiled('int main(){ std::cout << "Mein eigener Text"; }',['Mein eigener Text']).ok,true);
+assert.equal(compiled('int main(){ std::cout << "Anderer Text"; }',['Anderer Text']).ok,true);
+assert.equal(compiled('int main(){}',[]).ok,false);
+assert.equal(compiled('int main(){ std::cout << " "; }',[' ']).ok,false);
