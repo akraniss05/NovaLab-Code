@@ -5,11 +5,11 @@ const {chromium}=require('playwright-core');
 const root=path.join(__dirname,'..');
 const read=(p)=>fs.readFileSync(path.join(root,p),'utf8');
 const js=read('site/academy-v21.js');
-const css=read('site/app-v21.css');
 const logo=fs.readFileSync(path.join(root,'site/novalab-logo.webp')).toString('base64');
 const banner=fs.readFileSync(path.join(root,'site/novalab-banner.webp')).toString('base64');
 let html=read('site/index.html')
- .replace(/<link rel="stylesheet"[^>]*>/,'<style>'+css+'</style>')
+ .replace(/<link rel="stylesheet" href="\.\/([^"?]+)(?:\?[^"]*)?"[^>]*>/g,
+  (_,file)=>'<style>'+read('site/'+file)+'</style>')
  .replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'')
  .replaceAll('./novalab-logo.webp','data:image/webp;base64,'+logo)
  .replaceAll('./novalab-banner.webp','data:image/webp;base64,'+banner);
@@ -68,7 +68,7 @@ for(const width of [390,430,1280]){
  assert(info.modal.width<=width&&info.modal.height<=844,'Popup must fit viewport: '+JSON.stringify(info));
  assert(info.modal.x>=0&&info.modal.y>=0,'Popup clipped on mobile');
  assert(info.inert,'Background should not be interactive while modal open');
- assert(info.bodyWidth<=width+2,'No horizontal scrolling');
+ assert(info.bodyWidth<=width+2,'No horizontal scrolling at '+width+'px; document width '+info.bodyWidth);
  await page.screenshot({path:path.join(root,'test-results','daily-login-'+width+'.png')});
  await page.locator('[data-streak-claim]').click();
  await page.locator('.ll-streak-claimed').waitFor({state:'visible',timeout:6000});
