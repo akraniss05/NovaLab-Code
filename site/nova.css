@@ -1,0 +1,102 @@
+/* NovaLab Code v1.02 • shared surfaces and art direction */
+:root,html[data-theme="nova"]{
+ --bg:#090b16;--nav:#0c0e1b;--panel:#131625;--panel2:#1a1d31;--panel3:#252941;
+ --stroke:#30334c;--stroke2:#4c506e;--text:#faf9ff;--soft:#d9dbea;--muted:#afb3cb;
+ --nova-edge:color-mix(in srgb,var(--accent) 25%,var(--stroke));
+ color-scheme:dark;
+}
+:root,html[data-accent="magenta"]{--accent:#ff58c2;--accent2:#93deff}
+html body{font-family:Inter,"Segoe UI",system-ui,sans-serif}
+body .content:before{opacity:.18}
+html body .app-column .footer,body.nova-legal .footer{background:var(--nav);color:var(--muted);border-color:var(--stroke)}
+body .nova-version{display:inline-block;vertical-align:middle;font:650 .7rem/1.25 ui-monospace,monospace;letter-spacing:.015em;padding:.25em .52em;color:var(--soft);border:1px solid var(--stroke2);border-radius:6px}
+html body :is(button,a,input,textarea,select,summary):focus-visible{outline:3px solid var(--accent2);outline-offset:3px}
+body .nova-public-nav,body .nova-auth-brand{display:flex;align-items:center;gap:.65rem}
+body .nova-public-nav{padding:14px clamp(4px,2vw,26px);margin-bottom:4px}
+.nova-nav-actions{display:flex;align-items:center;gap:6px;margin-left:auto}
+.nova-nav-actions [data-lang]{color:var(--muted);background:transparent;border:0;font-weight:700;padding:8px 5px}
+.nova-nav-actions [aria-pressed="true"]{color:var(--text);text-decoration:underline;text-underline-offset:4px}
+.nova-wordmark{display:inline-flex;align-items:baseline;gap:.16em;color:var(--text);font-size:clamp(16px,2vw,24px);letter-spacing:-.055em}
+.nova-wordmark i{font:bold italic 1.24em/1 system-ui;background:linear-gradient(135deg,#fe157d,#a437f0,#9decff);color:transparent;background-clip:text;margin-right:.22em}
+.nova-wordmark b{font-weight:800}
+body.is-auth #content{max-width:1320px;width:100%;padding:0 clamp(12px,3vw,44px) 38px;margin:auto}
+body.is-auth .app-shell{background:var(--bg)}
+nova-slider{display:block;isolation:isolate;position:relative;overflow:hidden;border-radius:22px;border:1px solid var(--nova-edge);background:#090916}
+.nova-slide{position:relative;display:flex;align-items:center;min-height:clamp(330px,35vw,490px);padding:clamp(26px,5vw,70px);isolation:isolate;overflow:hidden}
+.nova-slide[hidden]{display:none!important}
+.nova-slide::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,#090916 14%,#090916f0 34%,#09091600 70%)}
+.nova-art{position:absolute;z-index:-2;inset:0 0 0 auto;width:72%;height:100%;object-fit:cover;object-position:53% 50%}
+.nova-caption{max-width:52%;padding-bottom:16px}
+.nova-caption :is(h1,h2),.nova-paths h2,body .nova-auth-heading{margin:0;color:#fff;letter-spacing:-.055em;line-height:1.02;font-weight:800;text-wrap:balance}
+.nova-caption :is(h1,h2){font-size:clamp(36px,4.6vw,74px)}
+.nova-caption em,.nova-paths em{font-style:normal;color:var(--accent)}
+.nova-caption p,.nova-paths p{line-height:1.55;color:var(--soft);margin:13px 0}
+.nova-actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:22px}
+html body .btn.primary,html body .auth-login-layout .btn.primary{background:var(--accent)!important;color:#14091a!important;border:1px solid transparent!important;text-shadow:none;box-shadow:0 4px 18px color-mix(in srgb,var(--accent) 16%,transparent)}
+body .nova-actions .btn,body .nova-nav-actions .btn{border-radius:10px}
+.nova-slider-controls{position:absolute;bottom:8px;right:18px;display:flex;align-items:center;gap:0}
+.nova-slider-controls button{border:0;background:transparent;min-width:34px;height:34px;color:white;cursor:pointer;display:grid;place-items:center}
+.nova-slider-controls button span{width:8px;height:8px;border-radius:8px;background:#b7b4c8;transition:width .25s}
+.nova-slider-controls [aria-pressed="true"] span{width:22px;background:var(--accent)}
+.nova-slider-controls [data-pause]{background:#101022d9;border:1px solid #7b7896;border-radius:50%;margin-left:6px}
+.nova-paths{margin:clamp(28px,4vw,54px) 0;outline-offset:5px}
+.nova-paths h2{font-size:clamp(26px,3.5vw,48px);margin:0 0 20px}
+.nova-path-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(10px,2vw,24px)}
+.nova-path-grid article{position:relative;overflow:hidden;isolation:isolate;background:var(--panel);border:1px solid var(--stroke);border-radius:16px;transition:border-color .25s,transform .25s}
+.nova-path-grid img{display:block;width:100%;height:auto;aspect-ratio:2.25;object-fit:cover}
+.nova-path-grid article>div{padding:16px clamp(12px,1.5vw,22px)}
+.nova-path-grid h3{margin:0;font-size:clamp(18px,2vw,25px);color:var(--text);letter-spacing:-.035em}
+.nova-path-grid p{font-size:14px;margin:4px 0 0;color:var(--muted)}
+.nova-path-open{position:absolute;inset:0;width:100%;border:0;background:transparent;color:var(--accent2);font-size:19px;text-align:right;display:flex;align-items:flex-end;justify-content:flex-end;padding:0 12px 7px;cursor:pointer}
+.nova-path-grid article:focus-within{outline:3px solid var(--accent2);outline-offset:2px}
+body .nova-login-area{max-width:700px;margin:32px auto}
+body .nova-auth-heading{font-size:clamp(28px,4vw,44px);margin-top:17px}
+html body :is(.auth-layout .auth-card,.auth-card,.feature-gate,.mfa-error-card,.mfa-setup-card){background:linear-gradient(135deg,var(--panel2),var(--panel) 65%)!important;border:1px solid var(--nova-edge)!important;box-shadow:0 14px 50px #04051070;border-radius:20px}
+body .auth-showcase{background:linear-gradient(0deg,#0a0918 8%,#100a1530 66%),url('./art/nova.webp') 52% 30%/cover;min-height:300px;border-color:var(--nova-edge)}
+body .auth-showcase em{color:var(--accent)}
+body .sidebar-logo,body .topbar,html body .bottom-nav,body .sidebar{border-color:var(--stroke)!important;background:var(--nav)!important}
+body .btn,body .icon-btn{transition:background .2s,border-color .2s,transform .2s}
+html body :is(.panel,.course-card,.member-card,.membership-card,.ll-home-shortcut,.ll-neon-menu-tile,.ll-home-continue,.ll-home-focus,.ll-tool-card,.ll-atelier-course-rail,.ll-atelier-rail-card,.ll-neon-feature,.ll-atelier-mission-strip,.profile-overview-card,.friend-profile-card,.achievement-card,.reference-block,.step-box,.lesson-card,.ll-track-summary,.ll-atelier-exam-card,.ticket-card,.voucher-panel,.settings-appearance-card,.ll-streak-modal,.ll-timer-modal,.ll-admin-progress-panel,.ll-atelier-studio-work,.ll-atelier-studio-files){
+ background:linear-gradient(135deg,var(--panel2),var(--panel) 76%)!important;border-color:var(--nova-edge)!important;color:var(--text);box-shadow:0 8px 26px #0203104a!important
+}
+html body :is(.ll-learning-hero,.ll-roadmap-track-hero,.ll-lesson-hero,.ll-neon-screen .ll-neon-page-heading,.ll-neon-screen .ll-neon-custom-hero,.ll-neon-screen .ll-neon-feature){
+ background:radial-gradient(ellipse at top right,color-mix(in srgb,var(--accent) 16%,transparent),transparent 60%),linear-gradient(120deg,var(--panel2),var(--bg))!important;border-color:var(--nova-edge)!important
+}
+html body .ll-neon-screen{--atelier-ink:var(--bg);--atelier-surface:var(--panel);--atelier-edge:var(--nova-edge);--atelier-violet:var(--accent);--page-accent:var(--accent2)}
+html body :is(.ll-roadmap-catalog,.ll-roadmap-course,.ll-roadmap-lesson){--road-violet:var(--accent);--road-ink:var(--bg);--road-muted:var(--muted)}
+html body :is(.input,.select,.exercise-textarea,.file-code,.file-preview,textarea:not([style])){background:var(--bg);color:var(--text);border-color:var(--stroke2)}
+html body :is(.ll-level-bar,.progress) > span{background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.nova-legal .content{margin:0 auto;padding:clamp(22px,5vw,65px) 20px;line-height:1.65}
+.nova-legal h1{font-size:clamp(32px,5vw,56px);letter-spacing:-.05em}
+.nova-legal h2{color:var(--accent2);margin-top:1.6em}
+@media(hover:hover){.nova-path-grid article:has(button):hover{transform:translateY(-4px);border-color:var(--accent)}body .btn.primary:hover{filter:brightness(1.12)}}
+@keyframes nova-appear{from{opacity:.45;transform:translateY(5px)}to{opacity:1;transform:none}}
+@keyframes nova-camera{from{transform:scale(1)}to{transform:scale(1.045)}}
+@media(prefers-reduced-motion:no-preference){
+ body:not(.less-motion) .nova-slide:not([hidden]) .nova-art{animation:nova-camera 7s ease-out both}
+ body:not(.less-motion) :is(.nova-caption,.ll-neon-screen,.ll-roadmap-catalog,.ll-roadmap-lesson,.auth-card){animation:nova-appear .35s ease-out both}
+}
+@media(max-width:700px){
+ .nova-slide{min-height:420px;align-items:flex-end;padding:170px 21px 49px}
+ .nova-art{width:100%;height:62%;object-position:center}
+ .nova-slide::after{background:linear-gradient(to bottom,transparent 10%,#09091611 28%,#090916eb 55%,#090916 77%)}
+ .nova-caption{max-width:100%;padding-bottom:0}
+ .nova-caption :is(h1,h2){font-size:clamp(34px,8.6vw,47px)}
+ .nova-caption p{margin:9px 0}.nova-actions{margin-top:14px;gap:8px}
+ .nova-path-grid{grid-template-columns:1fr}
+ .nova-path-grid article{display:grid;grid-template-columns:36% 1fr;align-items:center;min-height:89px}
+ .nova-path-grid img{height:100%;object-fit:cover}
+ .nova-paths{margin:24px 0}.nova-paths h2{margin-bottom:14px}
+ .nova-public-nav .nova-nav-actions{gap:0}.nova-nav-actions .btn{padding:7px 10px}
+ body .auth-showcase{min-height:145px;background-position:center 42%}
+}
+@media(max-width:420px){body .nova-public-nav{gap:5px}.nova-public-nav .nova-version{font-size:9px}.topbar .nova-version{font-size:9px}.nova-nav-actions [data-lang]{padding:7px 4px}}
+@media(prefers-reduced-motion:reduce){.nova-slider-controls button span,.nova-path-grid article{transition:none}}
+body.less-motion .nova-path-grid article:hover{transform:none}
+html body :is(.mfa-gate-card,.ll-focus-modal,.profile-quick-tile,.settings-list,.support-compose,.support-history,.reference-picker,.achievement-grid article,.friend-empty,.ll-atelier-settings-preview,.ll-atelier-support-stats,.ll-atelier-admin-pulse,.voucher-manage-card,.ll-plan-manager,.ll-learning-block,.ll-home-greeting){
+ background:linear-gradient(135deg,var(--panel2),var(--panel))!important;border-color:var(--nova-edge)!important;color:var(--text)
+}
+html body .lesson-card.is-complete,html body .course-card.is-complete{border-color:#69bd9a!important}
+html body .lesson-card.is-current{border-color:var(--accent)!important}
+html body.high-contrast{--muted:#e0e2f1;--soft:#f5f4ff;--stroke2:#969bb6;--nova-edge:#939bb6}
+html body.high-contrast :is(.nova-caption,.nova-slider-controls){background:var(--bg);border-radius:8px;padding:8px}

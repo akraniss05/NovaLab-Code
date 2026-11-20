@@ -1,12 +1,12 @@
 {
-  "name": "NovaLab Academy",
+  "name": "NovaLab Code v1.02",
   "short_name": "NovaLab",
   "description": "NovaLab Academy – Learn. Code. Grow. Programmieren, Sprachen und Blender lernen.",
   "start_url": "./v31.html#home",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#0d0a19",
-  "theme_color": "#180b2b",
+  "background_color": "#090b16",
+  "theme_color": "#090b16",
   "icons": [
     {
       "src": "./novalab-icon-192.webp",

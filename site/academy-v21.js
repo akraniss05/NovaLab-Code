@@ -65,10 +65,10 @@ function applyPreferences(){
  document.body.classList.toggle('high-contrast',getPreference('contrast'));
  document.body.classList.toggle('soft-corners',getPreference('softCorners'));
  document.body.classList.toggle('decorative-background',getPreference('backgroundArt'));
- const theme=getChoicePreference('theme','violet'),accent=getChoicePreference('accent','lavender');
+ const theme=getChoicePreference('theme','nova'),accent=getChoicePreference('accent','magenta');
  if(document.documentElement?.dataset){
-  document.documentElement.dataset.theme=['violet','midnight','ocean','forest','rose','ember'].includes(theme)?theme:'violet';
-  document.documentElement.dataset.accent=['lavender','sky','mint','pink','amber','white'].includes(accent)?accent:'lavender';
+  document.documentElement.dataset.theme=['nova','violet','midnight','ocean','forest','rose','ember'].includes(theme)?theme:'nova';
+  document.documentElement.dataset.accent=['magenta','lavender','sky','mint','pink','amber','white'].includes(accent)?accent:'magenta';
  }
  window.LLEffects?.sync?.();
 }
@@ -86,7 +86,7 @@ function pageHeading(label,title,description){
  };
  const entry=designs[label]||[label,'code'];
  return '<header class="page-heading ll-neon-page-heading">'+
-  '<div class="ll-neon-page-title"><span class="ll-neon-brand-text"><img src="./novalab-logo.webp" alt=""> NovaLab <em>Academy</em></span>'+
+  '<div class="ll-neon-page-title"><span class="ll-neon-brand-text"><img src="./novalab-logo.webp" alt=""> NovaLab <em>Code</em></span>'+
   '<span class="eyebrow ll-neon-kicker">'+esc(label)+'</span><h1>'+esc(entry[0])+'</h1>'+
   '<p class="lede">'+esc(description)+'</p><span class="ll-neon-legacy-heading" aria-hidden="true">'+title+'</span></div>'+
   '<span class="ll-neon-hero-art" aria-hidden="true"><span class="ll-neon-hero-glyph">'+atelierScene(entry[1],label==='MITGLIEDSCHAFT'?'shop':label==='ADMINISTRATION'?'admin':entry[1])+'</span></span>'+
@@ -180,7 +180,7 @@ function atelierSupportPulse(tickets){
  '<div><span>'+llIcon('check')+'</span><strong>'+answered+'</strong><small>Beantwortet</small></div></div>';
 }
 function atelierSettingsPreview(){
- const theme=getChoicePreference('theme','violet'),accent=getChoicePreference('accent','lavender'),
+ const theme=getChoicePreference('theme','nova'),accent=getChoicePreference('accent','magenta'),
  themeLabel=(COLOR_THEMES.find(x=>x[0]===theme)||COLOR_THEMES[0])[1],
  accentLabel=(ACCENT_THEMES.find(x=>x[0]===accent)||ACCENT_THEMES[0])[1];
  return '<section class="ll-atelier-settings-preview"><div class="ll-atelier-settings-preview-copy">'+
@@ -210,7 +210,7 @@ function neonHero(kind){
  }[kind];
  if(!info)return '';
  return '<header class="ll-neon-page-heading ll-neon-custom-hero" aria-label="'+esc(info[0])+'">'+
-  '<div class="ll-neon-page-title"><span class="ll-neon-brand-text"><img src="./novalab-logo.webp" alt=""> NovaLab <em>Academy</em></span>'+
+  '<div class="ll-neon-page-title"><span class="ll-neon-brand-text"><img src="./novalab-logo.webp" alt=""> NovaLab <em>Code</em></span>'+
   '<span class="eyebrow ll-neon-kicker">NOVALAB ACADEMY</span><h1>'+esc(info[0])+'</h1>'+
   '<p class="lede">'+esc(info[1])+'</p></div>'+
   '<span class="ll-neon-hero-art" aria-hidden="true"><span class="ll-neon-hero-glyph">'+atelierScene(info[2],kind)+'</span></span>'+
@@ -301,7 +301,7 @@ function frame(){
  const route=parseRoute().page;
  if(!authenticated){sidebar.innerHTML='';bottom.innerHTML='';}
  else{
-  sidebar.innerHTML='<div class="sidebar-logo"><img class="ll-brand-symbol" src="./novalab-logo.webp" alt=""><span>NovaLab<br><span class="gradient">Academy</span></span><button type="button" class="sidebar-close" data-nav-close aria-label="Menü schließen">×</button></div>'+
+  sidebar.innerHTML='<div class="sidebar-logo"><img class="ll-brand-symbol" src="./novalab-logo.webp" alt=""><span>NovaLab<br><span class="gradient">Code</span></span><button type="button" class="sidebar-close" data-nav-close aria-label="Menü schließen">×</button></div>'+
   '<div class="side-label">Navigation</div>'+navHTML(route)+
   '<div class="side-bottom"><span class="eyebrow">DEIN PROFIL</span><strong>'+
   esc(s.profile.display_name||s.profile.username||'Developer')+'</strong>'+
@@ -324,12 +324,43 @@ function frame(){
  const avatar=$('.avatar-btn');if(avatar)avatar.textContent=String(s.profile?.display_name||s.profile?.username||'N').slice(0,1).toUpperCase();
 }
 
+function releaseMark(){
+ return '<span class="nova-version">v1.02</span>';
+}
+function novaBrand(){
+ return '<span class="nova-wordmark"><i aria-hidden="true">N</i><b>NovaLab</b> Code</span>';
+}
+function publicNav(){
+ return '<nav class="nova-public-nav" aria-label="NovaLab Code">'+novaBrand()+releaseMark()+
+ '<div class="nova-nav-actions"><button type="button" data-lang="de">DE</button><button type="button" data-lang="en">EN</button><button type="button" class="btn small" data-nova-login>Anmelden</button></div></nav>';
+}
+function studioHero(member){
+ const slides=[
+  ['nova','Dein nächstes Level beginnt','hier.','Lerne Coding. Baue echte Projekte.'],
+  ['studio','Schreib deine erste','App.','Vom ersten Befehl zum eigenen Projekt.'],
+  ['sculpt','Erschaffe eigene','Welten.','Modelliere und animiere mit Blender.']
+ ];
+ const tag=member?'h2':'h1';
+ return '<nova-slider aria-label="NovaLab Highlights" role="region">'+slides.map(([image,title,accent,copy],i)=>
+  '<section class="nova-slide"'+(i?' hidden':'')+'><img class="nova-art" src="./art/'+image+'.webp" alt="" '+(i?'loading="lazy"':'fetchpriority="high"')+'><div class="nova-caption"><'+tag+'><span>'+title+'</span> <em>'+accent+'</em></'+tag+'><p>'+copy+'</p><div class="nova-actions">'+
+  (member?'<button class="btn primary" type="button" data-go="courses">Kurse entdecken</button>':'<button class="btn primary" type="button" data-action="show-register">Kostenlos starten</button><button class="btn" type="button" data-nova-courses>Kurse entdecken</button>')+'</div></div></section>').join('')+
+  '<div class="nova-slider-controls">'+slides.map((slide,i)=>'<button type="button" data-slide="'+i+'" aria-label="'+['NovaLab','Coding','Blender'][i]+'" aria-pressed="'+(i===0)+'"><span></span></button>').join('')+
+  '<button type="button" data-pause aria-label="Diashow pausieren" aria-pressed="false">Ⅱ</button></div></nova-slider>';
+}
+function featuredPaths(member){
+ const paths=[['python','Python','Programme von Grund auf schreiben.',['python']],['web','Webentwicklung','Websites und Web-Apps entwickeln.',['html','javascript','css']],['blender','Blender','In 3D modellieren und animieren.',['blender-fundamentals','blender']]];
+ return '<section class="nova-paths" id="nova-paths" tabindex="-1"><h2><span>Aus Ideen werden</span> <em>Projekte.</em></h2><div class="nova-path-grid">'+paths.map(([art,name,description,ids])=>{
+  const match=member&&ids.map(courseOf).find(Boolean);
+  return '<article><img width="764" height="337" loading="lazy" src="./art/'+art+'.webp" alt=""><div><h3>'+name+'</h3><p>'+description+'</p>'+
+   (member?'<button class="nova-path-open" data-go="'+(match?'track/'+esc(match.id):'courses')+'" aria-label="'+name+'">↗</button>':'')+'</div></article>';
+ }).join('')+'</div></section>';
+}
+
 function login(){
  s.ready=false;frame();
- const betaLabel=s.service?.beta_open===false?'NOVALAB · ACADEMY':'NOVALAB · PRIVATE BETA';
- const brand='<img class="ll-login-banner" src="./novalab-banner.webp" alt="NovaLab Premium FiveM Systems Banner"><div class="brandmark"><img class="ll-brand-symbol" src="./novalab-logo.webp" alt=""><span>NovaLab <span class="gradient">Academy</span></span></div><div class="ll-auth-release">'+(s.service?.beta_open===false?'ACADEMY':'PRIVATE BETA')+' <span>NEUE ACADEMY · V28</span></div>';
+ const brand='<div class="nova-auth-brand">'+novaBrand()+releaseMark()+'</div>';
  if(s.authScreen==='register'){
- content.innerHTML='<div class="auth-layout auth-login-layout"><aside class="auth-showcase"><span class="eyebrow">'+betaLabel+'</span><h2>Baue echte Skills.<br><em>Schritt für Schritt.</em></h2><p>Programmierung, FiveM und Blender in klaren Lernpfaden – mit Videos, Praxis, Quizzen und Abschlussprüfungen.</p><div class="auth-feature-grid"><span>▶ Video-Lektionen</span><span>✓ Praxisaufgaben</span><span>✦ XP & Titel</span><span>★ Kursprüfungen</span></div><small>Made with 💙 from NyxAtheris (NovaLab Academy)</small></aside><section class="auth-card">'+brand+
+ content.innerHTML=publicNav()+'<div class="auth-layout auth-login-layout"><aside class="auth-showcase"><h2>Dein nächstes Level beginnt <em>hier.</em></h2></aside><section class="auth-card">'+brand+
  '<span class="eyebrow">'+(s.registrationPolicy?.mode==='open'?'[ + ] FREIE REGISTRIERUNG':'[ + ] BEWERBUNG')+'</span><h1>Dein Weg in die <span class="gradient">Academy.</span></h1>'+
  '<p class="lede">'+(s.registrationPolicy?.mode==='open'?'Erstelle ein Konto und starte direkt mit den Free-Kursen. Dafür ist keine Freigabe durch das Team erforderlich.':'Erstelle ein Konto und sende deine Bewerbung. Erst nach der Freigabe durch das Team erhältst du Zugang.')+'</p>'+
  '<form data-form="register"><div class="form-group"><label class="form-label" for="reg-email">E-Mail-Adresse</label>'+
@@ -337,24 +368,24 @@ function login(){
  '<div class="form-group"><label class="form-label" for="reg-user">Benutzername</label>'+
  '<input class="input" id="reg-user" name="username" autocomplete="username" required minlength="3" maxlength="24" pattern="[A-Za-z][A-Za-z0-9_]{2,23}" placeholder="DeinBenutzername"></div>'+
  '<div class="form-group"><label class="form-label" for="reg-pass">Passwort (mind. 7 Zeichen)</label>'+
- '<input class="input" type="password" id="reg-pass" name="password" autocomplete="new-password" minlength="7" required></div>'+
+ '<input class="input" type="password" id="reg-pass" name="password" autocomplete="new-password" minlength="7" maxlength="256" required></div>'+
  '<div class="form-group"><label class="form-label" for="reg-confirm">Passwort wiederholen</label>'+
- '<input class="input" type="password" id="reg-confirm" name="confirm_password" autocomplete="new-password" minlength="7" required></div>'+
+ '<input class="input" type="password" id="reg-confirm" name="confirm_password" autocomplete="new-password" minlength="7" maxlength="256" required></div>'+
  '<button class="btn primary block" type="submit">'+(s.registrationPolicy?.mode==='open'?'Konto erstellen →':'Registrierungsanfrage senden →')+'</button></form>'+
  '<p class="micro">Dein Passwort wird sicher über Supabase Auth verarbeitet. Die E-Mail-Adresse wird bei diesem Registrierungsweg nicht automatisch auf Besitz geprüft. '+(s.registrationPolicy?.mode==='open'?'Mit der kostenlosen Mitgliedschaft kannst du dich nach der Registrierung anmelden.':'Ohne Annahme deiner Bewerbung bleibt das Konto gesperrt.')+'</p>'+
  '<button type="button" class="btn ghost block" data-action="show-login">← Bereits registriert? Anmelden</button>'+
  '<p class="smallprint" style="text-align:center;margin-top:18px">Made with 💙 from NyxAtheris (NovaLab Academy)</p></section></div>';return;
  }
  if(s.authScreen==='sent'){
- content.innerHTML='<div class="auth-layout"><section class="auth-card auth-success">'+brand+
+ content.innerHTML=publicNav()+'<div class="auth-layout"><section class="auth-card auth-success">'+brand+
  '<span class="auth-check">✓</span><span class="eyebrow">'+(s.registrationManual?'ANFRAGE VERSENDET':'KONTO ERSTELLT')+'</span>'+
  '<h1>Registrierung <span class="gradient">eingegangen.</span></h1>'+
  '<p class="lede">'+(s.registrationManual?'Deine Bewerbung ist eingegangen. Du kannst die Academy erst benutzen, nachdem ein Administrator dich freigeschaltet hat. Die Kontakt-E-Mail wurde nicht automatisch geprüft.':'Dein Konto ist sofort als Free-Mitglied freigeschaltet. Melde dich jetzt mit Benutzernamen und Passwort an. Die Kontakt-E-Mail wurde nicht automatisch überprüft.')+'</p>'+
  '<button class="btn primary block" type="button" data-action="show-login">Zur Anmeldung →</button>'+
  '<a class="btn ghost block" style="margin-top:10px" href="https://discord.gg/SZhYa6Nnmy" target="_blank" rel="noopener noreferrer">Discord-Support</a></section></div>';return;
  }
- content.innerHTML='<div class="auth-layout auth-login-layout"><aside class="auth-showcase"><span class="eyebrow">'+betaLabel+'</span><h2>Baue echte Skills.<br><em>Schritt für Schritt.</em></h2><p>Programmierung, FiveM und Blender in klaren Lernpfaden – mit Videos, Praxis, Quizzen und Abschlussprüfungen.</p><div class="auth-feature-grid"><span>▶ Video-Lektionen</span><span>✓ Praxisaufgaben</span><span>✦ XP & Titel</span><span>★ Kursprüfungen</span></div><small>Made with 💙 from NyxAtheris (NovaLab Academy)</small></aside><section class="auth-card">'+brand+
- '<span class="eyebrow">[ 01 ] DEVELOPER ACADEMY</span><h1>Lernen. Entwickeln.<br><span class="gradient">Weiterkommen.</span></h1>'+
+ content.innerHTML=publicNav()+studioHero(false)+featuredPaths(false)+'<div class="auth-layout nova-login-area"><section class="auth-card">'+brand+
+ '<h2 class="nova-auth-heading">Willkommen zurück.</h2>'+
  '<p class="lede">Melde dich mit deinem Benutzernamen oder deiner E-Mail-Adresse an.</p>'+
  '<form data-form="login"><div class="form-group"><label class="form-label" for="username">Benutzername oder E-Mail</label>'+
  '<input class="input" id="username" name="username" autocomplete="username" required minlength="3" maxlength="254" placeholder="name@beispiel.de oder dein_name"></div>'+
@@ -362,9 +393,18 @@ function login(){
  '<input class="input" type="password" id="password" name="password" autocomplete="current-password" required placeholder="Dein Passwort"></div>'+
  '<button class="btn primary block" type="submit">Anmelden →</button></form>'+
  '<div class="auth-secondary"><span>Noch kein Konto?</span><button type="button" class="btn" data-action="show-register">Jetzt registrieren →</button></div>'+
- '<p class="micro">'+(s.registrationPolicy?.mode==='open'?'Neue Konten sind derzeit ohne Freigabe möglich.':'Neue Registrierungen müssen derzeit vom Team angenommen werden.')+'</p>'+
+ '<p class="micro" data-policy-note>'+(s.registrationPolicy?.mode==='open'?'Neue Konten sind derzeit ohne Freigabe möglich.':'Neue Registrierungen müssen derzeit vom Team angenommen werden.')+'</p>'+
  '<a class="btn discord block discord-block" href="https://discord.gg/SZhYa6Nnmy" target="_blank" rel="noopener noreferrer">Discord beitreten</a>'+
  '<p class="smallprint" style="text-align:center;margin-top:19px">Sicherer Zugang über NovaLab Academy</p></section></div>';
+}
+function updateRegistrationCopy(){
+ const card=$('form[data-form="register"]')?.closest?.('.auth-card');
+ if(!card)return;
+ const open=s.registrationPolicy?.mode==='open';
+ card.querySelector('.eyebrow').textContent=open?'[ + ] FREIE REGISTRIERUNG':'[ + ] BEWERBUNG';
+ card.querySelector('.lede').textContent=open?'Erstelle ein Konto und starte direkt mit den Free-Kursen. Dafür ist keine Freigabe durch das Team erforderlich.':'Erstelle ein Konto und sende deine Bewerbung. Erst nach der Freigabe durch das Team erhältst du Zugang.';
+ card.querySelector('[type="submit"]').textContent=open?'Konto erstellen →':'Registrierungsanfrage senden →';
+ card.querySelector('.micro').textContent='Dein Passwort wird sicher über Supabase Auth verarbeitet. Die E-Mail-Adresse wird bei diesem Registrierungsweg nicht automatisch auf Besitz geprüft. '+(open?'Mit der kostenlosen Mitgliedschaft kannst du dich nach der Registrierung anmelden.':'Ohne Annahme deiner Bewerbung bleibt das Konto gesperrt.');
 }
 async function fetchRegistrationPolicy(adminView){
  try{
@@ -374,7 +414,11 @@ async function fetchRegistrationPolicy(adminView){
   if(!response?.ok||!['approval','open'].includes(response.mode))throw Error('Registrierungsmodus nicht erreichbar.');
   s.registrationPolicy={mode:response.mode,loaded:true,updated_at:response.updated_at||null};
   // Never replace an access-denied screen with the anonymous registration form.
-  if(!s.ready&&!s.user&&s.authScreen!=='sent')login();
+  if(!adminView&&!s.user&&!s.ready){
+   const policyNote=$('[data-policy-note]');
+   if(policyNote)policyNote.textContent=response.mode==='open'?'Neue Konten sind derzeit ohne Freigabe möglich.':'Neue Registrierungen müssen derzeit vom Team angenommen werden.';
+   if(s.authScreen==='register')updateRegistrationCopy();
+  }
   return s.registrationPolicy;
  }catch(error){
   // Fail closed: if the service cannot be reached, never promise open access.
@@ -388,7 +432,8 @@ async function registerAccount(fd){
  const password=String(fd.get('password')||'');
  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)||email.length>254)throw Error('Bitte eine gültige E-Mail-Adresse eingeben.');
  if(!/^[a-z][a-z0-9_]{2,23}$/.test(username))throw Error('Benutzername: 3–24 Zeichen, Buchstaben, Zahlen und Unterstrich.');
- if(password.length<7||password.length>256)throw Error('Das Passwort muss mindestens 7 Zeichen lang sein.');
+ if(password.length<7)throw Error('Das Passwort muss mindestens 7 Zeichen lang sein.');
+ if(password.length>256)throw Error('Das Passwort darf höchstens 256 Zeichen lang sein.');
  if(password!==String(fd.get('confirm_password')||''))throw Error('Die beiden Passwörter stimmen nicht überein.');
  // One secure registration route for both modes. The server, never browser
  // parameters or Supabase Auth's public signUp, decides the access status.
@@ -987,15 +1032,14 @@ function homePage(){
  const weeklyGoal=Math.max(1,Math.min(100,Number(getChoicePreference('weekly-goal-'+(s.user?.id||'guest'),'10'))||10));
  const last=available.find(l=>l.id===s.progress.lastLesson?.id);
  const inLastCourse=last?lessonsOf(last.course_id).filter(allowed):[];
- const next=last||available.find(l=>!completed.has(l.id)&&['coding-basics','lua','python','fivem'].includes(l.course_id))||available.find(l=>!completed.has(l.id));
+ const next=(last&&!completed.has(last.id)?last:null)||inLastCourse.find(l=>!completed.has(l.id))||available.find(l=>!completed.has(l.id)&&['coding-basics','lua','python','fivem'].includes(l.course_id))||available.find(l=>!completed.has(l.id));
  const nextCourse=next?courseOf(next.course_id):null;
  const currentDone=nextCourse?countDone(nextCourse.id):0,total=nextCourse?lessonsOf(nextCourse.id).length:0,progress=pct(currentDone,total);
  const xp=xpEarned(),level=Math.floor(xp/500)+1,levelXp=xp%500;
  const nickname=s.profile?.display_name||s.profile?.username||'Developer';
  const streak=Number(s.loginStreak?.current||0),ready=!!s.loginStreak?.claimable;
  const picks=['coding-basics','lua','python','javascript'].map(courseOf).filter(Boolean);
- return '<div class="ll-home-dashboard">'+neonHero('home')+
- '<section class="ll-home-brand-banner"><img src="./novalab-banner.webp" alt="NovaLab Academy – Learn. Code. Grow. – violette Skyline" loading="eager" fetchpriority="high"></section>'+ownPlanCountdownHtml()+
+ return '<div class="ll-home-dashboard">'+studioHero(true)+featuredPaths(true)+ownPlanCountdownHtml()+
  '<div class="ll-home-greeting"><div><span class="eyebrow">DEIN PERSÖNLICHES DASHBOARD</span>'+
  '<h1>Willkommen zurück, <span class="gradient">'+esc(nickname)+'</span>!</h1><p>Lerne programmieren, entwickle Projekte und erreiche deine nächsten Ziele.</p></div>'+
  '<div class="ll-home-level"><div class="ll-level-top">'+llIcon('xp')+'<span>Level '+level+'</span></div>'+
@@ -1092,7 +1136,7 @@ function coursesPage(){
  const levels=[1,2,3,4,5],selected=s.difficultyFilter==='all'?'all':String(s.difficultyFilter);
  return '<div class="ll-roadmap-catalog">'+
  '<header class="ll-learning-hero"><div class="ll-learning-brand"><img src="./novalab-logo.webp" alt="">'+
- '<span>NovaLab <strong>Academy</strong></span></div>'+
+ '<span>NovaLab <strong>Code</strong></span></div>'+
  '<span class="ll-learning-eyebrow">'+catalogText('KURSBIBLIOTHEK · DEIN LERNPFAD','COURSE LIBRARY · YOUR PATH')+'</span>'+
  '<h1>'+catalogText('Lernen','Learn')+'</h1>'+
  '<p>'+catalogText('Dein geführter Lernpfad für Scripting und Entwicklung.','Your guided path to scripting and software development.')+'</p>'+
@@ -2227,8 +2271,8 @@ function profilePage(){
 }
 
 
-const COLOR_THEMES=[["violet","Mystic Purple","linear-gradient(130deg,#1c1534,#8550c9)"],["midnight","Midnight","linear-gradient(130deg,#0a1325,#394b88)"],["ocean","Deep Ocean","linear-gradient(130deg,#0b2339,#2588bc)"],["forest","Emerald","linear-gradient(130deg,#09281e,#328775)"],["rose","Rose","linear-gradient(130deg,#361431,#c25b96)"],["ember","Amber Dusk","linear-gradient(130deg,#2c1815,#bb743a)"]];
-const ACCENT_THEMES=[["lavender","Violett","#b18cff"],["sky","Blau","#64b6ff"],["mint","Mint","#65dbb2"],["pink","Rosa","#ef8fc5"],["amber","Gold","#f1be73"],["white","Neutral","#e5e3f0"]];
+const COLOR_THEMES=[["nova","NovaLab Dark","linear-gradient(135deg,#090b16,#4c1550)"],["violet","Mystic Purple","linear-gradient(130deg,#1c1534,#8550c9)"],["midnight","Midnight","linear-gradient(130deg,#0a1325,#394b88)"],["ocean","Deep Ocean","linear-gradient(130deg,#0b2339,#2588bc)"],["forest","Emerald","linear-gradient(130deg,#09281e,#328775)"],["rose","Rose","linear-gradient(130deg,#361431,#c25b96)"],["ember","Amber Dusk","linear-gradient(130deg,#2c1815,#bb743a)"]];
+const ACCENT_THEMES=[["magenta","Nova Magenta","#ff45bc"],["lavender","Violett","#b18cff"],["sky","Blau","#64b6ff"],["mint","Mint","#65dbb2"],["pink","Rosa","#ef8fc5"],["amber","Gold","#f1be73"],["white","Neutral","#e5e3f0"]];
 function appearanceChoices(items,current,attribute){
  return '<div class="appearance-picker">'+items.map(([value,label,color])=>
   '<button type="button" class="appearance-choice '+(value===current?'selected':'')+'" data-'+attribute+'="'+esc(value)+'" aria-pressed="'+(value===current)+'">'+
@@ -2248,8 +2292,8 @@ function settingsPage(){
  '<section class="setting-section appearance-section"><div class="section-heading"><div><span class="eyebrow">01 · PERSÖNLICHES DESIGN</span>'+
  '<h2>Farben & Hintergrund</h2><p>Die Änderungen werden sofort auf diesem Gerät gespeichert.</p></div></div>'+
  '<div class="settings-appearance-card"><h3>Hintergrund & Oberflächen</h3>'+
- appearanceChoices(COLOR_THEMES,getChoicePreference('theme','violet'),'theme-choice')+
- '<h3>Akzentfarbe</h3>'+appearanceChoices(ACCENT_THEMES,getChoicePreference('accent','lavender'),'accent-choice')+
+ appearanceChoices(COLOR_THEMES,getChoicePreference('theme','nova'),'theme-choice')+
+ '<h3>Akzentfarbe</h3>'+appearanceChoices(ACCENT_THEMES,getChoicePreference('accent','magenta'),'accent-choice')+
  '<h3>App-Hintergrund</h3><div class="settings-list">'+
  toggle('backgroundArt','Hintergrund-Effekte','Dezente Lichtverläufe für mehr Atmosphäre anzeigen.')+
  toggle('compact','Kompakte Kurskarten','Mehr Lerninhalte gleichzeitig auf dem Bildschirm sehen.')+
@@ -2296,7 +2340,7 @@ function settingsPage(){
  '<span><b>Discord-Support</b><p>Schreibe NyxAtheris eine DM oder öffne ein Ticket und erwähne @nyxatheris.</p></span></div>'+
  '<a class="btn small discord" href="https://discord.gg/SZhYa6Nnmy" target="_blank" rel="noopener noreferrer">Discord ↗</a></div></div></section>'+
  '<section class="section panel"><span class="eyebrow">NOVALAB ACADEMY</span><h3>Über die Academy</h3>'+
- '<p class="micro">Developer-Lernplattform mit Kursen, sicheren Accounts, Profilen, Freunden und Erfolgen. Version 28.</p>'+
+ '<p class="micro">Developer-Lernplattform mit Kursen, sicheren Accounts, Profilen, Freunden und Erfolgen. v1.02.</p>'+
  '<a href="./privacy.html">Datenschutzhinweise ansehen ↗</a><p class="smallprint" style="margin-top:16px">Made with 💙 from NyxAtheris (NovaLab Academy)</p></section>';
 }
 
@@ -2882,6 +2926,11 @@ async function pollSupportInbox(){
 if(typeof setInterval==='function')setInterval(pollSupportInbox,20000);
 function filterSupportTickets(){const query=String($('#support-search')?.value||'').toLocaleLowerCase('de'),status=$('#support-filter')?.value||'all';document.querySelectorAll('.support-history .support-ticket').forEach(el=>{el.hidden=!!query&&!el.textContent.toLocaleLowerCase('de').includes(query)||status!=='all'&&el.dataset.ticketStatus!==status;});}
 document.addEventListener('click',async function(e){
+ if(e.target.closest('[data-nova-login]')){
+  if(s.authScreen!=='login'){s.authScreen='login';login();}
+  $('#username')?.focus();return;
+ }
+ if(e.target.closest('[data-nova-courses]')){$('#nova-paths')?.focus();return;}
  if(e.target.closest('[data-toggle-shop]')){if(s.profile?.role!=='admin')return;const btn=e.target.closest('[data-toggle-shop]');btn.disabled=true;const result=await api.rpc('novalab_set_shop_enabled',{p_enabled:!s.shopEnabled});if(result.error){notice('Shop konnte nicht geändert werden: '+formatError(result.error));btn.disabled=false;return;}s.shopEnabled=result.data===true;document.body.classList.toggle('novalab-shop-hidden',!s.shopEnabled);render();notice(s.shopEnabled?'Shop ist für alle sichtbar.':'Shop ist für alle ausgeblendet.');return;}
  if(e.target.closest('[data-lang]')&&parseRoute().page==='courses'){Promise.resolve().then(render);return;}
  if(e.target.closest('[data-timer-open]')){openTimer();return;}
@@ -3020,8 +3069,8 @@ document.addEventListener('click',async function(e){
    return;
   }
   if(name==='logout'){await logout();return;}
-  if(name==='show-register'){s.authScreen='register';login();void fetchRegistrationPolicy(false).catch(()=>{});return;}
-  if(name==='show-login'){s.authScreen='login';login();return;}
+  if(name==='show-register'){s.authScreen='register';login();$('#reg-email')?.focus?.();void fetchRegistrationPolicy(false).catch(()=>{});return;}
+  if(name==='show-login'){s.authScreen='login';login();$('#username')?.focus?.();return;}
   if(name==='retry-access'){await boot();return;}
   if(name==='more-courses'){
    s.catalogLimit=Math.min(filteredCourses().length,s.catalogLimit+9);
@@ -3561,11 +3610,10 @@ async function init(){
  document.head.insertAdjacentHTML('beforeend','<style>.is-auth .sidebar,.is-auth .bottom-nav{display:none}.is-auth .topbar{background:#0d0a19}.is-auth .content{max-width:1100px}.is-auth .app-column{width:100%}</style>');
  if(!window.supabase||!cfg.supabaseUrl||!cfg.supabasePublishableKey){content.innerHTML='<div class="auth-layout panel"><h2>Verbindung nicht verfügbar</h2><p>Supabase konnte nicht geladen werden. Bitte lade die Seite erneut oder überprüfe deine Verbindung.</p></div>';return;}
  try{api=window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-  await refreshShopVisibility();
   window.setInterval(()=>{void refreshShopVisibility().catch(()=>{});},30000);
   void fetchRegistrationPolicy(false).catch(()=>{});
   void api.rpc('academy_shop_discount').then(res=>{if(!res.error){s.shopDiscount=Number(res.data)||0;if(s.ready&&['plans','admin'].includes(parseRoute().page))render();}}).catch(()=>{});
-  void api.rpc('academy_beta_status').then(beta=>{if(!beta.error){s.service.beta_open=beta.data===true;if(!s.ready)login();}}).catch(()=>{});
+  void api.rpc('academy_beta_status').then(beta=>{if(!beta.error){s.service.beta_open=beta.data===true;}}).catch(()=>{});
   window.LLLearning?.attach?.({state:()=>s,client:()=>api,notice,onStep:(id,step)=>{s.lessonStep=step;if(s.progress.lastLesson?.id===id){s.progress.lastLesson.step=step;void saveProgress().catch(()=>{});}}});
    await boot();}
  catch(err){content.innerHTML='<div class="auth-layout panel"><h2>Academy nicht erreichbar</h2><p class="muted">'+esc(formatError(err))+'</p><button class="btn" onclick="location.reload()">Erneut versuchen</button></div>';}

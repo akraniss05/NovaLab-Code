@@ -5,7 +5,7 @@ const read=file=>fs.readFileSync(path.join(__dirname,'..',file),'utf8');
 const html=read('site/index.html'),js=read('site/academy-v21.js'),css=read('site/app-v21.css');
 for(const file of ['site/reference-data.js','site/app-v21.css','site/app-v12.css','site/config.js','site/auth-mfa-v15.js','site/academy-v21.js','site/privacy.html','site/manifest.webmanifest','site/icon.svg','supabase/functions/academy-signin/index.ts','supabase/functions/admin-users/index.ts'])
  assert(fs.existsSync(path.join(__dirname,'..',file)),file+' missing');
-for(const token of ['app-v21.css?build=20261109v73','academy-v21.js?build=20261113flexible','auth-mfa-v15.js?build=20261109v73','config.js?build=20261107v31','NovaLab Academy'])
+for(const token of ['app-v21.css?build=20261109v73','academy-v21.js?build=v1.02','auth-mfa-v15.js?build=20261109v73','config.js?build=20261107v31','NovaLab Academy'])
  assert(html.includes(token),'Versioned asset missing: '+token);
 for(const obsolete of ['styles.css','refined.css','music-studio.js','studio3d-v5.js'])
  assert(!html.includes(obsolete),'Old asset still linked: '+obsolete);
@@ -33,7 +33,7 @@ assert(mfa.includes('mfa.challenge')&&mfa.includes('mfa.verify')&&mfa.includes('
 assert(js.includes('function renderMFA(){'),'Authenticator rendering bridge missing');
 assert(js.includes('id="mfa-settings"'),'Authenticator mount missing');
 new Function(js);
-for(const token of ['academy_streak_status','academy_streak_claim','streakModalHtml','data-streak-claim','ll-home-brand-banner','ll-home-shortcuts','academy_streak_status','academy_voucher_create_flexible','academy_voucher_delete','data-voucher-delete','getChoicePreference','achievementGallery','friend-navigation','reset-appearance','data-social-upload']) assert(js.includes(token),'Missing v18 feature: '+token);
+for(const token of ['academy_streak_status','academy_streak_claim','streakModalHtml','data-streak-claim','studioHero(true)','ll-home-shortcuts','academy_streak_status','academy_voucher_create_flexible','academy_voucher_delete','data-voucher-delete','getChoicePreference','achievementGallery','friend-navigation','reset-appearance','data-social-upload']) assert(js.includes(token),'Missing v18 feature: '+token);
 for(const token of ['.appearance-picker','.achievement-grid','.friends-overview','.voucher-manage-card','.profile-quick-stats'])assert(css.includes(token),'Missing v18 style: '+token);
 for(const asset of ['site/novalab-banner.webp','site/novalab-logo.webp']) assert(fs.existsSync(path.join(__dirname,'..',asset)),'Missing new branding asset: '+asset);
 const banner=fs.readFileSync(path.join(__dirname,'../site/novalab-banner.webp'));
@@ -41,16 +41,16 @@ const novaLogo=fs.readFileSync(path.join(__dirname,'../site/novalab-logo.webp'))
 assert.equal(novaLogo.subarray(0,4).toString(),'RIFF','Official NL logo should be WebP');
 assert.equal(novaLogo.subarray(8,12).toString(),'WEBP','Official NL logo is not WebP');
 assert(html.includes('novalab-logo.webp'),'Top bar must show NovaLab logo');
-assert(js.includes('novalab-banner.webp'),'App must render NovaLab banner');
+assert(js.includes('studioHero(false)'),'App must render NovaLab banner');
 const manifest=JSON.parse(read('site/manifest.webmanifest'));
-assert.equal(manifest.name,'NovaLab Academy');
+assert.equal(manifest.name,'NovaLab Code v1.02');
 assert(manifest.icons.some(icon=>icon.src.includes('novalab-icon-512.webp')),'512px NovaLab install icon missing');
 assert.equal(banner.subarray(0,4).toString(),'RIFF','NovaLab banner is not an actual WebP');
 assert.equal(banner.subarray(8,12).toString(),'WEBP','NovaLab banner invalid');
 for(const selector of ['.ll-home-shortcuts','.ll-home-brand-banner','.ll-streak-modal','.ll-streak-claim','.ll-streak-backdrop'])assert(css.includes(selector),'Missing v19 interface style: '+selector);
 assert(fs.existsSync(path.join(__dirname,'../site/v21.html')),'Physical uncached v20 entry missing');
 assert(read('site/v21.html').includes('academy-v21.js?build='),'Unique iOS entry must load new code');
-assert(read('site/v31.html').includes('academy-v21.js?build=20261113flexible'),'Fresh entry must load current code');
+assert(read('site/v31.html').includes('academy-v21.js?build=v1.02'),'Fresh entry must load current code');
 assert(read('site/manifest.webmanifest').includes('v31.html#home'),'Installed app must open fresh entry');
 assert(js.includes("root=document.createElement('div')"),'Old HTML popup fallback missing');
 assert(js.includes("s.streakModalOpen=true;"),'Daily popup must appear after every login');
@@ -61,7 +61,7 @@ assert(html.includes('id="streak-portal"')&&html.includes('data-streak-open'),'S
 for(const token of ['data-form="profile-title"','profile-title-badge','auth-showcase','admin-overview','blender-video-step'])assert(js.includes(token),'Missing v23 feature: '+token);
 for(const token of ['data-focus-course','ll-home-focus','data-pref="','data-admin-filter','admin-search-empty','Größere Schrift','Hoher Kontrast','Weniger Bewegung'])assert(js.includes(token),'Missing v24 function: '+token);
 for(const token of ['.ll-home-focus','.ll-focus-result','.appearance-toggle:focus-within','.admin-search-empty[hidden]'])assert(css.includes(token),'Missing v24 styling: '+token);
-for(const token of ['ll-home-metrics','ll-difficulty-dashboard','data-difficulty-filter','NEUE ACADEMY · V28'])assert(js.includes(token),'Missing v25 interface: '+token);
+for(const token of ['ll-home-metrics','ll-difficulty-dashboard','data-difficulty-filter','v1.02'])assert(js.includes(token),'Missing v25 interface: '+token);
 for(const token of ['.ll-home-metrics','.ll-auth-release'])assert(css.includes(token),'Missing base styling: '+token);
 for(const token of ['.ll-difficulty-dashboard','.ll-difficulty-chart','.ll-course-filter-controls'])assert(read('site/academy-v31-layout.css').includes(token),'Missing difficulty radar styling: '+token);
 console.log('App v28 support, appearance, Blender, profile titles, admin and login tests passed');
@@ -121,7 +121,7 @@ for(const item of ['PRIMARY KEY (user_id, lesson_id)','ON CONFLICT (user_id,less
 const languageModule=read('site/academy-i18n.js');
 for(const file of ['site/index.html','site/v21.html','site/v31.html']){
  const contents=read(file);
- assert(contents.includes('academy-i18n.js?build=20261109v73'),file+' must load i18n before the main app');
+ assert(contents.includes('academy-i18n.js?build=v1.02'),file+' must load i18n before the main app');
  assert(contents.includes('data-lang="de"')&&contents.includes('data-lang="en"'),file+' must display DE and EN in the topbar');
 }
 for(const token of ['liverylab-language','MutationObserver','setAccount','data-lang','data-no-translate','practice-input','document.documentElement.lang'])assert(languageModule.includes(token),'Language module missing '+token);

@@ -9,6 +9,13 @@ const storageKey='liverylab-language',accountKey=id=>storageKey+'-'+id;
 let current='de',accountId='',observer=null,scheduled=false,processing=false;
 try{current=localStorage.getItem(storageKey)==='en'?'en':'de';}catch(_){}
 const translations={
+'Das Passwort darf höchstens 256 Zeichen lang sein.':'The password must be at most 256 characters long.',
+'Dein nächstes Level beginnt':'Your next level starts','hier.':'here.','Lerne Coding. Baue echte Projekte.':'Learn to code. Build real projects.',
+'Schreib deine erste':'Build your first','App.':'app.','Vom ersten Befehl zum eigenen Projekt.':'From your first command to your own project.',
+'Erschaffe eigene':'Create your own','Welten.':'worlds.','Modelliere und animiere mit Blender.':'Model and animate with Blender.',
+'Aus Ideen werden':'Turn ideas into','Projekte.':'projects.','Willkommen zurück.':'Welcome back.','Kostenlos starten':'Start for free',
+'Programme von Grund auf schreiben.':'Write programs from scratch.','Websites und Web-Apps entwickeln.':'Build websites and web apps.',
+'In 3D modellieren und animieren.':'Model and animate in 3D.','Diashow pausieren':'Pause slideshow',
 'Hauptmenü':'Main menu','HAUPTMENÜ':'MAIN MENU','Deine Kurse, Projekte und Werkzeuge auf einen Blick.':'Your courses, projects and tools at a glance.','Dein Lernstand':'Your learning progress','Lernen & Entwickeln':'Learn & build','Profil & Community':'Profile & community','Konto & Hilfe':'Account & help','Verwaltung':'Management','Tarif erforderlich':'Plan required','Referenzen':'References','Kurse entdecken und Wissen aufbauen':'Explore courses and build your skills','Script-Projekt, Dateien und Codebeispiele':'Script project, files and code examples','Wissen testen und den Lernstand prüfen':'Test your knowledge and check your progress','Funktionen, Befehle und Dokumentation':'Functions, commands and documentation','Free, Plus, Ultimate und Gutscheine':'Free, Plus, Ultimate and vouchers','Lernfortschritte, XP und Erfolge':'Learning progress, XP and achievements','Gemeinsam lernen und Anfragen verwalten':'Learn together and manage friend requests','Hilfe, Tickets und Antworten vom Team':'Help, tickets and replies from the team','Darstellung, Konto, Timer und Datenschutz':'Appearance, account, timer and privacy','Nutzer, Freigaben und Academy verwalten':'Manage users, permissions and the Academy',
 
 'Navigation':'Navigation','DEIN PROFIL':'YOUR PROFILE','Startseite':'Home','Lernen':'Learn','Prüfung':'Exam','Prüfungen':'Exams','Referenz':'Reference','Referenz 🔒':'Reference 🔒','Mein Profil':'My Profile','Profil':'Profile','Freunde':'Friends','Support':'Support','Einstellungen':'Settings','Administration':'Administration','Menü öffnen':'Open menu','Menü schließen':'Close menu','Home':'Home',
@@ -129,7 +136,7 @@ Object.assign(translations,{
 'Fortschritt zurücksetzen':'Reset progress','Setzt Lektionen und lokale Prüfungsanzeigen zurück. Auf dem Server vergebene Erfolge bleiben bestehen.':'Resets lessons and local exam status. Server-side achievements stay unlocked.',
 'Support und Abmeldung':'Support and sign out','Beendet die aktuelle Sitzung auf diesem Gerät.':'Ends your current session on this device.',
 'Schreibe NyxAtheris eine DM oder öffne ein Ticket und erwähne @nyxatheris.':'DM NyxAtheris or open a ticket and mention @nyxatheris.',
-'Über die Academy':'About the Academy','Developer-Lernplattform mit Kursen, sicheren Accounts, Profilen, Freunden und Erfolgen. Version 28.':'Developer learning platform with courses, secure accounts, profiles, friends, and achievements.',
+'Über die Academy':'About the Academy','Developer-Lernplattform mit Kursen, sicheren Accounts, Profilen, Freunden und Erfolgen. v1.02.':'Developer learning platform with courses, secure accounts, profiles, friends, and achievements.',
 'Erstelle eigene oder automatisch generierte Codes. Löschen und Ablaufen werden serverseitig durchgesetzt.':'Create custom or automatically generated codes. Deletion and expiration are enforced server-side.',
 '[ + ] NEU ERSTELLEN':'[ + ] CREATE NEW','Neuer Gutschein':'New voucher','Code erstellen':'Create code','Dein Wunschcode':'Your custom code',
 '3–64 Zeichen, Buchstaben, Zahlen und Bindestriche. Groß-/Kleinschreibung ist egal.':'3–64 characters: letters, numbers, and hyphens. Case does not matter.',

@@ -1,12 +1,12 @@
-# NovaLab Academy v12
+# NovaLab Code v1.02
 
-**Rebranding (9. November 2026):** Die App heißt jetzt **NovaLab Academy**. Banner, Logo, Startseite, Login, App-Icons und Manifest wurden aktualisiert. Die existierende Domain `liverylab-academy.dev`, die GitHub-Repository-Kennung und die internen Supabase-/Speicherschlüssel bleiben bis zu einer separaten technischen Migration unverändert, damit Accounts und Lernfortschritte erhalten bleiben.
+Die Lernplattform für Coding und Blender nutzt ein durchgehendes dunkles Design mit animiertem Titelbild, Kursmotiven und einer für Mobilgeräte angepassten Anmeldung. Die Darstellung lässt sich in den Einstellungen anpassen.
 
 **Made with 💙 from NyxAtheris (NovaLab Academy)**
 
 Neue responsive NovaLab-Lernplattform für Programmiersprachen, FiveM und Blender. Dunkles Violett, mobile Bottom-Navigation, Kurskarten und XP wie in den Designreferenzen.
 
-Live: https://akraniss05.github.io/liverylab-academy/  
+Website: https://akraniss05.github.io/NovaLab-Code/
 Discord: https://discord.gg/SZhYa6Nnmy  
 Kontakt: nyxatheris
 

@@ -27,7 +27,7 @@ s.social={friends:[],requests:[],titles:['Developer'],profile:{username:'student
 s.socialMedia={};s.vouchers=[];s.members=[];s.memberPlans={};s.memberExpiry={};
 function has(html,selectors,label){for(const fragment of selectors)assert(html.includes(fragment),label+' is missing '+fragment)}
 const home=a.homePage();
-has(home,['ll-neon-custom-hero','ll-home-brand-banner','ll-home-shortcuts','ll-home-continue','data-go="menu"','study-goal','weekly-goal'],'Home');
+has(home,['nova-slider','nova-path-grid','ll-home-shortcuts','ll-home-continue','data-go="menu"','study-goal','weekly-goal'],'Home');
 const menu=a.neonMenuPage();
 for(const route of ['courses','script','exams','reference','profile','friends','support','settings'])
  assert(menu.includes('data-go="'+route+'"'), 'Menu must preserve all current sections: '+route);

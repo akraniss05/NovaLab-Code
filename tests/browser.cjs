@@ -4,7 +4,7 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),asse
 const {chromium}=require('playwright-core');
 const root=path.join(__dirname,'..');
 const source=fs.readFileSync(path.join(root,'site/academy-v21.js'),'utf8');
-const css=['site/app-v21.css','site/academy-v31-layout.css','site/academy-roadmap.css','site/academy-neon-ui.css','site/academy-atelier.css'].map(file=>fs.readFileSync(path.join(root,file),'utf8')).join('\n');
+const css=['site/app-v21.css','site/academy-v31-layout.css','site/academy-roadmap.css','site/academy-neon-ui.css','site/academy-atelier.css','site/nova.css'].map(file=>fs.readFileSync(path.join(root,file),'utf8')).join('\n');
 const expose='\nwindow.__views={s,neonMenuPage,neonHero,neonBanner,neonExamOverview,filteredCourses,difficultyDiagram,coursesPage,trackPage,lessonPage,scriptPage,examPage,examsPage,referencePage,plansPage,adminPage,login,profilePage,friendsPage,supportPage,settingsPage,homePage,streakModalHtml,llIcon,paywall};\n})();';
 assert.match(source,/\ninit\(\);\n\}\)\(\);\s*$/);
 const rewritten=source.replace(/\ninit\(\);\n\}\)\(\);\s*$/,expose);
@@ -62,6 +62,7 @@ const bannerB64=fs.readFileSync(path.join(root,'site/novalab-banner.webp')).toSt
 function capture(html){
 html=html.replaceAll('src="./novalab-banner.webp"','src="data:image/webp;base64,'+bannerB64+'"');
 const nav=['Home','Lernen','Script','Prüfung','Profil'].map((n,i)=>'<button class="bottom-item '+(i===0?'active':'')+'"><span class="side-icon">'+app.llIcon(['home','learn','code','exam','profile'][i])+'</span>'+n+'</button>').join('');
+html=html.replace(/src="\.\/art\/([a-z]+)\.webp"/g,(_,name)=>'src="data:image/webp;base64,'+fs.readFileSync(path.join(root,'site/art',name+'.webp')).toString('base64')+'"');
 return '<!doctype html><html lang="de"><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+'</style></head><body>'+
 '<div class="app-shell"><aside class="sidebar"><div class="sidebar-logo"><span class="logo-mark">fx</span>NovaLab Academy</div></aside>'+
 '<div class="app-column"><header class="topbar"><div class="brandbox"><button class="icon-btn mobile-only">☰</button><a class="brand" href="#"><span class="brand-mark">fx</span><span>NovaLab <strong>Academy</strong></span></a></div>'+
@@ -74,10 +75,11 @@ if(!executable)throw Error('Chrome/Chromium is required on CI');
 (async()=>{
 const browser=await chromium.launch({headless:true,executablePath:executable,args:['--no-sandbox','--disable-dev-shm-usage']});
 try{
+await require('./nova-public.cjs')(browser);
 fs.mkdirSync(path.join(root,'test-results'),{recursive:true});
 const neonWrap=(page,markup)=>'<div class="ll-neon-screen ll-neon-'+page+'">'+markup+'</div>';
 const scenes=[
- ['neon-home',neonWrap('home',app.homePage()),['.ll-atelier-mission-strip','.ll-atelier-course-rail','.ll-neon-custom-hero','.ll-home-brand-banner','.ll-home-continue','.ll-home-shortcuts']],
+ ['neon-home',neonWrap('home',app.homePage()),['.ll-atelier-mission-strip','.ll-atelier-course-rail','nova-slider','.nova-path-grid','.ll-home-continue','.ll-home-shortcuts']],
  ['neon-menu',neonWrap('menu',app.neonMenuPage()),['.ll-atelier-mission-strip','.ll-atelier-scene','.ll-neon-page-heading','.ll-neon-menu-grid','.ll-neon-menu-tile','[data-go="settings"]','[data-go="support"]']],
  ['neon-script',neonWrap('script',app.scriptPage()),['.ll-atelier-stats','.ll-atelier-studio-shell','.ll-atelier-studio-files','.ll-atelier-studio-work','.ll-neon-custom-hero','.file-tree','.file-preview','.file-tabs']],
  ['neon-exams',neonWrap('exams',app.examsPage()),['.ll-atelier-exam-card','.ll-atelier-scene','.ll-neon-page-heading','.ll-neon-exam-overview','.ll-neon-stat-row','.exam-filters']],
@@ -91,7 +93,7 @@ const scenes=[
   s.profile.role='admin';s.isOwner=true;s.members=[];const html=neonWrap('admin',app.adminPage());
   s.profile.role=oldRole;s.isOwner=oldIsOwner;s.members=oldMembers;return html;})(),
  ['.ll-atelier-admin-pulse','.ll-atelier-admin-pulse-cards','.ll-neon-page-heading','.ll-neon-feature','.ll-admin-tabs','.admin-overview','.ll-admin-hub']],
- ['home',app.homePage(),['.ll-home-brand-banner img','.ll-home-shortcuts','.ll-home-continue','.ll-streak-shortcut']],
+ ['home',app.homePage(),['nova-slider img','.ll-home-shortcuts','.ll-home-continue','.ll-streak-shortcut']],
  ['courses',app.coursesPage(),['.ll-learning-hero','.ll-journey','.ll-journey-step','.ll-difficulty-dashboard','.ll-difficulty-chart','.ll-difficulty-tile','#course-difficulty-select','#course-search','.course-grid','.ll-path-course','.ll-mini-road']],
  ['admin-registration',(()=>{const old=context.location.hash,oldRole=s.profile.role,oldOwner=s.isOwner,oldPolicy=s.registrationPolicy;
   context.location.hash='#admin/registration';s.profile.role='admin';s.isOwner=true;
@@ -293,12 +295,12 @@ return {
  modalWidth:get('.ll-streak-modal')?get('.ll-streak-modal').getBoundingClientRect().width:null,
  focusBounds:get('.ll-focus-modal')?{width:get('.ll-focus-modal').getBoundingClientRect().width,height:get('.ll-focus-modal').getBoundingClientRect().height,top:get('.ll-focus-modal').getBoundingClientRect().top,left:get('.ll-focus-modal').getBoundingClientRect().left}:null,
  planManagementWidth:get('.ll-plan-manager')?get('.ll-plan-manager').getBoundingClientRect().width:null,
- bannerRatio:get('.ll-home-brand-banner')?get('.ll-home-brand-banner').getBoundingClientRect().width/get('.ll-home-brand-banner').getBoundingClientRect().height:null,
- bannerHeight:get('.ll-home-brand-banner')?.getBoundingClientRect().height||null,
+ bannerRatio:get('nova-slider')?get('nova-slider').getBoundingClientRect().width/get('nova-slider').getBoundingClientRect().height:null,
+ bannerHeight:get('nova-slider')?.getBoundingClientRect().height||null,
  headerHeight:get('.topbar')?.getBoundingClientRect().height||null,
  timerVisible:get('.focus-center .focus-header')?getComputedStyle(get('.focus-center .focus-header')).display!=='none':false,
  timerCenterOffset:get('.focus-center .focus-header')?Math.abs((get('.focus-center .focus-header').getBoundingClientRect().left+get('.focus-center .focus-header').getBoundingClientRect().width/2)-(get('.topbar').getBoundingClientRect().left+get('.topbar').getBoundingClientRect().width/2)):null,
- bannerDebug:get('.ll-home-brand-banner')?{width:get('.ll-home-brand-banner').getBoundingClientRect().width,height:get('.ll-home-brand-banner').getBoundingClientRect().height,aspect:getComputedStyle(get('.ll-home-brand-banner')).aspectRatio,display:getComputedStyle(get('.ll-home-brand-banner')).display,imagePosition:getComputedStyle(get('.ll-home-brand-banner img')).position,rules:Array.from(document.styleSheets).map(x=>x.cssRules?.length||0)}:null
+ bannerDebug:get('nova-slider')?{width:get('nova-slider').getBoundingClientRect().width,height:get('nova-slider').getBoundingClientRect().height,aspect:getComputedStyle(get('nova-slider')).aspectRatio,display:getComputedStyle(get('nova-slider')).display,imagePosition:getComputedStyle(get('nova-slider img')).position,rules:Array.from(document.styleSheets).map(x=>x.cssRules?.length||0)}:null
 };
 },selectors);
 assert.equal(actual.missing.length,0,name+' @'+width+' missing '+actual.missing.join(','));
@@ -315,7 +317,7 @@ if(name.startsWith('neon-plans')){
 assert.ok(actual.iconWidths.every(v=>v===0||(v>=1&&v<=48)),name+' @'+width+' icon HUGE: '+JSON.stringify(actual.iconWidths));
 assert.equal(actual.timerVisible,true,name+' @'+width+' centered timer must be visible');
 assert.ok(actual.timerCenterOffset<3,name+' @'+width+' timer not centered: '+actual.timerCenterOffset+'px');
-if(name==='home'){console.log('BANNER GEOMETRY '+width+' '+JSON.stringify(actual.bannerDebug));assert.equal(actual.shortcutDisplay,'grid','Home shortcuts must be a grid');assert.equal(actual.continueDisplay,'flex','Continue card must be styled');const expectedRatio=width<=820?16/9:2.2;assert.ok(Math.abs(actual.bannerRatio-expectedRatio)<.07,'NovaLab banner must fill frame without side gutters: '+actual.bannerRatio+' expected '+expectedRatio);if(width<=430){assert.ok(actual.bannerHeight<251,'iPhone banner is too tall: '+actual.bannerHeight)}if(width<820){assert.ok(actual.headerHeight<=75,'Mobile header became multi-row: '+actual.headerHeight)}}
+if(name==='home'){console.log('BANNER GEOMETRY '+width+' '+JSON.stringify(actual.bannerDebug));assert.equal(actual.shortcutDisplay,'grid','Home shortcuts must be a grid');assert.equal(actual.continueDisplay,'flex','Continue card must be styled');assert.ok(actual.bannerHeight>=300&&actual.bannerHeight<=550,'Hero must keep text and controls visible: '+actual.bannerHeight);if(width<820){assert.ok(actual.headerHeight<=75,'Mobile header became multi-row: '+actual.headerHeight)}}
 if(name.startsWith('streak')){assert.ok(actual.modalWidth>200&&actual.modalWidth<=width,'Daily popup size broken');}
 if(name==='focus-timer'){assert.ok(actual.focusBounds.width>220&&actual.focusBounds.width<=width,'Focus popup exceeds screen width');assert.ok(actual.focusBounds.height<=850,'Focus modal too tall');assert.ok(actual.focusBounds.top>=0,'Focus modal cut off above viewport');}
 if(name==='admin-members'){assert.equal(actual.planManagementWidth,0,'Member details should stay collapsed by default');}
